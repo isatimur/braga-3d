@@ -1,0 +1,204 @@
+{
+  "title_ru": "Брага: 2000 лет",
+  "title_en": "Braga: 2000 Years",
+  "title_pt": "Braga: 2000 anos",
+  "subtitle_ru": "От римской Бракары Августы до святилища всемирного наследия — в десяти главах.",
+  "subtitle_en": "From Roman Bracara Augusta to a World Heritage sanctuary, in ten chapters.",
+  "subtitle_pt": "Da romana Bracara Augusta a um santuário Património Mundial, em dez capítulos.",
+  "chapters": [
+    {
+      "id": "bracara",
+      "era_ru": "ок. 16 г. до н. э.",
+      "era_en": "c. 16 BC",
+      "era_pt": "c. 16 a.C.",
+      "title_ru": "Город Августа",
+      "title_en": "The City of Augustus",
+      "title_pt": "A cidade de Augusto",
+      "text_ru": "Около 16 г. до н. э., в правление Августа, римляне основали на северо-западе Иберии город и назвали его Бракара Августа в честь императора. На холме Алту-да-Сивидади можно пройти среди руин общественных терм. Их построили рядом с форумом около 100 года н. э. Здесь видны холодный, тёплый и горячий залы, гипокауст для обогрева пола и открытая палестра. Рядом в 1999 году нашли остатки римского театра. В нижнем городе сохранилась Фонте-ду-Идолу — святилище у источника I века. Целик Фронтон из Аркобриги посвятил его местному богу Тонгоэнабиагу. Высеченная в скале фигура в тоге до сих пор стоит над водой.",
+      "text_en": "Around 16 BC, in the reign of Augustus, the Romans founded a town in the north-west of Iberia and named it Bracara Augusta in the emperor’s honour. On the Alto da Cividade you can walk among the ruins of its public baths, built near the forum around AD 100: cold, warm and hot rooms, the hypocaust that heated the floors, and an open-air palaestra. Beside them lie the remains of a Roman theatre, found in 1999. In the town below, the Fonte do Ídolo is a 1st-century spring sanctuary. Celicus Fronto of Arcobriga dedicated it to the local god Tongoenabiagus, and a figure in a toga, carved into the rock, still watches over the water.",
+      "text_pt": "Por volta de 16 a.C., no reinado de Augusto, os romanos fundaram no extremo noroeste da Península Ibérica uma cidade a que deram o nome de Bracara Augusta, em honra do imperador. No Alto da Cividade podem ver-se as ruínas das termas públicas, construídas junto ao fórum por volta do ano 100: salas fria, tépida e quente, o hipocausto que aquecia o chão e uma palestra ao ar livre. Ao lado ficam os restos de um teatro romano, descoberto em 1999. Mais abaixo, a Fonte do Ídolo é um santuário do século I junto a uma nascente. Célico Fronto, natural de Arcóbriga, dedicou-o ao deus local Tongoenabiago, e uma figura de toga esculpida na rocha ainda vigia a água.",
+      "focus": ["termas-romanas", "fonte-idolo"],
+      "time": "morning",
+      "sources": [
+        { "title": "Bracara Augusta — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Bracara_Augusta" },
+        { "title": "Termas romanas de Maximinos — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Termas_romanas_de_Maximinos" },
+        { "title": "Roman Thermal Baths of Alto da Cividade — Câmara Municipal de Braga", "url": "https://www.cm-braga.pt/en/1201/conhecer/historia-e-patrimonio/museus/item/item-1-670" },
+        { "title": "Fonte do Ídolo — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Fonte_do_%C3%8Ddolo" }
+      ]
+    },
+    {
+      "id": "gallaecia",
+      "era_ru": "I–IV вв.",
+      "era_en": "1st–4th c. AD",
+      "era_pt": "séc. I–IV",
+      "title_ru": "Столица Галлеции",
+      "title_en": "Capital of Gallaecia",
+      "title_pt": "Capital da Galécia",
+      "text_ru": "Бракара стала центром судебного округа — конвента Бракаренсис. По античным подсчётам, в нём жили 24 общины и около 285 тысяч свободных людей. Это был самый населённый округ северо-запада. В конце III века Диоклетиан перестроил управление империей, и Бракара стала столицей новой провинции Галлеция. В неё вошли три округа: Бракары, Лукус-Августи (Луго) и Астурики Августы (Асторги). Новая городская стена конца III или начала IV века охватила больше 48 гектаров. Средневековый город, который позже вырос вокруг собора, займёт лишь около трети этой площади.",
+      "text_en": "Bracara became the seat of the conventus Bracarensis, a Roman judicial district. Ancient counts give it 24 communities and about 285,000 free people, the most populous district of the north-west. At the end of the 3rd century, Diocletian reorganised the empire, and Bracara became the capital of the new province of Gallaecia. The province joined three districts: those of Bracara, Lucus Augusti (Lugo) and Asturica Augusta (Astorga). A new city wall, raised in the late 3rd or early 4th century, enclosed more than 48 hectares. The medieval town that later grew around the cathedral would cover only about a third of that area.",
+      "text_pt": "Bracara tornou-se sede do conventus Bracarensis, uma circunscrição judicial romana. As contagens antigas atribuem-lhe 24 comunidades e cerca de 285 000 pessoas livres, o mais populoso do Noroeste. No final do século III, as reformas de Diocleciano fizeram de Bracara a capital da nova província da Galécia, que reunia os conventos de Bracara, Lucus Augusti (Lugo) e Asturica Augusta (Astorga). Uma nova muralha, erguida entre o final do século III e o início do século IV, cercava mais de 48 hectares. A cidade medieval que mais tarde cresceu em torno da Sé ocuparia apenas cerca de um terço dessa área.",
+      "focus": ["termas-romanas", "se-braga"],
+      "time": "morning",
+      "sources": [
+        { "title": "Bracara Augusta — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Bracara_Augusta" },
+        { "title": "Bracara Augusta — Wikipedia", "url": "https://en.wikipedia.org/wiki/Bracara_Augusta" },
+        { "title": "Gallaecia — Wikipedia", "url": "https://en.wikipedia.org/wiki/Gallaecia" },
+        { "title": "Castelo de Braga — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Castelo_de_Braga" }
+      ]
+    },
+    {
+      "id": "suebi",
+      "era_ru": "V–VI вв.",
+      "era_en": "5th–6th c.",
+      "era_pt": "séc. V–VI",
+      "title_ru": "Королевство свевов",
+      "title_en": "Kingdom of the Suebi",
+      "title_pt": "O reino suevo",
+      "text_ru": "В начале V века германский народ свевов пришёл в Иберию и сделал Бракару столицей своего королевства. Оно продержалось до 585 года, когда его захватил вестготский король Леовигильд. Около 550 года морем сюда прибыл монах из Паннонии по имени Мартин. Он основал монастырь в Думиуме, нынешнем Думе, рядом с городом. Позже Мартин стал митрополитом Браги. Он помог свевам перейти от арианства к католической вере. Этот поворот закрепил Первый Брагский собор 561 года, а в 572 году Мартин сам возглавил Второй. В трактате «Об исправлении крестьян» он с необычной мягкостью писал о языческих обычаях деревни. Мартин умер в 580 году. Его помнят как апостола свевов.",
+      "text_en": "In the early 5th century the Suebi, a Germanic people, entered Iberia and made Bracara the capital of their kingdom. It lasted until 585, when the Visigothic king Leovigild took it over. Around 550 a monk from Pannonia named Martin arrived by sea. He founded a monastery at Dumium, today’s Dume, near the city, and later became metropolitan bishop of Braga. He helped lead the Suebi from Arianism to Catholic Christianity, a change sealed at the First Council of Braga in 561; in 572 he presided over the second. His treatise De correctione rusticorum dealt with the pagan customs of country people with unusual mildness. Martin died in 580 and is remembered as the Apostle of the Suebi.",
+      "text_pt": "No início do século V, os Suevos, um povo germânico, entraram na Península Ibérica e fizeram de Bracara a capital do seu reino, que durou até 585, quando o rei visigodo Leovigildo o anexou. Por volta de 550 chegou por mar um monge da Panónia, Martinho. Fundou um mosteiro em Dume, às portas da cidade, e mais tarde tornou-se bispo metropolita de Braga. Ajudou os Suevos a passar do arianismo ao catolicismo, mudança confirmada no I Concílio de Braga, em 561; em 572 presidiu ao II Concílio. No tratado De correctione rusticorum tratou os costumes pagãos do campo com invulgar brandura. Morreu em 580 e é lembrado como o Apóstolo dos Suevos.",
+      "focus": ["se-braga"],
+      "time": "day",
+      "sources": [
+        { "title": "Kingdom of the Suebi — Wikipedia", "url": "https://en.wikipedia.org/wiki/Kingdom_of_the_Suebi" },
+        { "title": "Martin of Braga — Wikipedia", "url": "https://en.wikipedia.org/wiki/Martin_of_Braga" },
+        { "title": "Bracara Augusta — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Bracara_Augusta" }
+      ]
+    },
+    {
+      "id": "cathedral",
+      "era_ru": "XI–XII вв.",
+      "era_en": "11th–12th c.",
+      "era_pt": "séc. XI–XII",
+      "title_ru": "Собор графов",
+      "title_en": "The Counts’ Cathedral",
+      "title_pt": "A Sé dos condes",
+      "text_ru": "Документальная история собора начинается с епископа Педру. Около 1070 года он начал строительство. Новый храм в романском стиле Бургундии освятили 28 августа 1089 года. Вскоре бургундский рыцарь Генрих, уроженец Дижона, женился на Терезе, дочери короля Леона Альфонсо VI. С 1096 года супруги правили графством Португалия. Их сын Афонсу Энрикеш стал первым королём Португалии. Генрих умер в Асторге в 1112 году, и по его воле тело привезли в Брагу. Он и Тереза покоятся в Капелле королей. Позже собор получил готический портик, мануэлинскую главную капеллу и два позолоченных органа XVIII века.",
+      "text_en": "The cathedral’s documented history begins with Bishop Pedro, who started the work around 1070. The new church, in the Romanesque style of Burgundy, was consecrated on 28 August 1089. A few years later Henry of Burgundy, a knight born in Dijon, married Teresa, a daughter of King Alfonso VI of León, and from 1096 the couple ruled the County of Portugal. Their son, Afonso Henriques, became the first king of Portugal. Henry died at Astorga in 1112 and, as he had asked, was brought back to Braga. He and Teresa lie in the Chapel of the Kings. Later centuries added a Gothic porch, a Manueline main chapel and two gilded 18th-century organs.",
+      "text_pt": "A história documentada da Sé começa com o bispo D. Pedro, que iniciou as obras por volta de 1070. O novo templo, no românico da Borgonha, foi sagrado a 28 de agosto de 1089. Pouco depois, D. Henrique de Borgonha, cavaleiro nascido em Dijon, casou com D. Teresa, filha do rei Afonso VI de Leão, e a partir de 1096 o casal governou o Condado Portucalense. O filho, D. Afonso Henriques, seria o primeiro rei de Portugal. D. Henrique morreu em Astorga em 1112 e, como pedira, foi trazido para Braga. Ele e D. Teresa repousam na Capela dos Reis. Os séculos seguintes juntaram uma galilé gótica, uma capela-mor manuelina e dois órgãos dourados do século XVIII.",
+      "focus": ["se-braga"],
+      "time": "day",
+      "sources": [
+        { "title": "Sé de Braga — Wikipédia", "url": "https://pt.wikipedia.org/wiki/S%C3%A9_de_Braga" },
+        { "title": "Braga Cathedral — Wikipedia", "url": "https://en.wikipedia.org/wiki/Braga_Cathedral" },
+        { "title": "Henry, Count of Portugal — Wikipedia", "url": "https://en.wikipedia.org/wiki/Henry,_Count_of_Portugal" },
+        { "title": "Teresa, Countess of Portugal — Wikipedia", "url": "https://en.wikipedia.org/wiki/Teresa,_Countess_of_Portugal" }
+      ]
+    },
+    {
+      "id": "walls",
+      "era_ru": "XIV в.",
+      "era_en": "14th c.",
+      "era_pt": "séc. XIV",
+      "title_ru": "Стены и донжон",
+      "title_en": "Walls and the Keep",
+      "title_pt": "Muralhas e torre de menagem",
+      "text_ru": "Около 1300 года король Диниш приказал построить в Браге замок. Его герб до сих пор виден над дверью донжона. Торре-де-Менажен — квадратная готическая башня высотой около 30 метров, внутри у неё три этажа. После вторжения кастильцев в 1369 году король Фернанду перестроил стены. Их кольцо длиной около 1600 метров окружало собор. Около 1858 года город начал сносить стены, а в 1905 году снёс и замок. Донжон уцелел. Рядом, у сада Санта-Барбара, стоит старейшее крыло Архиепископского дворца. Его построили в XIV–XV веках архиепископы Гонсалу Перейра и Фернанду да Герра. У крыла зубцы и стрельчатые окна. Фонтан в саду со статуей святой Варвары относится к XVII веку.",
+      "text_en": "Around 1300 King Dinis ordered a castle for Braga; his coat of arms still sits above the keep door. The Torre de Menagem is a square Gothic tower about 30 metres high, with three floors. After a Castilian invasion in 1369, King Fernando rebuilt the walls, a ring about 1,600 metres long centred on the cathedral. The city began pulling the walls down around 1858 and demolished the castle in 1905; the keep survived. Facing the Santa Bárbara garden stands the oldest wing of the Archbishop’s Palace, built in the 14th and 15th centuries by archbishops Gonçalo Pereira and Fernando da Guerra, with battlements and pointed windows. The garden’s fountain, topped by Saint Barbara, is 17th-century.",
+      "text_pt": "Por volta de 1300, D. Dinis mandou erguer o castelo de Braga; o seu brasão vê-se sobre a porta da torre de menagem, uma torre gótica quadrada com cerca de 30 metros e três pisos. Depois da invasão castelhana de 1369, D. Fernando refez a muralha, um anel de cerca de 1600 metros centrado na Sé. As muralhas começaram a ser demolidas por volta de 1858 e o castelo caiu em 1905, mas a torre resistiu. Virada para o Jardim de Santa Bárbara ergue-se a ala mais antiga do Paço Arquiepiscopal, obra dos arcebispos Gonçalo Pereira e Fernando da Guerra nos séculos XIV e XV. A fonte do jardim, coroada por Santa Bárbara, é do século XVII.",
+      "focus": ["torre-menagem", "santa-barbara"],
+      "time": "day",
+      "sources": [
+        { "title": "Castelo de Braga — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Castelo_de_Braga" },
+        { "title": "Paço Arquiepiscopal Bracarense — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Pa%C3%A7o_Arquiepiscopal_Bracarense" },
+        { "title": "Jardim de Santa Bárbara — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Jardim_de_Santa_B%C3%A1rbara" }
+      ]
+    },
+    {
+      "id": "baroque",
+      "era_ru": "XVII–XVIII вв.",
+      "era_en": "17th–18th c.",
+      "era_pt": "séc. XVII–XVIII",
+      "title_ru": "Барочная Брага",
+      "title_en": "Baroque Braga",
+      "title_pt": "Braga barroca",
+      "text_ru": "В 1722 году архиепископ Родригу де Моура Телиш начал строить нынешнее святилище Бон-Жезуш на горе Эшпинью над городом. Он же оплатил зигзаг лестницы Пяти чувств с её фонтанами. У брагского барокко есть и более ранние корни. Церковь Санта-Круш начали в 1625 году, когда архиепископ Афонсу Фуртаду де Мендонса освятил участок. На её пышном фасаде стоит дата 1736. В 1754–1755 годах архитектор Андре Соареш спроектировал дом для купца Жуана Дуарте де Фарии. Имя Паласиу-ду-Райу дом получил от Мигела Жозе Райу, купившего его в 1853 году. Синие изразцы появились позже. В 1772 году архиепископ Гашпар де Браганса придал арке Порта-Нова нынешний вид: это городские ворота без створок.",
+      "text_en": "In 1722 Archbishop Rodrigo de Moura Teles began the present sanctuary of Bom Jesus on Mount Espinho above the city, and paid for its zigzag Stairway of the Five Senses. The church of Santa Cruz is older: Archbishop Afonso Furtado de Mendonça blessed its ground in 1625, and its crowded façade carries the date 1736. In 1754–1755 the architect André Soares designed a house for the merchant João Duarte de Faria. It takes its present name, the Palácio do Raio, from Miguel José Raio, who bought it in 1853; the blue tiles came later. In 1772 Archbishop Gaspar de Bragança gave the Arco da Porta Nova its present form, a city gate with no doors.",
+      "text_pt": "Em 1722, o arcebispo D. Rodrigo de Moura Teles iniciou o atual santuário do Bom Jesus, no monte Espinho, e custeou o escadório em ziguezague dos Cinco Sentidos. A igreja de Santa Cruz é mais antiga: o arcebispo D. Afonso Furtado de Mendonça benzeu o terreno em 1625, e a fachada exuberante mostra a data de 1736. Em 1754–1755, o arquiteto André Soares projetou uma casa para o comerciante João Duarte de Faria; o nome de Palácio do Raio vem de Miguel José Raio, que a comprou em 1853; os azulejos azuis são posteriores. Em 1772, o arcebispo D. Gaspar de Bragança deu ao Arco da Porta Nova a feição atual: uma porta da cidade sem portas.",
+      "focus": ["bom-jesus", "palacio-raio", "santa-cruz"],
+      "time": "sunset",
+      "sources": [
+        { "title": "Sanctuary of Bom Jesus do Monte — Wikipedia", "url": "https://en.wikipedia.org/wiki/Sanctuary_of_Bom_Jesus_do_Monte" },
+        { "title": "Palácio do Raio — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Pal%C3%A1cio_do_Raio" },
+        { "title": "Igreja de Santa Cruz (Braga) — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Igreja_de_Santa_Cruz_(Braga)" },
+        { "title": "Arco da Porta Nova — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Arco_da_Porta_Nova" }
+      ]
+    },
+    {
+      "id": "avenue",
+      "era_ru": "1882–1915",
+      "era_en": "1882–1915",
+      "era_pt": "1882–1915",
+      "title_ru": "Аркада, фуникулёр, театр",
+      "title_en": "Arcade, Funicular, Theatre",
+      "title_pt": "Arcada, elevador e teatro",
+      "text_ru": "В середине XIX века площадь у Аркады, нынешняя Праса-да-Република, превратилась в общественный сад. Нынешнее здание аркады достроили в 1885 году. В 1910 году, с провозглашением республики, площадь получила своё имя. К ней примыкает Авенида-Сентрал. 25 марта 1882 года открылся фуникулёр Бон-Жезуш. Его построили Рауль Меснье дю Понсар и швейцарский инженер Николаус Риггенбах на деньги предпринимателя Мануэла Жоакина Гомеша. Бак с водой утяжеляет вагон, идущий вниз, и тот тянет наверх второй вагон. Это первый фуникулёр Пиренейского полуострова и старейший действующий водяной фуникулёр мира. 21 апреля 1915 года открылся Театру-Сирку архитектора Моуры Коутинью на 1500 мест.",
+      "text_en": "In the mid-19th century the square by the Arcada, now Praça da República, became a public garden. The present arcade building was finished in 1885, and the square took its current name in 1910, when Portugal became a republic. The Avenida Central opens out beside it. On 25 March 1882 the Bom Jesus funicular opened, built by Raoul Mesnier du Ponsard with the Swiss engineer Nikolaus Riggenbach and paid for by Manuel Joaquim Gomes. A water tank weighs down the descending car, which pulls the other up. It was Iberia’s first funicular and is the oldest water-balanced one still running. On 21 April 1915 the Theatro Circo, designed by Moura Coutinho, opened with 1,500 seats.",
+      "text_pt": "Em meados do século XIX, o largo junto à Arcada, hoje Praça da República, tornou-se jardim público. O atual edifício da arcada ficou concluído em 1885, e a praça recebeu o nome atual em 1910, com a implantação da República. Ao lado estende-se a Avenida Central. A 25 de março de 1882 abriu o Elevador do Bom Jesus, obra de Raoul Mesnier du Ponsard e do engenheiro suíço Nikolaus Riggenbach, pago por Manuel Joaquim Gomes. Foi o primeiro funicular da Península Ibérica e é o mais antigo do mundo movido a contrapeso de água ainda em serviço. A 21 de abril de 1915 abriu o Theatro Circo, de Moura Coutinho, com 1500 lugares.",
+      "focus": ["avenida-central", "praca-republica", "theatro-circo"],
+      "time": "sunset",
+      "sources": [
+        { "title": "Praça da República (Braga) — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Pra%C3%A7a_da_Rep%C3%BAblica_(Braga)" },
+        { "title": "Bom Jesus do Monte Funicular — Wikipedia", "url": "https://en.wikipedia.org/wiki/Bom_Jesus_do_Monte_Funicular" },
+        { "title": "Elevator or Funicular — Confraria do Bom Jesus do Monte", "url": "https://bomjesus.pt/bom-jesus/elevator-or-funicular/?lang=en" },
+        { "title": "Theatro Circo — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Theatro_Circo" }
+      ]
+    },
+    {
+      "id": "sameiro",
+      "era_ru": "1863–1941",
+      "era_en": "1863–1941",
+      "era_pt": "1863–1941",
+      "title_ru": "Самейру и футбольный клуб",
+      "title_en": "Sameiro and a Football Club",
+      "title_pt": "O Sameiro e o Braga",
+      "text_ru": "14 июня 1863 года викарий Браги Мартинью Антониу Перейра да Силва положил начало святилищу Богоматери на горе Самейру. В 1869 году на вершине установили образ Непорочного зачатия. Первый камень нынешнего храма заложили 31 августа 1890 года, а алтарь освятили лишь 12 июня 1941 года. В 1904 году образ короновали. Корону из 2,5 кг золота подарили португальские женщины, среди них королева Амелия. 15 мая 1982 года сюда приезжал папа Иоанн Павел II. А в городе 19 января 1921 года появился клуб «Спортинг Брага». Его красно-белая команда трижды выигрывала Кубок Португалии и в 2011 году дошла до финала Лиги Европы.",
+      "text_en": "On 14 June 1863 Father Martinho António Pereira da Silva, the vicar of Braga, started a shrine to Our Lady on Monte Sameiro. In 1869 an image of the Immaculate Conception was set on the summit. The first stone of the present church was laid on 31 August 1890, but its altar was consecrated only on 12 June 1941. In 1904 the image was crowned with 2.5 kg of gold, a gift from Portuguese women that included Queen Amélia. Pope John Paul II visited on 15 May 1982. In the city, Sporting Clube de Braga was founded on 19 January 1921. Its red-and-white team has won the Portuguese Cup three times and reached the 2011 Europa League final.",
+      "text_pt": "A 14 de junho de 1863, o padre Martinho António Pereira da Silva, vigário de Braga, lançou um santuário a Nossa Senhora no Sameiro. Em 1869, colocou-se no cimo uma imagem da Imaculada Conceição. A primeira pedra do atual templo foi lançada a 31 de agosto de 1890, mas o altar só foi sagrado a 12 de junho de 1941. Em 1904, a imagem foi coroada com 2,5 kg de ouro, oferta de senhoras portuguesas como a rainha D. Amélia. João Paulo II esteve aqui a 15 de maio de 1982. O Sporting Clube de Braga nasceu a 19 de janeiro de 1921 e já venceu três Taças de Portugal e chegou à final da Liga Europa de 2011.",
+      "focus": ["sameiro"],
+      "time": "sunset",
+      "sources": [
+        { "title": "Santuário de Nossa Senhora do Sameiro — Wikipédia", "url": "https://pt.wikipedia.org/wiki/Santu%C3%A1rio_de_Nossa_Senhora_do_Sameiro" },
+        { "title": "S.C. Braga — Wikipedia", "url": "https://en.wikipedia.org/wiki/S.C._Braga" }
+      ]
+    },
+    {
+      "id": "stadium",
+      "era_ru": "2003",
+      "era_en": "2003",
+      "era_pt": "2003",
+      "title_ru": "Стадион в карьере",
+      "title_en": "The Quarry Stadium",
+      "title_pt": "O estádio da pedreira",
+      "text_ru": "Архитектор Эдуарду Соуту ди Моура поставил новый стадион Браги в карьере Монте-Каштру. Стадион открылся 30 декабря 2003 года. У него только две длинные трибуны. За одними воротами поднимается голая гранитная стена карьера. Строители взрывали скалу и дробили камень на бетон. Стальные тросы держат крышу между трибунами; эту идею подсказали верёвочные мосты инков. Стадион вмещает 30 286 зрителей, а в городе его зовут «Педрейра», то есть «Карьер». Летом 2004 года здесь прошли два матча группового этапа Евро-2004. В 2011 году Соуту ди Моура получил Притцкеровскую премию. Жюри назвало стадион мускулистым, монументальным и очень уместным в своём мощном пейзаже.",
+      "text_en": "The architect Eduardo Souto de Moura set Braga’s new stadium in the Monte Castro quarry. It opened on 30 December 2003. There are only two long stands; behind one goal rises the bare granite face of the quarry. The builders blasted out the rock and crushed much of it into concrete. Steel cables, inspired by Inca rope bridges, hold the roof between the stands. The stadium seats 30,286 people, and locals call it A Pedreira, “the Quarry”. In June 2004 it hosted two group matches of Euro 2004. In 2011 Souto de Moura won the Pritzker Prize, and the jury called the stadium “muscular, monumental and very much at home within its powerful landscape”.",
+      "text_pt": "O arquiteto Eduardo Souto de Moura instalou o novo estádio de Braga na pedreira do Monte Castro. Abriu a 30 de dezembro de 2003. Tem apenas duas bancadas compridas; atrás de uma das balizas ergue-se o granito nu da pedreira. A rocha foi rebentada e triturada para fazer betão. Cabos de aço, inspirados nas pontes de corda dos Incas, suspendem a cobertura entre as bancadas. O estádio leva 30 286 espetadores e em Braga chamam-lhe «A Pedreira». Em junho de 2004 recebeu dois jogos da fase de grupos do Euro 2004. Em 2011, Souto de Moura venceu o Prémio Pritzker, e o júri chamou ao estádio musculado, monumental e em casa na sua paisagem poderosa.",
+      "focus": ["estadio-braga"],
+      "time": "sunset",
+      "sources": [
+        { "title": "Estádio Municipal de Braga — Wikipedia", "url": "https://en.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Braga" },
+        { "title": "Eduardo Souto de Moura — Wikipedia", "url": "https://en.wikipedia.org/wiki/Eduardo_Souto_de_Moura" },
+        { "title": "2011 Laureate: Eduardo Souto de Moura — The Pritzker Architecture Prize", "url": "https://www.pritzkerprize.com/laureates/2011" }
+      ]
+    },
+    {
+      "id": "unesco",
+      "era_ru": "2019",
+      "era_en": "2019",
+      "era_pt": "2019",
+      "title_ru": "Всемирное наследие",
+      "title_en": "World Heritage",
+      "title_pt": "Património Mundial",
+      "text_ru": "7 июля 2019 года на 43-й сессии в Баку Комитет всемирного наследия ЮНЕСКО внёс «Святилище Бон-Жезуш-ду-Монте в Браге» в Список всемирного наследия как культурный ландшафт. Комитет увидел в нём священную гору, которая напоминает христианский Иерусалим и складывалась больше 600 лет. Крестный путь поднимается по склону к церкви, построенной в 1784–1811 годах. Неподалёку, на горе Самейру, стоит второе великое святилище Браги. Сегодня Брага — университетский город, в муниципалитете живут около 193 тысяч человек. Здесь находится старейшая архиепархия Португалии. Каждый год 24 июня улицы заполняет праздник святого Иоанна.",
+      "text_en": "On 7 July 2019, at its 43rd session in Baku, the UNESCO World Heritage Committee inscribed the Sanctuary of Bom Jesus do Monte in Braga on the World Heritage List as a cultural landscape. It is a sacred mount that evokes Christian Jerusalem, shaped over more than 600 years. A Via Crucis of chapels and fountains climbs the slope to the church, built between 1784 and 1811. Nearby, on Monte Sameiro, stands Braga’s other great sanctuary. Braga today is a university city, with about 193,000 people in the municipality, and the seat of Portugal’s oldest archdiocese. Every year on 24 June the streets fill for the feast of Saint John.",
+      "text_pt": "A 7 de julho de 2019, na 43.ª sessão, em Baku, o Comité do Património Mundial da UNESCO inscreveu o Santuário do Bom Jesus do Monte em Braga na Lista do Património Mundial, como paisagem cultural. É um sacro monte que evoca a Jerusalém cristã, construído ao longo de mais de 600 anos. Uma Via Sacra de capelas e fontes sobe a encosta até à igreja, edificada entre 1784 e 1811. Ali perto, no Sameiro, fica o outro grande santuário de Braga. Hoje, Braga é uma cidade universitária, com cerca de 193 mil habitantes no concelho, e sede da arquidiocese mais antiga de Portugal. Todos os anos, a 24 de junho, as ruas enchem-se para o São João.",
+      "focus": ["bom-jesus", "sameiro"],
+      "time": "sunset",
+      "sources": [
+        { "title": "New Inscribed Properties (43COM) — UNESCO World Heritage Centre", "url": "https://whc.unesco.org/en/newproperties/meeting=43COM&mode=list" },
+        { "title": "Sanctuary of Bom Jesus do Monte — Wikipedia", "url": "https://en.wikipedia.org/wiki/Sanctuary_of_Bom_Jesus_do_Monte" },
+        { "title": "Braga — Wikipedia", "url": "https://en.wikipedia.org/wiki/Braga" }
+      ]
+    }
+  ]
+}

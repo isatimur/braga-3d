@@ -1,0 +1,1695 @@
+[
+  {
+    "id": "bom-jesus",
+    "name_pt": "Santuário do Bom Jesus do Monte",
+    "name_ru": "Бом-Жезуш-ду-Монте",
+    "category": "religious",
+    "lat": 41.55494,
+    "lon": -8.37703,
+    "year": "1722–1811",
+    "short_ru": "Барочная лестница на холм, базилика и водяной фуникулёр 1882 года",
+    "long_ru": "Паломники поднимаются к храму по зигзагу барочной лестницы с часовнями и фонтанами. Лестницу начали строить в 1722 году, базилику по проекту Карлуша Амаранте закончили в 1811 году. Рядом ходит фуникулёр 1882 года: вагоны движет вес воды в баках. С 2019 года святилище входит в список Всемирного наследия ЮНЕСКО.",
+    "model": "stairs-hill",
+    "image": "assets/img/bom-jesus.jpg",
+    "image_credit": {
+      "author": "Botafogo",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Treppenaufgang_Bom_Jesus_do_Monte.jpg"
+    },
+    "history_ru": "Холм Эшпинью почитали задолго до барокко. Уже в 1373 году здесь стояла часовня Святого Креста. В 1494 и 1522 годах её перестраивали и расширяли. В 1629 году горожане создали братство Бом-Жезуш-ду-Монте, «Доброго Иисуса на горе». Они построили церковь, дома для паломников и первые крошечные часовни Страстей.\n\nНынешний облик святилищу дал архиепископ Родригу де Моура Теллеш. В 1720 году он возглавил братство и начал большую перестройку. С 1722 года росла лестница: сначала портал с его гербом и часовни Крестного пути, потом зигзаг Пяти чувств. На каждой площадке стоит фонтан, и вода течёт из глаз, ушей, носа или рта статуи. В 1760-х годах за церковью появились часовни и фонтаны евангелистов, их приписывают Андре Соаришу.\n\nОколо 1781 года архиепископ Гашпар Браганский добавил третий пролёт — лестницу Трёх добродетелей: Веры, Надежды и Любви. Старую церковь снесли. 1 июня 1784 года заложили новую по проекту Карлуша Амаранте. Это один из первых неоклассических храмов Португалии, стройку закончили в 1811 году. Вся лестница поднимается на 116 метров.\n\nВ 1882 году рядом пустили фуникулёр. Проект дал швейцарский инженер Никлаус Ригенбах, работы вёл Раул Меснье дю Понсар. Верхний вагон наполняют водой, он идёт вниз и тянет второй вагон вверх. Это старейший действующий фуникулёр на водяном противовесе в мире.\n\nВ 2015 году церковь стала малой базиликой, а 7 июля 2019 года святилище вошло в список Всемирного наследия ЮНЕСКО. Сегодня сюда едут и паломники, и туристы. Вокруг лежит тенистый лесной парк. Пройдите лестницу пешком хотя бы раз: её задумали как путь души, а не просто дорогу к виду.",
+    "facts_ru": [
+      "Лестница поднимается на 116 метров и насчитывает 583 ступени.",
+      "Фонтаны лестницы изображают пять чувств и три добродетели: Веру, Надежду и Любовь.",
+      "Фуникулёр 1882 года — первый на Пиренейском полуострове.",
+      "Вагон фуникулёра берёт 38 пассажиров, его бак вмещает 5850 литров воды.",
+      "Лестница стала образцом для святилищ в Ламегу и в бразильском Конгоньясе."
+    ],
+    "sources": [
+      {
+        "title": "Sanctuary of Bom Jesus do Monte — Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Bom_Jesus_do_Monte"
+      },
+      {
+        "title": "Santuário do Bom Jesus do Monte — Wikipédia",
+        "url": "https://pt.wikipedia.org/wiki/Santu%C3%A1rio_do_Bom_Jesus_do_Monte"
+      },
+      {
+        "title": "História — Confraria do Bom Jesus do Monte",
+        "url": "https://bomjesus.pt/bom-jesus/historia/"
+      },
+      {
+        "title": "Elevador ou Funicular — Confraria do Bom Jesus do Monte",
+        "url": "https://bomjesus.pt/bom-jesus/elevador-ou-funicular/"
+      }
+    ],
+    "tip_ru": "Из центра до остановки Bom Jesus идёт автобус TUB № 2 от Авениды-да-Либердаде. Вверх поднимитесь на фуникулёре, а вниз спуститесь пешком по лестнице: так вы увидите все фонтаны. До Самейру отсюда около 2 км.",
+    "gallery": [
+      {
+        "src": "assets/img/bom-jesus-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф базилики Бом-Жезуш с алтарём в глубине",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_do_Bom_Jesus%2C_interior.jpg"
+        }
+      },
+      {
+        "src": "assets/img/bom-jesus-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Центральный проход к главному алтарю базилики",
+        "credit": {
+          "author": "António Amen",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_-_Santu%C3%A1rio_do_Bom_Jesus_do_Monte_-_Altar_Mor.jpg"
+        }
+      },
+      {
+        "src": "assets/img/bom-jesus-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Вагон водяного фуникулёра 1882 года на крутом пути",
+        "credit": {
+          "author": "José Goncalves",
+          "license": "CC BY 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Bom_Jesus-Funicular.jpg"
+        }
+      },
+      {
+        "src": "assets/img/bom-jesus-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Зигзаг лестницы паломников и базилика наверху",
+        "credit": {
+          "author": "Béria Lima de Rodríguez",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Escad%C3%B3rio_do_Bom_Jesus.JPG"
+        }
+      }
+    ],
+    "panorama": {
+      "type": "youtube",
+      "youtube_id": "W2KtJbNL-vA",
+      "title": "Virtual Tour 360 VR - Bom Jesus do Monte / Good Jesus of the Mount (Braga, Portugal)",
+      "channel": "VR Voyage",
+      "caption_ru": "Часовни и марши барочной лестницы, площадь перед базиликой и интерьер храма"
+    },
+    "videos": [
+      {
+        "youtube_id": "2VQIgV8u1bM",
+        "title": "BRAGA, Bom Jesus do Monte | Portugal by Drone 4K footage",
+        "channel": "Epic Life Flashes",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "djD9nxOiJU4",
+        "title": "Santuário do Bom Jesus do Monte vista aérea - Bom Jesus do Monte Sanctuary aerial view - 4K Ultra HD",
+        "channel": "Portugal visto do Ceu",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "s3rQzdX1nII",
+        "title": "Bom Jesus do Monte Funicular in Braga. The oldest water powered funicular railway in the world.",
+        "channel": "WooWooMad",
+        "lang": "en"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 146373021,
+      "height_m": 34,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "sameiro",
+    "name_pt": "Santuário de Nossa Senhora do Sameiro",
+    "name_ru": "Святилище Самейру",
+    "category": "religious",
+    "lat": 41.54182,
+    "lon": -8.36954,
+    "year": "1863",
+    "short_ru": "Большое марианское святилище на вершине горы над Брагой",
+    "long_ru": "Святилище основал в 1863 году священник Мартинью да Силва. Это одно из главных мест поклонения Деве Марии в Португалии после Фатимы. Базилика стоит выше Бом-Жезуша, и с её площади видно всю долину Браги. В 1982 году здесь служил мессу папа Иоанн Павел II.",
+    "model": "basilica",
+    "image": "assets/img/sameiro.jpg",
+    "image_credit": {
+      "author": "Otto Domes",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Basilika_Unserer_Lieben_Frau_von_Sameiro.jpg"
+    },
+    "history_ru": "Святилище Самейру родилось из веры одного священника. Отец Мартинью Антониу Перейра да Силва служил в архиепархии Браги. В 1854 году папа Пий IX провозгласил догмат о Непорочном зачатии Девы Марии. Брага одной из первых в Португалии торжественно отметила это событие. Отец Мартинью решил поставить Деве памятник на вершине горы.\n\n14 июня 1863 года на Самейру заложили первый камень. В 1869 году освятили памятник со статуей Непорочного зачатия. В 1880 году в новую капеллу торжественно принесли статую Богоматери Самейру. Её вырезал в Риме итальянский скульптор Эудженио Макканьяни. В 1904 году статую короновал папский нунций, а золотую корону подарили женщины Португалии.\n\nНынешний храм начали строить 31 августа 1890 года, и работа шла десятилетиями. Купол начали в 1936 году, главный алтарь освятили в 1941 году. Перед храмом лежит широкая гранитная лестница. Наверху стоят высокие колонны со статуями Девы Марии и Святого Сердца Иисуса. Внутри посмотрите на алтарь из светлого полированного гранита и серебряную дарохранительницу. В крипте есть изразцовые панно Керубина Лапы.\n\n15 мая 1982 года папа Иоанн Павел II отслужил здесь мессу для семей. В 2004 году святилище получило папскую Золотую розу. Сегодня Самейру — одно из главных мест почитания Девы Марии в Португалии. Большие паломничества приходят в первое воскресенье июня и в третье воскресенье августа. Гора поднимается больше чем на 350 метров над Брагой, и с площади видно всю долину.",
+    "facts_ru": [
+      "Статую Богоматери Самейру вырезали в Риме, в Брагу она прибыла в 1878 году.",
+      "Золотая корона статуи весит 2,5 кг, её подарили в 1904 году.",
+      "15 мая 1982 года Иоанн Павел II отслужил на Самейру мессу для семей.",
+      "В 2004 году святилище получило от папы Золотую розу.",
+      "Самейру стоит менее чем в 2 км от Бом-Жезуша и в 4 км от центра Браги."
+    ],
+    "sources": [
+      {
+        "title": "Santuário de Nossa Senhora do Sameiro — Wikipédia",
+        "url": "https://pt.wikipedia.org/wiki/Santu%C3%A1rio_de_Nossa_Senhora_do_Sameiro"
+      },
+      {
+        "title": "Sanctuary of Our Lady of Sameiro — Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Sanctuary_of_Our_Lady_of_Sameiro"
+      },
+      {
+        "title": "Santa Missa para as famílias, Braga (15 de maio de 1982) — vatican.va",
+        "url": "https://www.vatican.va/content/john-paul-ii/pt/homilies/1982/documents/hf_jp-ii_hom_19820515_famiglie-braga.html"
+      }
+    ],
+    "tip_ru": "Совместите Самейру с Бом-Жезушем: между ними меньше 2 км лесной дороги, это полчаса пешком или несколько минут на такси. Выбирайте ясный день ближе к вечеру, когда долина Браги видна лучше всего.",
+    "gallery": [
+      {
+        "src": "assets/img/sameiro-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф базилики Самейру с алтарём Девы Марии",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Santu%C3%A1rio_do_Sameiro%2C_interior.jpg"
+        }
+      },
+      {
+        "src": "assets/img/sameiro-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Крипта под базиликой",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Cripta_do_Sameiro.JPG"
+        }
+      },
+      {
+        "src": "assets/img/sameiro-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Изразцовое панно «Рождество» в крипте",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Azulejos_Sameiro-Nativity.JPG"
+        }
+      },
+      {
+        "src": "assets/img/sameiro-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Латинская памятная доска в базилике",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Bas%C3%ADlica_Nossa_Senhora_do_Sameiro_06.JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "DcYVQV2tdSw",
+        "title": "Vista aérea do Santuário do Sameiro",
+        "channel": "Santuário do Sameiro",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "50avBC3UlRo",
+        "title": "Vista Aérea // Santuário do Sameiro // Braga // 4K",
+        "channel": "Armando Gonçalves",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "2sL-QOkVbzw",
+        "title": "BRAGA 🇵🇹 Drone Aerial 4K | Bom Jesus & Santuário do Sameiro UNESCO PORTUGAL",
+        "channel": "Polychronis Film",
+        "lang": "en"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 146227475,
+      "height_m": 32,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "se-braga",
+    "name_pt": "Sé de Braga",
+    "name_ru": "Собор Браги",
+    "category": "religious",
+    "lat": 41.54998,
+    "lon": -8.42715,
+    "year": "XI век",
+    "short_ru": "Старейший собор Португалии, заложен ещё до рождения королевства",
+    "long_ru": "Собор начали строить в XI веке, и он старше самого Португальского королевства. Романские стены за века обросли готикой, мануэлином и барокко. В Капелле королей лежат граф Энрике и Тереза, родители первого короля Афонсу Энрикеша. Два позолоченных органа XVIII века до сих пор звучат на службах.",
+    "model": "cathedral",
+    "image": "assets/img/se-braga.jpg",
+    "image_credit": {
+      "author": "Krzysztof Golik",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Braga_Cathedral_(1).jpg"
+    },
+    "history_ru": "Собор стоит в самом сердце старой Браги. Под ним лежат остатки римской постройки и раннехристианской базилики. Около 1070 года город снова стал христианским, и здесь восстановили епископскую кафедру. Епископ Педру начал строить новый собор и освятил его 28 августа 1089 года. Это первый собор Португалии: он старше самого королевства.\n\nПервый храм строили в бургундском романском стиле, по образцу аббатства Клюни. Работы шли до середины XIII века. Потом каждая эпоха добавляла своё. В начале XVI века архиепископ Жорже да Кошта заказал готический притвор-галерею у входа. Архиепископ Диогу де Соуза поручил Жуану де Каштилью новую главную капеллу с резным сводом. В 1688 году архиепископ Родригу де Моура Телеш переделал фасад в духе барокко и добавил купол над средокрестием.\n\nЧто искать внутри. В готической Капелле королей лежат граф Энрике Бургундский и Тереза Леонская, родители первого короля Афонсу Энрикеша. Два органа в позолоченных резных корпусах построил мастер Симан Фонтанеш в 1737 и 1739 годах. Посмотрите романскую резьбу южного портала, «Ворот солнца», и фламандскую гробницу инфанта Афонсу, сына короля Жуана I.\n\nСобор остаётся живым храмом и кафедрой архиепископа-примаса. Здесь служат мессу по особому, брагскому обряду. В бывшем доме капитула работает Сокровищница-музей. В 2022 году собор принял почти 150 тысяч посетителей.",
+    "facts_ru": [
+      "Епископ Педру освятил собор 28 августа 1089 года, за полвека до рождения Португалии.",
+      "Архиепископ Браги носит древний титул «примас Испаний».",
+      "Здесь служат мессу по собственному, брагскому обряду.",
+      "Два органа 1737 и 1739 годов построил мастер Симан Фонтанеш.",
+      "Собор — национальный памятник Португалии с 1910 года."
+    ],
+    "sources": [
+      {
+        "title": "Sé de Braga — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/S%C3%A9_de_Braga"
+      },
+      {
+        "title": "Braga Cathedral — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Braga_Cathedral"
+      },
+      {
+        "title": "Sé de Braga — официальный сайт",
+        "url": "https://se-braga.pt/"
+      }
+    ],
+    "tip_ru": "Приходите утром: по данным сайта собора, он открыт с 08:00 до 13:00 и с 14:30 до 18:30. Капеллы и Сокровищницу смотрят по отдельному маршруту, оставьте на них час. До арки Порта-Нова отсюда 3 минуты пешком.",
+    "gallery": [
+      {
+        "src": "assets/img/se-braga-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Главный неф собора: вид к алтарю между позолоченными органами",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Nave%2C_S%C3%A9_de_Braga_(1).jpg"
+        }
+      },
+      {
+        "src": "assets/img/se-braga-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Два барочных органа XVIII века над хорами",
+        "credit": {
+          "author": "Daniel VILLAFRUELA.",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga-S%C3%A9-%C3%93rg%C3%A3os_de_tubos-20140912.jpg"
+        }
+      },
+      {
+        "src": "assets/img/se-braga-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Готический свод и витражи капеллы-мор",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Altar_S%C3%A9_de_Braga-Capela-mor.jpg"
+        }
+      },
+      {
+        "src": "assets/img/se-braga-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Резная деревянная деталь на верхних хорах",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Coro_alto%2C_S%C3%A9_de_Braga_(2).jpg"
+        }
+      }
+    ],
+    "panorama": {
+      "type": "youtube",
+      "youtube_id": "EXXspmMwVtE",
+      "title": "A arte cristã - Visita à Sé de Braga (CP) '19",
+      "channel": "EMRC Mondim",
+      "caption_ru": "Школьная экскурсия по внутренним залам и капеллам собора; в кадре группа учеников, внизу логотип"
+    },
+    "videos": [
+      {
+        "youtube_id": "54BMQCPxKJM",
+        "title": "The Secrets of Portugal's Oldest Cathedral | Braga",
+        "channel": "POV Tours",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "LkNf5XBnhi0",
+        "title": "Sé de Braga - Catedral",
+        "channel": "Drone World Brasil",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "-69KTqv25II",
+        "title": "Sé Catedral de Braga: a primeira em Portugal",
+        "channel": "Andarilho",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 22746378,
+      "height_m": 30,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "arco-porta-nova",
+    "name_pt": "Arco da Porta Nova",
+    "name_ru": "Арка Порта-Нова",
+    "category": "civic",
+    "lat": 41.55024,
+    "lon": -8.42934,
+    "year": "1772",
+    "short_ru": "Западные ворота старого города, у которых никогда не было створок",
+    "long_ru": "Арку построили в 1772 году по заказу архиепископа Гашпара Браганского на месте ворот 1512 года. Она отмечает западный вход в исторический центр. В арке никогда не было дверей. Поэтому тому, кто не закрыл за собой дверь, в Португалии говорят: «Ты что, из Браги?»",
+    "model": "arch",
+    "image": "assets/img/arco-porta-nova.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Arco_da_porta_nova_Braga.jpg"
+    },
+    "history_ru": "Когда-то Брагу окружали средневековые стены. В 1512 году архиепископ Диогу де Соуза велел пробить в них новые ворота. Они вели на Руа-ду-Соуту, главную торговую улицу города. Так появилось имя Порта-Нова — «Новые ворота».\n\nНынешнюю арку построили в 1772 году по заказу архиепископа Гашпара Браганского. Город тогда рос за стены, и укрепления теряли смысл. Чаще всего автором проекта называют брагского архитектора Андре Соареша. Некоторые историки приписывают арку Карлушу Амаранте. Работы вёл каменщик Франсишку Томаш Коррейя. С 1910 года арка — национальный памятник.\n\nОбойдите арку с двух сторон: у неё два разных лица. Со стороны центра стоит статуя Богоматери Назаретской, а декор выдаёт позднее барокко. С внешней стороны видны герб архиепископа Гашпара и аллегорическая фигура Браги наверху. Эта сторона уже строже, в духе неоклассицизма. Рядом, почти скрытая домами, стоит средневековая башня городской стены. В неё входят через Музей изображения.\n\nВ арке никогда не было дверей. Отсюда португальская шутка: тому, кто оставил дверь открытой, говорят «Ты что, из Браги?». Сегодня арка — главный пешеходный вход в старый город с запада. От неё улица ведёт прямо к собору.",
+    "facts_ru": [
+      "Ворота в стене открыли в 1512 году, нынешнюю арку построили в 1772 году.",
+      "В арке никогда не было дверей, отсюда шутка «Ты что, из Браги?».",
+      "Сторона к центру — барокко, внешняя сторона — неоклассицизм.",
+      "Автор спорен: чаще называют Андре Соареша, реже Карлуша Амаранте.",
+      "Национальный памятник Португалии с 1910 года."
+    ],
+    "sources": [
+      {
+        "title": "Arco da Porta Nova — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Arco_da_Porta_Nova"
+      },
+      {
+        "title": "Arco da Rua do Souto, também conhecido por Porta Nova — Câmara Municipal de Braga",
+        "url": "https://www.cm-braga.pt/pt/1201/conhecer/historia-e-patrimonio/patrimonio-cultural/patrimonio-edificado/item/item-1-604"
+      },
+      {
+        "title": "Arco da Porta Nova — We Braga",
+        "url": "https://webraga.pt/visitar/monumentos/arco-da-porta-nova/"
+      }
+    ],
+    "tip_ru": "Пройдите под аркой в обе стороны и сравните её фасады. Отсюда 3 минуты пешком до собора и 2 минуты до музея Бишкайнюш — удобная точка старта прогулки по центру.",
+    "gallery": [
+      {
+        "src": "assets/img/arco-porta-nova-1.jpg",
+        "kind": "detail",
+        "caption_ru": "Статуя на вершине арки",
+        "credit": {
+          "author": "Béria Lima de Rodríguez",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Arco_da_Porta_Nova_(5).JPG"
+        }
+      },
+      {
+        "src": "assets/img/arco-porta-nova-2.jpg",
+        "kind": "exterior",
+        "caption_ru": "Арка со стороны старого города",
+        "credit": {
+          "author": "Maragato1976",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Arco_da_Porta_Nova_(Braga).jpg"
+        }
+      },
+      {
+        "src": "assets/img/arco-porta-nova-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Каменные шпили арки, вид сверху",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Arco_da_Porta_Nova_visto_da_Torre_Museu_da_Imagem.JPG"
+        }
+      }
+    ],
+    "panorama": {
+      "type": "youtube",
+      "youtube_id": "dvB37MaNnlA",
+      "title": "Passeio 360º em Braga (Portugal)",
+      "channel": "Nalini",
+      "caption_ru": "Прогулка по центру: арка видна примерно с 1:25, дальше пешеходная торговая улица старого города"
+    },
+    "videos": [
+      {
+        "youtube_id": "mbSbgj6c3o8",
+        "title": "\" É de Braga\" - Arco da Porta Nova",
+        "channel": "Diário do Minho",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "node",
+      "id": 243891111,
+      "height_m": 12,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "santa-barbara",
+    "name_pt": "Jardim de Santa Bárbara e Antigo Paço Episcopal",
+    "name_ru": "Сад Санта-Барбара и Епископский дворец",
+    "category": "park",
+    "lat": 41.55138,
+    "lon": -8.4259,
+    "year": "XIV–XVIII века",
+    "short_ru": "Цветочный сад у зубчатой стены средневекового дворца архиепископов",
+    "long_ru": "Сад лежит у старого крыла дворца архиепископов Браги с арками и зубцами. Весной клумбы из тюльпанов и самшита превращают его в самое яркое место центра. В середине сада стоит фонтан со статуей святой Варвары. Сам дворец строили с XIV по XVIII век, сегодня в нём работают библиотека и ректорат университета Минью.",
+    "model": "garden",
+    "image": "assets/img/santa-barbara.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Jardim_de_Santa_B%C3%A1rbara_Braga.jpg"
+    },
+    "history_ru": "Сад лежит у восточного, самого старого крыла дворца архиепископов Браги. Архиепископы веками правили городом: в 1112 году граф Энрике и Тереза отдали им Брагу во владение. Первое здание дворца начал строить архиепископ Гонсалу Перейра в 1336 году. В 1422–1436 годах архиепископ Фернанду да Герра перестроил и расширил его, а башню закончили к 1439 году.\n\nСредневековое крыло похоже на крепость: ровные гранитные блоки, стрельчатые окна, зубцы наверху. Другие корпуса выросли позже: в XVI веке, в 1709 году при архиепископе Родригу де Моура Телеше и в 1740-х годах при Жозе Браганском. В 1866 году пожар уничтожил барочное крыло и библиотеку. В 1911 году архиепископов выселили, а 1 декабря 1934 года здесь открылась Публичная библиотека Браги. Сегодня во дворце работают библиотека и ректорат университета Минью.\n\nСам сад намного моложе дворца. Его разбили в 1955 году по проекту садовода Жозе Кардозу да Силвы. Название «сад Святой Варвары» городской совет утвердил 17 февраля 1955 года. В 2018 году мэрия признала сад объектом культурного наследия муниципального значения.\n\nПосмотрите на геометрические клумбы в рамках из самшита и на кедры, подстриженные фигурами. В центре стоит восьмиугольный фонтан XVII века со статуей святой Варвары. Раньше он стоял в монастыре Ремедиуш. Вдоль сада тянутся обломки арок средневекового дворца. Весной клумбы полны цветов, и это самое яркое место центра.",
+    "facts_ru": [
+      "Сад разбили в 1955 году, а дворец рядом начали строить в 1336 году.",
+      "Фонтан святой Варвары XVII века раньше стоял в монастыре Ремедиуш.",
+      "Пожар 1866 года уничтожил барочное крыло дворца и библиотеку архиепископов.",
+      "В 1112 году граф Энрике и Тереза отдали Брагу во владение архиепископам.",
+      "Публичная библиотека Браги открылась во дворце 1 декабря 1934 года."
+    ],
+    "sources": [
+      {
+        "title": "Jardim de Santa Bárbara — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Jardim_de_Santa_B%C3%A1rbara"
+      },
+      {
+        "title": "Garden of Santa Barbara (Braga) — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Garden_of_Santa_Barbara_(Braga)"
+      },
+      {
+        "title": "Episcopal Palace, Braga — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Episcopal_Palace,_Braga"
+      },
+      {
+        "title": "Paço Arquiepiscopal Bracarense — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Pa%C3%A7o_Arquiepiscopal_Bracarense"
+      }
+    ],
+    "tip_ru": "Лучше всего сад выглядит весной и в начале лета, когда цветут клумбы. Приходите утром, пока свет мягкий и людей мало. Рядом Ларгу-ду-Пасу с фонтаном Каштелуш, торговая Руа-ду-Соуту и площадь Республики.",
+    "gallery": [
+      {
+        "src": "assets/img/santa-barbara-1.jpg",
+        "kind": "exterior",
+        "caption_ru": "Готические арки старого дворца в саду",
+        "credit": {
+          "author": "Béria Lima de Rodríguez",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Jardim_de_Santa_B%C3%A1rbara_(arcos).JPG"
+        }
+      },
+      {
+        "src": "assets/img/santa-barbara-2.jpg",
+        "kind": "exterior",
+        "caption_ru": "Клумбы и самшитовые фигуры перед дворцом",
+        "credit": {
+          "author": "José Goncalves",
+          "license": "CC BY 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Santa_Barbara_Garden.jpg"
+        }
+      },
+      {
+        "src": "assets/img/santa-barbara-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Зубчатое крыло дворца архиепископов над цветами",
+        "credit": {
+          "author": "Maragato1976",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Pa%C3%A7o_Arquiepiscopal_Bracarense_III.jpg"
+        }
+      },
+      {
+        "src": "assets/img/santa-barbara-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Каменная резная деталь среди клумб",
+        "credit": {
+          "author": "Béria Lima de Rodríguez",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Jardim_de_Santa_B%C3%A1rbara_(detalhe).JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "0bm-eQIoGv8",
+        "title": "Dos mais belos e antigos jardins de Portugal - Jardim de Santa Bárbara - Braga",
+        "channel": "André Carvalho LUSOaBRaço ",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "vJh90ctFoiY",
+        "title": "Braga - Jardim de Santa Bárbara",
+        "channel": "Ficou Mais Fácil Viajar",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 22745314,
+      "height_m": 20,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "praca-republica",
+    "name_pt": "Praça da República e Arcada",
+    "name_ru": "Площадь Республики и Аркада",
+    "category": "civic",
+    "lat": 41.55131,
+    "lon": -8.42297,
+    "year": "XVIII век",
+    "short_ru": "Главная площадь города: аркада, фонтан и старые кафе",
+    "long_ru": "Площадь — живое сердце Браги, здесь назначают встречи и пьют кофе. Её западный край занимает Аркада с церковью Лапа в центре. Арки поставили в 1715 году, а нынешнее здание достроили в 1885 году. Под арками работают старые кафе «Вианна» и «Астория», а «Бразилейра» стоит рядом, на соседнем углу. Перед Аркадой бьёт большой фонтан, а за ней видна башня замка.",
+    "model": "plaza",
+    "image": "assets/img/praca-republica.jpg",
+    "image_credit": {
+      "author": "GFreihalter",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Braga_Pra%C3%A7a_da_Rep%C3%BAblica_374.jpg"
+    },
+    "history_ru": "Площадь появилась в конце Средних веков, прямо за восточной стеной города. С конца XVI века здесь торговали едой, которая кормила Брагу. Имя площадь меняла не раз. С 1761 года её звали Ларгу-да-Лапа, с 1904 года — Ларгу-Хинтзе-Рибейру. В 1910 году, после провозглашения республики, она стала площадью Республики. Но горожане зовут её просто Аркада.\n\nПервую аркаду поставил ещё архиепископ Диогу де Соуза в XVI веке. В 1715 году архиепископ Родригу де Моура Телеш построил новую, из 19 арок. В XVIII веке в середину аркады встроили церковь Лапа, а её колокольня стоит на основании башни старой городской стены. Нынешнее здание аркады по проекту городского инженера Жоакина Перейры да Круша закончили в 1885 году.\n\nВ середине XIX века площадь превратили в сквер. По ней ходил трамвай, сначала паровой, потом электрический. Старый фонтан позже вернули в монастырь Тибайнш и поставили новый. В 1994–1995 годах с площади убрали машины и сделали светящийся фонтан. На краю площади стоит здание Банка Португалии 1921 года, его построили на месте старого театра Сан-Жералду.\n\nПод арками работают два столетних кафе: «Вианна» и «Астория». В «Вианне» бывали писатели Эса де Кейрош и Камилу Каштелу Бранку. По утрам сюда приходят пожилые горожане: пьют кофе и обсуждают новости. Рядом, на Ларгу-Барау-де-Сан-Мартинью, с 1907 года работает кафе «Бразилейра».",
+    "facts_ru": [
+      "Аркада 1715 года состоит из 19 арок: по восемь по бокам и три в центре.",
+      "Колокольня церкви Лапа стоит на основании башни средневековой стены.",
+      "В 1921 году в городе не хватало мелочи, и кафе «Вианна» выдавало талоны вместо сдачи.",
+      "Имя «площадь Республики» появилось в 1910 году, до этого было ещё два названия.",
+      "Кафе «Бразилейра» открылось 17 марта 1907 года; раньше туда пускали только в галстуке."
+    ],
+    "sources": [
+      {
+        "title": "Praça da República (Braga) — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Pra%C3%A7a_da_Rep%C3%BAblica_(Braga)"
+      },
+      {
+        "title": "Arcada da Lapa — Visit Braga",
+        "url": "https://visitbraga.travel/en/highlights/monumentos/arcada/"
+      },
+      {
+        "title": "Café Vianna — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Caf%C3%A9_Vianna"
+      },
+      {
+        "title": "Café A Brasileira (Braga) — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Caf%C3%A9_A_Brasileira_(Braga)"
+      }
+    ],
+    "tip_ru": "Приходите утром: выпейте кофе под аркой и посмотрите, как просыпается город. Площадь — удобная точка старта: башня замка в двух минутах, Театру Сирку в пяти минутах по Авениде-да-Либердаде, собор в десяти минутах по Руа-ду-Соуту.",
+    "gallery": [
+      {
+        "src": "assets/img/praca-republica-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Свод и люстра церкви Лапа в центре Аркады",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_da_Lapa_-_Braga_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/praca-republica-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Кафе «Вианна» под арками вечером",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Cafe_Vianna.JPG"
+        }
+      },
+      {
+        "src": "assets/img/praca-republica-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Здание Аркады и фонтан площади",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Edificio_das_Arcadas.jpg"
+        }
+      }
+    ],
+    "panorama": {
+      "type": "youtube",
+      "youtube_id": "_vp6fwVk2hk",
+      "title": "Chafariz da Praça da República em 360º - Braga - Portugal - 12/Set/2019",
+      "channel": "Marco Bianco",
+      "caption_ru": "Фонтан площади и вся площадь вокруг в солнечный день, ролик на 30 секунд"
+    },
+    "videos": [
+      {
+        "youtube_id": "eNjxG1wcuwU",
+        "title": "Braga Walking Tour 4K – Portugal’s Oldest City",
+        "channel": "My Travel Journey",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "6J3IBPHqYPE",
+        "title": "🇵🇹 Braga, Portugal Walking Tour (4K UHD) – With Captions",
+        "channel": "Walking and Food",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "QENDiDXLcC4",
+        "title": "BRAGA Portugal  | Tour in 4k UHD",
+        "channel": "Our Endless World",
+        "lang": "en"
+      }
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 14626258,
+      "height_m": 22,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "theatro-circo",
+    "name_pt": "Theatro Circo",
+    "name_ru": "Театр «Театру Сирку»",
+    "category": "civic",
+    "lat": 41.54969,
+    "lon": -8.42261,
+    "year": "1915",
+    "short_ru": "Роскошный театр 1915 года на Авениде-да-Либердаде",
+    "long_ru": "Театр открылся в 1915 году и сразу стал гордостью города. Зал с золотом, красным бархатом и расписным потолком считают одним из самых красивых в Португалии. После долгой реставрации театр снова открыл двери в 2006 году. Сегодня здесь идут спектакли, концерты и кинопоказы.",
+    "model": "theatre",
+    "image": "assets/img/theatro-circo.jpg",
+    "image_credit": {
+      "author": "Sara silva",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Theatro_Circo,_fachada_principal.jpg"
+    },
+    "history_ru": "Театр задумали в 1906 году. Тогда в Браге был только маленький театр Сан-Жералду, и большие труппы не могли в нём играть. Группа горожан во главе с председателем мэрии Артуром Жозе Соарешем создала общество, чтобы построить новый зал. Место нашли на Авениде-да-Либердаде, на земле упразднённого монастыря Ремедиуш.\n\nПроект сделал архитектор Жуан де Моура Коутинью. Стройка шла с 1911 по 1914 год. Театр открылся 21 апреля 1915 года опереттой Леонкавалло «Королева роз», главную роль играла Палмира Баштуш. Зал в итальянском стиле вмещал 1500 зрителей. Здесь ставили оперы, давали цирк и показывали кино, а в 1930 году публика услышала первые звуковые фильмы.\n\nПозже зрителей забрали новые кинотеатры и телевидение. В 1988 году здание купила мэрия. В 1999 году началась большая реставрация по проекту архитектора Сержиу Боржеша. Она длилась семь лет. 27 октября 2006 года театр снова открылся концертом Национального симфонического оркестра Чехии.\n\nВ зале посмотрите на занавес 12 на 8 метров: его расписал мастер Домингуш Кошта. На куполе уцелела сцена танца нимф, её написал Бенвинду Сейя в 1915 году. Остальной купол показывает день от рассвета до вечера. Сегодня главный зал вмещает почти 900 зрителей, рядом есть малый зал и парадный Салан-Нобре. Здесь идут спектакли, концерты, танец и кино.",
+    "facts_ru": [
+      "Театр открылся 21 апреля 1915 года опереттой Леонкавалло «Королева роз».",
+      "Первый зал вмещал 1500 зрителей, сегодня главный зал — почти 900.",
+      "В 1930 году в театре показали первые звуковые фильмы.",
+      "Реставрация шла семь лет, театр снова открылся 27 октября 2006 года.",
+      "С 2015 года театр входит в Европейский маршрут исторических театров."
+    ],
+    "sources": [
+      {
+        "title": "Theatro Circo — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Theatro_Circo"
+      },
+      {
+        "title": "Theatre Circo — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Theatre_Circo"
+      },
+      {
+        "title": "The Theatro — Theatro Circo (официальный сайт)",
+        "url": "https://theatrocirco.com/en/about/the-theatro/"
+      },
+      {
+        "title": "Guided Tours — Theatro Circo",
+        "url": "https://theatrocirco.com/en/info/guided-tours/"
+      }
+    ],
+    "tip_ru": "Зал можно увидеть на экскурсии: она идёт 45 минут на португальском или английском, билеты продают в кассе за 30 минут до начала, даты ищите на theatrocirco.com. От площади Республики до театра пять минут пешком по Авениде-да-Либердаде.",
+    "gallery": [
+      {
+        "src": "assets/img/theatro-circo-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Главный зал: ярусы, люстра и расписной потолок",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Sala_Principal_-_Theatro_Circo_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/theatro-circo-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Купол зрительного зала с росписью и люстрой",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Theatro_Circo_(2).JPG"
+        }
+      },
+      {
+        "src": "assets/img/theatro-circo-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Парадный зал с розовыми колоннами и позолотой",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Main_Hall_of_Theatro_Circo_2017_(1).jpg"
+        }
+      },
+      {
+        "src": "assets/img/theatro-circo-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Бархатный диван в фойе театра",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Theatro_Circo_in_2016_(5).JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "lPiCng9kapg",
+        "title": "Centenário Theatro Circo | Vídeo oficial",
+        "channel": "Theatro Circo",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "vlSF0csQXbI",
+        "title": "O fascínio do Theatro Circo em Braga",
+        "channel": "Andarilho",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "-Y_-qhCITpg",
+        "title": "Theatro Circo em Braga, Portugal",
+        "channel": "Olhar Brasileiro em Portugal",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 108153358,
+      "height_m": 28,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "palacio-raio",
+    "name_pt": "Palácio do Raio",
+    "name_ru": "Дворец Райу",
+    "category": "museum",
+    "lat": 41.54835,
+    "lon": -8.42265,
+    "year": "1752–1754",
+    "short_ru": "Барочный дворец с фасадом из синих изразцов работы Андре Соареша",
+    "long_ru": "Дворец построил архитектор Андре Соареш для купца Жуана Дуарте де Фарии. Фасад покрыт синими изразцами и гранитным барочным декором. Имя дворцу дал позднейший владелец, Мигел Жозе Райу. Сейчас в нём музей истории благотворительного братства Мизерикордия.",
+    "model": "palace",
+    "image": "assets/img/palacio-raio.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Pal%C3%A1cio_do_Raio_2017_(3).jpg"
+    },
+    "history_ru": "Дворец Райу построили в 1752–1754 годах. Заказчиком был богатый купец Браги Жуан Дуарте де Фария. Проект сделал Андре Соареш, главный архитектор барочной Браги. Он работал в стиле позднего барокко времён короля Жуана V, с лёгкими асимметричными завитками.\n\nВ 1853 году дом купил Мигел Жозе Райу, виконт Сан-Лазару. Он разбогател в Бразилии и вернулся на родину. Именно он облицевал фасад синими изразцами, и его фамилия осталась в названии дворца. После его смерти дом перешёл к банку, а в 1880-х годах его купило братство Санта-Каза-да-Мизерикордия. Братство разместило здесь службы соседней больницы Сан-Маркуш. Больница работала в этих стенах до 2011 года.\n\nПосмотрите на фасад внимательно. Синий фон изразцов подчёркивает серый гранит: окна, карнизы и пышный портал в центре. Над парадной лестницей сохранились расписные потолки. Между вестибюлем и лестницей стоит дверь с цветными стёклами конца XIX века.\n\nВ 2015 году после реставрации дворец открылся как Центр памяти Мизерикордии Браги. В десяти залах рассказывают о братстве, о больнице и о помощи бедным. Здесь есть церковное искусство, живопись, керамика, ювелирные вещи, старая аптека и архивные документы. Первый зал посвящён двум главным архитекторам города, Андре Соарешу и Карлушу Амаранте.",
+    "facts_ru": [
+      "Дворец построили в 1752–1754 годах по проекту Андре Соареша.",
+      "Название дал виконт Мигел Жозе Райу, который купил дом в 1853 году.",
+      "Синие изразцы на фасад добавили в XIX веке, при Райу.",
+      "Здесь до 2011 года работали службы больницы Сан-Маркуш.",
+      "С 2015 года во дворце — музей братства Мизерикордия из десяти залов."
+    ],
+    "sources": [
+      {
+        "title": "Palácio do Raio — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Pal%C3%A1cio_do_Raio"
+      },
+      {
+        "title": "Misericórdia de Braga — CIMMB Palácio do Raio",
+        "url": "https://www.scmbraga.pt/cimmb-pal%C3%A1cio-do-raio"
+      }
+    ],
+    "tip_ru": "Дворец стоит в пяти минутах ходьбы к югу от площади Республики. В воскресенье и понедельник музей закрыт. Фонте-ду-Идолу находится прямо за углом, их удобно смотреть вместе.",
+    "gallery": [
+      {
+        "src": "assets/img/palacio-raio-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Парадная лестница дворца с синими изразцами",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Stairs_in_Raio_Palace_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/palacio-raio-2.jpg",
+        "kind": "detail",
+        "caption_ru": "Сцена на изразцах XVIII века внутри дворца",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Azulejos_in_Raio_Palace_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/palacio-raio-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Витрина музея истории братства Мизерикордия",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Centro_Interpretativo_das_Mem%C3%B3rias_da_Miseric%C3%B3rdia_de_Braga_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/palacio-raio-4.jpg",
+        "kind": "interior",
+        "caption_ru": "Вестибюль с гранитными арками",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Lobby_-_Raio_Palace_(1).JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "KEYnX2JHA18",
+        "title": "Palácio do Raio",
+        "channel": "Câmara Municipal de Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "sGp75oISElU",
+        "title": "Palácio do Raio - Braga / Portugal",
+        "channel": "Borbo Leta",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "tVdFZNVvFh4",
+        "title": "Braga: Palácio do Raio",
+        "channel": "Ficou Mais Fácil Viajar",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 269246992,
+      "height_m": 15,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "torre-menagem",
+    "name_pt": "Torre de Menagem do Castelo de Braga",
+    "name_ru": "Донжон замка Браги",
+    "category": "civic",
+    "lat": 41.55136,
+    "lon": -8.42389,
+    "year": "XIV век",
+    "short_ru": "Последняя башня средневекового замка, стоит прямо в центре города",
+    "long_ru": "Башню подняли в начале XIV века, при короле Динише. Она была главной башней замка, который защищал город. Стены замка снесли в начале XX века, чтобы город мог расти. Уцелел гранитный донжон с зубцами, он виден с площади Республики.",
+    "model": "tower",
+    "image": "assets/img/torre-menagem.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Torre_de_menagem_Braga.jpg"
+    },
+    "history_ru": "Около 1300 года король Диниш приказал построить в Браге замок. Замок встал на севере города и закрыл въезд с дороги, по которой проще всего было напасть. План был прямоугольный: башни по углам, две башни у ворот и главная башня, донжон, посреди двора. Стены замка были толщиной почти три метра.\n\nЗащита всё равно оказалась слабой. В 1369 году кастильские войска шесть дней грабили Брагу. После этого король Фернанду укрепил город, а донжону добавили зубцы и навесные бойницы, машикули. Позже в третьем этаже прорезали парные окна, и башня стала жилой. В XV веке в замке работала тюрьма.\n\nДонжон квадратный в плане, высотой около 30 метров, в нём четыре этажа. Нижний этаж самый высокий, около 12 метров. Вход — высокая дверь со стрельчатой аркой, над ней королевский герб. На гранитных блоках учёные нашли около 533 знаков каменщиков. Мастерам платили за каждый камень, и знак служил подписью.\n\nВ XVIII веке замок потерял военную роль, вокруг выросли дома, Аркада и церковь Лапа. 15 ноября 1905 года замок снесли, и горожане отметили это шествием с оркестрами. Уцелели донжон и колокольня соседней церкви. В 1910 году остатки замка объявили национальным памятником. С 2017 года в башне работает центр истории Браги.",
+    "facts_ru": [
+      "Высота донжона — около 30 метров, внутри четыре этажа.",
+      "На камнях башни нашли около 533 знаков каменщиков.",
+      "В 1369 году кастильские войска шесть дней грабили плохо защищённую Брагу.",
+      "Замок снесли 15 ноября 1905 года, и город отметил это шествием с оркестрами.",
+      "Остатки замка — национальный памятник Португалии с 1910 года."
+    ],
+    "sources": [
+      {
+        "title": "Castelo de Braga — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Castelo_de_Braga"
+      },
+      {
+        "title": "Torre de Menagem e Antigo Castelo — Visit Braga",
+        "url": "https://visitbraga.travel/en/highlights/monumentos/torre-de-menagem/"
+      }
+    ],
+    "tip_ru": "Visit Braga сейчас пишет, что центр истории в башне временно закрыт, поэтому проверьте это на visitbraga.travel перед визитом. Снаружи башню хорошо видно с Терейру-ду-Каштелу; от площади Республики и Аркады до неё две минуты пешком.",
+    "gallery": [
+      {
+        "src": "assets/img/torre-menagem-1.jpg",
+        "kind": "exterior",
+        "caption_ru": "Гранитный донжон с зубцами",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Torre_de_Menagem_em_Braga.jpg"
+        }
+      },
+      {
+        "src": "assets/img/torre-menagem-2.jpg",
+        "kind": "detail",
+        "caption_ru": "Знаки каменщиков на блоках башни",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Torre_de_menagem_de_Braga.Marcas_de_Pedreiro.JPG"
+        }
+      },
+      {
+        "src": "assets/img/torre-menagem-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Вид с башни на крыши центра",
+        "credit": {
+          "author": "Sergei Gussev",
+          "license": "CC BY 2.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_-i---i-_(24350984467).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "xrRhmsRt_MY",
+        "title": "Torre de Menagem | Castelo de Braga | Portugal | História na Descrição | #viagem",
+        "channel": "Caminhos Por Aí",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "FEkhr_U__K4",
+        "title": "Torre de Menagem: Bracara Augusta - Portugal",
+        "channel": "Olhar Brasileiro em Portugal",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 828265603,
+      "height_m": 30,
+      "height_source": "osm height tag"
+    }
+  },
+  {
+    "id": "santa-cruz",
+    "name_pt": "Igreja de Santa Cruz",
+    "name_ru": "Церковь Санта-Круш",
+    "category": "religious",
+    "lat": 41.54921,
+    "lon": -8.42426,
+    "year": "1625",
+    "short_ru": "Церковь с пышным гранитным барочным фасадом",
+    "long_ru": "Братство Святого Креста начало строить церковь в 1625 году. Её фасад — один из самых нарядных в Браге: гранит здесь вырезан тонко, как кружево. Внутри много позолоченной резьбы по дереву. Церковь стоит в центре, в нескольких шагах от Театру Сирку.",
+    "model": "church",
+    "image": "assets/img/santa-cruz.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_Santa_Cruz_em_Braga.jpg"
+    },
+    "history_ru": "Церковь Святого Креста построило мирское братство Санта-Круш. В 1625 году архиепископ Афонсу Фуртаду де Мендонса освятил участок и присутствовал при закладке первого камня. Деньги дали сами члены братства. Каменные работы закончили в 1653 году, а две колокольни — только в 1694 году.\n\nЗдание скоро начало трескаться. В 1731 году братство позвало мастера Мануэла Фернандеша да Силву, который тогда вёл стройку в Мафре. Он снёс часть стен и бросил работу. В 1734 году корпус церкви разобрали целиком и оставили только фасад. Новый храм закончили в 1739 году.\n\nФасад — главная причина остановиться на площади Ларгу-Карлуш-Амаранте. Гранит здесь вырезан тонко, как кружево. На фризе над входом видны орудия Страстей Христовых, а по краям сидят петухи. Они напоминают об отречении апостола Петра, поэтому горожане зовут храм «церковью петухов». На картушах стоят даты 1642 и 1736. Наверху святая Елена держит крест, а под фронтоном висит герб короля Жуана VI: в 1822 году он дал братству титул королевского.\n\nВнутри высокий неф, каменный кессонный свод и много позолоченной резьбы. Обратите внимание на кафедры, хоры и орган: его заказали в 1742 году галисийскому мастеру Мигелу Москере. Братство живёт и сегодня. Рядом с церковью оно содержит дом, где живут около ста пожилых людей.",
+    "facts_ru": [
+      "Первый камень заложили в 1625 году, на фасаде высечена дата 1642.",
+      "Петухи на фризе напоминают об отречении апостола Петра.",
+      "В 1822 году король Жуан VI дал братству титул королевского.",
+      "Орган 1742 года построил галисийский мастер Мигел Москера."
+    ],
+    "sources": [
+      {
+        "title": "Igreja de Santa Cruz (Braga) — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Igreja_de_Santa_Cruz_(Braga)"
+      },
+      {
+        "title": "Património arquitetónico — Irmandade de Santa Cruz",
+        "url": "https://irmandadesantacruz.pt/patrimonio/arquitetonico/"
+      }
+    ],
+    "tip_ru": "Встаньте на другой стороне площади Ларгу-Карлуш-Амаранте: оттуда фасад виден целиком, с петухами на фризе и статуями наверху. Театру Сирку и дворец Райу — в 3–4 минутах пешком.",
+    "gallery": [
+      {
+        "src": "assets/img/santa-cruz-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф церкви Санта-Круш с позолоченными алтарями",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_Santa_Cruz_(6).jpg"
+        }
+      },
+      {
+        "src": "assets/img/santa-cruz-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Позолоченная резьба под сводом",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_Santa_Cruz_(9).jpg"
+        }
+      },
+      {
+        "src": "assets/img/santa-cruz-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Барочный орган церкви",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Santa_Cruz_2019_(22).jpg"
+        }
+      },
+      {
+        "src": "assets/img/santa-cruz-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Резной позолоченный ангел на пилястре",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Santa_Cruz_2019_(18).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "WpfPkpu1V8Y",
+        "title": "A História da Igreja de Santa Cruz e a Lenda dos 3 galos na Fachada, Braga, Portugal",
+        "channel": "Uzi Por Aí",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "naDbWmbHTNc",
+        "title": "É de Braga - A Igreja dos Galos em Braga",
+        "channel": "Diário do Minho",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 121590141,
+      "height_m": 28,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "estadio-braga",
+    "name_pt": "Estádio Municipal de Braga",
+    "name_ru": "Муниципальный стадион Браги",
+    "category": "sport",
+    "lat": 41.5625,
+    "lon": -8.42987,
+    "year": "2003",
+    "short_ru": "Стадион в гранитном карьере, проект Эдуарду Соуту ди Моуры",
+    "long_ru": "Архитектор Эдуарду Соуту ди Моура врезал стадион в склон старого гранитного карьера. У него только две трибуны, а за одними воротами стоит голая скала. Крыши трибун держат стальные тросы, как у верёвочных мостов инков. Стадион открыли в 2003 году к Евро-2004, здесь играет клуб «Спортинг Брага».",
+    "model": "stadium",
+    "image": "assets/img/estadio-braga.jpg",
+    "image_credit": {
+      "author": "準建築人手札網站 Forgemind ArchiMedia from Taichung, Taiwan, Taiwan",
+      "license": "CC BY 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Eduardo_Souto_de_Moura_-_Braga_Stadium_02_(6010593292).jpg"
+    },
+    "history_ru": "Стадион построили к чемпионату Европы по футболу 2004 года. Проект в 2000 году сделал архитектор Эдуарду Соуту ди Моура, конструкции рассчитал инженер Руй Фуртаду из бюро AFAconsult. Стройка шла в 2002–2003 годах. 30 декабря 2003 года стадион открыли матчем «Браги» и испанской «Сельты».\n\nМесто выбрали смелое: старый каменный карьер на северном склоне горы Каштру, в районе Думе. Строители вырезали в скале огромную выемку. Трибуны стоят только вдоль боковых линий поля. За одними воротами встаёт голая скала, за другими открыт вид на город и долину реки Кавадо. Поэтому стадион зовут «Педрейра», то есть «Карьер».\n\nКрыши двух трибун связывают десятки стальных тросов. Архитектор вдохновлялся верёвочными мостами инков в Перу. Узкий просвет между крышами даёт газону естественный свет. Под полем лежит площадь в 5000 кв. м, по ней зрители переходят с трибуны на трибуну. Проект получил премию Secil, а в 2011 году Соуту ди Моура стал лауреатом Притцкеровской премии.\n\nСмелость стоила дорого. Первую смету в 29,9 млн евро превысили во много раз, и арена стала самой дорогой из новых стадионов Евро-2004. На турнире здесь прошли два матча: Болгария — Дания и Нидерланды — Латвия. Сегодня стадион принадлежит городу, на нём играет «Спортинг Брага». Он вмещает 30 286 зрителей. Рядом каждый год проходит студенческий праздник Enterro da Gata университета Минью.",
+    "facts_ru": [
+      "Стадион вмещает 30 286 зрителей, и у него только две трибуны.",
+      "Крышу держат стальные тросы, как у верёвочных мостов инков.",
+      "Первый матч: «Брага» — «Сельта», 30 декабря 2003 года.",
+      "На Евро-2004 здесь играли Болгария — Дания и Нидерланды — Латвия.",
+      "Архитектор Эдуарду Соуту ди Моура получил Притцкеровскую премию в 2011 году."
+    ],
+    "sources": [
+      {
+        "title": "Estádio Municipal de Braga — Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Braga"
+      },
+      {
+        "title": "Estádio Municipal de Braga — Wikipédia",
+        "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Braga"
+      },
+      {
+        "title": "Braga Municipal Stadium — SC Braga",
+        "url": "https://scbraga.pt/en/stadium"
+      }
+    ],
+    "tip_ru": "Стадион стоит примерно в 1,5 км к северу от центра, пешком это около 20 минут. По будням клуб проводит экскурсии с гидом и без гида, их можно заказать на scbraga.pt. Скалу за воротами хорошо видно и снаружи, с парка вокруг стадиона.",
+    "gallery": [
+      {
+        "src": "assets/img/estadio-braga-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Трибуна и поле; за воротами видна скала карьера",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_Municipal_de_Braga_2.jpg"
+        }
+      },
+      {
+        "src": "assets/img/estadio-braga-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Лестницы и бетонные опоры под трибуной",
+        "credit": {
+          "author": "準建築人手札網站 Forgemind ArchiMedia from Taichung, Taiwan, Taiwan",
+          "license": "CC BY 2.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Eduardo_Souto_de_Moura_-_Braga_Stadium_31_(6010053325).jpg"
+        }
+      }
+    ],
+    "panorama": {
+      "type": "youtube",
+      "youtube_id": "T62kLs-iYrg",
+      "title": "A arte cristã - Visita ao estádio municipal do Braga (CP) '19",
+      "channel": "EMRC Mondim",
+      "caption_ru": "Школьная экскурсия: у кромки поля с видом на трибуну и навес, затем раздевалка; внизу логотип"
+    },
+    "videos": [
+      {
+        "youtube_id": "CmYEBvt3Lqs",
+        "title": "Braga Municipal Stadium - Eduardo Souto de Moura | Video by Ricardo Oliveira Alves Photography",
+        "channel": "Amazing Architecture",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "lN_tuMjBMPU",
+        "title": "\"I knew nothing about football\" says Souto de Moura when designing Braga stadium",
+        "channel": "Dezeen",
+        "lang": "en"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 116650252,
+      "height_m": 40,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "termas-romanas",
+    "name_pt": "Termas Romanas do Alto da Cividade",
+    "name_ru": "Римские термы Алту-да-Сивидаде",
+    "category": "archaeology",
+    "lat": 41.54631,
+    "lon": -8.42964,
+    "year": "I–II века н. э.",
+    "short_ru": "Руины общественных бань римского города Бракара-Августа",
+    "long_ru": "Брага началась как римский город Бракара-Августа. На холме Сивидаде археологи в 1977 году нашли его общественные бани. Сохранились основания залов с холодной, тёплой и горячей водой и система подогрева пола. Рядом раскопали и римский театр.",
+    "model": "ruins",
+    "image": "assets/img/termas-romanas.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Termas_romanas_do_Alto_da_Cividade_09.JPG"
+    },
+    "history_ru": "Римляне основали Бракару-Августу около 16 года до н. э. Город быстро рос и получил всё, что нужно римскому городу: форум, храмы, театр и бани. Общественные термы на холме Сивидаде построили в начале II века вместе с соседним театром.\n\nРуины нашли в 1977 году, во время первых раскопок на этом месте. Затем более двадцати лет здесь работал археологический отдел Университета Минью. В 1999 году археологи искали границы палестры, площадки для упражнений. Так они открыли рядом с банями римский театр.\n\nТермы жили долго и не раз менялись. В конце II — начале III века зону купален расширили. В конце III — начале IV века, когда Брага стала столицей провинции Галлеция, внутренние залы сильно перестроили. В середине IV века исчезла большая палестра на западе. Бани забросили только в начале V века.\n\nНа месте легко понять путь римского купальщика. Сначала шла раздевалка, потом холодный зал, тёплый зал и горячий зал. Обратите внимание на низкие столбики из кирпича. На них лежал пол, а под ним шёл горячий воздух от печи. Эта система называется гипокауст.\n\nС ноября 2004 года руины открыты для публики. Термы — национальный памятник. Город использует их и как площадку: во время праздника Noite Branca здесь проходят ночные вечеринки.",
+    "facts_ru": [
+      "Термы построили в начале II века, одновременно с соседним театром.",
+      "Руины нашли в 1977 году, раскопки вёл Университет Минью.",
+      "Римский театр рядом с банями открыли в 1999 году.",
+      "Бани работали около трёхсот лет и опустели в начале V века.",
+      "Музей под открытым небом принимает гостей с ноября 2004 года."
+    ],
+    "sources": [
+      {
+        "title": "Termas Romanas do Alto da Cividade — Património Arqueológico, CM Braga",
+        "url": "https://patrimonioarqueologico.cm-braga.pt/show-item/termas-romanas-do-alto-da-cividade/"
+      },
+      {
+        "title": "Roman Thermal Baths of Alto da Cividade — Braga City Council",
+        "url": "https://www.cm-braga.pt/en/1201/conhecer/historia-e-patrimonio/museus/item/item-1-670"
+      },
+      {
+        "title": "O Espaço Público — Museu D. Diogo de Sousa",
+        "url": "https://www.maddiogosousa.gov.pt/epoca-romana/bracara-augusta-o-espaco-urbano/2-o-espaco-publico/"
+      }
+    ],
+    "tip_ru": "Термы стоят на тихом холме в десяти минутах к юго-западу от собора. В воскресенье и в праздники они закрыты. Есть общий билет в Термы и Фонте-ду-Идолу, а для полной картины Бракары-Августы зайдите в музей Д. Диогу де Соуза неподалёку.",
+    "gallery": [
+      {
+        "src": "assets/img/termas-romanas-1.jpg",
+        "kind": "exterior",
+        "caption_ru": "Раскопанные залы терм под защитной крышей",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Termas_romanas_do_Alto_da_Cividade_03.JPG"
+        }
+      },
+      {
+        "src": "assets/img/termas-romanas-2.jpg",
+        "kind": "detail",
+        "caption_ru": "Столбики гипокауста: под полом ходил горячий воздух",
+        "credit": {
+          "author": "Manuel Anastácio",
+          "license": "CC BY 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Termas_de_Maximinos.JPG"
+        }
+      },
+      {
+        "src": "assets/img/termas-romanas-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Основания стен и бассейнов римских бань",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Termas_romanas_do_Alto_da_Cividade_06.JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "r0HXS4qtnqI",
+        "title": "Termas e Teatro Romano - Braga (Portugal)",
+        "channel": "Guilherme Na Europa",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "HcSmy9nwRjY",
+        "title": "TERMAS ROMANAS DO ALTO DA CIVIDADE",
+        "channel": "José Campos",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 11244034,
+      "height_m": 6,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "fonte-idolo",
+    "name_pt": "Fonte do Ídolo",
+    "name_ru": "Источник Идола",
+    "category": "archaeology",
+    "lat": 41.5485,
+    "lon": -8.42182,
+    "year": "I век н. э.",
+    "short_ru": "Римское святилище у источника, высеченное прямо в граните",
+    "long_ru": "Это святилище у родника, вырезанное в гранитной скале в I веке. На камне видна фигура в тоге и надписи на латыни. Их оставил человек по имени Целик Фронтон в честь местного бога Тонгоэнабиагуса. Сегодня источник стоит под современной крышей музея, рядом с дворцом Райу.",
+    "model": "fountain",
+    "image": "assets/img/fonte-idolo.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Fonte_do_%C3%ADdolo_2025_1.jpg"
+    },
+    "history_ru": "Фонте-ду-Идолу — святилище у родника в гранитной скале. Люди почитали это место ещё до прихода римлян. Здесь поклонялись воде и плодородию. Около 16 года до н. э. рядом выросла римская Бракара-Августа, и родник оказался в черте нового города.\n\nНа рубеже эр святилище украсил приезжий по имени Целик Фронтон. Он был родом из города Аркобрига. Фронтон заказал резные фигуры и латинские надписи на лицевой стороне скалы. Надписи посвящают источник богине Набии и местному богу Тонгоэнабиагусу. Позже потомки Фронтона поставили перед фонтаном каменный бассейн.\n\nПрисмотритесь к скале. На ней видна фигура в тоге. Рядом, в классической нише, стоит бюст, а над ним фронтон с голубем. Среди надписей легко найти имя Фронтона и слова TONGOE NABIAGOI.\n\nИсторик Жеронимо Контадор де Арготе напечатал гравюру фонтана в своём труде о Браге. В 1910 году святилище объявили национальным памятником. В 2001–2004 годах над ним построили защитный павильон. Теперь здесь небольшой музей с видео, который объясняет смысл знаков на камне.",
+    "facts_ru": [
+      "Святилище у родника почитали ещё до основания римской Браги.",
+      "Резьбу и надписи заказал Целик Фронтон из Аркобриги.",
+      "Надписи посвящены богине Набии и богу Тонгоэнабиагусу.",
+      "Национальный памятник Португалии с 16 июня 1910 года.",
+      "Защитный павильон над скалой построили в 2001–2004 годах."
+    ],
+    "sources": [
+      {
+        "title": "Fonte do Ídolo — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Fonte_do_%C3%8Ddolo"
+      },
+      {
+        "title": "Fonte do Ídolo — Património Arqueológico, CM Braga",
+        "url": "https://patrimonioarqueologico.cm-braga.pt/show-item/fonte-do-idolo/"
+      },
+      {
+        "title": "Tongoenabiagus — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Tongoenabiagus"
+      }
+    ],
+    "tip_ru": "Вход с улицы Руа-ду-Райу, напротив дворца Райу. Музей маленький, хватит 20–30 минут. Возьмите общий билет с римскими термами Сивидаде: до них десять минут пешком.",
+    "gallery": [
+      {
+        "src": "assets/img/fonte-idolo-1.jpg",
+        "kind": "detail",
+        "caption_ru": "Латинская надпись Целика Фронтона из Аркобриги",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Fonte_do_Idolo_(3).JPG"
+        }
+      },
+      {
+        "src": "assets/img/fonte-idolo-2.jpg",
+        "kind": "detail",
+        "caption_ru": "Фигура в тоге и надпись на гранитной скале",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Fonte_do_Idolo_(4).JPG"
+        }
+      },
+      {
+        "src": "assets/img/fonte-idolo-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Резьба на скале над родником",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Fonte_do_Idolo_(13).JPG"
+        }
+      },
+      {
+        "src": "assets/img/fonte-idolo-4.jpg",
+        "kind": "interior",
+        "caption_ru": "Зал музея при святилище",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Fonte_do_Idolo_(9).JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "ydb4T5pPkmE",
+        "title": "A JANTA MAIS CARA! PIZZARIA FAMOSA DE BRAGA | CONHECEMOS UMA FONTE DO SÉCULO I E BANHO DE BANHEIRA!!",
+        "channel": "Cristiane Fabres",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 146343020,
+      "height_m": 5,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "tibaes",
+    "name_pt": "Mosteiro de São Martinho de Tibães",
+    "name_ru": "Монастырь Тибайнш",
+    "category": "religious",
+    "lat": 41.55542,
+    "lon": -8.47881,
+    "year": "XVII–XVIII века",
+    "short_ru": "Бывший главный монастырь бенедиктинцев Португалии и Бразилии",
+    "long_ru": "Монастырь основали в XI веке, а нынешние здания построили в XVII–XVIII веках. Отсюда управляли всеми бенедиктинскими монастырями Португалии и Бразилии. Церковь внутри сияет позолоченной резьбой, над ней работал Андре Соареш. В 1986 году монастырь выкупило государство, теперь здесь музей с садами и лесом.",
+    "model": "monastery",
+    "image": "assets/img/tibaes.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Mosteiro_Tibaes_(1).JPG"
+    },
+    "history_ru": "Монастырь стоит в тихой зелёной долине, примерно в 5 км к западу от центра Браги. Первую обитель здесь основали между 1070 и 1077 годами. В 1110 году граф Энрике и Тереза подарили ей окрестные земли и грамоту об иммунитете. С тех пор монастырь сам собирал подати и вершил суд.\n\nВ 1567 году Тибайнш стал главным домом новой Конгрегации бенедиктинцев. Отсюда управляли всеми монастырями ордена в Португалии и Бразилии. В XVII–XVIII веках монахи перестроили комплекс заново. Церковь по проекту Мануэла Алвареша и Жуана Турриану закончили в 1661 году. В 1757–1760 годах Андре Соареш нарисовал главный алтарь, кафедры и боковые ретабло. Монах-резчик Жозе де Санту Антониу Виласа вырезал и позолотил их.\n\nВ 1834 году Португалия закрыла монастыри. Земли и здания продали с торгов. В 1894 году пожар уничтожил клуатр трапезной, кухни и спальни. Больше ста лет комплекс ветшал в частных руках. В 1986 году государство выкупило его в полной разрухе и начало долгую реставрацию.\n\nНа месте посмотрите алтарную часть церкви: это одна из вершин португальского рококо. Пройдите по клуатрам и в сад. Там барочная лестница с фонтанами поднимается к капелле Святого Бенедикта. Сегодня в монастыре работают музей, приходская церковь, гостиница и ресторан. С 30 октября 2024 года Тибайнш — национальный памятник.",
+    "facts_ru": [
+      "С 1567 года здесь был главный дом бенедиктинцев Португалии и Бразилии.",
+      "Алтарь и кафедры церкви нарисовал Андре Соареш в 1757–1760 годах.",
+      "В 1894 году пожар уничтожил клуатр трапезной и спальни монахов.",
+      "Государство выкупило разрушенный монастырь в 1986 году.",
+      "Национальный памятник Португалии с 30 октября 2024 года."
+    ],
+    "sources": [
+      {
+        "title": "Da fundação à atualidade — Mosteiro de Tibães (официальный сайт)",
+        "url": "https://www.mosteirodetibaes.gov.pt/historia/fundacao-atualidade/"
+      },
+      {
+        "title": "Horário e bilhética — Mosteiro de Tibães",
+        "url": "https://www.mosteirodetibaes.gov.pt/servicos/horario-e-bilhetica/"
+      },
+      {
+        "title": "Mosteiro de São Martinho de Tibães — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Mosteiro_de_S%C3%A3o_Martinho_de_Tib%C3%A3es"
+      },
+      {
+        "title": "Monastery of Tibães — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Monastery_of_Tib%C3%A3es"
+      }
+    ],
+    "tip_ru": "Монастырь открыт со вторника по воскресенье: 10:00–19:00 с апреля по сентябрь и 10:00–18:00 с октября по март, в понедельник закрыт (сайт монастыря). Билет 4 €, только сад — 1,5 €. Из центра удобнее ехать на такси, а на сад и лес оставьте хотя бы час.",
+    "gallery": [
+      {
+        "src": "assets/img/tibaes-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф монастырской церкви с позолоченной резьбой",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Tibaes_Church_Interior.JPG"
+        }
+      },
+      {
+        "src": "assets/img/tibaes-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Барочные алтари церкви Тибайнш в дневном свете",
+        "credit": {
+          "author": "Pedro from Maia (Porto), Portugal",
+          "license": "CC BY 2.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:The_light_of_baroque_(29715990033).jpg"
+        }
+      },
+      {
+        "src": "assets/img/tibaes-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Окно с каменными скамьями в монастырских покоях",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Mosteiro_de_Tib%C3%A3es_(2).jpg"
+        }
+      },
+      {
+        "src": "assets/img/tibaes-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Аркады монастырского клуатра и башни церкви",
+        "credit": {
+          "author": "lumoplank",
+          "license": "CC0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Monastery_of_Tibaes_-_Tibaes5854.jpg"
+        }
+      },
+      {
+        "src": "assets/img/tibaes-5.jpg",
+        "kind": "exterior",
+        "caption_ru": "Гранитная лестница у монастырского двора",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Escadas_Tib%C3%A3es.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "Sn-Hh7KCzF8",
+        "title": "Mosteiro de São Martinho de Tibães- Vista Aérea",
+        "channel": "Share Drone",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "uDx8E3SOiKU",
+        "title": "Mosteiro de Tibães: A Joia Oculta de Braga | Assim é Portugal",
+        "channel": "Assim Portugal",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "KhGxzsLnVGI",
+        "title": "Mosteiro de Tibães | Braga | Portugal",
+        "channel": "360portugal",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 2271296,
+      "height_m": 28,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "biscainhos",
+    "name_pt": "Museu dos Biscainhos",
+    "name_ru": "Музей Бишкайнюш",
+    "category": "museum",
+    "lat": 41.55119,
+    "lon": -8.42974,
+    "year": "XVII век",
+    "short_ru": "Дворянский дворец с барочным садом, где видно быт знати XVIII века",
+    "long_ru": "Дворец знатной семьи построили в XVII веке и перестроили в XVIII веке. Сейчас это музей, и залы обставлены так, будто хозяева только что вышли. Здесь есть изразцы, расписные потолки, мебель и фарфор. За домом лежит барочный сад с фонтанами и живыми изгородями.",
+    "model": "museum",
+    "image": "assets/img/biscainhos.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Biscainhos_2023_(9).jpg"
+    },
+    "history_ru": "Дворец Бискайньюш построили в начале XVII века. Первым хозяином был доктор Константину Рибейру ду Лагу. Название пришло от улицы. В XVI веке здесь жили «бискайцы», мастера из испанской Бискайи, которые перестраивали Брагу.\n\nВ начале XVIII века сын хозяина, декан собора Франсишку Перейра да Силва, расширил дом. В 1712 году он нанял архитектора и мастера-каменщика Мануэла Фернандеша да Силву. Тогда же, во втором десятилетии века, разбили барочный сад. Потолок главного зала расписал Мануэл Фуртаду де Мендонса в 1724 году. Позже дом принадлежал графам Бертиандуш и виконтам Пасу-де-Нешпорейра.\n\nПоследний частный владелец, третий виконт Пасу-де-Нешпорейра, продал дворец местной власти и умер в 1963 году. Музей открылся 11 февраля 1978 года. Он показывает, как жила знатная городская семья с XVII по XIX век. В залах стоят мебель, фарфор, серебро и посуда, будто хозяева только вышли.\n\nОбратите внимание на парадную лестницу с изразцовой панелью XVIII века. Поднимите голову в залах: там расписные потолки. Потом выйдите в сад за домом: он продолжает залы под открытым небом.",
+    "facts_ru": [
+      "Дворец построили в начале XVII века, расширили после 1712 года.",
+      "Имя дала улица, где в XVI веке жили мастера из Бискайи.",
+      "Потолок главного зала расписан в 1724 году.",
+      "Музей открылся 11 февраля 1978 года.",
+      "Барочный сад разбили во втором десятилетии XVIII века."
+    ],
+    "sources": [
+      {
+        "title": "Palácio dos Biscainhos — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Pal%C3%A1cio_dos_Biscainhos"
+      },
+      {
+        "title": "Palácio dos Biscainhos — site oficial",
+        "url": "https://palaciodosbiscainhos.gov.pt/"
+      }
+    ],
+    "tip_ru": "Дворец стоит в двух минутах от арки Порта-Нова. В понедельник музей закрыт. Оставьте время на сад: весной и летом он особенно красив.",
+    "gallery": [
+      {
+        "src": "assets/img/biscainhos-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Зал с мебелью, коврами и фаянсом XVII–XVIII веков",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Biscainhos_(15).jpg"
+        }
+      },
+      {
+        "src": "assets/img/biscainhos-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Гостиная с картинами и старинными столиками",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Biscainhos_(20).jpg"
+        }
+      },
+      {
+        "src": "assets/img/biscainhos-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Анфилада комнат дворца",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Biscainhos_(31).jpg"
+        }
+      },
+      {
+        "src": "assets/img/biscainhos-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Ворота и барочный сад за дворцом",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Biscainhos_2023_(4).jpg"
+        }
+      }
+    ],
+    "panorama": {
+      "type": "youtube",
+      "youtube_id": "dvB37MaNnlA",
+      "title": "Passeio 360º em Braga (Portugal)",
+      "channel": "Nalini",
+      "caption_ru": "Прогулка по Браге: первые ~80 секунд — сад дворца Бискайнюш: газоны, самшит, фонтан и стены с пинаклями"
+    },
+    "videos": [
+      {
+        "youtube_id": "oUZOETpwOU8",
+        "title": "Museu dos Biscainhos, Braga",
+        "channel": "DR Cultura Norte",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "FtrgFM9d3Hg",
+        "title": "Um lugar mágico em Braga: o Jardim do Museu dos Biscainhos",
+        "channel": "Uzi Por Aí",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "J2YneE-q70o",
+        "title": "PASSEIO MUSEU DOS BISCAINHOS | BRAGA PORTUGAL",
+        "channel": "Cintia Beͦntes",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 13337528,
+      "height_m": 16,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "avenida-central",
+    "name_pt": "Avenida Central e Avenida da Liberdade",
+    "name_ru": "Авенида-Сентрал и Авенида-да-Либердаде",
+    "category": "street",
+    "lat": 41.5517,
+    "lon": -8.4208,
+    "year": "XIX–XX века",
+    "short_ru": "Главные бульвары Браги с фонтанами, деревьями и уличной жизнью",
+    "long_ru": "Авенида-Сентрал тянется на восток от площади Республики. Это длинный бульвар-сквер с деревьями, фонтанами и скамейками. От площади на юг уходит Авенида-да-Либердаде, самая широкая улица центра. Здесь гуляют вечером и отмечают праздники, а в июне город празднует день святого Иоанна.",
+    "model": "avenue",
+    "image": "assets/img/avenida-central.jpg",
+    "image_credit": {
+      "author": "K. Kendall from Portland, OR, USA",
+      "license": "CC BY 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Braga,_Avenida_Central.jpg"
+    },
+    "history_ru": "Авенида-Сентрал — огромная вытянутая площадь-сквер в самом центре Браги. Её история началась в начале XVI века. Архиепископ Диогу де Соуза, главный градостроитель Браги той эпохи, велел открыть здесь широкое поле. Его назвали Кампу-де-Сантана, по часовне святой Анны, которая стояла рядом.\n\nПотом площадь не раз меняла имя. Одно время она звалась Авенидой бойцов Великой войны, в память о солдатах Первой мировой. Западный конец Авениды — это площадь Республики с Аркадой. По площади Авенида-Сентрал больше Авениды-душ-Алиадуш в Порту и Террейру-ду-Пасу в Лиссабоне. Её часто называют самой большой площадью Португалии.\n\nОт площади Республики на юг уходит Авенида-да-Либердаде. В XVI веке здесь шла Руа-даш-Агуаш, «улица Вод». Имя улицы менялось вместе со страной. В 1910 году, после провозглашения республики, её назвали Авенидой Свободы. В 1935 году улицу переименовали в честь маршала Гомеша да Кошты. Через 41 день после революции 25 апреля 1974 года ей вернули имя Свободы.\n\nВ 1997 году под Авенидой-да-Либердаде открыли автомобильный тоннель, а в 2009 году его удлинили. В 2023 году улицу начали перестраивать: проект добавляет велодорожки, новые переходы и деревья. Сегодня здесь назначают встречи, гуляют вечером и ждут автобусы к Бом-Жезушу. Сядьте на скамейку под деревьями у фонтана: отсюда хорошо видно, как живёт город.",
+    "facts_ru": [
+      "Площадь открыли в начале XVI века при архиепископе Диогу де Соузе.",
+      "Первое имя площади — Кампу-де-Сантана, по часовне святой Анны.",
+      "Авенида-Сентрал больше Авениды-душ-Алиадуш в Порту и Террейру-ду-Пасу в Лиссабоне.",
+      "Авенида-да-Либердаде вернула своё имя через 41 день после революции 1974 года.",
+      "Тоннель под Авенидой-да-Либердаде открыли в 1997 году, его длина 1,15 км."
+    ],
+    "sources": [
+      {
+        "title": "Avenida Central (Braga) — Wikipédia",
+        "url": "https://pt.wikipedia.org/wiki/Avenida_Central_(Braga)"
+      },
+      {
+        "title": "Avenida da Liberdade (Braga) — Wikipédia",
+        "url": "https://pt.wikipedia.org/wiki/Avenida_da_Liberdade_(Braga)"
+      },
+      {
+        "title": "Praça da República (Braga) — Wikipédia",
+        "url": "https://pt.wikipedia.org/wiki/Pra%C3%A7a_da_Rep%C3%BAblica_(Braga)"
+      },
+      {
+        "title": "TUB, linha 2: Ponte de Prado — Bom Jesus (horário)",
+        "url": "https://tub.pt/uploads/horarios/02h.pdf"
+      }
+    ],
+    "tip_ru": "Автобус TUB № 2 к Бом-Жезушу отходит от остановки Avenida da Liberdade (25 de Abril). Начните прогулку с кофе под Аркадой на площади Республики, затем пройдите на восток вдоль сквера Авениды-Сентрал.",
+    "gallery": [
+      {
+        "src": "assets/img/avenida-central-1.jpg",
+        "kind": "exterior",
+        "caption_ru": "Фонтан в начале бульвара отражает дома и башни",
+        "credit": {
+          "author": "Gabriele Iuvara",
+          "license": "CC BY 2.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Avenida_Central_em_Braga.jpg"
+        }
+      },
+      {
+        "src": "assets/img/avenida-central-2.jpg",
+        "kind": "exterior",
+        "caption_ru": "Музыкальный павильон на Авенида-Сентрал",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Coreto_da_Avenida.JPG"
+        }
+      },
+      {
+        "src": "assets/img/avenida-central-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Старые фасады на бульваре",
+        "credit": {
+          "author": "GFreihalter",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_Avenida_Central_377.jpg"
+        }
+      },
+      {
+        "src": "assets/img/avenida-central-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Широкая пешеходная аллея бульвара",
+        "credit": {
+          "author": "jad99 from Graz, Austria",
+          "license": "CC BY-SA 2.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_(14004080952).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "eNjxG1wcuwU",
+        "title": "Braga Walking Tour 4K – Portugal’s Oldest City",
+        "channel": "My Travel Journey",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "AnoHiz-72_0",
+        "title": "Braga walking tour in 4K with animated map. Portugal.",
+        "channel": "Walkistic",
+        "lang": "en"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 134654858,
+      "height_m": 8,
+      "height_source": "estimate"
+    }
+  }
+]

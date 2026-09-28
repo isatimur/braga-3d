@@ -1,0 +1,275 @@
+{
+  "_meta": {
+    "about": "Real-world dimensions of the 16 landmarks, for re-authoring the procedural models at 1:1 metres. Every numeric leaf under footprint_m, height_m, elements and facade_azimuth_deg has an entry in sources[] (by path). An entry has either a url (published figure) or source:'estimate' with reasoning.",
+    "units": "metres unless the key says otherwise; heights are above the local ground at the main entrance",
+    "facade_azimuth_deg": "compass direction (0-360, clockwise from north) that the main facade looks towards. footprints.json bearing_deg is a folded long axis in [0,180) and cannot say which end is the front; facade_axis_rel says how the azimuth relates to it.",
+    "osm_geometry": "extent_m, edge lengths and edge normals were measured from data/footprints.json outlines with scripts/geo-lib.mjs minAreaRect/toXY; ground heights from data/terrain.json (EU-DEM 25 m).",
+    "checked": "2026-09-28"
+  },
+  "bom-jesus": {
+    "footprint_m": { "length": 55.1, "width": 34.3, "matches_osm": true,
+      "note": "The OSM way is the basilica only: nave + facade 24.2 m wide, transept arms 34.3 m across, apse at the east end. The site (escadorio, terraces, 17 chapels, funicular) spans about 520 x 166 m of OSM stairs parts and is not inside extent_m." },
+    "height_m": { "total": 34, "towers": 34, "facade_pediment": 22, "nave_ridge": 18, "dome": 28, "portal_columns": 6 },
+    "elements": {
+      "towers": 2, "portal_columns": 4, "facade_width_m": 24.2, "dome_diameter_m": 10, "transept_width_m": 34.3, "nave_clerestory_windows": 6,
+      "stair_flights_major": 3, "cinco_sentidos_flights": 5, "stair_fountains": 9, "via_sacra_chapels": 17, "steps": 581,
+      "escadorio_rise_m": 116, "escadorio_run_m": 335, "escadorio_slope_length_m": 355,
+      "funicular_length_m": 274, "funicular_rise_m": 116, "funicular_run_m": 248.7
+    },
+    "facade_faces": "W", "facade_azimuth_deg": 261, "facade_axis_rel": "bearing_deg + 180",
+    "facade_note": "Twin-tower west front looks down the escadorio towards Braga. In the OSM outline the flat 24.2 m end is at the west (x 3594.5) and the apse at the east; the Adro and Terreiro de Moises lie west of it.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM outline: flat 24.2 m west end, apse east; long axis 81 deg, so the front looks 261 deg. Adro and escadorio are on that side." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.facade_width_m", "elements.transept_width_m"], "source": "estimate", "fact": "OSM way 146373021 geometry", "reasoning": "Measured from the footprints.json outline in the building axis frame: nave/facade block 24.2 m wide, transept 34.3 m, overall 55.1 m. OSM geometry, not a published figure." },
+      { "paths": ["height_m.total", "height_m.towers"], "source": "estimate", "fact": "tower height", "reasoning": "No published figure. Towers read about 1.4 x the 24.2 m facade width in photos (bom-jesus.jpg); matches the 34 m already in footprints.json, which was scaled from the 6 m portal columns." },
+      { "paths": ["height_m.facade_pediment", "height_m.nave_ridge", "height_m.dome", "elements.dome_diameter_m"], "source": "estimate", "fact": "pediment, nave, dome", "reasoning": "Proportioned from photos against the 34 m towers: pediment apex about 2/3 of tower height, nave ridge about half, crossing dome below the tower tops. Dome sits on the crossing of the 9.3 m deep transept and the nave (inner width about 12 m), so about 10 m across." },
+      { "paths": ["height_m.portal_columns"], "url": "https://pt.wikipedia.org/wiki/Bas%C3%ADlica_do_Bom_Jesus_(Braga)", "fact": "columns beside the main door", "value": "colunas de seis metros de altura" },
+      { "paths": ["elements.towers", "elements.portal_columns", "elements.nave_clerestory_windows"], "url": "https://bomjesus.pt/bom-jesus/basilica/?lang=en", "fact": "towers, portico, nave windows", "value": "twin bell towers; portico with four Tuscan granite columns; nave with 6 rectilinear windows (double clerestory)" },
+      { "paths": ["elements.stair_flights_major", "elements.cinco_sentidos_flights", "elements.stair_fountains", "elements.escadorio_rise_m"], "url": "https://pt.wikipedia.org/wiki/Escad%C3%B3rios_do_Bom_Jesus", "fact": "stair structure and rise", "value": "desnivel de 116 m; tres grandes lancos (Portico, Cinco Sentidos, Tres Virtudes); Cinco Sentidos = cinco lances intervalados por patamares; 6 + 3 fountains" },
+      { "paths": ["elements.via_sacra_chapels"], "source": "estimate", "fact": "Via Sacra chapels", "reasoning": "A search snippet says 17 Via Sacra chapels along the stairs, Largo do Pelicano, Adro and Terreiro dos Evangelistas; the fetched pt.wikipedia text gives no count, so unverified. OSM maps 20 small chapel ways (h 6 m), which include non-Via-Sacra chapels such as Sao Pedro and Maria Madalena. Note: 17 is a chapel count, not a landing count." },
+      { "paths": ["elements.steps"], "url": "https://pt.wikipedia.org/wiki/Santu%C3%A1rio_do_Bom_Jesus_do_Monte", "fact": "step count", "value": "581 degraus (en.wikipedia says 583)" },
+      { "paths": ["elements.funicular_length_m", "elements.funicular_rise_m"], "url": "https://en.wikipedia.org/wiki/Bom_Jesus_do_Monte_Funicular", "fact": "funicular", "value": "length 274 m, rise 116 m" },
+      { "paths": ["elements.funicular_run_m"], "source": "estimate", "fact": "funicular horizontal run", "reasoning": "OSM funicular ways (Elevador do Bom Jesus) span 248.7 m horizontally. Check: sqrt(248.7^2 + 116^2) = 274.4 m, which matches the published 274 m, so the OSM+DEM method is calibrated." },
+      { "paths": ["elements.escadorio_run_m", "elements.escadorio_slope_length_m"], "source": "estimate", "fact": "escadorio run and length along slope", "reasoning": "Lowest Portico stair way at local (3222, 407) m, DEM z 293; top at the Adro/Terreiro de Moises front about (3546, 492), z 403. Straight horizontal run sqrt(324^2 + 85^2) = 335 m. With the published 116 m rise: sqrt(335^2 + 116^2) = 355 m along the slope. The walked zig-zag path is longer." }
+    ],
+    "confidence": "medium"
+  },
+  "sameiro": {
+    "footprint_m": { "length": 54.9, "width": 43.2, "matches_osm": true,
+      "note": "OSM way 146227475 is the basilica: nave, rounded side bodies (43.2 m across) and a polygonal east end (capela-mor). The crypt terrace (OSM 176 x 64 m) and the 265-step stair lie west of it and are separate parts." },
+    "height_m": { "total": 42, "towers": 35, "dome_springing": 26, "nave_ridge": 20, "pedestals": 20 },
+    "elements": { "towers": 2, "facade_width_m": 24, "dome_diameter_m": 12, "pedestals": 2, "stair_steps": 265, "summit_altitude_m": 572 },
+    "facade_faces": "W", "facade_azimuth_deg": 258, "facade_axis_rel": "bearing_deg + 180",
+    "facade_note": "Harmonic granite front between two bell towers faces WSW towards Braga, over the crypt terrace and stair. The east end of the outline is polygonal (apse), the west end is flat.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM outline: polygonal east end (apse), flat west end; crypt terrace and stair parts lie west. Long axis 78 deg, so the front looks 258 deg." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "OSM way 146227475 geometry", "reasoning": "footprints.json extent_m; OSM geometry, not a published figure." },
+      { "paths": ["height_m.total", "height_m.towers", "height_m.dome_springing", "height_m.nave_ridge", "elements.facade_width_m", "elements.dome_diameter_m"], "source": "estimate", "fact": "heights and dome", "reasoning": "Frontal photo (sameiro.jpg) scaled to the 43.2 m OSM width across the side bodies (0.055 m/px): tower finials about 35 m, lantern cross about 42 m, dome about 12 m across, towers-to-towers facade about 24 m. Sources say the dome top is 'over 600 m' altitude with the hill at 572 m, which agrees with 35-45 m. The footprints.json 32 m is probably low. Range 34-45 m." },
+      { "paths": ["height_m.pedestals", "elements.pedestals", "elements.stair_steps", "elements.summit_altitude_m"], "url": "https://webraga.pt/visitar/monumentos/santuario-do-sameiro/", "fact": "pedestals, stair, altitude", "value": "dois altos pedestais em granito, de 20 metros de altura cada; escadorio com 265 degraus; monte com 572 metros" },
+      { "paths": ["elements.towers"], "source": "estimate", "fact": "towers", "reasoning": "Photo (sameiro.jpg) shows two bell towers flanking the front and the dome behind." }
+    ],
+    "confidence": "low"
+  },
+  "se-braga": {
+    "footprint_m": { "length": 72, "width": 52, "matches_osm": false,
+      "note": "OSM way 22746378 covers the church plus the galilee and attached chapels/cloister ranges on the north side; the three-nave church itself is about 22 m wide. Separate OSM parts: Capela dos Reis, Sao Geraldo, Sao Nicolau, N.S. da Piedade, a 47 x 27 m range, and a 5 x 4 m lantern turret." },
+    "height_m": { "total": 29, "towers": 29, "tower_parapet": 25, "galilee": 10, "nave_ridge": 18 },
+    "elements": { "towers": 2, "naves": 3, "nave_bays": 6, "galilee_arches": 3, "apse_absidioles": 2, "west_facade_width_m": 22 },
+    "facade_faces": "W", "facade_azimuth_deg": 258, "facade_axis_rel": "edge normal of the west galilee edges; bearing_deg + 180 would give 278",
+    "facade_note": "Galilee and twin towers face west onto Rua Dom Paio Mendes / Rossio da Se (OSM west edges face 255-259 deg, 5-8 m from those streets). The Manueline apse with the Nossa Senhora do Leite image is at the east, on Rua Nossa Senhora do Leite.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "Outward normals of the OSM west (galilee) edges are 255-259 deg, 5-8 m from Rua Dom Paio Mendes / Rossio da Se. The apse with the Nossa Senhora do Leite image (e-cultura) is on the east street of that name." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "OSM way 22746378 geometry", "reasoning": "footprints.json extent_m; OSM geometry." },
+      { "paths": ["height_m.total", "height_m.towers", "height_m.tower_parapet", "height_m.galilee", "height_m.nave_ridge", "elements.west_facade_width_m"], "source": "estimate", "fact": "heights and front width", "reasoning": "No published height (pt/en Wikipedia, se-braga.pt, e-cultura checked). West front about 22 m wide (galilee edges in OSM, 20-23 m). Straight-on photo (se-braga.jpg) at 22 m / 560 px: tower parapet about 25 m, pinnacles and vanes about 29 m, galilee about 10 m." },
+      { "paths": ["elements.naves", "elements.nave_bays", "elements.galilee_arches", "elements.apse_absidioles"], "url": "https://www.e-cultura.pt/patrimonio_item/7599", "fact": "plan", "value": "tres naves divididas em seis tramos; cabeceira com dois absidiolos; galile dividida por tres tramos, a que correspondem tres arcos na frontaria" },
+      { "paths": ["elements.towers"], "url": "https://www.e-cultura.pt/patrimonio_item/7599", "fact": "towers", "value": "duas grandes torres, com novas sineiras (early 18th c.)" }
+    ],
+    "confidence": "medium"
+  },
+  "arco-porta-nova": {
+    "footprint_m": { "length": 8, "width": 3, "matches_osm": false,
+      "note": "OSM has only a node plus a 7 m barrier=wall line; the 8 x 3 m rectangle is synthesized. The medieval tower beside it (OSM 11 x 10 m) is separate." },
+    "height_m": { "total": 13.5, "cornice": 8.5, "pinnacles": 12, "arch_opening": 7.1 },
+    "elements": { "arch_opening_width_m": 3.7, "arch_openings": 1, "pinnacles": 4, "crowning_statue": 1 },
+    "facade_faces": "W", "facade_azimuth_deg": 266, "facade_axis_rel": "bearing_deg + 90 (the gate line runs N-S; the street passes E-W through it)",
+    "facade_note": "Both faces are decorated. The west face looks out of the old town (towards Rua dos Biscainhos / Av. Sao Miguel-o-Anjo); en.wikipedia captions the east face with the image of Our Lady of Nazareth. Model both sides; put the richer baroque face west.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "Gate line bearing 175.8 deg (N-S), so the faces look 86 and 266 deg. West (outer) face chosen as the main one; low confidence which side is baroque." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "gate plan", "reasoning": "Synthesized OSM rectangle on the 7 m wall line; photo shows the piers about 2.1 x the opening width, consistent with 8 m overall." },
+      { "paths": ["height_m.total", "height_m.cornice", "height_m.pinnacles", "height_m.arch_opening", "elements.arch_opening_width_m", "elements.arch_openings", "elements.pinnacles", "elements.crowning_statue"], "source": "estimate", "fact": "arch proportions", "reasoning": "No published dimensions (pt/en Wikipedia, cm-braga checked). Frontal photo (arco-porta-nova.jpg) scaled to 8 m overall width (0.016 m/px): opening 3.7 m wide x 7.1 m to the keystone, entablature 8.5 m, 4 pinnacles to about 12 m, a crowning statue to about 13.5 m. Street-level view compresses the top slightly." }
+    ],
+    "confidence": "low"
+  },
+  "santa-barbara": {
+    "footprint_m": { "length": 59, "width": 45.5, "matches_osm": true,
+      "note": "OSM way 22745314 is the garden only. The medieval wing of the Paco on its west edge is OSM relation 20123877 (99 x 61 m palace), not inside extent_m." },
+    "height_m": { "total": 15, "palace_wing": 15, "fountain": 5 },
+    "elements": { "garden_paths": 8, "fountains": 1, "arcade_ruin_length_m": 18 },
+    "facade_faces": "E", "facade_azimuth_deg": 77, "facade_axis_rel": "bearing_deg (garden west edge faces 257; the wing looks the other way, east over the garden)",
+    "facade_note": "Flat garden. The main vertical element is the crenellated medieval wing on the west side; its garden front faces east towards Rua Dr. Justino Cruz. The arcade ruin stands at the south-west corner.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "Guia Verde puts the medieval Paco facade on the west of the garden; the garden's west edge normal is 257 deg, so the wing looks back east at 77 deg." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.arcade_ruin_length_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; OSM ruins way 1411157146 is 18 m long." },
+      { "paths": ["elements.garden_paths", "elements.fountains"], "url": "https://www.cm-braga.pt/archive/doc/GUIA_VERDE_DE_BRAGA.pdf", "fact": "garden layout", "value": "chafariz do seculo XVII no centro, aonde acorrem os oito caminhos retos; a oeste, a fachada do antigo Paco Medieval com as suas ameias e a arcaria" },
+      { "paths": ["height_m.total", "height_m.palace_wing", "height_m.fountain"], "source": "estimate", "fact": "wing and fountain heights", "reasoning": "No published figure. The wing reads as two tall storeys plus crenellations (about 15 m); footprints.json uses 20 m for the whole Paco relation, which includes taller ranges. The fountain column with the statue of Saint Barbara is about 5 m." }
+    ],
+    "confidence": "medium"
+  },
+  "praca-republica": {
+    "footprint_m": { "length": 226.3, "width": 86.5, "matches_osm": false,
+      "note": "OSM relation 14626258 runs from the Arcada east along the head of the Avenida and overlaps avenida-central's garden (409 x 70 m). The square proper is the west part with the 18.7 m fountain." },
+    "height_m": { "total": 24, "lapa_tower": 24, "arcada": 16, "fountain": 1.5 },
+    "elements": { "arcada_arches": 19, "arcada_side_arches": 8, "arcada_centre_arches": 3, "arcada_length_m": 56.7, "arcada_depth_m": 21.2, "arcada_storeys": 3, "fountain_diameter_m": 18.7 },
+    "facade_faces": "NE", "facade_azimuth_deg": 56, "facade_axis_rel": "Arcada long axis 145.8 - 90",
+    "facade_note": "The Arcada (with the Igreja da Lapa and its 1771 bell tower) closes the west side and faces ENE down the square and Avenida Central.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "Arcada way long axis 145.8 deg; the square lies east of it (centroid 112 m east), so its front looks 56 deg." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.arcada_length_m", "elements.arcada_depth_m", "elements.fountain_diameter_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; Arcada way 167193931 is 56.7 x 21.2 m; fountain way 132951673 is 18.7 x 18.6 m." },
+      { "paths": ["elements.arcada_arches", "elements.arcada_side_arches", "elements.arcada_centre_arches"], "url": "https://pt.wikipedia.org/wiki/Arcada_(Braga)", "fact": "arches", "value": "oito arcos em cada uma das laterais e tres na parte central, num total de 19 arcos" },
+      { "paths": ["height_m.total", "height_m.lapa_tower", "height_m.arcada", "height_m.fountain", "elements.arcada_storeys"], "source": "estimate", "fact": "heights", "reasoning": "No published figure. Photo (praca-republica-3.jpg): arcade + one full storey + set-back attic, about 16 m; the Lapa bell tower rises well above it, about 24 m. footprints.json gives the whole Arcada 22 m, too tall for the arcade block. Fountain basin rim about 1.5 m." }
+    ],
+    "confidence": "medium"
+  },
+  "theatro-circo": {
+    "footprint_m": { "length": 52.8, "width": 40.5, "matches_osm": true,
+      "note": "OSM way 108153358 matches the whole theatre block: 32.8 m front on Avenida da Liberdade, fly tower at the rear (WSW)." },
+    "height_m": { "total": 28, "fly_tower": 28, "facade_cornice": 17, "stage_to_grid": 24 },
+    "elements": { "facade_width_m": 32.8, "facade_bodies": 5, "facade_doors": 9, "seats_main_hall": 899, "stage_depth_m": 11.9, "stage_width_m": 14, "proscenium_width_m": 11, "proscenium_height_m": 10.45, "studio_depth_below_m": 11 },
+    "facade_faces": "NE", "facade_azimuth_deg": 66, "facade_axis_rel": "bearing_deg (front is the ENE short end)",
+    "facade_note": "Main front faces ENE onto Avenida da Liberdade (OSM edge 32.8 m, normal 66 deg, 16 m from the avenue). Fly tower is at the WSW end.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM edge 3 (32.8 m) has outward normal 66 deg and is 16 m from Avenida da Liberdade, the theatre's address (rider: Avenida da Liberdade 697)." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.facade_width_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; front edge 32.8 m." },
+      { "paths": ["height_m.stage_to_grid", "elements.stage_depth_m", "elements.stage_width_m", "elements.proscenium_width_m", "elements.proscenium_height_m"], "url": "https://theatrocirco.com/wp-content/uploads/2025/09/RIDER_THEATRO_CIRCO.pdf", "fact": "stage", "value": "Height stage to grid 24.00 m; depth fire curtain to back wall 11.90 m; fly bars 14.00 m; proscenium 11.00 m wide x 10.45 m high" },
+      { "paths": ["height_m.total", "height_m.fly_tower"], "source": "estimate", "fact": "fly tower top", "reasoning": "Stage is at street level (rider: ramp from street into the stage). 24 m to grid plus about 4 m of grid floor and roof = 28 m." },
+      { "paths": ["height_m.facade_cornice"], "source": "estimate", "fact": "front cornice", "reasoning": "Photo (theatro-circo.jpg): three levels of openings under a cornice and parapet, about 17 m." },
+      { "paths": ["elements.facade_bodies", "elements.facade_doors", "elements.studio_depth_below_m"], "url": "https://www.e-cultura.pt/patrimonio_item/13876", "fact": "front and studio", "value": "cinco corpos e nove portas; sala estudio de 240 lugares no subsolo, 11 m abaixo" },
+      { "paths": ["elements.seats_main_hall"], "url": "https://pt.wikipedia.org/wiki/Theatro_Circo", "fact": "seats", "value": "899 lugares after the 2006 renovation (originally 1500)" }
+    ],
+    "confidence": "medium"
+  },
+  "palacio-raio": {
+    "footprint_m": { "length": 32.4, "width": 30.7, "matches_osm": true,
+      "note": "OSM way 269246992 is the palace block; the tiled front is its 27.6 m NE edge." },
+    "height_m": { "total": 16, "cornice": 11.7, "balustrade": 14 },
+    "elements": { "storeys": 2, "facade_windows": 11, "facade_bays": 7, "facade_doors": 3, "facade_width_m": 27.6 },
+    "facade_faces": "NE", "facade_azimuth_deg": 44, "facade_axis_rel": "bearing_deg - 90 (long side)",
+    "facade_note": "Blue-tiled baroque front on Rua do Raio / Rua de Sao Lazaro, facing NE (edge 27.6 m, 8 m from Rua do Raio).",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM edge 0 (27.6 m) has outward normal 44 deg, 8 m from Rua do Raio, the street pt.wikipedia names for the front." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.facade_width_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; front edge 27.6 m." },
+      { "paths": ["elements.storeys", "elements.facade_windows"], "url": "https://pt.wikipedia.org/wiki/Pal%C3%A1cio_do_Raio", "fact": "storeys and windows", "value": "dois pisos; 11 janelas divididas pelos dois pisos" },
+      { "paths": ["elements.facade_bays", "elements.facade_doors"], "source": "estimate", "fact": "bays", "reasoning": "Photo (palacio-raio.jpg): 7 upper windows over 4 windows + 3 doors, so 7 bays; agrees with the 11 windows in pt.wikipedia." },
+      { "paths": ["height_m.total", "height_m.cornice", "height_m.balustrade"], "source": "estimate", "fact": "heights", "reasoning": "Frontal photo scaled to the 27.6 m front (0.035 m/px): cornice 11.7 m, balustrade top 14 m, central finial about 16 m; roof hidden behind the balustrade." }
+    ],
+    "confidence": "medium"
+  },
+  "torre-menagem": {
+    "footprint_m": { "length": 9.5, "width": 9.4, "matches_osm": true, "note": "OSM way 828265603 is the keep only, almost square." },
+    "height_m": { "total": 31.3, "parapet": 30 },
+    "elements": { "floors": 4, "corner_bartizans": 4, "merlons_per_side": 5, "loopholes_per_side": 2 },
+    "facade_faces": "W", "facade_azimuth_deg": 252, "facade_axis_rel": "bearing_deg + 90",
+    "facade_note": "Free-standing keep on the Terreiro do Castelo. The WSW edge (normal 252 deg) is 6 m from the Terreiro; the external stair and door side is not confirmed (photo shows a stair against one face).",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM edge 4 normal 252 deg is 6 m from the Terreiro do Castelo; the door side is not confirmed, low confidence on this value only." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m." },
+      { "paths": ["height_m.total", "elements.floors"], "url": "https://www.revistarua.pt/o-castelo-de-braga/", "fact": "height and floors", "value": "aproximadamente 31,3 metros de altura; quatro pavimentos, um em pedra e tres em madeira; merloes e mata-caes nos vertices" },
+      { "paths": ["height_m.parapet", "elements.corner_bartizans", "elements.merlons_per_side", "elements.loopholes_per_side"], "source": "estimate", "fact": "crown", "reasoning": "Photo (torre-menagem.jpg): machicolated bartizans at the 4 corners, 5 merlons between them on each face, slit windows; parapet walk about 1.3 m below the merlon tops. OSM tag says 30 m." }
+    ],
+    "confidence": "high"
+  },
+  "santa-cruz": {
+    "footprint_m": { "length": 49.4, "width": 18.2, "matches_osm": true, "note": "OSM way 121590141 is the church rectangle; the front is the 18.2 m NNE end." },
+    "height_m": { "total": 25, "towers": 25, "pediment_cross": 19, "nave_ridge": 15 },
+    "elements": { "towers": 2, "facade_levels": 2, "doric_columns": 4, "ionic_pilasters": 4, "doors": 3, "facade_width_m": 18.2 },
+    "facade_faces": "NE", "facade_azimuth_deg": 31, "facade_axis_rel": "bearing_deg (front is the NNE short end)",
+    "facade_note": "Front faces NNE onto Largo Carlos Amarante; the long WNW side runs along Rua do Anjo.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM NNE end edges have normals 31-32 deg; Largo Carlos Amarante (the church's address in pt.wikipedia) lies at azimuth 19 deg from the centroid." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.facade_width_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; front edge 18.2 m." },
+      { "paths": ["elements.facade_levels", "elements.doric_columns", "elements.ionic_pilasters", "elements.towers"], "url": "https://pt.wikipedia.org/wiki/Igreja_de_Santa_Cruz_em_Braga", "fact": "facade", "value": "two levels: quatro colunas doricas caneladas, quatro pilastras jonicas estriadas; towers finished 1694" },
+      { "paths": ["elements.doors"], "url": "https://irmandadesantacruz.pt/patrimonio/arquitetonico/", "fact": "doors", "value": "three main entrance doors under the architrave with the instruments of the Passion" },
+      { "paths": ["height_m.total", "height_m.towers", "height_m.pediment_cross", "height_m.nave_ridge"], "source": "estimate", "fact": "heights", "reasoning": "Frontal photo (santa-cruz.jpg) scaled to the 18.2 m front (0.029 m/px): tower vanes about 24 m, pediment cross about 19 m; plus about 5 % for the upward view. footprints.json 28 m is a little high." }
+    ],
+    "confidence": "medium"
+  },
+  "estadio-braga": {
+    "footprint_m": { "length": 238.3, "width": 125.4, "matches_osm": true,
+      "note": "OSM site way 116650252: 238 m across the pitch (both stands) x 125 m along it. Stand 1 (NE, DEM 101 m) is the free-standing east stand; Stand 2 (SW, DEM 114 m, higher ground) is the west stand carved into the granite. The ends are open: rock face at the SE end, city at the NW end." },
+    "height_m": { "total": 50, "east_stand": 50, "west_stand": 50 },
+    "elements": {
+      "east_blade_length_m": 55.05,
+      "roof_span_m": 202, "roof_covered_band_each_m": 55, "roof_open_middle_m": 95, "cable_pair_spacing_m": 3.75, "roof_slab_thickness_m": 0.24,
+      "cable_total_length_m": 13736, "east_stand_blades": 16, "west_stand_uprights": 18, "blade_thickness_m": 1, "stand_length_m": 125,
+      "pitch_length_m": 105, "pitch_width_m": 68, "capacity": 30286
+    },
+    "facade_faces": "NE", "facade_azimuth_deg": 40, "facade_axis_rel": "bearing_deg (outer face of the east stand)",
+    "facade_note": "The two stands face each other across the pitch (pitch long axis 130 deg). The iconic outer face is the east stand's 16 blades, looking NE; the west stand backs into the quarry.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "Site long axis 40.3 deg runs across the pitch. OSM Stand 1 lies NE of the pitch on lower ground (DEM 101 m), so it is the free-standing east stand; its outer face looks 40 deg." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.stand_length_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; OSM stand parts are 125 m long." },
+      { "paths": ["height_m.total", "height_m.east_stand", "height_m.west_stand", "elements.east_blade_length_m", "elements.roof_span_m", "elements.cable_pair_spacing_m", "elements.roof_slab_thickness_m", "elements.east_stand_blades", "elements.west_stand_uprights", "elements.blade_thickness_m"], "url": "https://adfconsultores.com/media/3732/the-new-braga-municipal-stadium.pdf", "fact": "structure (AFA engineers' paper)", "value": "202 m span roof built 50 m high; 16 blades 1 m thick from +87.80 to +142.85 (55.05 m); 18 uprights 1 m thick in the west stand; upper West square at roof level; cable pairs at 3.75 m; slab 240 mm" },
+      { "paths": ["elements.roof_covered_band_each_m", "elements.roof_open_middle_m"], "url": "https://block.arch.ethz.ch/eq/course/4/exercise/20?aid=34", "fact": "roof bands", "value": "205 m wide; outer 55 m roofed each side; middle 95 m open" },
+      { "paths": ["elements.cable_total_length_m"], "url": "https://engenhariacivil.wordpress.com/2007/07/05/estadio-municipal-de-braga/", "fact": "cables", "value": "13 736 m of full locked coil cable, 517 657 kg" },
+      { "paths": ["elements.pitch_length_m", "elements.pitch_width_m", "elements.capacity"], "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_Municipal_de_Braga", "fact": "pitch and capacity", "value": "105 x 68 m; 30 286 espectadores" }
+    ],
+    "confidence": "high"
+  },
+  "termas-romanas": {
+    "footprint_m": { "length": 30.6, "width": 27.9, "matches_osm": true,
+      "note": "OSM relation 11244034 (767 m2) is the baths core; a second ruins way of 42 x 40 m covers the wider excavated area incl. the palaestra." },
+    "height_m": { "total": 6, "canopy": 6, "walls": 1.5 },
+    "elements": { "excavated_area_m2": 850 },
+    "facade_faces": "E", "facade_azimuth_deg": 73, "facade_axis_rel": "bearing_deg - 90",
+    "facade_note": "Ruins under a protective canopy; no facade. The visitor side faces ENE towards Rua Dr. Rocha Peixoto.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "visitor side", "reasoning": "OSM edge 2 (30.6 m) normal 73 deg, 21 m from Rua Dr. Rocha Peixoto." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m." },
+      { "paths": ["elements.excavated_area_m2"], "url": "http://bragapatrimonio.blogspot.com/p/termas-romanas-maximinos.html", "fact": "excavated area", "value": "A area escavada das termas ocupa cerca de 850 metros quadrados" },
+      { "paths": ["height_m.total", "height_m.canopy", "height_m.walls"], "source": "estimate", "fact": "canopy and walls", "reasoning": "No published figure. Canopy reads as a single high storey (about 6 m) in photos; surviving walls about 1-1.5 m." }
+    ],
+    "confidence": "low"
+  },
+  "fonte-idolo": {
+    "footprint_m": { "length": 33.4, "width": 6.8, "matches_osm": false,
+      "note": "OSM way 146343020 is the interpretation centre built over the fountain (2001-2004), below street level on Rua do Raio. The carved granite outcrop itself is only about 3 m long." },
+    "height_m": { "total": 5, "centre_building": 5, "carved_rock": 1.5, "figure": 1.2 },
+    "elements": { "rock_length_m": 3, "niches": 1 },
+    "facade_faces": "E", "facade_azimuth_deg": 70, "facade_axis_rel": "bearing_deg - 90",
+    "facade_note": "Long side of the centre faces ENE towards Rua do Raio / Avenida da Liberdade.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM long edges have normal 70 deg towards Rua do Raio (25-40 m), the address in pt.wikipedia." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m." },
+      { "paths": ["height_m.total", "height_m.centre_building", "height_m.carved_rock", "height_m.figure", "elements.rock_length_m", "elements.niches"], "source": "estimate", "fact": "rock and building", "reasoning": "No figure on the fetched pages (pt.wikipedia, cm-braga). Search snippets from local blogs give a rock of about 3 m, a standing togate figure of 1.1-1.2 m and heights of 1.2-1.5 m; not verified. Single-storey centre about 5 m." }
+    ],
+    "confidence": "low"
+  },
+  "tibaes": {
+    "footprint_m": { "length": 111.2, "width": 91.6, "matches_osm": true,
+      "note": "OSM relation 2271296 is the monastery block (about 1 ha) around the cloisters; the church (OSM 57.5 x 21 m) runs along its north edge. The 40 ha cerca with the escadorio lies outside extent_m." },
+    "height_m": { "total": 34, "towers": 34, "tower_cupola": 31, "nave_ridge": 20, "wings": 13, "enclosure_wall": 3 },
+    "elements": { "towers": 2, "church_length_m": 57.5, "church_width_m": 21, "cloisters": 2, "refectory_cloister_ranges": 4, "refectory_cloister_bays_per_range": 6, "escadorio_fountains": 7, "escadorio_chafariz": 1, "garden_terraces": 5, "cerca_area_ha": 40, "enclosure_wall_length_m": 2700 },
+    "facade_faces": "W", "facade_azimuth_deg": 270, "facade_axis_rel": "bearing_deg + 180",
+    "facade_note": "In the OSM church polygon the east 13 m are narrower (15 m) than the 21 m nave: that is the capela-mor, so the front is the flat west end. The photo shows the monastery's north wing projecting to the right of the front, which fits. The official site says the church facade 'emerges in the nascente part of this wing' (a position in the north wing, not the facing).",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM church way 170604958: nave 21 m wide from x -4889 to -4845, then a 15 m wide, 13 m deep east end (chancel). Flat west end = front, looking 270 deg. Photo (tibaes.jpg) shows the monastery wing projecting to the right of the front, which fits a west front with the wing to the south." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.church_length_m", "elements.church_width_m"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; church way 170604958 is 57.5 x 21 m." },
+      { "paths": ["height_m.total", "height_m.towers", "height_m.tower_cupola", "height_m.nave_ridge", "height_m.wings"], "source": "estimate", "fact": "heights", "reasoning": "Distant photo (tibaes.jpg) scaled to the 21 m front (0.089 m/px): tower cupolas about 31 m, vanes about 34 m, 3-storey wing eaves about 13 m. footprints.json 28 m is a little low." },
+      { "paths": ["elements.cloisters", "elements.refectory_cloister_ranges", "elements.refectory_cloister_bays_per_range"], "url": "https://www.mosteirodetibaes.gov.pt/conjunto-monastico/o-mosteiro-e-os-seus-espacos/", "fact": "cloisters", "value": "Claustro do Cemiterio and Claustro do Refeitorio; quatro lancos de seis tramos; 1 ha" },
+      { "paths": ["elements.towers"], "url": "https://www.mosteirodetibaes.gov.pt/conjunto-monastico/o-mosteiro-e-os-seus-espacos/", "fact": "towers", "value": "O coro da acesso ao orgao e as torres sineiras" },
+      { "paths": ["elements.escadorio_fountains", "elements.escadorio_chafariz", "elements.cerca_area_ha", "elements.enclosure_wall_length_m", "height_m.enclosure_wall"], "url": "https://pt.wikipedia.org/wiki/Mosteiro_de_Tib%C3%A3es", "fact": "cerca", "value": "propriedade de 40 ha cercada por 2,7 km de muro de pedra de mais de tres metros; escadorio (1731-34) com um chafariz e sete fontes" },
+      { "paths": ["elements.garden_terraces"], "source": "estimate", "fact": "garden terraces", "reasoning": "Sources describe the gardens as socalcos rising from the rear facade but give no count. 5 is a guess from the seven-fountain escadorio (landings between fountain pairs); low confidence." }
+    ],
+    "confidence": "medium"
+  },
+  "biscainhos": {
+    "footprint_m": { "length": 49.5, "width": 36.4, "matches_osm": true,
+      "note": "OSM relation 13337528 is the palace around its courtyard; the baroque garden (OSM 166 x 76 m, about 1 ha) lies west." },
+    "height_m": { "total": 15, "eaves": 11 },
+    "elements": { "tulip_tree_height_m": 27.4, "storeys": 2, "garden_area_ha": 1, "garden_fountains": 5 },
+    "facade_faces": "NE", "facade_azimuth_deg": 63, "facade_axis_rel": "bearing_deg (front is the ENE end)",
+    "facade_note": "Street front on Rua dos Biscainhos faces ENE (OSM edges 13 + 15 m, normals 62-64 deg, 11-24 m from the street). Garden behind to the WSW.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "facade direction", "reasoning": "OSM edges 2-3 (28.6 m together) have normals 62-64 deg, 11-24 m from Rua dos Biscainhos; the garden relation lies WSW." },
+      { "paths": ["footprint_m.length", "footprint_m.width"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m." },
+      { "paths": ["elements.tulip_tree_height_m", "elements.garden_area_ha", "elements.garden_fountains"], "url": "https://www.cm-braga.pt/archive/doc/GUIA_VERDE_DE_BRAGA.pdf", "fact": "garden", "value": "cerca de um hectare; cinco fontes de repuxo; tulipeiro-da-Virginia com 27,4 metros de altura" },
+      { "paths": ["height_m.total", "height_m.eaves", "elements.storeys"], "source": "estimate", "fact": "palace heights", "reasoning": "Courtyard photo (biscainhos.jpg): two tall storeys (about 5.5 m each) to the eaves at about 11 m, hipped roof and pinnacles to about 15 m." }
+    ],
+    "confidence": "medium"
+  },
+  "avenida-central": {
+    "footprint_m": { "length": 409, "width": 70, "matches_osm": true,
+      "note": "OSM way 134654858 is the Jardim da Avenida Central lawn strip; it overlaps the east half of praca-republica's relation." },
+    "height_m": { "total": 15, "trees": 15, "bandstand": 8, "pyramids": 4, "monuments": 4 },
+    "elements": { "pyramids": 3, "monuments": 4, "bandstand_diameter_m": 7.9, "tree_rows": 2 },
+    "facade_faces": "none", "facade_azimuth_deg": 87, "facade_axis_rel": "long axis (bearing_deg); no front",
+    "facade_note": "Linear garden, no facade. The azimuth is the long axis towards the east end; the Arcada closes the west end and Bom Jesus is the backdrop to the east.",
+    "sources": [
+      { "paths": ["facade_azimuth_deg"], "source": "estimate", "fact": "long axis", "reasoning": "footprints.json bearing_deg 87.3, pointing to the east end." },
+      { "paths": ["footprint_m.length", "footprint_m.width", "elements.bandstand_diameter_m", "elements.monuments"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; bandstand way 108153350 is 7.9 x 7.8 m; 4 OSM monument nodes." },
+      { "paths": ["elements.pyramids"], "url": "https://www.cm-braga.pt/archive/doc/GUIA_VERDE_DE_BRAGA.pdf", "fact": "pyramids and trees", "value": "tres piramides que simbolizam os tres sacro-montes; frondosas tilias delimitam um extenso relvado" },
+      { "paths": ["height_m.total", "height_m.trees", "height_m.bandstand", "height_m.pyramids", "height_m.monuments", "elements.tree_rows"], "source": "estimate", "fact": "heights", "reasoning": "No published figures. Mature lime trees in two rows along the lawn, about 15 m; octagonal iron bandstand with cupola about 8 m; granite pyramids and statues about 4 m." }
+    ],
+    "confidence": "medium"
+  }
+}

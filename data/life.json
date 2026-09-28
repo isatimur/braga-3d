@@ -1,0 +1,263 @@
+{
+ "generated": "2026-09-28",
+ "funicular": {
+  "name": "Elevador do Bom Jesus do Monte (1882)",
+  "source": "OSM Overpass railway=funicular (8 ways)",
+  "tracks": [
+   [
+    [
+     41.554922,
+     -8.377896
+    ],
+    [
+     41.55486,
+     -8.378729
+    ],
+    [
+     41.554849,
+     -8.378884
+    ],
+    [
+     41.554709,
+     -8.380727
+    ],
+    [
+     41.554699,
+     -8.380866
+    ]
+   ],
+   [
+    [
+     41.554895,
+     -8.377894
+    ],
+    [
+     41.55483,
+     -8.378738
+    ],
+    [
+     41.554819,
+     -8.378894
+    ],
+    [
+     41.554678,
+     -8.380723
+    ],
+    [
+     41.554667,
+     -8.380862
+    ]
+   ]
+  ],
+  "lengths_m": [
+   249,
+   249
+  ]
+ },
+ "fountains": [
+  {
+   "id": "praca-republica",
+   "site": "praca-republica",
+   "name": "Chafariz da Praça da República",
+   "lat": 41.551395,
+   "lon": -8.42309,
+   "kind": "jet",
+   "h": 4.5,
+   "r": 5.5,
+   "osm": "w132951673",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "avenida-central",
+   "site": "avenida-central",
+   "name": "Avenida Central",
+   "lat": 41.551378,
+   "lon": -8.417833,
+   "kind": "jet",
+   "h": 3,
+   "r": 3,
+   "osm": "n11280978633",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "largo-santa-barbara",
+   "site": "santa-barbara",
+   "name": "Rua Francisco Sanches",
+   "lat": 41.551303,
+   "lon": -8.425328,
+   "kind": "jet",
+   "h": 1.5,
+   "r": 1.5,
+   "osm": "w167195708",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "santa-barbara",
+   "site": "santa-barbara",
+   "name": "Fonte de Santa Bárbara",
+   "lat": 41.551371,
+   "lon": -8.4259,
+   "kind": "jet",
+   "h": 1.6,
+   "r": 1.2,
+   "osm": "w1408446166",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "santa-barbara-castelos",
+   "site": "santa-barbara",
+   "name": "Fonte dos Castelos",
+   "lat": 41.55071,
+   "lon": -8.426348,
+   "kind": "jet",
+   "h": 1.2,
+   "r": 1,
+   "osm": "n1724210420",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "bom-jesus-lago",
+   "site": "bom-jesus",
+   "name": "Fonte do Lago",
+   "lat": 41.555503,
+   "lon": -8.375738,
+   "kind": "jet",
+   "h": 2.2,
+   "r": 1.5,
+   "osm": "n5489902834",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "bom-jesus-evangelistas",
+   "site": "bom-jesus",
+   "name": "Terreiro dos Evangelistas",
+   "lat": 41.556432,
+   "lon": -8.376064,
+   "kind": "jet",
+   "h": 2.4,
+   "r": 2.2,
+   "osm": "w1544908559",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "tibaes-claustro",
+   "site": "tibaes",
+   "name": "Mosteiro de Tibães",
+   "lat": 41.555619,
+   "lon": -8.478752,
+   "kind": "jet",
+   "h": 1.8,
+   "r": 1.5,
+   "osm": "n11236952965",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "tibaes-horta",
+   "site": "tibaes",
+   "name": "Mosteiro de Tibães",
+   "lat": 41.555577,
+   "lon": -8.479165,
+   "kind": "jet",
+   "h": 1.4,
+   "r": 1.2,
+   "osm": "n11236952967",
+   "source": "osm amenity=fountain"
+  },
+  {
+   "id": "bom-jesus-spout-1",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554629,
+   "lon": -8.37794,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163787",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-2",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554618,
+   "lon": -8.378022,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163788",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-3",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554606,
+   "lon": -8.378103,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163789",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-4",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554583,
+   "lon": -8.378367,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163790",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-5",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554574,
+   "lon": -8.378443,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163791",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-6",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554564,
+   "lon": -8.378517,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163792",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-7",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554552,
+   "lon": -8.378605,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163793",
+   "source": "footprints.json"
+  },
+  {
+   "id": "bom-jesus-spout-8",
+   "site": "bom-jesus",
+   "name": "Escadório",
+   "lat": 41.554544,
+   "lon": -8.378686,
+   "kind": "spout",
+   "h": 1.2,
+   "r": 0.9,
+   "osm": "n13093163794",
+   "source": "footprints.json"
+  }
+ ]
+}
