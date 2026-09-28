@@ -203,8 +203,8 @@ if (cloudShape.z > 0.001) {
   vec3 brgWN = (vec4(normal, 0.0) * viewMatrix).xyz;
   float brgWet = cloudShape.z * smoothstep(0.5, 0.9, brgWN.y);
   float brgPud = brgWet * smoothstep(0.56, 0.7, texture2D(tCloud, vFogWorld.xz * 0.043).b);
-  material.diffuseContribution *= 1.0 - 0.36 * brgWet - 0.22 * brgPud;
-  material.diffuseColor *= 1.0 - 0.36 * brgWet - 0.22 * brgPud;
+  material.diffuseContribution *= 1.0 - 0.3 * brgWet - 0.18 * brgPud;
+  material.diffuseColor *= 1.0 - 0.3 * brgWet - 0.18 * brgPud;
   material.roughness = mix(material.roughness, 0.3, brgWet * 0.7);
   material.roughness = mix(material.roughness, 0.07, brgPud);
 }

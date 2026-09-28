@@ -844,7 +844,7 @@ const TREE_SEASON_COLOR = /* glsl */ `
   // spring blossom: whole trees, in specks over the crown
   float bloom = step(tHI, uKind.z) * seasonW.x * aCrown;
   float speck = smoothstep(0.3, 0.7, tHash(position.xz * 23.0 + position.y * 7.0 + tHI * 9.0));
-  vec3 blossom = mix(vec3(0.78, 0.42, 0.52), vec3(0.82, 0.74, 0.72), fract(tHI * 3.1));
+  vec3 blossom = mix(vec3(0.84, 0.44, 0.52), vec3(0.86, 0.72, 0.7), fract(tHI * 3.1));
   float b = bloom * speck * 0.8;
   vTint = mix(leaf, blossom, b);
   // blossom and bare twigs do not glow against the sun like leaves

@@ -117,12 +117,12 @@ export function createCameraRig(camera, dom, heightAt, { reducedMotion, onFlight
       const tau = (flyIn.held ? FLY.easeIn : FLY.easeOut) / 3;
       vel.lerp(_want, 1 - Math.exp(-dt / tau));
     }
+    // the soft wall reads the camera only: the target may sit far ahead
+    // (2.6 km from the overview) and would stop the camera outside the map;
+    // clampPose() keeps the target inside MAP_LIMIT
     if (bounds) {
-      const m = FLY.margin;
-      const vx = Math.min(Math.abs(wall(cam.x, vel.x, bounds.x0, bounds.x1, m)), Math.abs(wall(tgt.x, vel.x, bounds.x0, bounds.x1, m)));
-      const vz = Math.min(Math.abs(wall(cam.z, vel.z, bounds.zN, bounds.zS, m)), Math.abs(wall(tgt.z, vel.z, bounds.zN, bounds.zS, m)));
-      vel.x = Math.sign(vel.x) * vx;
-      vel.z = Math.sign(vel.z) * vz;
+      vel.x = wall(cam.x, vel.x, bounds.x0, bounds.x1, FLY.margin);
+      vel.z = wall(cam.z, vel.z, bounds.zN, bounds.zS, FLY.margin);
     }
     vel.y = wall(cam.y, vel.y, -Infinity, FLY.ceiling - FLY.margin, FLY.margin);
     _step.copy(vel).multiplyScalar(dt);
@@ -148,6 +148,25 @@ export function createCameraRig(camera, dom, heightAt, { reducedMotion, onFlight
       }
       const tg2 = heightAt(tgt.x, tgt.z);
       if (tgt.y < tg2) tgt.y = tg2;
+    }
+    // A target past the soft wall slides back along the same ray to the
+    // wall, so the heading holds (an axis clamp would swing the view).
+    if (bounds) {
+      const m = FLY.margin;
+      const lo = [bounds.x0 - m, bounds.zN - m];
+      const hi = [bounds.x1 + m, bounds.zS + m];
+      const inside = (x, z) => x >= lo[0] && x <= hi[0] && z >= lo[1] && z <= hi[1];
+      if (!inside(tgt.x, tgt.z) && inside(cam.x, cam.z)) {
+        _o.subVectors(tgt, cam);
+        let k = 1;
+        if (_o.x > 0) k = Math.min(k, (hi[0] - cam.x) / _o.x);
+        if (_o.x < 0) k = Math.min(k, (lo[0] - cam.x) / _o.x);
+        if (_o.z > 0) k = Math.min(k, (hi[1] - cam.z) / _o.z);
+        if (_o.z < 0) k = Math.min(k, (lo[1] - cam.z) / _o.z);
+        const len = _o.length();
+        k = Math.max(k, Math.min(1, (controls.minDistance + 0.5) / len));
+        tgt.copy(cam).addScaledVector(_o, k);
+      }
     }
     flySpeed = vel.length();
   }

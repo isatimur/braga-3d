@@ -1,9 +1,15 @@
 // Post-processing: one EffectComposer, linear HDR until the OutputPass.
 //
 //   RenderPass        scene into a half-float target with a depth texture
-//   SunRaysPass       sun shafts: bright open sky near the sun, blurred
-//                     radially toward it at half resolution (skipped when
-//                     the sun is off screen or below the horizon)
+//   SunRaysPass       sun shafts (3d-sky-rays): bright open sky near the
+//                     visible sun, marched radially toward it at half
+//                     resolution, so towers, ridges and crowns cut the
+//                     shafts (skipped when the sun is off screen or below
+//                     the horizon); the same composite carries the faint
+//                     summer heat haze over far ground
+//
+// setQuality('2x') renders two drawing-buffer pixels per CSS pixel
+// (3d-retina-resolution): renderer, composer and every pass follow.
 //   UnrealBloomPass   threshold 1.5 in linear HDR: only emissive things
 //                     (gold pins, the main-street glow, routes, lamps, lit
 //                     windows, the sun) pass it; sunlit stone stays below
