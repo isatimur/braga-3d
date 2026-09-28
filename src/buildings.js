@@ -26,6 +26,8 @@ const WALL_DIM = 0.78; // keeps a sunlit white wall well below bloom threshold
 
 export const BUILDING_UNIFORMS = {
   uNight: { value: 0 },
+  // seconds, for the streamed tiles' fade-in (src/tiles.js advances it)
+  uClock: { value: 0 },
 };
 
 const WIN_PARS = /* glsl */ `
@@ -87,11 +89,142 @@ function inRect(x, z, r) {
   return Math.abs(dx * r.ux + dz * r.uz) <= r.hu && Math.abs(-dx * r.uz + dz * r.ux) <= r.hv;
 }
 
-function hash(i) {
+export function hash(i) {
   let h = Math.imul(i ^ 0x9e3779b9, 0x85ebca6b);
   h ^= h >>> 13;
   h = Math.imul(h, 0xc2b2ae35);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+
+// Wall and roof colour of one building (linear rgb, into wc and rc) and the
+// window seed its walls carry (churches: -1, no windows).
+const _wc = new THREE.Color();
+const _rc = new THREE.Color();
+export function buildingColors(seed, k, areaM2, wc = _wc, rc = _rc) {
+  const h1 = hash(seed);
+  const h2 = hash(seed + 7919);
+  const tint = 0.9 + h2 * 0.2;
+  const church = k === 'church';
+  const shed = k === 'industrial' || k === 'commercial' || areaM2 > 900;
+  wc.copy(church ? CHURCH_WALL : WALLS[Math.floor(h1 * WALLS.length)]).multiplyScalar(tint * WALL_DIM);
+  rc.copy(shed ? FLAT_ROOF : ROOFS[Math.floor(h2 * ROOFS.length)]).multiplyScalar(0.92 + h1 * 0.16);
+  return { wc, rc, win: church ? -1 : h1 };
+}
+
+// One building, extruded into T = { pos, nor, col, wall, idx } (plain
+// arrays). pts: [{x, z}] world units, counter-clockwise seen from above
+// (positive area), no closing duplicate; h metres; heightAt(x, z) the ground.
+// The core (below) and the streamed tiles (src/tile-worker.js) both call it.
+const contour = [];
+export function extrudeBuilding(T, pts, h, k, areaM2, seedIndex, heightAt) {
+  const n = pts.length;
+  const gs = pts.map((p) => heightAt(p.x, p.z));
+  const gmin = Math.min(...gs);
+  const gmax = Math.max(...gs);
+  const base = gmin - SKIRT;
+  const top = Math.max(gmin + h * S, gmax + 0.5);
+  const { wc, rc, win: seed } = buildingColors(seedIndex, k, areaM2);
+  // metres, for the window grid
+  const hM = (top - base) / S - SKIRT / S;
+  const footM = (gmin - base) / S;
+  let run = 0;
+
+  // walls: 4 vertices each, darker at the foot (cheap ambient occlusion)
+  for (let i = 0; i < n; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % n];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const L = Math.hypot(dx, dz);
+    const nx = dz / L;
+    const nz = -dx / L;
+    const v = T.pos.length / 3;
+    T.pos.push(a.x, base, a.z, b.x, base, b.z, b.x, top, b.z, a.x, top, a.z);
+    T.nor.push(nx, 0, nz, nx, 0, nz, nx, 0, nz, nx, 0, nz);
+    const f = 0.62;
+    T.col.push(wc.r * f, wc.g * f, wc.b * f, wc.r * f, wc.g * f, wc.b * f, wc.r, wc.g, wc.b, wc.r, wc.g, wc.b);
+    const LM = L / S;
+    const vTop = (top - gmin) / S;
+    T.wall.push(run, -footM, hM, seed, run + LM, -footM, hM, seed, run + LM, vTop, hM, seed, run, vTop, hM, seed);
+    run += LM;
+    // (a0, b1, b0) and (a0, a1, b1) face outward
+    T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
+  }
+
+  // flat roof
+  contour.length = 0;
+  for (const p of pts) contour.push(new THREE.Vector2(p.x, p.z));
+  const faces = THREE.ShapeUtils.triangulateShape(contour, []);
+  const v0 = T.pos.length / 3;
+  for (const p of pts) {
+    T.pos.push(p.x, top, p.z);
+    T.nor.push(0, 1, 0);
+    T.col.push(rc.r, rc.g, rc.b);
+    T.wall.push(0, -1, 0, seed);
+  }
+  for (const [a, b, c] of faces) {
+    const A = pts[a];
+    const B = pts[b];
+    const C = pts[c];
+    const up = (B.z - A.z) * (C.x - A.x) - (B.x - A.x) * (C.z - A.z);
+    if (up >= 0) T.idx.push(v0 + a, v0 + b, v0 + c);
+    else T.idx.push(v0 + a, v0 + c, v0 + b);
+  }
+  return top;
+}
+
+// Fade-in for the streamed tiles (src/tiles.js): each vertex carries the
+// clock time it appeared (aBorn); for 0.6 s after that a growing share of
+// its pixels is drawn (ordered dither), so a tile appears without a pop and
+// stays opaque (shadows, depth, no sorting).
+export const FADE_S = 0.6;
+export const FADE_VERT_PARS = /* glsl */ `
+#ifdef BRG_FADE
+attribute float aBorn;
+varying float vBorn;
+#endif
+`;
+export const FADE_VERT = /* glsl */ `
+#ifdef BRG_FADE
+vBorn = aBorn;
+#endif
+`;
+export const FADE_FRAG_PARS = /* glsl */ `
+#ifdef BRG_FADE
+uniform float uClock;
+varying float vBorn;
+#endif
+`;
+export const FADE_FRAG = /* glsl */ `
+#include <clipping_planes_fragment>
+#ifdef BRG_FADE
+{
+  float brgK = clamp((uClock - vBorn) / ${FADE_S.toFixed(2)}, 0.0, 1.0);
+  // interleaved gradient noise: an even dither without a visible pattern
+  float brgB = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  if (brgK < 1.0 && brgB >= brgK) discard;
+}
+#endif
+`;
+
+// The building material: vertex colours, the window grid, night lights.
+// fade: the streamed-tile variant (BRG_FADE, aBorn, uClock); a separate
+// program, so the core's shader stays exactly as it was.
+export function createBuildingMaterial({ fade = false } = {}) {
+  const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+  material.name = fade ? 'buildings-tiles' : 'buildings';
+  if (fade) material.defines = { BRG_FADE: '' };
+  material.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, BUILDING_UNIFORMS);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', `#include <common>\n${WIN_PARS}\n${FADE_VERT_PARS}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvWall = aWall;\n${FADE_VERT}`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>\n${WIN_FRAG_PARS}\n${FADE_FRAG_PARS}`)
+      .replace('#include <clipping_planes_fragment>', FADE_FRAG)
+      .replace('#include <emissivemap_fragment>', WIN_FRAG);
+  };
+  return material;
 }
 
 // masks: { outlines: [[{x,z}]], plans: [{cx,cz,ux,uz,hu,hv}] } in world units
@@ -175,87 +308,12 @@ export function buildBuildings(data, project, heightAt, masks = { outlines: [], 
     if (!t) tiles.set(key, (t = { key, pos: [], nor: [], col: [], wall: [], idx: [] }));
     return t;
   };
-  const wc = new THREE.Color();
-  const rc = new THREE.Color();
-  const contour = [];
-
   for (const it of keep) {
-    const T = tileOf(it);
-    const { pts } = it;
-    const n = pts.length;
-    const gs = pts.map((p) => heightAt(p.x, p.z));
-    const gmin = Math.min(...gs);
-    const gmax = Math.max(...gs);
-    const base = gmin - SKIRT;
-    const top = Math.max(gmin + it.h * S, gmax + 0.5);
-    const h1 = hash(it.seed);
-    const h2 = hash(it.seed + 7919);
-    const tint = 0.9 + h2 * 0.2;
-    const church = it.k === 'church';
-    const shed = it.k === 'industrial' || it.k === 'commercial' || it.areaM2 > 900;
-    wc.copy(church ? CHURCH_WALL : WALLS[Math.floor(h1 * WALLS.length)]).multiplyScalar(tint * WALL_DIM);
-    rc.copy(shed ? FLAT_ROOF : ROOFS[Math.floor(h2 * ROOFS.length)]).multiplyScalar(0.92 + h1 * 0.16);
-    // metres, for the window grid; churches get no windows (seed < 0)
-    const seed = church ? -1 : h1;
-    const hM = (top - base) / S - SKIRT / S;
-    const footM = (gmin - base) / S;
-    let run = 0;
-
-    // walls: 4 vertices each, darker at the foot (cheap ambient occlusion)
-    for (let i = 0; i < n; i++) {
-      const a = pts[i];
-      const b = pts[(i + 1) % n];
-      const dx = b.x - a.x;
-      const dz = b.z - a.z;
-      const L = Math.hypot(dx, dz);
-      const nx = dz / L;
-      const nz = -dx / L;
-      const v = T.pos.length / 3;
-      T.pos.push(a.x, base, a.z, b.x, base, b.z, b.x, top, b.z, a.x, top, a.z);
-      T.nor.push(nx, 0, nz, nx, 0, nz, nx, 0, nz, nx, 0, nz);
-      const f = 0.62;
-      T.col.push(wc.r * f, wc.g * f, wc.b * f, wc.r * f, wc.g * f, wc.b * f, wc.r, wc.g, wc.b, wc.r, wc.g, wc.b);
-      const LM = L / S;
-      const vTop = (top - gmin) / S;
-      T.wall.push(run, -footM, hM, seed, run + LM, -footM, hM, seed, run + LM, vTop, hM, seed, run, vTop, hM, seed);
-      run += LM;
-      // (a0, b1, b0) and (a0, a1, b1) face outward
-      T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
-    }
-
-    // flat roof
-    contour.length = 0;
-    for (const p of pts) contour.push(new THREE.Vector2(p.x, p.z));
-    const faces = THREE.ShapeUtils.triangulateShape(contour, []);
-    const v0 = T.pos.length / 3;
-    for (const p of pts) {
-      T.pos.push(p.x, top, p.z);
-      T.nor.push(0, 1, 0);
-      T.col.push(rc.r, rc.g, rc.b);
-      T.wall.push(0, -1, 0, seed);
-    }
-    for (const [a, b, c] of faces) {
-      const A = pts[a];
-      const B = pts[b];
-      const C = pts[c];
-      const up = (B.z - A.z) * (C.x - A.x) - (B.x - A.x) * (C.z - A.z);
-      if (up >= 0) T.idx.push(v0 + a, v0 + b, v0 + c);
-      else T.idx.push(v0 + a, v0 + c, v0 + b);
-    }
+    extrudeBuilding(tileOf(it), it.pts, it.h, it.k, it.areaM2, it.seed, heightAt);
     stats.built++;
   }
 
-  const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
-  material.name = 'buildings';
-  material.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, BUILDING_UNIFORMS);
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', `#include <common>\n${WIN_PARS}`)
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWall = aWall;');
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `#include <common>\n${WIN_FRAG_PARS}`)
-      .replace('#include <emissivemap_fragment>', WIN_FRAG);
-  };
+  const material = createBuildingMaterial();
   for (const T of tiles.values()) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(T.pos, 3));

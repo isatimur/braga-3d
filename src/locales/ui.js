@@ -83,6 +83,17 @@ export const messages = {
   '2x недоступно: устройство не тянет даже обычное качество': ['2x indisponível: este dispositivo já tem dificuldade com a qualidade normal', '2x unavailable: this device already struggles at normal quality'],
   '2x недоступно: видеокарта не вмещает такой кадр': ['2x indisponível: a placa gráfica não suporta uma imagem deste tamanho', '2x unavailable: the graphics card cannot hold a frame this large'],
   'Качество снижено до «авто»: устройство не справляется с 2x': ['Qualidade reduzida para «auto»: este dispositivo não aguenta 2x', 'Quality set back to “auto”: this device cannot keep up at 2x'],
+  // real time: aircraft, buses, traffic (src/liveair.js, livebus.js, traffic-model.js)
+  'Над Брагой сейчас:': ['Sobre Braga agora:', 'Over Braga now:'],
+  'самолёт': ['avião', 'aircraft'], 'самолёта': ['aviões', 'aircraft'], 'самолётов': ['aviões', 'aircraft'],
+  'Самолёты:': ['Aviões:', 'Aircraft:'], 'нет данных': ['sem dados', 'no data'], 'м': ['m', 'm'],
+  'Автобусы TUB:': ['Autocarros TUB:', 'TUB buses:'], 'на линиях': ['em serviço', 'running'],
+  'по расписанию': ['segundo o horário', 'on schedule'], 'в реальном времени': ['em tempo real', 'real time'],
+  'след.:': ['próx.:', 'next:'],
+  'Трафик:': ['Trânsito:', 'Traffic:'], 'час пик': ['hora de ponta', 'rush hour'],
+  'плотное движение': ['trânsito intenso', 'heavy traffic'], 'обычное движение': ['trânsito normal', 'normal traffic'],
+  'свободно': ['trânsito livre', 'light traffic'], 'машин': ['carros', 'cars'],
+  'Подробнее': ['Mais detalhes', 'More details'],
   // fly mode keys (src/fly.js)
   'WASD — полёт · Q/E — высота · Shift — быстрее': ['WASD — voar · Q/E — altura · Shift — mais rápido', 'WASD — fly · Q/E — height · Shift — faster'],
 };

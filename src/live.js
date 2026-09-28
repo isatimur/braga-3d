@@ -138,7 +138,17 @@ const CSS = `
 .life-badge .badge-dim { color: var(--text-2); }
 @media (prefers-reduced-motion: no-preference) { .life-badge:not([hidden]) { animation: life-badge-in 0.5s ease both; } }
 @keyframes life-badge-in { from { opacity: 0; transform: translateY(-4px); } }
-@media (max-width: 900px) { .life-badge { font-size: 11.5px; } .weather-menu { left: auto; right: 0; } }
+.life-badge .badge-head { display: block; }
+.life-badge .badge-line { display: block; margin-top: 3px; font-size: 11.5px; color: var(--text-2); }
+.life-badge .badge-more { display: none; margin-left: 8px; padding: 0 6px; font: inherit; font-size: 11px; line-height: 16px; color: var(--gold); background: rgba(224, 169, 72, 0.12); border: 1px solid rgba(224, 169, 72, 0.35); border-radius: 8px; cursor: pointer; }
+.life-badge .badge-more:focus-visible { outline: 1px solid var(--gold); outline-offset: 1px; }
+@media (max-width: 900px) {
+  .life-badge { font-size: 11.5px; white-space: normal; }
+  .life-badge .badge-more { display: inline-block; }
+  .life-badge:not(.is-open) .badge-line { display: none; }
+  .life-badge .badge-line { font-size: 11px; }
+  .weather-menu { left: auto; right: 0; }
+}
 `;
 
 function el(tag, attrs = {}, text = '') {
@@ -219,12 +229,25 @@ function mountControls({ onWeather, onLive }) {
       badge.hidden = !on;
       brk.hidden = !on;
     },
-    setBadge(parts) {
+    setBadge(parts, extras = []) {
       badge.textContent = '';
+      const head = el('span', { class: 'badge-head' });
       parts.forEach((p, i) => {
-        if (i) badge.append(el('span', { class: 'badge-dim', 'aria-hidden': 'true' }, ' · '));
-        badge.append(i === 0 ? el('span', { class: 'badge-dim' }, p) : document.createTextNode(p));
+        if (i) head.append(el('span', { class: 'badge-dim', 'aria-hidden': 'true' }, ' · '));
+        head.append(i === 0 ? el('span', { class: 'badge-dim' }, p) : document.createTextNode(p));
       });
+      badge.append(head);
+      if (!extras.length) return;
+      // aircraft, buses, traffic: one line each; folded on phones behind a
+      // small toggle (the open state survives the re-render)
+      const more = el('button', { type: 'button', class: 'badge-more', 'aria-expanded': String(badge.classList.contains('is-open')), title: t('Подробнее') }, `+${extras.length}`);
+      more.addEventListener('click', () => {
+        const on = !badge.classList.contains('is-open');
+        badge.classList.toggle('is-open', on);
+        more.setAttribute('aria-expanded', String(on));
+      });
+      head.append(more);
+      for (const x of extras) badge.append(el('span', { class: 'badge-line' }, x));
     },
   };
 }
@@ -404,7 +427,21 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
     parts.push(next);
     if (reading) parts.push(t(weatherFromCode(reading.code, reading.cloud, reading.precip).label));
     else if (status.startsWith('offline')) parts.push(t('нет данных о погоде'));
-    ui.setBadge(parts);
+    const lines = EXTRA_ORDER.map((k) => extras[k]).filter(Boolean);
+    // re-render only on a change: the badge is a polite live region
+    const key = parts.join('|') + '||' + lines.join('|');
+    if (key === badgeKey) return;
+    badgeKey = key;
+    ui.setBadge(parts, lines);
+  }
+  // extra badge lines from the live layers (life.js): aircraft, buses, traffic
+  const EXTRA_ORDER = ['air', 'bus', 'traffic'];
+  const extras = {};
+  let badgeKey = '';
+  function setExtra(k, text) {
+    if ((extras[k] ?? null) === (text ?? null)) return;
+    extras[k] = text ?? null;
+    updateBadge();
   }
 
   // Called from the render loop (life.js): no timers, so a hidden tab
@@ -447,6 +484,9 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
   return {
     update,
     setLive,
+    setExtra,
+    // the clock of live mode: real time, or the ?now= / setNow() instant
+    now,
     get live() {
       return live;
     },

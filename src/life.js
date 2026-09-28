@@ -21,8 +21,10 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import LIFE from '../data/life.json';
 import { S } from './geo.js';
+import { t } from './i18n.js';
 import { createWeather, addScaled } from './weather.js';
 import { createLive } from './live.js';
+import { createTrafficModel, axisAt } from './traffic-model.js';
 
 // shared by the materials here: night 0..1 and the emissive boost (above
 // the bloom threshold when post-processing is on)
@@ -330,7 +332,7 @@ const lampChunk = (y0, y1) => `
   totalEmissiveRadiance += lamp * band * uLifeNight * uLifeGlow * 1.6;
 }`;
 
-function buildTraffic({ roads, project, heightAt, mobile }) {
+function buildTraffic({ roads, project, heightAt, mobile, model }) {
   const zones = CAR_FREE.map(([la, lo, r]) => ({ ...project(la, lo), r: r * S }));
   const blocked = (x, z) => zones.some((q) => (x - q.x) ** 2 + (z - q.z) ** 2 < q.r * q.r);
 
@@ -390,13 +392,35 @@ function buildTraffic({ roads, project, heightAt, mobile }) {
     }
   });
   const ends = lanes.map((l) => [nodes.get(l.keyA), nodes.get(l.keyB)]);
-  // spawn weight: length, more in the city than out in the hills
-  const cdf = new Float32Array(lanes.length);
-  let acc = 0;
+  // the main axes (traffic-model.js): a lane is on an axis when its middle
+  // and one end lie within 8 units (32 m) of the corridor
+  const axes = model?.axes;
+  const laneAxis = new Uint8Array(lanes.length);
+  const lanePrimary = new Uint8Array(lanes.length);
   lanes.forEach((l, i) => {
-    acc += l.total * (0.04 + Math.exp(-Math.hypot(l.cx, l.cz) / 420));
-    cdf[i] = acc;
+    lanePrimary[i] = l.kind === 'primary' ? 1 : 0;
+    if (!axes || !axes.ids.length) return;
+    const a = axisAt(axes, l.cx, l.cz, 8);
+    if (a && (axisAt(axes, X[l.start], Z[l.start], 8) === a || axisAt(axes, X[l.start + l.n - 1], Z[l.start + l.n - 1], 8) === a)) laneAxis[i] = a;
   });
+  // spawn weight: length, more in the city than out in the hills; primary
+  // roads carry more, and the axes more still as the demand rises
+  const cdf = new Float32Array(lanes.length);
+  const baseW = new Float32Array(lanes.length);
+  lanes.forEach((l, i) => {
+    baseW[i] = l.total * (0.04 + Math.exp(-Math.hypot(l.cx, l.cz) / 420)) * (lanePrimary[i] ? 1.8 : 1);
+  });
+  let acc = 0;
+  let weighedFor = -1;
+  function weigh(demand) {
+    weighedFor = demand;
+    acc = 0;
+    for (let i = 0; i < lanes.length; i++) {
+      acc += baseW[i] * (laneAxis[i] ? 1 + 2.5 * demand : 1);
+      cdf[i] = acc;
+    }
+  }
+  weigh(model ? model.state.demand : 0);
   const pickLane = (r) => {
     const v = r * acc;
     let lo = 0;
@@ -410,7 +434,8 @@ function buildTraffic({ roads, project, heightAt, mobile }) {
   };
 
   // ---- vehicles
-  const N = mobile ? 150 : 300;
+  // buffers for the peak (traffic-model.js): 600, or 300 on phones
+  const N = mobile ? 300 : 600;
   const rnd = lcg(20260928);
   const vl = new Int32Array(N);
   const vs = new Float32Array(N);
@@ -530,8 +555,27 @@ function buildTraffic({ roads, project, heightAt, mobile }) {
   const RMAX2 = 1150 * 1150; // world units (4.6 km) from the centre: then respawn
   let visible = 0;
   let active = N;
+  let flowT = 0; // seconds, for the stop-and-go waves
+  const ms = model?.state;
+  function speedK(i) {
+    if (!ms) return 1;
+    const l = vl[i];
+    const ax = laneAxis[l];
+    if (!ax) return lanePrimary[l] ? ms.primaryK : ms.freeK;
+    let k = ms.axisK;
+    const jam = ms.jam;
+    if (jam > 0.02) {
+      // a wave of slow traffic travelling against the flow (about 280 m
+      // long, 5 m/s back), and a queue in the last 40 m before a junction
+      const w = 0.5 + 0.5 * Math.sin(vd[i] * vs[i] * 0.09 + flowT * 0.11 + ax);
+      k *= 1 - 0.8 * jam * (w * w * (3 - 2 * w));
+      const left = vd[i] > 0 ? lanes[l].total - vs[i] : vs[i];
+      if (left < 10) k *= 1 - 0.75 * jam * (1 - left / 10);
+    }
+    return Math.max(0.06, k);
+  }
   function advance(i, dt) {
-    let s = vs[i] + vd[i] * vsp[i] * dt;
+    let s = vs[i] + vd[i] * vsp[i] * speedK(i) * dt;
     let l = vl[i];
     for (let guard = 0; guard < 4 && (s < 0 || s > lanes[l].total); guard++) {
       const atEnd = s > lanes[l].total;
@@ -602,7 +646,14 @@ function buildTraffic({ roads, project, heightAt, mobile }) {
   const counts = [0, 0]; // visible cars, vans (reused every frame)
   const streakAttrs = [lpAttr, ldAttr];
   function update(dt, camera, frustum, { night, camDist, width, height }) {
-    active = Math.round(N * (1 - 0.2 * night));
+    flowT += dt;
+    if (ms) {
+      if (Math.abs(ms.demand - weighedFor) > 0.04) weigh(ms.demand);
+      const want = Math.min(N, ms.count);
+      // new vehicles enter where the demand now sends them
+      for (let i = active; i < want; i++) spawn(i);
+      active = want;
+    } else active = Math.round(N * 0.5 * (1 - 0.2 * night));
     const bodies = camDist < 2800;
     const showLights = night > 0.02;
     counts[0] = counts[1] = 0;
@@ -685,7 +736,29 @@ function buildTraffic({ roads, project, heightAt, mobile }) {
   return {
     object: group,
     update,
-    stats: { lanes: lanes.length, vehicles: N, laneKm: +(lanes.reduce((s, l) => s + l.total, 0) / S / 1000).toFixed(1) },
+    stats: {
+      lanes: lanes.length,
+      vehicles: N,
+      laneKm: +(lanes.reduce((s, l) => s + l.total, 0) / S / 1000).toFixed(1),
+      axisLanes: [1, 2, 3].map((a) => laneAxis.filter((v) => v === a).length),
+    },
+    // tests: mean speed factor of the active vehicles on the axes and off them
+    speedSample() {
+      let sa = 0;
+      let na = 0;
+      let so = 0;
+      let no = 0;
+      for (let i = 0; i < active; i++) {
+        if (laneAxis[vl[i]]) {
+          sa += speedK(i);
+          na++;
+        } else {
+          so += speedK(i);
+          no++;
+        }
+      }
+      return { axis: na ? +(sa / na).toFixed(2) : null, onAxis: na, other: no ? +(so / no).toFixed(2) : null };
+    },
     get visible() {
       return visible;
     },
@@ -1144,15 +1217,31 @@ export function createLife(ctx) {
       return null;
     }
   };
+  const datumM = debug.projection?.datum ?? 0;
+  const weather = createWeather({ scene, atmosphere, datumM, mobile, reducedMotion });
+  const live = createLive({ atmosphere, weather, reducedMotion, onPersist: () => setHash() });
+  // one clock for traffic and buses: the real Lisbon time in live mode (or
+  // ?now=), the preset's hour otherwise (traffic-model.js PRESET_HOUR)
+  const model = safe('traffic model', () =>
+    createTrafficModel({ max: mobile ? 300 : 600, getNow: live.now, isLive: () => live.live, getPreset: () => atmosphere.time, project, mobile }),
+  );
+
   const funicular = safe('funicular', () => buildFunicular({ project, heightAt, items }));
-  const traffic = safe('traffic', () => buildTraffic({ roads, project, heightAt, mobile }));
+  const traffic = safe('traffic', () => buildTraffic({ roads, project, heightAt, mobile, model }));
   const birds = safe('birds', () => buildBirds({ items, heightAt, project, nature, mobile }));
   const fountains = safe('fountains', () => buildFountains({ project, heightAt, items, mobile }));
   for (const p of [funicular, traffic, birds, fountains]) if (p) group.add(p.object);
 
-  const datumM = debug.projection?.datum ?? 0;
-  const weather = createWeather({ scene, atmosphere, datumM, mobile, reducedMotion });
-  const live = createLive({ atmosphere, weather, reducedMotion, onPersist: () => setHash() });
+  const ctxLive = { scene, camera, renderer, project, heightAt, datumM, mobile, reducedMotion, live, model, atmosphere, group };
+  // aircraft and buses: a separate chunk, loaded after the first frame
+  let air = null;
+  let buses = null;
+  Promise.all([import('./liveair.js'), import('./livebus.js')])
+    .then(([a, b]) => {
+      air = safe('aircraft', () => a.createLiveAir(ctxLive));
+      buses = safe('buses', () => b.createLiveBus(ctxLive));
+    })
+    .catch((e) => console.warn('[braga] life: live layers failed to load', e));
   const buildMs = Math.round(performance.now() - t0);
 
   const frustum = new THREE.Frustum();
@@ -1169,6 +1258,22 @@ export function createLife(ctx) {
     rainDrops: 0,
     visibleVehicles: 0,
   };
+
+  // the live badge's extra lines: aircraft, buses, traffic (once a second)
+  let lastBadge = -Infinity;
+  function badgeLines() {
+    const tNow = performance.now();
+    if (tNow - lastBadge < 1000) return;
+    lastBadge = tNow;
+    if (!live.live) return;
+    live.setExtra('air', air?.badge() ?? null);
+    live.setExtra('bus', buses?.badge() ?? null);
+    const ms = model?.state;
+    if (ms && traffic) {
+      const n = Math.round(traffic.active / 10) * 10;
+      live.setExtra('traffic', `${t('Трафик:')} ${t(ms.level)} · ≈ ${n} ${t('машин')}${ms.source === 'tomtom' ? ' · TomTom' : ''}`);
+    }
+  }
 
   function update(dt, camDist) {
     const adt = reducedMotion ? 0 : dt;
@@ -1190,10 +1295,14 @@ export function createLife(ctx) {
     view.width = _size.x;
     view.height = _size.y;
     view.rain = weather.rainK;
+    model?.update();
     funicular?.update(adt, camera);
     traffic?.update(adt, camera, frustum, view);
     birds?.update(adt, camera, view);
     fountains?.update(camera, view);
+    air?.update(adt, dt, view);
+    buses?.update(adt, dt, view);
+    badgeLines();
 
     stats.visibleVehicles = traffic?.visible ?? 0;
     stats.rainDrops = weather.rainDrops;
@@ -1202,7 +1311,24 @@ export function createLife(ctx) {
     if (debug.stats && debug.stats.life !== stats) debug.stats.life = stats;
   }
 
-  const api = { update, weather, live, funicular, traffic, birds, fountains, stats, group };
+  const api = {
+    update,
+    weather,
+    live,
+    funicular,
+    traffic,
+    birds,
+    fountains,
+    stats,
+    group,
+    model,
+    get air() {
+      return air;
+    },
+    get buses() {
+      return buses;
+    },
+  };
   debug.life = api;
   return api;
 }

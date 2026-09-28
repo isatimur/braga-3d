@@ -939,15 +939,45 @@ function detailNoise(size = 256) {
 
 // Grid lines along one axis: fine steps (`sub` per DEM cell) over the DEM,
 // then steps that double outward to +-HALF, where the fog hides the edge.
-function axisLines(a0, a1, cells, sub, half) {
+// Grid lines along one axis: `subOf(cell)` lines per DEM cell over the DEM,
+// then coarser and coarser out to +-half.
+function axisLines(a0, a1, cells, subOf, half) {
   const out = [];
-  const step = (a1 - a0) / (cells * sub);
-  for (let s = step * 2, a = a0 - step * 2; a > -half; s *= 1.6, a -= s) out.unshift(a);
+  const cell = (a1 - a0) / cells;
+  const first = cell / subOf(0);
+  const last = cell / subOf(cells - 1);
+  for (let s = first * 2, a = a0 - first * 2; a > -half; s *= 1.6, a -= s) out.unshift(a);
   out.unshift(-half);
-  for (let i = 0; i <= cells * sub; i++) out.push(a0 + i * step);
-  for (let s = step * 2, a = a1 + step * 2; a < half; s *= 1.6, a += s) out.push(a);
+  for (let c = 0; c < cells; c++) {
+    const n = subOf(c);
+    for (let k = 0; k < n; k++) out.push(a0 + (c + k / n) * cell);
+  }
+  out.push(a1);
+  for (let s = last * 2, a = a1 + last * 2; a < half; s *= 1.6, a += s) out.push(a);
   out.push(half);
   return out;
+}
+
+export const GROUND_HALF = 6000;
+// The ground's grid lines (world units, both ascending): 4 x 4 quads per DEM
+// cell over the core, where the city stands and the draped lines need them;
+// one quad per cell over the rest of the DEM (the streamed surroundings,
+// src/tiles.js); coarser beyond. The tile worker drapes the streamed tiles
+// on exactly these triangles, so nothing floats or sinks.
+export function groundAxes(terrain) {
+  const b = terrain.bounds;
+  const c = terrain.core;
+  const wide = c && c !== b && Number.isInteger(c.c0);
+  // columns west to east; rows: z runs north to south, the DEM rows south to north
+  const subX = wide ? (i) => (i >= c.c0 && i < c.c0 + c.cols - 1 ? 4 : 1) : () => 4;
+  const subZ = wide ? (j) => {
+    const r = b.rows - 2 - j; // the DEM cell row (its south node) of z cell j
+    return r >= c.r0 && r < c.r0 + c.rows - 1 ? 4 : 1;
+  } : () => 4;
+  return {
+    xs: axisLines(b.x0, b.x1, b.cols - 1, subX, GROUND_HALF),
+    zs: axisLines(b.zN, b.zS, b.rows - 1, subZ, GROUND_HALF),
+  };
 }
 
 // Terrain shading, in the fragment shader:
@@ -963,6 +993,10 @@ uniform sampler2D tNoise;
 uniform vec4 uLandRect; // x0, z0, 1/width, 1/depth (world units)
 uniform float uDatum;   // metres above sea level at y = 0
 uniform float uHasLand;
+// the streamed surroundings (src/tiles.js): the same four channels, coarser
+uniform sampler2D tLandW;
+uniform vec4 uLandRectW;
+uniform float uHasLandW;
 uniform vec4 uDemRect; // x0, zN, x1, zS: outside it there is no DEM data
 varying vec3 vTWorld;
 float demOutside(vec2 p) {
@@ -1001,13 +1035,19 @@ const GROUND_COLOR = /* glsl */ `
   float rock = smoothstep(0.045, 0.12, slope + (n2 - 0.5) * 0.06 + (n1 - 0.5) * 0.04);
   rock = max(rock, smoothstep(0.62, 0.8, n2) * smoothstep(420.0, 540.0, hm));
   col = mix(col, granite * (0.8 + 0.4 * nB.a), rock * 0.85);
-  if (uHasLand > 0.5) {
+  if (uHasLand + uHasLandW > 0.5) {
     vec2 luv = (W.xz - uLandRect.xy) * uLandRect.zw;
     // no clamped edge pixels smeared outward; the cover thins out over the
     // last 200 m inside the data edge instead of stopping at a ruled line
     vec2 edgeD = min(luv, 1.0 - luv) / uLandRect.zw;
-    float inR = smoothstep(0.0, 50.0, min(edgeD.x, edgeD.y));
+    float inR = smoothstep(0.0, 50.0, min(edgeD.x, edgeD.y)) * uHasLand;
     vec4 L = texture2D(tLand, luv) * inR;
+    // outside the core the streamed cover takes over (it is empty inside)
+    if (uHasLandW > 0.5 && inR < 1.0) {
+      vec2 wuv = (W.xz - uLandRectW.xy) * uLandRectW.zw;
+      vec2 wD = min(wuv, 1.0 - wuv) / uLandRectW.zw;
+      L += texture2D(tLandW, wuv) * smoothstep(0.0, 30.0, min(wD.x, wD.y)) * (1.0 - inR);
+    }
     L.a = smoothstep(0.25, 0.8, L.a);
     float fine = nB.a;
     // fields and vineyards: faint stripes across the parcel
@@ -1094,10 +1134,8 @@ function shadowProxy(terrain) {
 // to the fogged edge. Vertex colour: an ambient-occlusion term from the
 // local concavity (folds darker, ridges a touch lighter).
 export function createGround(terrain) {
-  const HALF = 6000;
   const { heightAt, bounds: b } = terrain;
-  const xs = axisLines(b.x0, b.x1, b.cols - 1, 4, HALF);
-  const zs = axisLines(b.zN, b.zS, b.rows - 1, 4, HALF);
+  const { xs, zs } = groundAxes(terrain);
   const nx = xs.length;
   const nz = zs.length;
   const pos = new Float32Array(nx * nz * 3);
@@ -1153,6 +1191,9 @@ export function createGround(terrain) {
     uLandRect: { value: new THREE.Vector4(0, 0, 1, 1) },
     uDatum: { value: terrain.datum },
     uHasLand: { value: 0 },
+    tLandW: { value: blank },
+    uLandRectW: { value: new THREE.Vector4(0, 0, 1, 1) },
+    uHasLandW: { value: 0 },
     uDemRect: { value: new THREE.Vector4(b.x0, b.zN, b.x1, b.zS) },
   };
   const mat = new THREE.MeshStandardMaterial({
@@ -1189,6 +1230,13 @@ export function createGround(terrain) {
     uniforms.tLand.value = tex;
     uniforms.uLandRect.value.set(rect.x0, rect.z0, 1 / rect.w, 1 / rect.d);
     uniforms.uHasLand.value = 1;
+  };
+  // the streamed land cover around the core (src/tiles.js); rect in world
+  // units: { x0, z0 (north edge), w, d }
+  mesh.userData.setLandcoverWide = (tex, rect) => {
+    uniforms.tLandW.value = tex;
+    uniforms.uLandRectW.value.set(rect.x0, rect.z0, 1 / rect.w, 1 / rect.d);
+    uniforms.uHasLandW.value = 1;
   };
   return mesh;
 }

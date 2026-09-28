@@ -118,8 +118,19 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     return h;
   }
 
-  // Terrain extent in world units, for the ground mesh.
+  // Terrain extent in world units, for the ground mesh, the haze wall and
+  // the fly-mode walls. The grid now reaches past the core to the streamed
+  // tiles (data/tiles); `core` is the original 90 x 60 grid inside it: the
+  // area of roads.json, buildings.json and nature.json. With an old core-only
+  // file `core` equals `bounds`.
   const bounds = { x0: x0 * S, x1: x1 * S, zN: zN * S, zS: zS * S, cols, rows };
+  let core = bounds;
+  if (ok && data.core?.bbox) {
+    const c = data.core;
+    const csw = toMetres(c.bbox.s, c.bbox.w);
+    const cne = toMetres(c.bbox.n, c.bbox.e);
+    core = { x0: csw.x * S, x1: cne.x * S, zN: cne.z * S, zS: csw.z * S, cols: c.cols, rows: c.rows, c0: c.c0, r0: c.r0 };
+  }
 
   return {
     ok,
@@ -129,6 +140,10 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     addPad,
     pads,
     bounds,
+    core,
+    // the raw grid, for the tile worker (src/tile-worker.js), which drapes
+    // the streamed tiles on the same ground
+    grid: ok ? { bbox: data.bbox, cols, rows, heights: H, core: data.core || null } : null,
     datum,
     // metres above sea level at a world point (with pads)
     elevationAt: (x, z) => heightAt(x, z) / k + datum,

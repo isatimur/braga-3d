@@ -5,6 +5,36 @@
 export const BBOX = { s: 41.52, w: -8.49, n: 41.575, e: -8.36 };
 export const ORIGIN = { lat: 41.5503, lon: -8.42 };
 
+// The core: the area the first load draws (roads.json, buildings.json,
+// nature.json). The streamed tiles (scripts/fetch-tiles.mjs) cover the ring
+// around it.
+export const CORE_BBOX = BBOX;
+
+// Tile grid of the streamed area. The core is exactly 11 x 6 tiles, so a
+// tile is either all core (never written) or all outside it. A tile is
+// 0.13/11 deg lon x 0.055/6 deg lat: about 985 m x 1013 m.
+// Tile (x, y): x counts east from the wide west edge, y north from the wide
+// south edge.
+export const TILE_GRID = (() => {
+  const dLon = (BBOX.e - BBOX.w) / 11;
+  const dLat = (BBOX.n - BBOX.s) / 6;
+  const ext = { w: 5, e: 5, s: 6, n: 6 }; // tiles beyond the core on each side
+  const bbox = { s: BBOX.s - ext.s * dLat, w: BBOX.w - ext.w * dLon, n: BBOX.n + ext.n * dLat, e: BBOX.e + ext.e * dLon };
+  return {
+    dLon,
+    dLat,
+    ext,
+    nx: 11 + ext.w + ext.e,
+    ny: 6 + ext.s + ext.n,
+    bbox,
+    core: { x0: ext.w, y0: ext.s, x1: ext.w + 11, y1: ext.s + 6 }, // [x0, x1) x [y0, y1)
+  };
+})();
+
+// The terrain lattice (data/terrain.json): the original 90 x 60 core grid
+// extended by whole steps (~121 m lon, ~103 m lat) past the tile grid.
+export const TERRAIN_LATTICE = { coreCols: 90, coreRows: 60, ext: { w: 41, e: 41, s: 59, n: 59 } };
+
 // maps.mail.ru answered last time; the others often return 504. Try it first.
 export const MIRRORS = [
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',

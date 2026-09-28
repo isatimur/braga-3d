@@ -13,7 +13,7 @@ import { S } from './geo.js';
 
 // Order is draw order (later draws on top). metres: real width; px: the
 // line's CSS pixel width (the floor); surface: ribbon tone of the colour.
-const STYLE = {
+export const STYLE = {
   water: { color: 0x6fb2dd, metres: 8, px: 1.5, opacity: 0.7, surface: 0.55 },
   minor: { color: 0xc9a47a, metres: 3, px: 0.75, opacity: 0.3, surface: 0.55 },
   rail: { color: 0xa3a3a3, metres: 2.5, px: 1.2, opacity: 0.65, dashed: true, surface: 0.4 },
@@ -23,11 +23,11 @@ const STYLE = {
 
 // street surfaces (sRGB): asphalt on the main roads, granite setts and
 // worn tarmac on the smaller streets, ballast under the rails
-const SURFACE = { primary: 0x5b5753, secondary: 0x66615a, minor: 0x777066, rail: 0x5f574e, water: 0x2a4652 };
+export const SURFACE = { primary: 0x5b5753, secondary: 0x66615a, minor: 0x777066, rail: 0x5f574e, water: 0x2a4652 };
 
-const LIFT = 0.35; // line: world units (1.4 m) above the terrain surface
-const RIBBON_LIFT = 0.12; // ribbon: 0.5 m
-const MAX_SEG = 6; // subdivide longer segments so they follow the terrain
+export const LIFT = 0.35; // line: world units (1.4 m) above the terrain surface
+export const RIBBON_LIFT = 0.12; // ribbon: 0.5 m
+export const MAX_SEG = 6; // subdivide longer segments so they follow the terrain
 
 // One flat quad per segment, lengthened by half the width at both ends so
 // consecutive quads overlap at the joints (opaque, so overlaps do not show).
@@ -222,6 +222,11 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
   return {
     group,
     counts,
+    // the constant-width lines by kind, and the primary glow materials: the
+    // streamed tiles (src/tiles.js) draw their main streets with the same
+    // materials, so night, bloom and view-distance changes reach them too
+    lines,
+    glows,
     // w, h: CSS pixels; dpr: gl_PointSize counts device pixels
     setResolution(w, h, dpr = 1) {
       for (const m of materials) if (m.isLineMaterial) m.resolution.set(w, h);

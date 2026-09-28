@@ -1,29 +1,61 @@
-// Fetch a real elevation grid for the Braga bbox and write data/terrain.json.
+// Fetch a real elevation grid for Braga and its surroundings and write data/terrain.json.
 // Source: OpenTopoData (EU-DEM 25 m, fallback SRTM 30 m), fallback Open-Elevation.
 // Node 22, no dependencies. Run: node scripts/fetch-terrain.mjs
-// Public OpenTopoData limits: 100 locations per request, 1 request per second.
+// Public OpenTopoData limits: 100 locations per request, 1 request per second,
+// 1000 requests per day. The full grid takes about 310 requests (5 to 6 minutes).
+//
+// The grid is the original 90 x 60 core lattice (bbox s 41.52 w -8.49 n 41.575
+// e -8.36, ~110 m spacing) extended outward by whole lattice steps to the wide
+// streaming area (data/tiles, scripts/fetch-tiles.mjs). The core nodes keep
+// their old heights bit for bit (read from the old cache or the old file), so
+// the datum (189.4 m at the centre) and every core height stay the same.
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CORE_BBOX, TERRAIN_LATTICE } from './geo-lib.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'terrain.json');
-const CACHE = join(ROOT, 'data', '.cache', 'terrain-raw.json');
+const SRC = join(ROOT, 'data', 'terrain.json');
+// TERRAIN_OUT=<path> writes elsewhere (a trial run that leaves the app alone)
+const OUT = process.env.TERRAIN_OUT || SRC;
+const CORE_CACHE = join(ROOT, 'data', '.cache', 'terrain-raw.json');
+const CACHE = join(ROOT, 'data', '.cache', 'terrain-wide-raw.json');
 
-const BBOX = { s: 41.52, w: -8.49, n: 41.575, e: -8.36 };
-const COLS = 90; // along longitude, west -> east
-const ROWS = 60; // along latitude, south -> north
+const { coreCols: CC, coreRows: CR, ext: EXT } = TERRAIN_LATTICE;
+const COLS = CC + EXT.w + EXT.e; // along longitude, west -> east
+const ROWS = CR + EXT.s + EXT.n; // along latitude, south -> north
+const dLon = (CORE_BBOX.e - CORE_BBOX.w) / (CC - 1);
+const dLat = (CORE_BBOX.n - CORE_BBOX.s) / (CR - 1);
 const BATCH = 100;
 const PACE_MS = 1100;
 const DATASETS = ['eudem25m', 'srtm30m'];
 
 const wait = ms => new Promise(res => setTimeout(res, ms));
-const lonAt = c => BBOX.w + ((BBOX.e - BBOX.w) * c) / (COLS - 1);
-const latAt = r => BBOX.s + ((BBOX.n - BBOX.s) * r) / (ROWS - 1);
+const lonAt = c => CORE_BBOX.w + (c - EXT.w) * dLon;
+const latAt = r => CORE_BBOX.s + (r - EXT.s) * dLat;
+const BBOX = { s: latAt(0), w: lonAt(0), n: latAt(ROWS - 1), e: lonAt(COLS - 1) };
+const isCore = (r, c) => r >= EXT.s && r < EXT.s + CR && c >= EXT.w && c < EXT.w + CC;
 
-// Row-major, row 0 = south edge, col 0 = west edge.
-const points = [];
-for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) points.push([latAt(r), lonAt(c)]);
+// ---- core heights: the old file first, then the old cache
+function coreHeights() {
+  if (existsSync(SRC)) {
+    const t = JSON.parse(readFileSync(SRC, 'utf8'));
+    if (t.cols === CC && t.rows === CR && t.heights?.length === CC * CR) return { h: t.heights, src: t.source, sanity: t.sanity };
+    if (t.core && t.cols === COLS && t.rows === ROWS) {
+      // already wide: cut the core back out
+      const h = [];
+      for (let r = 0; r < CR; r++) for (let c = 0; c < CC; c++) h.push(t.heights[(r + EXT.s) * COLS + c + EXT.w]);
+      return { h, src: t.core.source || t.source, sanity: t.sanity };
+    }
+  }
+  if (existsSync(CORE_CACHE)) {
+    const cache = JSON.parse(readFileSync(CORE_CACHE, 'utf8'));
+    const h = [];
+    for (let b = 0; b < Math.ceil((CC * CR) / BATCH); b++) h.push(...cache.batches[b].values.map(v => Math.round(v * 10) / 10));
+    if (h.length === CC * CR) return { h, src: cache.batches[0].source, sanity: null };
+  }
+  throw new Error('no core heights: keep data/terrain.json (90x60) or data/.cache/terrain-raw.json');
+}
 
 async function openTopo(dataset, pts) {
   const loc = pts.map(([la, lo]) => `${la.toFixed(6)},${lo.toFixed(6)}`).join('|');
@@ -60,7 +92,7 @@ async function fetchBatch(pts) {
       } catch (e) {
         lastErr = e;
         console.warn(`  ${ds} failed: ${e.message}`);
-        await wait(PACE_MS * (attempt + 1));
+        await wait(PACE_MS * (attempt + 1) * (/429/.test(e.message) ? 5 : 1));
       }
     }
     try {
@@ -74,16 +106,22 @@ async function fetchBatch(pts) {
   throw new Error(`All elevation sources failed: ${lastErr?.message}`);
 }
 
+const core = coreHeights();
+
+// Only the nodes outside the core are fetched, row-major, row 0 = south edge.
+const todo = [];
+for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!isCore(r, c)) todo.push([r, c]);
+
 // Resumable cache of raw batch results keyed by batch index.
 mkdirSync(dirname(CACHE), { recursive: true });
 const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, 'utf8')) : {};
-const key = `${COLS}x${ROWS}:${BBOX.s},${BBOX.w},${BBOX.n},${BBOX.e}`;
+const key = `${COLS}x${ROWS}:${EXT.w},${EXT.e},${EXT.s},${EXT.n}`;
 if (cache.key !== key) { cache.key = key; cache.batches = {}; }
 
-const nBatches = Math.ceil(points.length / BATCH);
+const nBatches = Math.ceil(todo.length / BATCH);
 for (let b = 0; b < nBatches; b++) {
   if (cache.batches[b]) continue;
-  const pts = points.slice(b * BATCH, (b + 1) * BATCH);
+  const pts = todo.slice(b * BATCH, (b + 1) * BATCH).map(([r, c]) => [latAt(r), lonAt(c)]);
   const res = await fetchBatch(pts);
   cache.batches[b] = res;
   writeFileSync(CACHE, JSON.stringify(cache));
@@ -91,16 +129,21 @@ for (let b = 0; b < nBatches; b++) {
   await wait(PACE_MS);
 }
 
-const heights = [];
-const sources = {};
+const heights = new Array(COLS * ROWS);
+const sources = { [core.src]: CC * CR };
+for (let r = 0; r < CR; r++) for (let c = 0; c < CC; c++) heights[(r + EXT.s) * COLS + c + EXT.w] = core.h[r * CC + c];
 for (let b = 0; b < nBatches; b++) {
   const { values, source } = cache.batches[b];
   sources[source] = (sources[source] || 0) + values.length;
-  heights.push(...values.map(v => Math.round(v * 10) / 10));
+  values.forEach((v, i) => {
+    const [r, c] = todo[b * BATCH + i];
+    heights[r * COLS + c] = Math.round(v * 10) / 10;
+  });
 }
-if (heights.length !== COLS * ROWS) throw new Error(`grid has ${heights.length} values, want ${COLS * ROWS}`);
+if (heights.some(v => !Number.isFinite(v))) throw new Error('grid has holes');
 
-const min = Math.min(...heights), max = Math.max(...heights);
+let min = Infinity, max = -Infinity;
+for (const v of heights) { if (v < min) min = v; if (v > max) max = v; }
 
 // Bilinear sample for sanity checks.
 function sample(lat, lon) {
@@ -110,14 +153,9 @@ function sample(lat, lon) {
   const h = (r, c) => heights[Math.min(ROWS - 1, r) * COLS + Math.min(COLS - 1, c)];
   return (h(r0, c0) * (1 - tc) + h(r0, c0 + 1) * tc) * (1 - tr) + (h(r0 + 1, c0) * (1 - tc) + h(r0 + 1, c0 + 1) * tc) * tr;
 }
-
-// Point samples at exact coordinates (not interpolated from the grid).
 const probes = { centre: [41.5503, -8.42], 'bom-jesus': [41.55494, -8.37703], sameiro: [41.54182, -8.36954] };
-const probeRes = await fetchBatch(Object.values(probes));
 const sanity = {};
-Object.keys(probes).forEach((k, i) => {
-  sanity[k] = { point_m: Math.round(probeRes.values[i]), grid_m: Math.round(sample(...probes[k])) };
-});
+for (const [k, p] of Object.entries(probes)) sanity[k] = { point_m: core.sanity?.[k]?.point_m ?? null, grid_m: Math.round(sample(...p)) };
 
 const out = {
   bbox: BBOX,
@@ -125,13 +163,15 @@ const out = {
   rows: ROWS,
   row_order: 'south_to_north',
   col_order: 'west_to_east',
-  spacing_deg: { lat: (BBOX.n - BBOX.s) / (ROWS - 1), lon: (BBOX.e - BBOX.w) / (COLS - 1) },
+  spacing_deg: { lat: dLat, lon: dLon },
   source: Object.keys(sources).join(', '),
   min_m: min,
   max_m: max,
+  // the original 90 x 60 grid inside this one: its bbox and first column / row
+  core: { bbox: CORE_BBOX, c0: EXT.w, r0: EXT.s, cols: CC, rows: CR, source: core.src },
   sanity,
   heights,
 };
 writeFileSync(OUT, JSON.stringify(out));
-console.log(`Wrote ${OUT}: ${COLS}x${ROWS}, min ${min} m, max ${max} m, sources`, sources);
+console.log(`Wrote ${OUT}: ${COLS}x${ROWS}, bbox`, BBOX, `min ${min} m, max ${max} m, sources`, sources);
 console.log('sanity', sanity);

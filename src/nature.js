@@ -307,17 +307,31 @@ function billboardAtlas() {
 // opts: { data, project, heightAt, rect: {x0,zN,x1,zS}, roads, buildings,
 //         avoid: { outlines: [[{x,z}]], plans: [{cx,cz,ux,uz,hu,hv}], boxes: [Box3] },
 //         budget, mobile }
+// Tree kinds for the streamed tiles (src/tile-worker.js scatters their
+// trees with the same heights, mixes and densities).
+export const TREE_TABLES = { heights: SPECIES.map((s) => s.h), mix: MIX, density: DENSITY };
+
 export function buildNature(opts) {
-  const { data, project, heightAt, rect } = opts;
+  const { data, project, heightAt } = opts;
   const group = new THREE.Group();
   group.name = 'nature';
-  const stats = { areas: 0, trees: 0, near: 0, far: 0, water: 0, rejected: 0, landPx: '' };
+  const stats = { areas: 0, trees: 0, near: 0, far: 0, water: 0, rejected: 0, landPx: '', stream: 0 };
   const uniforms = {
     uTime: { value: 0 },
     uSunView: { value: new THREE.Vector3(0, 1, 0) },
     uSunColor: { value: new THREE.Color(1, 1, 1) },
   };
-  if (!data || !Array.isArray(data.areas)) return { group, stats, landcover: null, update() {}, uniforms };
+  if (!data || !Array.isArray(data.areas)) return { group, stats, landcover: null, update() {}, uniforms, setStreamTrees() {} };
+  // The masks cover the core only, the area of nature.json: the terrain
+  // rectangle may reach far past it (the streamed tiles bring their own).
+  let rect = opts.rect;
+  if (data.bbox) {
+    const sw = project(data.bbox.s, data.bbox.w);
+    const ne = project(data.bbox.n, data.bbox.e);
+    rect = { x0: Math.max(rect.x0, sw.x), x1: Math.min(rect.x1, ne.x), zN: Math.max(rect.zN, ne.z), zS: Math.min(rect.zS, sw.z) };
+  }
+  // room for the streamed trees of the tiles around the core
+  const STREAM = opts.streamCap ?? (opts.mobile ? 2500 : 8000);
 
   // ---- project
   const areas = [];
@@ -566,11 +580,12 @@ export function buildNature(opts) {
   for (const t of trees) bySpecies[t.s].push(t);
   const near = bySpecies.map((list, s) => {
     const geo = clumpGeometry(s);
-    const tintAttr = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, list.length) * 3), 3);
+    const cap = Math.max(1, list.length + STREAM);
+    const tintAttr = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3);
     tintAttr.setUsage(THREE.DynamicDrawUsage);
     geo.setAttribute('aTint', tintAttr);
     const mat = treeMaterial(uniforms, s);
-    const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
+    const mesh = new THREE.InstancedMesh(geo, mat, cap);
     // the shadow pass shrinks and sways the crowns the same way: bare
     // winter crowns cast no summer shadows
     mesh.customDepthMaterial = treeDepthMaterial(uniforms, s);
@@ -581,7 +596,7 @@ export function buildNature(opts) {
     mesh.receiveShadow = true;
     mesh.name = `trees-${s}`;
     group.add(mesh);
-    return { mesh, list, tintAttr };
+    return { mesh, list, stream: [], tintAttr };
   });
 
   const bbGeo = new THREE.InstancedBufferGeometry();
@@ -589,9 +604,10 @@ export function buildNature(opts) {
   bbGeo.index = quad.index;
   bbGeo.setAttribute('position', quad.attributes.position);
   bbGeo.setAttribute('uv', quad.attributes.uv);
-  const bbInst = new THREE.InstancedBufferAttribute(new Float32Array(trees.length * 4 + 4), 4);
-  const bbInfo = new THREE.InstancedBufferAttribute(new Float32Array(trees.length * 4 + 4), 4);
-  const bbTint = new THREE.InstancedBufferAttribute(new Float32Array(trees.length * 3 + 3), 3);
+  const bbCap = trees.length + STREAM + 1;
+  const bbInst = new THREE.InstancedBufferAttribute(new Float32Array(bbCap * 4), 4);
+  const bbInfo = new THREE.InstancedBufferAttribute(new Float32Array(bbCap * 4), 4);
+  const bbTint = new THREE.InstancedBufferAttribute(new Float32Array(bbCap * 3), 3);
   for (const a of [bbInst, bbInfo, bbTint]) a.setUsage(THREE.DynamicDrawUsage);
   bbGeo.setAttribute('aInst', bbInst);
   bbGeo.setAttribute('aInfo', bbInfo);
@@ -619,7 +635,8 @@ export function buildNature(opts) {
       const N = near[s];
       let k = 0;
       const wr = SPECIES[s].w;
-      for (const t of N.list) {
+      for (let ti = 0, nl = N.list.length, nt = nl + N.stream.length; ti < nt; ti++) {
+        const t = ti < nl ? N.list[ti] : N.stream[ti - nl];
         const dx = t.x - cam.x;
         const dy = t.y - cam.y;
         const dz = t.z - cam.z;
@@ -692,6 +709,30 @@ export function buildNature(opts) {
     },
     setShadows(on) {
       for (const N of near) N.mesh.castShadow = on;
+    },
+    // Trees of the streamed tiles (src/tiles.js): a list of Float32Arrays,
+    // 9 floats per clump: x, y (base), z, height, species, rotation, sway
+    // phase, and two randoms for the tint. Replaces the previous set; at
+    // most `streamCap` clumps are kept. They join the same meshes and
+    // billboards as the core's trees, so they sway, turn with the seasons
+    // and switch to billboards the same way.
+    streamCap: STREAM,
+    setStreamTrees(chunks) {
+      for (const N of near) N.stream = [];
+      let n = 0;
+      const c = new THREE.Color();
+      for (const arr of chunks) {
+        for (let i = 0; i + 8 < arr.length && n < STREAM; i += 9, n++) {
+          const s = arr[i + 4] | 0;
+          const sp = SPECIES[s];
+          if (!sp) continue;
+          c.set(sp.tint).multiplyScalar(0.8 + arr[i + 7] * 0.4);
+          c.offsetHSL((arr[i + 8] - 0.5) * 0.03, 0, 0);
+          near[s].stream.push({ x: arr[i], y: arr[i + 1], z: arr[i + 2], h: arr[i + 3], s, rot: arr[i + 5], phase: arr[i + 6], tint: [c.r, c.g, c.b] });
+        }
+      }
+      stats.stream = n;
+      lastCam.set(Infinity, 0, 0); // re-split at the next update
     },
   };
 }
