@@ -542,12 +542,14 @@ function applySeason(s, w, live) {
   }
   s.lightI *= 1 + 0.08 * su + 0.02 * fa - 0.16 * wi;
   s.light.lerp(_sc.winterLight, 0.35 * wi * day).lerp(_sc.autumnLight, 0.14 * fa * day).lerp(_sc.springLight, 0.1 * sp * day);
-  s.haze.lerp(_sc.winterHaze, 0.3 * wi).lerp(_sc.autumnHaze, 0.22 * fa * day).lerp(_sc.summerHaze, 0.12 * su * day);
-  s.scatterK *= 1 + 0.15 * fa - 0.2 * wi;
+  s.haze.lerp(_sc.winterHaze, 0.3 * wi).lerp(_sc.autumnHaze, 0.12 * fa * day).lerp(_sc.summerHaze, 0.12 * su * day);
+  s.scatterK *= 1 + 0.06 * fa - 0.2 * wi;
   s.hemiSky.lerp(_sc.winterSky, 0.3 * wi);
   s.zenith.lerp(_sc.winterSky, 0.12 * wi * day);
   s.hemiI *= 1 + 0.12 * wi;
-  s.density *= 1 + 0.15 * sp + 0.12 * su + 0.35 * fa + 0.5 * wi;
+  // autumn stays within ~10 % of summer: a thicker autumn haze washed the
+  // whole city out at the overview; winter keeps its heavier air
+  s.density *= 1 + 0.08 * sp + 0.04 * su + 0.12 * fa + 0.4 * wi;
   return s;
 }
 

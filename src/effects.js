@@ -12,7 +12,9 @@
 // (3d-retina-resolution): renderer, composer and every pass follow.
 //   UnrealBloomPass   threshold 1.5 in linear HDR: only emissive things
 //                     (gold pins, the main-street glow, routes, lamps, lit
-//                     windows, the sun) pass it; sunlit stone stays below
+//                     windows, the sun) pass it; sunlit stone stays below.
+//                     At the city overview by day: threshold 1.58, weaker
+//                     and tighter, so the pins stay small (update())
 //   OutputPass        ACES tone mapping and sRGB, once
 //   SMAAPass          anti-aliasing on the display-referred image
 //   FinishPass        a soft vignette and fine film grain
@@ -275,6 +277,13 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false }
   let sunSource = null; // the visible sun (scene.js skySunDir), when set
   let haze = 0;
 
+  // 0 at street and landmark distance, 1 at the city overview (camera to
+  // orbit focus, world units; the default overview sits near 2950)
+  function overviewK() {
+    const f = camera.userData.focus;
+    return THREE.MathUtils.smoothstep(f ? camera.position.distanceTo(f) : 300, 800, 2500);
+  }
+
   // sun position on screen, and how much of the shafts to show. The source
   // is projected from the camera along the sun direction; behind the camera
   // it is rejected before its coordinates are used, and off screen it fades
@@ -370,8 +379,14 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false }
       if (!reducedMotion) rays.compMat.uniforms.uTime.value += dt;
       rays.compMat.uniforms.uNearFar.value.set(camera.near, camera.far);
       aim(sunDir, night);
-      bloom.strength = 0.32 + 0.12 * night;
-      bloom.radius = 0.45 + 0.1 * night;
+      // at the overview the glowing roads cover much of the frame and the
+      // pins are a few pixels: a lower, tighter bloom with a slightly higher
+      // threshold keeps the city crisp and the pins small (close-ups and
+      // the night keep the full glow)
+      const far = overviewK() * (1 - night);
+      bloom.threshold = BLOOM_THRESHOLD + 0.08 * far;
+      bloom.strength = (0.32 + 0.12 * night) * (1 - 0.35 * far);
+      bloom.radius = 0.45 + 0.1 * night - 0.2 * far;
     },
     render() {
       composer.render();

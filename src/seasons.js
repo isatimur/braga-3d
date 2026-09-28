@@ -107,6 +107,7 @@ export function createSeasons({ renderer, scene, camera, atmosphere, nature, fx,
   // the visible sun drives the ray source and the glitter on the water
   fx?.setSunSource?.(atmosphere.skySunDir);
   debug.rays = fx?.rays; // tests: the ray pass and its tuning
+  debug.bloom = fx?.bloom; // tests: the bloom pass
   nature?.water?.setSunSource?.(atmosphere.skySunDir);
 
   // ---- controls
