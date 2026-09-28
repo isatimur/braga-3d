@@ -162,6 +162,11 @@ if (brgM == 1) {            // granite ashlar: two-tone blocks, thin joints
 } else if (brgM == 5) {     // foliage and grass
   brgH = texture2D(tDetail, vDUv * 0.3).b;
   diffuseColor.rgb *= mix(0.62, 1.25, brgH);
+  #ifdef USE_FOG
+  // season tint for model foliage (avenue trees, lawns, hedges): spring fresh + blossom, autumn rust, winter dull
+  diffuseColor.rgb *= seasonW.x * vec3(1.08, 1.14, 0.9) + vec3(seasonW.y) + seasonW.z * vec3(1.5, 1.0, 0.6) + seasonW.w * vec3(0.95, 0.88, 0.85);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.84, 0.5, 0.58), seasonW.x * smoothstep(0.62, 0.78, brgH) * 0.6);
+  #endif
   brgBump = 0.6;
   brgRough = 0.95;
 } else if (brgM == 6) {     // slate and lead
@@ -195,7 +200,7 @@ if (brgM == 1 || brgM == 2) {
       )
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += min(vColor.rgb * vEmit * 0.5, vec3(0.8));');
   };
-  mat.customProgramCacheKey = () => 'braga-stone-v5';
+  mat.customProgramCacheKey = () => 'braga-stone-v6';
   return mat;
 }
 

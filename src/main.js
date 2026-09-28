@@ -284,6 +284,7 @@ async function start() {
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
     if (atmosphere.time !== DEFAULT_TIME) parts.push(`time=${atmosphere.time}`);
     if (debug.life?.live.hash) parts.push(debug.life.live.hash);
+    if (debug.season && debug.season !== debug.seasons?.today) parts.push('season=' + (debug.season === 'fall' ? 'autumn' : debug.season));
     return parts.join('&');
   }
   function applyHash() {

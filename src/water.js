@@ -238,7 +238,8 @@ vec2 wRings(vec2 p, float cell, float t, float foot) {
     float env = exp(-x * x * 0.35) * (1.0 - ph) * step(d, 1.2);
     slope += (d > 1e-3 ? -c / d : vec2(0.0)) * cos(x * 2.2) * env;
   }
-  return slope * (1.0 - smoothstep(0.08, 0.25, foot / cell)) * 0.6;
+  // strong slopes: under a flat overcast sky only the Fresnel change shows
+  return slope * (1.0 - smoothstep(0.08, 0.25, foot / cell)) * 1.8;
 }
 `;
 
@@ -268,7 +269,7 @@ vec3 wN = normalize(cross(wDz, wDx));
   float dStr = 0.3 * exp(-wDist / 160.0) + 0.06;
   vec2 dn = (dA * 0.65 + dB.yx * 0.4) * dStr;
   #ifdef USE_FOG
-  if (cloudShape.w > 0.01) dn += (wRings(wP.xz, 0.28, uWTime, wFoot) + wRings(wP.xz + 0.13, 0.19, uWTime * 1.3 + 0.5, wFoot)) * cloudShape.w;
+  if (cloudShape.w > 0.01) dn += (wRings(wP.xz, 0.4, uWTime, wFoot) + wRings(wP.xz + 0.13, 0.27, uWTime * 1.3 + 0.5, wFoot)) * cloudShape.w;
   #endif
   wN = normalize(wN + vec3(dn.x, 0.0, dn.y));
 }
