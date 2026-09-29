@@ -252,6 +252,7 @@ async function start() {
   });
   rig.controls.target.copy(home.target);
   rig.controls.update();
+  debug.rig = rig; // scripted views for screenshots: __braga.rig.flyTo(pos, target, s)
 
   const ui = createUI(landmarks, routes, {
     onSelect: (i) => select(i),

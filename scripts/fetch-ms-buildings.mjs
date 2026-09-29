@@ -325,6 +325,53 @@ function enc(pts, o) {
   return out;
 }
 
+// Main-road and bridge corridors as xy segments with a half width (metres):
+// the core from data/roads.json (real lane counts), the ring from the
+// streamed tiles (class defaults). Minor streets are ignored: houses stand
+// close to them and the ML outlines there are usually right.
+function loadRoadSegs() {
+  const segs = [];
+  const push = (ll, half) => {
+    const xy = ll.map(toXY);
+    for (let i = 1; i < xy.length; i++) segs.push({ a: xy[i - 1], b: xy[i], half, box: { x0: Math.min(xy[i - 1][0], xy[i][0]), x1: Math.max(xy[i - 1][0], xy[i][0]), y0: Math.min(xy[i - 1][1], xy[i][1]), y1: Math.max(xy[i - 1][1], xy[i][1]) } });
+  };
+  const DEFAULT_W = { primary: 10, secondary: 7 };
+  const core = JSON.parse(readFileSync(join(ROOT, 'data', 'roads.json'), 'utf8'));
+  for (const f of core.features || []) {
+    const t = f.t || {};
+    const bridge = !!t.br;
+    if (!bridge && f.kind !== 'primary' && f.kind !== 'secondary') continue;
+    const lanes = t.ln > 0 ? t.ln : f.kind === 'primary' ? 2 : 2;
+    const wide = /motorway|trunk/.test(t.hw || '');
+    const widthM = Math.max(DEFAULT_W[f.kind] || 7, lanes * 3.5 + (wide ? 3 : 0));
+    push(f.pts, widthM / 2 + (bridge ? 3 : 2));
+  }
+  const idxFile = join(ROOT, 'data', 'tiles', 'index.json');
+  if (existsSync(idxFile)) {
+    const idx = JSON.parse(readFileSync(idxFile, 'utf8'));
+    const kinds = idx.kinds?.r || [];
+    for (const t of idx.tiles || []) {
+      const file = join(ROOT, 'data', 'tiles', `${t.x}_${t.y}.json`);
+      if (!existsSync(file)) continue;
+      const tile = JSON.parse(readFileSync(file, 'utf8'));
+      for (const rec of tile.r || []) {
+        const kind = kinds[rec[0]];
+        if (kind !== 'primary' && kind !== 'secondary') continue;
+        const pts = [];
+        let x = 0;
+        let y = 0;
+        for (let i = 1; i + 1 < rec.length; i += 2) {
+          x += rec[i];
+          y += rec[i + 1];
+          pts.push([(tile.o[0] + y) / 1e5, (tile.o[1] + x) / 1e5]);
+        }
+        if (pts.length >= 2) push(pts, DEFAULT_W[kind] / 2 + 2);
+      }
+    }
+  }
+  return segs;
+}
+
 function build() {
   if (!existsSync(BBOX_FILE)) throw new Error('no data/.cache/ms-raw/bbox.json: run with --fetch first');
   const raw = JSON.parse(readFileSync(BBOX_FILE, 'utf8'));
@@ -401,11 +448,57 @@ function build() {
     for (const B of list) if (shareIn(B, [P]) >= OVERLAP) return true;
     return false;
   };
+  // ---- road corridors: the ML model often outlines viaducts, wide roads
+  // and interchanges as "buildings" (they extrude into long blocks with
+  // windows). Drop any polygon whose sample points lie mostly inside the
+  // corridor of a main road (real width + 2 m margin) or of any bridge.
+  const roadSegs = loadRoadSegs();
+  const segIdx = makeIndex(100);
+  for (const s of roadSegs) segIdx.add(s);
+  const distToSeg = (x, y, s) => {
+    const dx = s.b[0] - s.a[0];
+    const dy = s.b[1] - s.a[1];
+    const l2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((x - s.a[0]) * dx + (y - s.a[1]) * dy) / l2));
+    return Math.hypot(x - (s.a[0] + t * dx), y - (s.a[1] + t * dy));
+  };
+  const inCorridor = (P) => {
+    const near = segIdx.query({ x0: P.box.x0 - 20, x1: P.box.x1 + 20, y0: P.box.y0 - 20, y1: P.box.y1 + 20 });
+    if (!near.length) return false;
+    const pts = samples(P);
+    let hit = 0;
+    for (let i = 0; i < pts.length; i += 2) {
+      for (const s of near) {
+        if (distToSeg(pts[i], pts[i + 1], s) <= s.half) {
+          hit++;
+          break;
+        }
+      }
+    }
+    return hit / (pts.length / 2) >= 0.6;
+  };
+  c.roadCorridor = 0;
+  // ---- big ML blobs in the historic centre: OSM coverage there is complete,
+  // so a large polygon with no OSM building under it is a square, a car park
+  // or a garden that the model mistook for a roof (Campo da Vinha, 3 000 m²).
+  const CENTRE_R = 700; // m around the Sé
+  const CENTRE_MAX_M2 = 1200;
+  const centreBlob = (P) => Math.hypot(P.c[0] - CENTRE[0], P.c[1] - CENTRE[1]) <= CENTRE_R && P.area > CENTRE_MAX_M2;
+  c.centreBlob = 0;
+
   const kept = [];
   const msIdx = makeIndex(50);
   // larger first, so a seam duplicate keeps its larger copy
   cand.sort((a, b) => b.area - a.area);
   for (const P of cand) {
+    if (inCorridor(P)) {
+      c.roadCorridor++;
+      continue;
+    }
+    if (centreBlob(P)) {
+      c.centreBlob++;
+      continue;
+    }
     if (overlaps(P, markIdx.query(P.box))) {
       c.dupLandmark++;
       continue;

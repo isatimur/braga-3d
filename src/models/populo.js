@@ -23,7 +23,7 @@ import { corniceProfile, PROFILES, MAT } from './kit.js';
 import { win, pediment, cartouche, bell, lobedFrame, flameUrn, wallFountain, volute, flutedColumn } from './parts.js';
 import { offset, bbox, centroid } from './geom.js';
 import { polyCornice } from './metric.js';
-import { lowTree } from './drape.js';
+import { lowTree, drapePoly, ribbon } from './drape.js';
 
 const G = 'graniteGold'; // the golden granite of the front
 const GS = 'granite'; // plain ashlar of the sides and the convent frames
@@ -326,19 +326,65 @@ function populo(k, { footprint }) {
   wallFountain(k, 0, 0, 0, 3.4, { trim: G });
   k.pop();
   const c = conv ? convent(k, conv) : null;
-  // --- the square in front (Largo do Pópulo): granite paving, the lawn
-  // strip and the small trees along the convent front
-  const zs0 = ZF;
-  const zs1 = ZF + 5.4;
-  const xr = conv ? bbox(conv.pts).x1 + 0.6 : 12;
-  k.box(xr + 12.5, 0.14, zs1 - zs0, 'graniteLight', (xr - 12.5) / 2, -0.02, (zs0 + zs1) / 2, { mat: MAT.smooth });
-  for (let i = 0; i < 12; i++) k.box(0.12, 0.02, zs1 - zs0 - 0.4, 'graniteDark', -11 + i * ((xr + 10) / 11), 0.12, (zs0 + zs1) / 2, { mat: MAT.flat });
-  if (c) {
-    k.box(xr - 11, 0.2, 2.2, 'grass', (xr + 11) / 2, 0.02, ZF + 1.7);
-    for (let i = 0; i < 6; i++) {
-      const x = 14 + i * ((xr - 18) / 5);
-      if (Math.abs(x - c.xm) < 5) continue;
-      lowTree(k, x, 0.15, ZF + 1.7, 4.2, { spread: 0.34, bole: 0.35, color: 'foliage' });
+  // --- the square in front: Largo do Pópulo (granite setts) and the
+  // Campo da Vinha garden (lawn parterres, gravel walks, plane trees,
+  // benches), both on their OSM parts and inside the mask so no city block
+  // or ML "roof" can stand on them. The old 5.4 m strip is the fallback.
+  const sq = footprint.part(/Largo do Pópulo/);
+  const gd = footprint.part(/Campo da Vinha/);
+  const ground = footprint.ground;
+  if (sq) drapePoly(k, sq.pts, ground, 0.12, 'graniteLight', { cell: 8, mat: MAT.smooth });
+  // garden beds: the central parterre of the Largo (9 m inside its kerb, as
+  // on the ground: the paved ring carries the traffic and the market) and
+  // the small OSM park polygon
+  const beds = [];
+  if (sq) beds.push(offset(sq.pts, -9));
+  if (gd) beds.push(gd.pts);
+  for (const bed of beds) {
+    if (!bed || bed.length < 3) continue;
+    drapePoly(k, bed, ground, 0.22, 'grass', { cell: 8, mat: MAT.leaf });
+    try {
+      const gb = bbox(bed);
+      const cx = (gb.x0 + gb.x1) / 2;
+      const cz = (gb.z0 + gb.z1) / 2;
+      // two crossing walks, a ring walk 2.5 m inside the edge
+      ribbon(k, [[gb.x0 + 3, cz], [gb.x1 - 3, cz]], 3, ground, 0.34, 'graniteLight', { step: 5, mat: MAT.smooth });
+      ribbon(k, [[cx, gb.z0 + 3], [cx, gb.z1 - 3]], 3, ground, 0.34, 'graniteLight', { step: 5, mat: MAT.smooth });
+      const walk = offset(bed, -2.5);
+      ribbon(k, walk.concat([walk[0]]), 2.2, ground, 0.34, 'graniteLight', { step: 5, mat: MAT.smooth });
+      // plane trees every 9 m along the ring, a bench beside every second one
+      const ring = offset(bed, -5);
+      let n = 0;
+      for (let i = 0; i < ring.length; i++) {
+        const a = ring[i];
+        const b = ring[(i + 1) % ring.length];
+        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        for (let s = 6; s < len - 3; s += 9) {
+          const t = s / len;
+          const x = a[0] + (b[0] - a[0]) * t;
+          const z = a[1] + (b[1] - a[1]) * t;
+          const y = ground(x, z);
+          lowTree(k, x, y + 0.2, z, 9 + (n % 3), { spread: 0.5, bole: 0.9, color: 'foliage' });
+          if (n % 2 === 0) k.box(1.6, 0.45, 0.5, 'graniteDark', x + 1.4, y + 0.6, z, { mat: MAT.flat });
+          n++;
+        }
+      }
+    } catch (e) {
+      console.warn('[populo] garden details skipped:', e?.message || e);
+    }
+  }
+  if (!sq && !gd) {
+    const zs0 = ZF;
+    const zs1 = ZF + 5.4;
+    const xr = conv ? bbox(conv.pts).x1 + 0.6 : 12;
+    k.box(xr + 12.5, 0.14, zs1 - zs0, 'graniteLight', (xr - 12.5) / 2, -0.02, (zs0 + zs1) / 2, { mat: MAT.smooth });
+    if (c) {
+      k.box(xr - 11, 0.2, 2.2, 'grass', (xr + 11) / 2, 0.02, ZF + 1.7);
+      for (let i = 0; i < 6; i++) {
+        const x = 14 + i * ((xr - 18) / 5);
+        if (Math.abs(x - c.xm) < 5) continue;
+        lowTree(k, x, 0.15, ZF + 1.7, 4.2, { spread: 0.34, bole: 0.35, color: 'foliage' });
+      }
     }
   }
   k.end('mask');
@@ -346,9 +392,9 @@ function populo(k, { footprint }) {
 }
 populo.metric = true;
 populo.rule = {
-  extent: [/Convento/],
+  extent: [/Convento/, /Largo do Pópulo/, /Campo da Vinha/],
   view: 0.75,
-  note: 'church on its outline (main, 26 m towers); convent on its OSM part; mask = church + convent (a 12 m city block stands in the convent part); 5.4 m of the square in front',
+  note: 'church on its outline (main, 26 m towers); convent on its OSM part; Largo do Pópulo paving and the Campo da Vinha garden on their OSM parts; mask = church + convent + square + garden',
 };
 
 export default { populo };
