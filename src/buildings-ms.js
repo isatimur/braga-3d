@@ -25,8 +25,12 @@ const GROUP = 3; // far ring tiles per merged block side
 const SLICE_MS = 1.5;
 const SCHEDULE_S = 0.25;
 const MAX_FETCH = 4;
-const FAR_MIN_M2 = 20; // far LOD: smaller footprints are left out
-const DEBUG_ROOF = new THREE.Color(0x2f7dff);
+// far LOD: smaller footprints are left out. OSM tiles use 20 m²; the ML
+// footprints hold many more sheds and annexes, and below 60 m² a box beyond
+// 4 km is about a pixel: 60 keeps ~70 % of the ring and saves ~190k tris.
+const FAR_MIN_M2 = 60;
+const CAST_U = 3000 * S; // shadows while the camera is within 3 km of the focus
+const DEBUG_ROOF =new THREE.Color(0x2f7dff);
 
 // ------------------------------------------------------------ helpers
 // horizontal distance from (x, z) to a rectangle (as src/tiles.js)
@@ -254,7 +258,13 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
   group.name = 'buildings-ms';
   const api = { group, stats, update() {}, idle: async () => stats, tiles: new Map() };
   debug.ms = api;
-  if (off) return api;
+  if (off) {
+    // main.js sets debug.stats after the first frames: fill it in then
+    api.update = () => {
+      if (debug.stats && !debug.stats.ms) debug.stats.ms = { core: 0, ringLoaded: 0, tris: 0 };
+    };
+    return api;
+  }
   scene.add(group);
 
   const NEAR_M = mobile ? 2000 : 4000;
@@ -274,6 +284,8 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
   let reqId = 0;
   const jobs = []; // extrusion jobs, highest priority first
   const coreMeshes = [];
+  const coreCents = []; // kept centres x, z (world), for countNear
+
   const tiles = api.tiles;
   const groups = new Map();
   let buildSum = 0;
@@ -355,6 +367,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         extrudeBuilding(T, f.pts, h, 'ms', f.areaM2, J.seed + i, ground);
         if (J.Tfar && f.areaM2 >= FAR_MIN_M2) extrudeBuilding(J.Tfar, orientedBox(f.pts), h, 'ms', f.areaM2, J.seed + i, ground);
         J.n++;
+        J.cents.push(f.cx, f.cz);
       }
       if (J.i >= J.recs.length) {
         jobs.shift();
@@ -386,6 +399,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       recs: doc.buildings,
       i: 0,
       n: 0,
+      cents: coreCents,
       seed: 0x4d5300,
       decode: (b) => (Array.isArray(b.p) && b.p.length >= 3 && b.h > 0 ? b.p.map((q) => proj.project(q[0], q[1])) : null),
       h: (b) => b.h,
@@ -473,6 +487,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       recs: tile.b,
       i: 0,
       n: 0,
+      cents: [],
       seed: (T.x * 131 + T.y * 7919) * 100003 + 0x4d53,
       T: Tn,
       Tfar: Tf,
@@ -494,6 +509,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         T.near = pack(Tn, tint);
         T.far = pack(Tf, tint);
         T.count = this.n;
+        T.cents = this.cents;
         T.state = 'built';
         T.born = clock;
       },
@@ -571,6 +587,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
     if (T.job) T.job.cancelled = true;
     T.job = null;
     T.near = T.far = null;
+    T.cents = null;
     T.state = 'idle';
     T.reqId++;
   }
@@ -665,9 +682,11 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       if (G.dirty) rebuildGroup(G);
     }
     buildSum += performance.now() - t0;
-    // shadows like the core: only when they can be seen
+    // shadows only in closer views: the MS houses are low (mostly 4-10 m),
+    // and over the whole city their shadows are below a pixel but cost a
+    // second pass of every core mesh (the OSM core casts up to 4000 units)
     const focus = camera.userData.focus;
-    const cast = (focus ? camera.position.distanceTo(focus) : 0) < 4000;
+    const cast = (focus ? camera.position.distanceTo(focus) : 0) < CAST_U;
     if (cast !== castNow) {
       castNow = cast;
       for (const m of coreMeshes) m.castShadow = cast;
@@ -692,5 +711,16 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
     });
   };
   api.mainMs = () => +buildSum.toFixed(0);
+  // for tests: MS buildings drawn with their centre within rM metres of (x, z)
+  api.countNear = function countNear(x, z, rM) {
+    const r2 = (rM * S) ** 2;
+    let n = 0;
+    const scan = (c) => {
+      for (let i = 0; i < c.length; i += 2) if ((c[i] - x) ** 2 + (c[i + 1] - z) ** 2 <= r2) n++;
+    };
+    scan(coreCents);
+    for (const T of tiles.values()) if (T.lod && T.cents) scan(T.cents);
+    return n;
+  };
   return api;
 }

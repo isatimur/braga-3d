@@ -178,3 +178,7 @@ Published figures come from these pages (facts only; no text or images copied):
 | forum-braga | https://www.forumbraga.com/Espacos/Pavilhao, https://www.forumbraga.com/Espacos/GrandeAuditorio, https://pt.wikipedia.org/wiki/Forum_Braga |
 
 We take only facts (numbers and counts) from these pages and cite each one; we reproduce no article text.
+
+## Microsoft building footprints
+
+`data/buildings-ms.json` and `data/tiles-ms/`: Microsoft Global ML Building Footprints, © Microsoft, Open Database License (ODbL 1.0), https://github.com/microsoft/GlobalMLBuildingFootprints. We fetched them with `scripts/fetch-ms-buildings.mjs`, simplified the outlines, dropped every outline that overlaps an OpenStreetMap building or a landmark, and estimated the missing heights from the footprint area and the nearby OSM buildings.

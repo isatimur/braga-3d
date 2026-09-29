@@ -14,8 +14,10 @@
 //                     anonymous users have a small daily credit budget)
 // airplanes.live is not used: it answers 403 and asks projects to contact it.
 //
-// Output: { src, now (ms), ac: [{ hex, flight, lat, lon, alt (m), gs (m/s),
-//           track (deg), vr (m/s), ground, type, seen (s) }] }
+// Output: { src, now (ms), ac: [{ hex, flight, call, reg, lat, lon, alt (m),
+//           gs (m/s), track (deg), vr (m/s), ground, type, seen (s) }] }
+// flight: the callsign, else the registration (the label); call: the
+// callsign only (api/route.js looks it up); reg: the registration or ''.
 const LAT = 41.55;
 const LON = -8.42;
 const NM = 40;
@@ -47,6 +49,8 @@ function readsb(j) {
     ac.push({
       hex: String(a.hex || '').replace(/^~/, ''),
       flight: String(a.flight || a.r || '').trim(),
+      call: String(a.flight || '').trim(),
+      reg: String(a.r || '').trim(),
       lat: a.lat,
       lon: a.lon,
       alt: Math.round(altFt * FT),
@@ -72,6 +76,8 @@ function opensky(j) {
     ac.push({
       hex,
       flight: String(call || '').trim(),
+      call: String(call || '').trim(),
+      reg: '',
       lat,
       lon,
       alt: Math.round(ground ? 0 : (geo ?? baro ?? 0)),

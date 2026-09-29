@@ -1,0 +1,11 @@
+{
+  "osm": {
+    "type": "way",
+    "id": 219034582,
+    "height_m": 14,
+    "height_source": "estimate"
+  },
+  "lat": 41.55191,
+  "lon": -8.42179,
+  "model": "house-museum"
+}

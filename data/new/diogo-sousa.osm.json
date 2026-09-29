@@ -1,0 +1,11 @@
+{
+  "osm": {
+    "type": "way",
+    "id": 104691209,
+    "height_m": 10,
+    "height_source": "estimate"
+  },
+  "lat": 41.5462,
+  "lon": -8.4273,
+  "model": "museum-roman"
+}

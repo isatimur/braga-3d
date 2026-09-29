@@ -1,5 +1,5 @@
-// Bridge and tunnel geometry, shared by the core (roads.js) and the tile
-// worker (tile-worker.js). DOM-free and three-free: it pushes flat-shaded
+// Bridge and tunnel geometry for the core streets (roads.js); the streamed
+// tiles carry no bridge or tunnel tags. DOM-free and three-free: it pushes flat-shaded
 // triangles into an accumulator T = { pos: [], nor: [], col: [], idx: [] }
 // (world units; colours linear 0..1), which the caller packs.
 //
@@ -22,7 +22,7 @@ function push(T, x, y, z, nx, ny, nz, c) {
 }
 // a quad a-b-c-d with its face normal (from the corners); flipped so it
 // faces `toward` when given
-function quad(T, a, b, c, d, col, toward) {
+export function quad(T, a, b, c, d, col, toward) {
   const ux = b[0] - a[0];
   const uy = b[1] - a[1];
   const uz = b[2] - a[2];

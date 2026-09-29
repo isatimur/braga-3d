@@ -2254,55 +2254,103 @@
     "lat": 41.5612,
     "lon": -8.3972,
     "category": "education",
-    "model": "university"
+    "model": "university",
+    "osm": {
+      "type": "way",
+      "id": 165563981,
+      "height_m": 19.2,
+      "height_source": "osm building:levels×3.2"
+    }
   },
   {
     "id": "dmaria-ii",
     "lat": 41.54866,
     "lon": -8.41778,
     "category": "education",
-    "model": "school"
+    "model": "school",
+    "osm": {
+      "type": "way",
+      "id": 21372352,
+      "height_m": 14,
+      "height_source": "estimate"
+    }
   },
   {
     "id": "sao-frutuoso",
     "lat": 41.56034,
     "lon": -8.43884,
     "category": "religious",
-    "model": "visigothic"
+    "model": "visigothic",
+    "osm": {
+      "type": "way",
+      "id": 159104082,
+      "height_m": 9,
+      "height_source": "estimate"
+    }
   },
   {
     "id": "diogo-sousa",
     "lat": 41.5462,
     "lon": -8.4273,
     "category": "museum",
-    "model": "museum-roman"
+    "model": "museum-roman",
+    "osm": {
+      "type": "way",
+      "id": 104691209,
+      "height_m": 10,
+      "height_source": "estimate"
+    }
   },
   {
     "id": "coimbras",
     "lat": 41.54992,
     "lon": -8.42474,
     "category": "religious",
-    "model": "chapel-manueline"
+    "model": "chapel-manueline",
+    "osm": {
+      "type": "way",
+      "id": 223138080,
+      "height_m": 17,
+      "height_source": "estimate"
+    }
   },
   {
     "id": "congregados",
     "lat": 41.55111,
     "lon": -8.42135,
     "category": "religious",
-    "model": "basilica-twin"
+    "model": "basilica-twin",
+    "osm": {
+      "type": "way",
+      "id": 121590117,
+      "height_m": 30,
+      "height_source": "estimate"
+    }
   },
   {
     "id": "nogueira-silva",
     "lat": 41.55191,
     "lon": -8.42179,
     "category": "museum",
-    "model": "house-museum"
+    "model": "house-museum",
+    "osm": {
+      "type": "way",
+      "id": 219034582,
+      "height_m": 14,
+      "height_source": "estimate"
+    }
   },
   {
     "id": "sao-marcos",
     "lat": 41.54889,
     "lon": -8.42329,
     "category": "religious",
-    "model": "hospital-church"
+    "model": "hospital-church",
+    "osm": {
+      "type": "way",
+      "id": 363528976,
+      "height_m": 22,
+      "height_source": "estimate"
+    }
   }
 ]

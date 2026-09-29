@@ -1,0 +1,11 @@
+{
+  "osm": {
+    "type": "way",
+    "id": 21372352,
+    "height_m": 14,
+    "height_source": "estimate"
+  },
+  "lat": 41.54866,
+  "lon": -8.41778,
+  "model": "school"
+}

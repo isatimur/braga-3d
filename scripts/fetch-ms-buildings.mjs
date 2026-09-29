@@ -11,7 +11,7 @@
 //   build  simplify (1 m), round to 5 decimals, drop slivers < 12 m², drop
 //          every polygon that overlaps an OSM building (data/buildings.json,
 //          data/tiles/*.json) or a landmark outline/part (data/footprints.json)
-//          by >= 30 % of either polygon's area, drop MS duplicates (quadkey
+//          by >= 15 % of either polygon's area, drop MS duplicates (quadkey
 //          seams), set heights, and write
 //            data/buildings-ms.json          the core bbox, buildings.json format, k "ms"
 //            data/tiles-ms/<x>_<y>.json      the ring, the data/tiles grid and format
@@ -44,7 +44,9 @@ const args = process.argv.slice(2);
 const DO_FETCH = !args.includes('--build');
 const DO_BUILD = !args.includes('--fetch');
 
-const OVERLAP = 0.3;
+// ML outlines sit 1-3 m off the OSM outline of the same house: at 30 % some
+// 280 core houses stood half inside an OSM one; 15 % drops them
+const OVERLAP = 0.15;
 const MIN_M2 = 12;
 const SIMPLIFY_M = 1;
 const NEAR_M = 150;

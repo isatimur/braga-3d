@@ -20,8 +20,16 @@
 //     badge counts every aircraft;
 //   - a faint contrail behind cruisers (> 7.5 km), nav lights at night
 //     (red port, green starboard, a white strobe), and a label with the
-//     callsign, altitude and type on hover (tap on phones).
-// At most 60 instances; nothing allocates per frame.
+//     callsign, altitude and type on hover (tap on phones);
+//   - the route card: a click (a tap), or a hover of 600 ms, looks the
+//     aircraft up once in GET /api/route (api/route.js: adsb.lol routes,
+//     adsbdb): airline and flight number, type and registration, origin ->
+//     destination, the great-circle distance left, a link to its track on
+//     globe.adsb.lol, and a faint dashed line toward the destination while
+//     the card is open. The badge names the three nearest flights with their
+//     routes (looked up ahead, one request at a time).
+// At most 60 instances; the per-frame path allocates nothing (the card, a
+// DOM element, updates a few times a second).
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { t, locale, language } from './i18n.js';
@@ -41,7 +49,17 @@ const VR_S = 20; // extrapolate a climb or descent this long at most
 // A DOM label that follows one of a set of world points, picked on screen
 // (nearest within `px`) on hover, pinned on click or tap. Shared with the
 // buses (livebus.js).
-export function createHoverLabel({ canvas, camera, count, worldPos, text, key, px = 22, className = '' }) {
+//
+// Opt-in (the aircraft card; the buses use none of these):
+//   - render(i, el, { pinned, hoverMs }): fills the element itself instead
+//     of text(i) -> innerHTML, so a card can keep its nodes (a link inside
+//     it stays clickable) and update text nodes only; called every 250 ms
+//     and after refresh();
+//   - interactive: the pinned label gets the class is-pinned (its CSS can
+//     take pointer events: a link in it);
+//   - fit: keep the label inside the viewport (below the point when there
+//     is no room above, clamped left and right).
+export function createHoverLabel({ canvas, camera, count, worldPos, text, key, px = 22, className = '', render = null, interactive = false, fit = false }) {
   const label = document.createElement('div');
   label.className = `live-label ${className}`;
   label.hidden = true;
@@ -64,6 +82,9 @@ export function createHoverLabel({ canvas, camera, count, worldPos, text, key, p
   let shownText = '';
   let down = null;
   let lastText = 0;
+  let hoverKey = null;
+  let hoverSince = 0;
+  let size = null; // { w, h } of the label, measured after a render
   canvas.addEventListener('pointermove', (e) => {
     if (e.buttons) return;
     mx = e.clientX;
@@ -122,6 +143,11 @@ export function createHoverLabel({ canvas, camera, count, worldPos, text, key, p
       hover = pick();
       canvas.style.cursor = hover >= 0 ? 'pointer' : '';
     }
+    const hk = hover >= 0 && hover < count() ? key(hover) : null;
+    if (hk !== hoverKey) {
+      hoverKey = hk;
+      hoverSince = tNow;
+    }
     let i = hover;
     if (i < 0 && pinnedKey != null) {
       const n = count();
@@ -141,16 +167,32 @@ export function createHoverLabel({ canvas, camera, count, worldPos, text, key, p
       label.hidden = true;
       return;
     }
-    if (tNow - lastText > 500 || label.hidden) {
+    const pinned = pinnedKey != null && key(i) === pinnedKey;
+    if (tNow - lastText > (render ? 250 : 500) || label.hidden) {
       lastText = tNow;
-      const s = text(i);
-      if (s !== shownText) {
-        shownText = s;
-        label.innerHTML = s;
+      if (render) {
+        render(i, label, { pinned, hoverMs: i === hover ? tNow - hoverSince : 0 });
+        size = null;
+      } else {
+        const s = text(i);
+        if (s !== shownText) {
+          shownText = s;
+          label.innerHTML = s;
+          size = null;
+        }
       }
     }
+    if (interactive) label.classList.toggle('is-pinned', pinned);
     label.hidden = false;
-    label.style.left = `${rect.x.toFixed(1)}px`;
+    let x = rect.x;
+    let below = false;
+    if (fit) {
+      if (!size) size = { w: label.offsetWidth, h: label.offsetHeight };
+      below = rect.y - size.h - 14 < rect.top;
+      x = Math.min(Math.max(x, rect.left + size.w / 2 + 6), rect.left + rect.width - size.w / 2 - 6);
+      label.classList.toggle('is-below', below);
+    }
+    label.style.left = `${x.toFixed(1)}px`;
     label.style.top = `${rect.y.toFixed(1)}px`;
   }
   return {
@@ -159,6 +201,15 @@ export function createHoverLabel({ canvas, camera, count, worldPos, text, key, p
       hover = -1;
       pinnedKey = null;
       label.hidden = true;
+    },
+    // render again on the next frame (new data for the shown point)
+    refresh() {
+      lastText = 0;
+    },
+    // the key of the point the label shows now (null when hidden)
+    get shownKey() {
+      if (label.hidden) return null;
+      return hover >= 0 && hover < count() ? key(hover) : pinnedKey;
     },
     // tests: pin the label on a slot
     pin(i) {
@@ -393,6 +444,10 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       hexOf[i] = '';
       info[i] = null;
     }
+    queue.length = 0;
+    for (const [k, r] of routes) if (r.state === 'queued') routes.delete(k);
+    nearest = [];
+    badgeText = null;
     drawn = 0;
     mesh.count = 0;
     cgeo.instanceCount = 0;
@@ -454,7 +509,94 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       T0[i] = tFix;
       TR[i] = tr;
       GS[i] = a.gs || 0;
-      info[i] = { flight: a.flight || a.hex.toUpperCase(), type: a.type || '', alt: a.alt || 0 };
+      // call: the callsign only (older answers have flight alone; a
+      // registration there fails the callsign check in routeKey)
+      const call = String(a.call ?? a.flight ?? '').trim().toUpperCase();
+      info[i] = { flight: a.flight || a.hex.toUpperCase(), call, reg: a.reg || '', type: a.type || '', alt: a.alt || 0, lat: a.lat, lon: a.lon };
+    }
+    // the badge names the three nearest; their routes are looked up ahead
+    nearest = keep.slice(0, 3).map((k) => k.a.hex);
+    for (const h of nearest) {
+      const i = hexOf.indexOf(h);
+      if (i >= 0 && used[i]) lookup(i, false);
+    }
+    badgeText = null;
+  }
+
+  // ---- routes (api/route.js): once per aircraft, one request at a time
+  const ROUTE_ENDPOINT = '/api/route';
+  const CALL_RE = /^[A-Z0-9]{2,8}$/;
+  const HEX_RE = /^[0-9a-f]{6}$/;
+  const routes = new Map(); // routeKey -> { state: 'queued'|'loading'|'ok'|'unknown'|'unavailable', data }
+  const queue = [];
+  let routeBusy = false;
+  let routeLogged = false;
+  let nearest = [];
+  let badgeText = null;
+  function routeKey(i) {
+    const n = info[i];
+    const hex = hexOf[i];
+    const call = n && CALL_RE.test(n.call) ? n.call : '';
+    const h = HEX_RE.test(hex) ? hex : '';
+    return call || h ? `${h}|${call}` : null;
+  }
+  function routeOf(i) {
+    const k = routeKey(i);
+    return k ? routes.get(k) || null : { state: 'unknown', data: null };
+  }
+  // urgent: a click or a hover goes to the front of the queue
+  function lookup(i, urgent) {
+    const k = routeKey(i);
+    if (!k || !active) return;
+    const r = routes.get(k);
+    // a failed lookup may try again after 2 minutes
+    if (r && r.state === 'unavailable' && performance.now() - r.at > 120e3) routes.delete(k);
+    else if (r) {
+      if (urgent && r.state === 'queued') {
+        queue.splice(queue.indexOf(k), 1);
+        queue.unshift(k);
+      }
+      return;
+    }
+    routes.set(k, { state: 'queued', data: null, at: 0 });
+    if (routes.size > 400) routes.delete(routes.keys().next().value);
+    urgent ? queue.unshift(k) : queue.push(k);
+    pump();
+  }
+  async function pump() {
+    if (routeBusy || !queue.length) return;
+    const k = queue.shift();
+    const r = routes.get(k);
+    if (!r || r.state !== 'queued') return pump();
+    routeBusy = true;
+    r.state = 'loading';
+    const [hex, call] = k.split('|');
+    const q = new URLSearchParams();
+    if (call) q.set('callsign', call);
+    if (hex) q.set('hex', hex);
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 12e3);
+    try {
+      const res = await fetch(`${ROUTE_ENDPOINT}?${q}`, { signal: ctl.signal });
+      // the Vite dev server answers /api/route with index.html and 200
+      if (!(res.headers.get('content-type') || '').includes('json')) throw Object.assign(new Error('no /api/route endpoint here (dev server?)'), { quiet: true });
+      const j = await res.json();
+      if (!res.ok || !j || !j.ok) throw new Error(`no route source answered (${res.status})`);
+      r.data = j;
+      r.state = j.route ? 'ok' : 'unknown';
+    } catch (e) {
+      r.state = 'unavailable';
+      r.at = performance.now();
+      if (!routeLogged) {
+        routeLogged = true;
+        console.info(`[braga] aircraft route lookup unavailable (${e.name === 'AbortError' ? 'timeout' : e.message})`);
+      }
+    } finally {
+      clearTimeout(timer);
+      routeBusy = false;
+      badgeText = null;
+      label?.refresh();
+      pump();
     }
   }
 
@@ -630,9 +772,154 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
     lgeo.setDrawRange(0, nl * L);
     if (nl) lPosA.needsUpdate = true;
     label.update(tNow);
+    updateHint();
   }
 
   const fmtN = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+
+  // ---- the card: who flies, from where to where (click, or hover 600 ms)
+  if (!document.getElementById('braga-air-card-css')) {
+    const st = document.createElement('style');
+    st.id = 'braga-air-card-css';
+    st.textContent = `.live-label.air-card { white-space: normal; width: max-content; max-width: min(340px, calc(100vw - 16px)); padding: 7px 10px 8px; line-height: 1.35; }
+.air-card .ac-stats { white-space: nowrap; }
+.air-card.is-below { transform: translate(-50%, 16px); }
+.air-card.is-pinned { pointer-events: auto; }
+.air-card .ac-title { display: block; font-size: 13px; }
+.air-card .ac-row { display: block; }
+.air-card .ac-route { display: block; margin: 3px 0 2px; font-size: 13px; color: #fff6e6; }
+.air-card .ac-route .ac-code { color: var(--gold, #e0a948); font-weight: 600; }
+.air-card .ac-link { display: none; margin-top: 4px; color: var(--gold, #e0a948); text-decoration: none; }
+.air-card.is-pinned .ac-link { display: inline-block; }
+.air-card .ac-link:hover, .air-card .ac-link:focus-visible { text-decoration: underline; }
+.air-card .ac-hint { display: block; font-size: 11px; }
+.air-card.is-pinned .ac-hint { display: none; }
+.air-card [hidden] { display: none !important; }`;
+    document.head.append(st);
+  }
+  const HOVER_MS = 600;
+  const nodes = new WeakMap(); // card element -> its parts
+  const setText = (el, s) => {
+    if (el.textContent !== s) el.textContent = s;
+  };
+  function cardParts(el) {
+    let c = nodes.get(el);
+    if (c) return c;
+    el.textContent = '';
+    const span = (cls) => {
+      const s = document.createElement('span');
+      s.className = cls;
+      return s;
+    };
+    const title = span('ac-title');
+    const titleB = document.createElement('b');
+    const titleRest = span('dim');
+    title.append(titleB, ' ', titleRest);
+    const plane = span('ac-row dim');
+    const route = span('ac-route');
+    const stats = span('ac-row ac-stats dim');
+    const dist = span('ac-row dim');
+    const link = document.createElement('a');
+    link.className = 'ac-link';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    const hint = span('ac-hint dim');
+    el.append(title, plane, route, stats, dist, link, hint);
+    c = { titleB, titleRest, plane, route, stats, dist, link, hint, routeKey: '', hex: '' };
+    nodes.set(el, c);
+    return c;
+  }
+  // "TP764" -> "TP 764"; a malformed IATA number (adsbdb gave "86BR" for
+  // VOE86BR, the airline's code missing) falls back to the callsign
+  function prettyFlight(d, call) {
+    const iata = d?.flight?.iata;
+    if (!iata || !/^[A-Z0-9]{2}[0-9]/.test(iata)) return call || '';
+    const al = d?.flight?.airline?.iata;
+    const pre = al && iata.startsWith(al) ? al : iata.slice(0, 2);
+    return `${pre} ${iata.slice(pre.length)}`;
+  }
+  const place = (a) => a.city || a.name || a.iata || a.icao || '?';
+  const code = (a) => a.iata || a.icao || '';
+  function haversineKm(la1, lo1, la2, lo2) {
+    const R = Math.PI / 180;
+    const h = Math.sin(((la2 - la1) * R) / 2) ** 2 + Math.cos(la1 * R) * Math.cos(la2 * R) * Math.sin(((lo2 - lo1) * R) / 2) ** 2;
+    return 12742 * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  // the name to show for an aircraft: callsign, else registration, else hex
+  function nameOf(i) {
+    const n = info[i];
+    const d = routeOf(i)?.data;
+    if (n?.call) return n.call;
+    return n?.reg || d?.aircraft?.registration || n?.flight || hexOf[i].toUpperCase();
+  }
+  let cardSlot = -1; // the slot the card shows (the hint line follows it)
+  function renderCard(k, el, st) {
+    const i = order[k];
+    const n = info[i];
+    if (!n) return;
+    cardSlot = i;
+    // look the route up on a click at once, on a hover after 600 ms
+    if (st.pinned || st.hoverMs >= HOVER_MS) lookup(i, true);
+    const c = cardParts(el);
+    const r = routeOf(i);
+    const d = r?.data;
+    const call = nameOf(i);
+    if (c.hex !== hexOf[i]) {
+      c.hex = hexOf[i];
+      if (HEX_RE.test(hexOf[i])) {
+        c.link.href = `https://globe.adsb.lol/?icao=${hexOf[i]}`;
+        setText(c.link, t('Открыть трек ↗'));
+      } else {
+        c.link.removeAttribute('href');
+        setText(c.link, '');
+      }
+    }
+    // title: airline and flight number
+    const airline = d?.flight?.airline?.name || d?.aircraft?.operator || '';
+    const pretty = prettyFlight(d, call);
+    setText(c.titleB, airline || pretty || call);
+    setText(c.titleRest, airline ? `${pretty || call}${pretty && pretty.replace(' ', '') !== call ? ` · ${call}` : ''}` : pretty && pretty.replace(' ', '') !== call ? call : '');
+    // aircraft type and registration
+    const ac = d?.aircraft;
+    // "Airbus Sas" + "A320-251N" -> "Airbus A320-251N"
+    const mf = (ac?.manufacturer || '').split(/\s+/)[0];
+    const typeName = ac?.type ? (mf && !ac.type.toLowerCase().includes(mf.toLowerCase()) ? `${mf} ${ac.type}` : ac.type) : n.type;
+    const reg = ac?.registration || n.reg;
+    setText(c.plane, [typeName, reg && reg !== call ? reg : ''].filter(Boolean).join(' · '));
+    // route
+    const rk = `${r?.state}|${d?.route?.origin?.icao}|${d?.route?.destination?.icao}`;
+    if (rk !== c.routeKey) {
+      c.routeKey = rk;
+      c.route.textContent = '';
+      if (r?.state === 'ok' && d.route) {
+        const o = d.route.origin;
+        const de = d.route.destination;
+        const b = (s) => {
+          const x = document.createElement('span');
+          x.className = 'ac-code';
+          x.textContent = s;
+          return x;
+        };
+        c.route.append(`${place(o)} `, b(code(o)), ` → ${place(de)} `, b(code(de)));
+      } else if (r?.state === 'queued' || r?.state === 'loading') c.route.textContent = t('маршрут: ищем…');
+      else if (r) c.route.textContent = t('маршрут неизвестен');
+    }
+    // altitude, speed, course, climb or descent
+    const dt = Math.min((performance.now() - T0[i]) / 1000, 90);
+    const alt = Math.max(0, A0[i] + VR[i] * Math.min(dt, VR_S));
+    const trend = VR[i] > 1.5 ? `↑ ${t('набор высоты')}` : VR[i] < -1.5 ? `↓ ${t('снижение')}` : `→ ${t('ровный полёт')}`;
+    const course = Math.round(((((TR[i] * 180) / Math.PI) % 360) + 360) % 360);
+    setText(c.stats, `${fmtN.format(Math.round(alt / 10) * 10)} ${t('м')} · ${fmtN.format(Math.round(GS[i] * 3.6))} ${t('км/ч')} · ${t('курс')} ${course}° · ${trend}`);
+    // great-circle distance from the aircraft to its destination
+    const de = r?.state === 'ok' ? d.route.destination : null;
+    if (de && Number.isFinite(de.lat) && Number.isFinite(de.lon) && Number.isFinite(n.lat)) {
+      const km = haversineKm(n.lat, n.lon, de.lat, de.lon);
+      setText(c.dist, `${t('до')} ${place(de)}: ${fmtN.format(km < 20 ? Math.round(km) : Math.round(km / 5) * 5)} ${t('км')}`);
+    } else setText(c.dist, '');
+    c.dist.hidden = !c.dist.textContent;
+    c.link.hidden = !c.link.getAttribute('href');
+    setText(c.hint, st.pinned ? '' : t('нажмите — маршрут и трек'));
+  }
   const label = createHoverLabel({
     canvas: renderer.domElement,
     camera,
@@ -643,21 +930,93 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       v.set(PX[i], PY[i], PZ[i]);
       return true;
     },
-    text: (k) => {
-      const i = order[k];
-      const n = info[i];
-      if (!n) return '';
-      const dt = Math.min((performance.now() - T0[i]) / 1000, 90);
-      const alt = Math.max(0, A0[i] + VR[i] * Math.min(dt, VR_S));
-      return `<b>${esc(n.flight)}</b> · ${fmtN.format(Math.round(alt / 10) * 10)} ${t('м')}${n.type ? ` <span class="dim">· ${esc(n.type)}</span>` : ''}`;
-    },
+    render: renderCard,
+    interactive: true,
+    fit: true,
+    className: 'air-card',
     px: 26,
   });
+
+  // ---- a faint great-circle hint toward the destination, while the card is open
+  const HINT_N = 48;
+  const hPos = new Float32Array(HINT_N * 3);
+  const hgeo = new THREE.BufferGeometry();
+  const hPosA = new THREE.BufferAttribute(hPos, 3).setUsage(THREE.DynamicDrawUsage);
+  hgeo.setAttribute('position', hPosA);
+  // no fog: the line runs out toward the haze, where fog would erase it
+  const hmat = new THREE.LineDashedMaterial({ color: 0xe0a948, transparent: true, opacity: 0.7, dashSize: 18, gapSize: 12, depthWrite: false, fog: false });
+  hmat.toneMapped = false;
+  const hint = new THREE.Line(hgeo, hmat);
+  hint.name = 'live-air-route-hint';
+  hint.frustumCulled = false;
+  hint.visible = false;
+  hint.renderOrder = 27;
+  root.add(hint);
+  const HINT_KM = 160; // past ~75 km the map compression folds it onto the haze edge anyway
+  function updateHint() {
+    const i = label.shownKey != null ? cardSlot : -1;
+    const n = i >= 0 && used[i] && hexOf[i] === label.shownKey ? info[i] : null;
+    const r = n ? routeOf(i) : null;
+    const de = r?.state === 'ok' ? r.data.route.destination : null;
+    if (!de || !Number.isFinite(de.lat) || !Number.isFinite(n.lat)) {
+      hint.visible = false;
+      return;
+    }
+    const R = Math.PI / 180;
+    const v = (la, lo) => [Math.cos(la * R) * Math.cos(lo * R), Math.cos(la * R) * Math.sin(lo * R), Math.sin(la * R)];
+    const A = v(n.lat, n.lon);
+    const B = v(de.lat, de.lon);
+    const total = haversineKm(n.lat, n.lon, de.lat, de.lon);
+    const span = Math.min(1, HINT_KM / Math.max(1, total));
+    // the fix's own map spot, to offset the line onto the drawn aircraft
+    const p0 = project(n.lat, n.lon);
+    const r0 = Math.hypot(p0.x, p0.z);
+    const f0 = r0 > 1e-6 ? compress(r0) / r0 : 1;
+    const ox = PX[i] - p0.x * f0;
+    const oz = PZ[i] - p0.z * f0;
+    for (let s = 0; s < HINT_N; s++) {
+      const f = (s / (HINT_N - 1)) * span;
+      const x = A[0] * (1 - f) + B[0] * f;
+      const y = A[1] * (1 - f) + B[1] * f;
+      const z = A[2] * (1 - f) + B[2] * f;
+      const p = project(Math.atan2(z, Math.hypot(x, y)) / R, Math.atan2(y, x) / R);
+      const rr = Math.hypot(p.x, p.z);
+      const fc = rr > 1e-6 ? compress(rr) / rr : 1;
+      const w = 1 - s / (HINT_N - 1);
+      const wx = p.x * fc + ox * w;
+      const wz = p.z * fc + oz * w;
+      // level at first, down to the ground when the destination is near
+      const k = span >= 1 ? f : 0;
+      const gy = heightAt(wx, wz) + 10 * S;
+      hPos[s * 3] = wx;
+      hPos[s * 3 + 1] = Math.max(gy, PY[i] * (1 - k) + gy * k);
+      hPos[s * 3 + 2] = wz;
+    }
+    hPosA.needsUpdate = true;
+    hint.computeLineDistances();
+    hint.visible = true;
+  }
 
   function badge() {
     if (!active) return null;
     // the source is named: adsb.fi and OpenSky ask to be cited
-    if (status === 'ok' || src) return `${t('Над Брагой сейчас:')} ${total} ${plural(total, ['самолёт', 'самолёта', 'самолётов'])}${src ? ` · ${src === 'opensky' ? 'OpenSky' : src}` : ''}`;
+    if (status === 'ok' || src) {
+      if (badgeText == null) {
+        // «TAP764 LIS→OSL, EZY62DK FUE→LTN, RYR3DK +9»: the three nearest
+        const list = [];
+        for (const h of nearest) {
+          const i = hexOf.indexOf(h);
+          if (i < 0 || !used[i]) continue;
+          const r = routeOf(i);
+          const ro = r?.state === 'ok' ? r.data.route : null;
+          list.push(ro ? `${nameOf(i)} ${code(ro.origin)}→${code(ro.destination)}` : nameOf(i));
+        }
+        const more = total - list.length;
+        const flights = list.length ? ` · ${list.join(', ')}${more > 0 ? ` +${more}` : ''}` : '';
+        badgeText = `${t('Над Брагой сейчас:')} ${total} ${plural(total, ['самолёт', 'самолёта', 'самолётов'])}${flights}${src ? ` · ${src === 'opensky' ? 'OpenSky' : src}` : ''}`;
+      }
+      return badgeText;
+    }
     if (status === 'idle' || status === 'fetching') return null;
     return `${t('Самолёты:')} ${t('нет данных')}`;
   }
@@ -696,6 +1055,14 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
     positionOf(k) {
       const i = order[k];
       return i >= 0 && k < drawn ? { x: PX[i], y: PY[i], z: PZ[i], flight: info[i]?.flight, alt: A0[i] } : null;
+    },
+    // the route lookup of a drawn slot (tests): { state, data } or null
+    routeOf(k) {
+      const i = order[k];
+      return i >= 0 && k < drawn ? routeOf(i) : null;
+    },
+    get hintVisible() {
+      return hint.visible;
     },
   };
 }

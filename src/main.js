@@ -24,6 +24,7 @@ import { createLife } from './life.js';
 import { createSeasons } from './seasons.js';
 import { createFlyKeys } from './fly.js';
 import { createTiles } from './tiles.js';
+import { createMsBuildings } from './buildings-ms.js';
 
 initLanguage();
 
@@ -134,6 +135,9 @@ async function start() {
   debug.nature = nature.stats;
   // the city around the core, streamed in once the core is on screen (tiles.js)
   const tiles = createTiles({ renderer, scene, camera, terrain, heightAt, proj, roadLayer, nature, ground, mobile: MOBILE, debug });
+  // Microsoft footprints in the OSM gaps, core and ring (buildings-ms.js; ?ms=0 off)
+  const msPlans = fits.filter((f) => !f.fallback).map((f) => f.plan);
+  const ms = createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints, plans: msPlans, osm: city.footprints, mobile: MOBILE, debug });
   const lightInfo = { dir: atmosphere.sunDir, color: new THREE.Color(), ambient: new THREE.Color() };
   const _amb = new THREE.Color();
 
@@ -772,6 +776,7 @@ async function start() {
     lightInfo.ambient.add(_amb.copy(atmosphere.hemi.color).multiplyScalar(atmosphere.hemi.intensity * 0.5));
     nature.update(reducedMotion ? 0 : dt, camera, lightInfo); // no sway or ripples under reduced motion
     tiles.update(rawDt);
+    ms.update(rawDt);
     life.update(dt, camDist); // traffic, birds, funicular, fountains, weather (life.js)
     seasons.update(rawDt); // season blend, leaves, snow, quality (seasons.js)
     marks.updatePins(clock, !reducedMotion, camera.position);

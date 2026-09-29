@@ -1,0 +1,11 @@
+{
+  "osm": {
+    "type": "way",
+    "id": 223138080,
+    "height_m": 17,
+    "height_source": "estimate"
+  },
+  "lat": 41.54992,
+  "lon": -8.42474,
+  "model": "chapel-manueline"
+}

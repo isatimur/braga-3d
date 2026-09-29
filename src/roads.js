@@ -21,7 +21,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { S } from './geo.js';
 import { buildNetwork, surfaceOf } from './road-network.js';
-import { bridgeGeometry, portalGeometry } from './road-structures.js';
+import { bridgeGeometry, portalGeometry, quad as embankmentQuad } from './road-structures.js';
 import { language } from './i18n.js';
 
 // Order is draw order (later draws on top). metres: fallback width; px: the
@@ -73,7 +73,7 @@ function geometryOf(T) {
 // per segment, lengthened by `ext` at both ends so consecutive quads overlap
 // at the joints (opaque, so overlaps do not show). Skips hidden points.
 function strip(T, net, i0, i1, off, h, lift, col, ext = h) {
-  const { X, Z, Y, HID } = net;
+  const { X, Z, HID } = net;
   for (let i = i0; i < i1; i++) {
     if (HID[i] && HID[i + 1]) continue;
     const ax = X[i];
@@ -89,13 +89,13 @@ function strip(T, net, i0, i1, off, h, lift, col, ext = h) {
     const lx = dz; // left of travel (x east, z south)
     const lz = -dx;
     const e = Math.min(ext, L);
-    const ya = Y[i] + lift;
-    const yb = Y[i + 1] + lift;
+    // each edge on the surface: level with the way, or up the hillside
+    const sy = net.surfaceY;
     const c = [
-      [ax - dx * e + lx * (off + h), ya, az - dz * e + lz * (off + h)],
-      [ax - dx * e + lx * (off - h), ya, az - dz * e + lz * (off - h)],
-      [bx + dx * e + lx * (off - h), yb, bz + dz * e + lz * (off - h)],
-      [bx + dx * e + lx * (off + h), yb, bz + dz * e + lz * (off + h)],
+      [ax - dx * e + lx * (off + h), sy(i, off + h) + lift, az - dz * e + lz * (off + h)],
+      [ax - dx * e + lx * (off - h), sy(i, off - h) + lift, az - dz * e + lz * (off - h)],
+      [bx + dx * e + lx * (off - h), sy(i + 1, off - h) + lift, bz + dz * e + lz * (off - h)],
+      [bx + dx * e + lx * (off + h), sy(i + 1, off + h) + lift, bz + dz * e + lz * (off + h)],
     ];
     const v = T.pos.length / 3;
     for (const p of c) {
@@ -112,7 +112,7 @@ function strip(T, net, i0, i1, off, h, lift, col, ext = h) {
 
 // Dashes along a way at offset `off`: dash / gap in metres (gap 0: solid)
 function dashes(T, net, w, off, halfM, dashM, gapM, lift, col) {
-  const { X, Z, Y, C, HID } = net;
+  const { X, Z, C, HID } = net;
   const h = halfM * S;
   const period = (dashM + gapM) * S;
   const dash = dashM * S;
@@ -144,8 +144,10 @@ function dashes(T, net, w, off, halfM, dashM, gapM, lift, col) {
       const z0 = Z[i] + dz * (d0 - s0);
       const x1 = X[i] + dx * (d1 - s0);
       const z1 = Z[i] + dz * (d1 - s0);
-      const y0 = Y[i] + (Y[i + 1] - Y[i]) * u0 + lift;
-      const y1 = Y[i] + (Y[i + 1] - Y[i]) * u1 + lift;
+      const ya = net.surfaceY(i, off);
+      const yb = net.surfaceY(i + 1, off);
+      const y0 = ya + (yb - ya) * u0 + lift;
+      const y1 = ya + (yb - ya) * u1 + lift;
       const v = T.pos.length / 3;
       T.pos.push(x0 + lx * (off + h), y0, z0 + lz * (off + h), x0 + lx * (off - h), y0, z0 + lz * (off - h), x1 + lx * (off - h), y1, z1 + lz * (off - h), x1 + lx * (off + h), y1, z1 + lz * (off + h));
       for (let q = 0; q < 4; q++) {
@@ -319,12 +321,59 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
       railing: w.kind === 'foot',
     });
   }
-  const portalCol = lin(PORTAL);
   const earth = lin(EARTH);
+  // embankments under the raised approach ramps: a grass slope (1:1.5) from
+  // each edge of the surface down to the ground, so no ramp floats
+  let embankments = 0;
+  for (const w of net.ways) {
+    if (w.bridge || w.tunnel || !surf[w.kind] || w.kind === 'foot') continue;
+    const half = (w.widthM / 2) * S;
+    const end = w.start + w.n - 1;
+    let any = false;
+    for (let i = w.start; i < end; i++) {
+      const la = Y[i] - G[i];
+      const lb = Y[i + 1] - G[i + 1];
+      if (la < 0.3 * S && lb < 0.3 * S) continue;
+      if (HID[i] || HID[i + 1]) continue;
+      any = true;
+      let dx = X[i + 1] - X[i];
+      let dz = Z[i + 1] - Z[i];
+      const L = Math.hypot(dx, dz);
+      if (L < 1e-5) continue;
+      dx /= L;
+      dz /= L;
+      for (const side of [1, -1]) {
+        const lx = dz * side;
+        const lz = -dx * side;
+        const ta = [X[i] + lx * half, Y[i] + RIBBON_LIFT, Z[i] + lz * half];
+        const tb = [X[i + 1] + lx * half, Y[i + 1] + RIBBON_LIFT, Z[i + 1] + lz * half];
+        const ra = half + Math.max(0.4 * S, 1.5 * la);
+        const rb = half + Math.max(0.4 * S, 1.5 * lb);
+        const fa = [X[i] + lx * ra, 0, Z[i] + lz * ra];
+        const fb = [X[i + 1] + lx * rb, 0, Z[i + 1] + lz * rb];
+        fa[1] = heightAt(fa[0], fa[2]) - 0.3 * S;
+        fb[1] = heightAt(fb[0], fb[2]) - 0.3 * S;
+        embankmentQuad(ST, ta, tb, fb, fa, earth, [lx, 0.6, lz]);
+      }
+    }
+    if (any) embankments++;
+  }
+  const portalCol = lin(PORTAL);
   const dark = [0.008, 0.008, 0.01];
+  let portalsOpen = 0;
   for (const p of net.portals) {
     const w = net.ways[p.way];
-    portalGeometry(ST, { x: p.x, z: p.z, y: p.y + RIBBON_LIFT, dx: p.dx, dz: p.dz }, { halfW: (w.widthM / 2) * S, col: portalCol, dark, cap: earth });
+    // the hood reaches at most halfway into the tunnel (the other portal's
+    // hood covers the rest), and never less than where vehicles vanish
+    // and stops short of a street at ground level over or beside the tunnel
+    // (p.clear); with no room for a hood the mouth is that street's edge and
+    // no portal is drawn (the vehicles vanish there)
+    const hoodM = Math.min(Math.max(4.5, Math.min(11, (w.chainLen ?? w.len) / S / 2 - 0.3)), p.clear / S);
+    if (hoodM < 2.5) {
+      portalsOpen++;
+      continue;
+    }
+    portalGeometry(ST, { x: p.x, z: p.z, y: p.y + RIBBON_LIFT, dx: p.dx, dz: p.dz }, { halfW: (w.widthM / 2) * S, col: portalCol, dark, cap: earth, hoodM });
   }
   let structTris = 0;
   if (ST.idx.length) {
@@ -513,6 +562,8 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
   counts.archBridges = archBridges;
   counts.tunnels = net.tunnels.length;
   counts.portals = net.portals.length;
+  counts.embankments = embankments;
+  counts.portalsDrawn = net.portals.length - portalsOpen;
   counts.roundabouts = rings.length;
   counts.tunnelHint = hintArr.length / 6;
 

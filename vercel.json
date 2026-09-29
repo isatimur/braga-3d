@@ -5,7 +5,8 @@
   "framework": "vite",
   "cleanUrls": true,
   "functions": {
-    "api/adsb.js": { "maxDuration": 20 }
+    "api/adsb.js": { "maxDuration": 20 },
+    "api/route.js": { "maxDuration": 10 }
   },
   "redirects": [
     {
@@ -36,6 +37,10 @@
     },
     {
       "source": "/data/tiles/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+    },
+    {
+      "source": "/data/tiles-ms/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
     },
     {

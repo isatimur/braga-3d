@@ -26,13 +26,24 @@ export const HEIGHTS = {
   'parque-ponte': { m: 10, source: 'estimate', on: 'w121590142', note: 'Tallest built element is the Capela de São João da Ponte (1616), single nave with bell gable; the park itself is flat. No published height.' },
   'forum-braga': { m: 14.5, source: 'wikipedia', note: 'Pavilion clear height 11.5-14.5 m across the hall (pt.wikipedia Forum Braga; forumbraga.com/Espacos/Pavilhao).' },
   // --- second batch, 2026-09-29 (placeholder values; refined below after research) ---
-  'uminho-gualtar': { m: 19.2, source: 'osm building:levels×3.2', on: 'w448580564', note: 'placeholder' },
-  'dmaria-ii': { m: 14, source: 'estimate', on: 'w473728998', note: 'placeholder' },
+  'uminho-gualtar': { m: 19.2, source: 'osm building:levels×3.2', on: 'w448580564', note: 'Tallest mapped campus building: the Instituto para a Bio-Sustentabilidade (IB-S, 2015), building:levels=6 in OSM. No published building heights for the campus (uminho.pt, pt/en Wikipedia checked 2026-09-29); the other schools carry 1-4 levels in OSM. The campus area itself is flat.' },
+  'dmaria-ii': {
+    m: 13, source: 'estimate', on: 'w473728998',
+    note: 'North-west wing of the 1964 Liceu (the only block OSM maps), three storeys. The original school had 2960 m² covered and 7060 m² of floors (asap-ehc.tecnico.ulisboa.pt escola id 28): about 2.4 floors on average, so three storeys at most; 3 x 3.8 m school storeys + parapet ≈ 13 m.',
+    parts: { 'ms:1': [12, 'Parque Escolar blocks (2011), two to three storeys; MS footprint only.'], 'ms:2': [12, 'Parque Escolar blocks (2011), two to three storeys; MS footprint only.'] },
+  },
   'sao-frutuoso': { m: 9, source: 'estimate', note: 'placeholder' },
-  'diogo-sousa': { m: 10, source: 'estimate', on: 'w108351556', note: 'placeholder' },
+  'diogo-sousa': {
+    m: 12.8, source: 'osm building:levels×3.2', on: 'w444600885',
+    note: 'The museum (2007, Carlos Guimarães and Luís Soares Carneiro) has three bodies: technical/services, cafeteria and public area (maddiogosousa.gov.pt/edificio). The tallest is the four-level block w444600885 (building:levels=4), read as the technical sector. The exhibition body w108351556 is set to 10 m: OSM says 2 levels, but the exhibition halls are double-height (estimate).',
+    parts: { w108351556: [10, 'Two-level exhibition body with tall halls, about 2 x 4.5 m + parapet.'] },
+  },
   coimbras: { m: 17, source: 'estimate', note: 'placeholder' },
   congregados: { m: 30, source: 'estimate', note: 'placeholder' },
-  'nogueira-silva': { m: 14, source: 'estimate', note: 'placeholder' },
+  'nogueira-silva': {
+    m: 13, source: 'estimate', on: 'synth:nogueira-house', main_m: 0, main_source: 'flat',
+    note: 'The house (built 1950s-60s, architect Raul Rodrigues de Lima, per webraga.pt) is the part of the OSM plot south of the garden; three storeys on Avenida Central with a pitched roof, about 13 m. No published height. The plot and garden are flat.',
+  },
   'sao-marcos': { m: 22, source: 'estimate', note: 'placeholder' },
   'avenida-central': { m: 8, source: 'estimate', on: 'w108153350', note: 'Tallest element on the avenue is the 1868 iron bandstand (Coreto da Avenida); garden itself is flat.' },
 };

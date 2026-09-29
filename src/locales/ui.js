@@ -99,4 +99,10 @@ export const messages = {
   'Подробнее': ['Mais detalhes', 'More details'],
   // fly mode keys (src/fly.js)
   'WASD — полёт · Q/E — высота · Shift — быстрее': ['WASD — voar · Q/E — altura · Shift — mais rápido', 'WASD — fly · Q/E — height · Shift — faster'],
+  // aircraft route card (src/liveair.js, api/route.js)
+  'Открыть трек ↗': ['Abrir o trajeto ↗', 'Open track ↗'],
+  'маршрут: ищем…': ['rota: a procurar…', 'route: looking up…'], 'маршрут неизвестен': ['rota desconhecida', 'route unknown'],
+  'набор высоты': ['a subir', 'climbing'], 'снижение': ['a descer', 'descending'], 'ровный полёт': ['voo nivelado', 'level flight'],
+  'км/ч': ['km/h', 'km/h'], 'км': ['km', 'km'], 'курс': ['rumo', 'track'], 'до': ['até', 'to'],
+  'нажмите — маршрут и трек': ['clique para ver a rota e o trajeto', 'click for the route and track'],
 };

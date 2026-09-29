@@ -1,0 +1,11 @@
+{
+  "osm": {
+    "type": "way",
+    "id": 363528976,
+    "height_m": 22,
+    "height_source": "estimate"
+  },
+  "lat": 41.54889,
+  "lon": -8.42329,
+  "model": "hospital-church"
+}

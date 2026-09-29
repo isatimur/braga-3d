@@ -2,12 +2,17 @@
 // Also adds an `osm` field to each landmark in data/landmarks.json.
 // Node 22, no dependencies. Run: node scripts/fetch-footprints.mjs
 //
+// Partial run: node scripts/fetch-footprints.mjs --only=id1,id2
+//   fetches only those landmarks, replaces only their keys in data/footprints.json
+//   (the other entries are copied unchanged), does NOT write data/landmarks.json and
+//   writes data/new/<id>.osm.json ({osm, lat, lon, model}) for a later merge instead.
+//
 // The OSM object for each landmark was picked by hand from an Overpass search
 // (name / historic / place_of_worship / stadium / building within 300 m).
 // The script re-checks each pick: the object must exist, carry the expected
 // name, lie near the landmark coordinate, and (when tagged) its Wikidata item
 // must point back to it (P402) or sit within 400 m of it (P625).
-import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { overpass, wait, toXY, toLL, r6, ringArea, centroid, minAreaRect, tagHeight, simplifyRing } from './geo-lib.mjs';
@@ -31,6 +36,14 @@ const OUT = join(ROOT, 'data', 'footprints.json');
 //            the outline (default: false only for the squares, gardens and the avenue).
 //  as        {key: {tag, h, name}}: give an untagged part a tag, height and name.
 //  paths     true = add the footways inside the site as 'path' parts.
+//  holes     true = relation parts keep their inner rings as `holes` (courtyards).
+//  synth     [{id, from, nodes, tag, name}]: a part cut from OSM way `from` along its own
+//            nodes (listed in way order); for a building mapped only as a larger plot.
+//            With `outline: true` it also becomes the landmark outline (bearing, extent).
+//  ms        {minArea, h, name}: add the Microsoft ML building footprints
+//            (data/.cache/ms-raw/bbox.json, see fetch-ms-buildings.mjs) whose centre is
+//            inside the site and whose area is >= minArea m², for blocks OSM does not map.
+//  model     proposed model type, written to data/new/<id>.osm.json by --only runs.
 // ---------------------------------------------------------------------------
 const CFG = {
   'bom-jesus': {
@@ -137,42 +150,53 @@ const CFG = {
     // inside it. The campus is ~815 x 763 m, so candidates are fetched within 650 m.
     main: 'w165563981', name: /Campus de Gualtar/, site: { buffer: 0 }, fetchR: 650, paths: true,
     cats: ['building', 'pitch', 'garden', 'square', 'water', 'monument'], include: ['n698815548'],
-    exclude_outline: false,
+    as: { n698815548: { tag: 'monument', h: 4, name: 'Prometeu (José Rodrigues, 1992)' } },
+    exclude_outline: false, model: 'university',
   },
   'dmaria-ii': {
-    // Main = the school site (amenity=school); OSM maps one school building inside it.
+    // Main = the school site (amenity=school). OSM maps only the north-west wing (w473728998);
+    // the two other blocks of the school exist only in the Microsoft ML footprints (`ms`).
     main: 'w21372352', name: /Dona Maria II/, site: { buffer: 0 }, paths: true,
-    cats: ['building', 'pitch', 'garden'], exclude_outline: false,
+    cats: ['building', 'pitch', 'garden'], exclude_outline: false, model: 'school',
+    ms: { minArea: 1000, h: 12, name: 'School block (Microsoft ML footprint)' },
   },
   'sao-frutuoso': {
     // Main = the Visigothic chapel. Site = the religious precinct w1329661274 with the church of
     // São Jerónimo de Real (the former Franciscan church) and the Convento de São Francisco.
     main: 'w159104082', name: /São Frutuoso/, site: { area: 'w1329661274', buffer: 0 },
-    cats: ['building', 'church', 'garden'], include: ['w1329661274', 'w131049722', 'w159104084'],
+    cats: ['building', 'church', 'garden'], include: ['w1329661274', 'w131049722', 'w159104084'], model: 'visigothic',
   },
   'diogo-sousa': {
     // Main = the museum site (tourism=museum area): exhibition building, wings and gardens.
     main: 'w104691209', name: /Diogo de Sousa/, site: { buffer: 0 },
-    cats: ['building', 'garden', 'monument'], exclude_outline: false,
+    cats: ['building', 'garden', 'monument'], exclude_outline: false, model: 'museum-roman',
   },
   coimbras: {
-    // Main = the chapel (Capela de Nossa Senhora da Conceição); the Casa dos Coimbras shares its Wikidata item.
-    main: 'w223138080', name: /Conceição/, site: { buffer: 0 }, cats: [], include: ['w146342996'],
+    // Main = the chapel (Capela de Nossa Senhora da Conceição); the Casa dos Coimbras shares its
+    // Wikidata item. The crenellated tower w1343853590 and the small annex w1343853591 stand at
+    // the chapel's south-west end.
+    main: 'w223138080', name: /Conceição/, site: { buffer: 0 }, cats: [],
+    include: ['w146342996', 'w1343853590', 'w1343853591'], model: 'chapel-manueline',
   },
   congregados: {
     // Main = the basilica; the convent / college is the UMinho area w121590125 beside it.
     main: 'w121590117', name: /Congregados/, site: { buffer: 2 }, cats: ['building'], include: ['w121590125'],
-    as: { w121590125: { tag: 'building', h: 14, name: 'Convento dos Congregados' } },
+    as: { w121590125: { tag: 'building', h: 14, name: 'Convento dos Congregados' } }, model: 'basilica-twin',
   },
   'nogueira-silva': {
-    // OSM tags the whole plot (house + garden) as one building=yes way; the garden is a separate way inside it.
+    // OSM tags the whole plot (house + garden) as one building=yes way; the garden w952323813 is a
+    // separate way inside it. The house is the plot south of the garden's south edge (nodes
+    // 8814524693-8814524694): synthesized from the plot's own nodes and used as the outline.
+    // The plot itself becomes a flat 'site' part.
     main: 'w219034582', name: /Nogueira da Silva/, site: { buffer: 0 }, cats: ['garden', 'building', 'water', 'monument'],
+    synth: [{ id: 'synth:nogueira-house', from: 'w219034582', nodes: [8814524693, 2076021399, 2076025358, 8814524694], tag: 'building', name: 'Casa Nogueira da Silva', outline: true }],
+    as: { w219034582: { tag: 'site', h: 0, name: 'Museu Nogueira da Silva (plot)' } }, model: 'house-museum',
   },
   'sao-marcos': {
-    // Main = the church; parts: the hospital wings (r8340055, w146343003) and the former hospital
-    // block now the Vila Galé hotel (r17978905).
-    main: 'w363528976', name: /São Marcos/, site: { buffer: 2 }, cats: ['building'],
-    include: ['r8340055', 'w146343003', 'r17978905'],
+    // Main = the church; parts: the former hospital block, now the Vila Galé hotel (r17978905,
+    // with its courtyard as a hole) and the later hospital wings to the south (r8340055, w146343003).
+    main: 'w363528976', name: /São Marcos/, site: { buffer: 2 }, cats: ['building'], holes: true,
+    include: ['r8340055', 'w146343003', 'r17978905'], model: 'hospital-church',
   },
 };
 
@@ -184,6 +208,23 @@ import { HEIGHTS } from './landmark-heights.mjs';
 const landmarks = JSON.parse(readFileSync(LANDMARKS, 'utf8'));
 const missingCfg = landmarks.filter(l => !CFG[l.id]).map(l => l.id);
 if (missingCfg.length) throw new Error(`No config for: ${missingCfg.join(', ')}`);
+const onlyArg = process.argv.find(a => a.startsWith('--only='));
+const ONLY = onlyArg ? onlyArg.slice(7).split(',').filter(Boolean) : null;
+if (ONLY) {
+  const unknown = ONLY.filter(id => !landmarks.some(l => l.id === id));
+  if (unknown.length) throw new Error(`--only: unknown landmark ids ${unknown.join(', ')}`);
+}
+// The landmarks this run builds (all, or the --only subset).
+const todo = ONLY ? landmarks.filter(l => ONLY.includes(l.id)) : landmarks;
+const MS_RAW = join(ROOT, 'data', '.cache', 'ms-raw', 'bbox.json');
+let msRaw = null;
+const msPolys = () => {
+  if (!msRaw) {
+    if (!existsSync(MS_RAW)) throw new Error(`${MS_RAW} missing: run node scripts/fetch-ms-buildings.mjs --fetch first`);
+    msRaw = JSON.parse(readFileSync(MS_RAW, 'utf8')).polys;
+  }
+  return msRaw;
+};
 
 const keyOf = el => el.type[0] + el.id;
 const parseKey = k => ({ type: { w: 'way', r: 'relation', n: 'node' }[k[0]], id: Number(k.slice(1)) });
@@ -191,8 +232,9 @@ const dist = (a, b) => { const p = toXY(a), q = toXY(b); return Math.hypot(p[0] 
 
 // ---- 1. Download: all explicit objects + all candidate parts around each landmark ----
 const explicit = new Set();
-for (const c of Object.values(CFG)) {
-  [c.main, c.site.area, c.gateWall, c.stands, ...(c.include || [])].filter(Boolean).forEach(k => explicit.add(k));
+for (const l of todo) {
+  const c = CFG[l.id];
+  [c.main, c.site.area, c.gateWall, c.stands, ...(c.include || []), ...(c.synth || []).map(s => s.from)].filter(Boolean).forEach(k => explicit.add(k));
 }
 const byType = { n: [], w: [], r: [] };
 for (const k of explicit) byType[k[0]].push(k.slice(1));
@@ -200,7 +242,7 @@ let q = '[out:json][timeout:180];(';
 if (byType.n.length) q += `node(id:${byType.n.join(',')});`;
 if (byType.w.length) q += `way(id:${byType.w.join(',')});`;
 if (byType.r.length) q += `relation(id:${byType.r.join(',')});`;
-for (const l of landmarks) {
+for (const l of todo) {
   const R = CFG[l.id].fetchR || (CFG[l.id].site.radius ? CFG[l.id].site.radius + 50 : l.id === 'bom-jesus' ? 700 : l.id === 'avenida-central' ? 700 : 300);
   const a = `around:${R},${l.lat},${l.lon}`;
   q += `wr(${a})["building"];way(${a})["highway"="steps"];way(${a})["highway"="footway"]["name"~"Escad"];`;
@@ -242,7 +284,9 @@ function geomOf(el) {
   const outers = (el.members || []).filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry?.length >= 2)
     .map(m => m.geometry.map(g => [g.lat, g.lon]));
   const joined = joinRings(outers);
-  return { rings: joined.filter(isClosed), lines: joined.filter(r => !isClosed(r)) };
+  const inners = joinRings((el.members || []).filter(m => m.type === 'way' && m.role === 'inner' && m.geometry?.length >= 2)
+    .map(m => m.geometry.map(g => [g.lat, g.lon]))).filter(isClosed);
+  return { rings: joined.filter(isClosed), lines: joined.filter(r => !isClosed(r)), inners };
 }
 const allPts = g => [...g.rings.flat(), ...g.lines.flat(), ...(g.point ? [g.point] : [])];
 const center = g => (g.rings.length ? centroid(g.rings.reduce((a, b) => (Math.abs(ringArea(b)) > Math.abs(ringArea(a)) ? b : a))) :
@@ -340,7 +384,7 @@ async function checkWikidata(qid, key, near) {
 // ---- 4. Build each landmark ----
 const out = {};
 const report = [];
-for (const l of landmarks) {
+for (const l of todo) {
   const cfg = CFG[l.id];
   const main = els.get(cfg.main);
   if (!main) throw new Error(`${l.id}: main object ${cfg.main} not returned by Overpass`);
@@ -363,12 +407,27 @@ for (const l of landmarks) {
   const dMain = dist(mainPoint, [l.lat, l.lon]);
   if (dMain > 250) throw new Error(`${l.id}: main object is ${Math.round(dMain)} m from the landmark coordinate`);
 
+  // cfg.synth: rings cut from an OSM way along its own nodes. One may replace the outline.
+  const mainRing = outline;
+  const synthRings = (cfg.synth || []).map(s => {
+    const w = els.get(s.from);
+    if (!w?.nodes) throw new Error(`${l.id}: synth source ${s.from} missing or without node ids`);
+    const ring = s.nodes.map(n => {
+      const i = w.nodes.indexOf(n);
+      if (i < 0) throw new Error(`${l.id}: synth node ${n} is not on ${s.from}`);
+      return [w.geometry[i].lat, w.geometry[i].lon];
+    });
+    return { s, ring: ring.concat([ring[0]]) };
+  });
+  const synthOutline = synthRings.find(x => x.s.outline);
+  if (synthOutline) outline = synthOutline.ring;
+
   // Principal axis: of the main building, or of `axisFrom` (e.g. the stadium stands).
   const axisPts = cfg.axisFrom ? allPts(geomOf(els.get(cfg.axisFrom))) : outline;
   const rect = minAreaRect(axisPts);
 
-  // Site polygons for part collection.
-  let sitePolys = [outline.map(toXY)], buffer = cfg.site.buffer ?? 0;
+  // Site polygons for part collection (the main object's ring, even when a synth ring is the outline).
+  let sitePolys = [mainRing.map(toXY)], buffer = cfg.site.buffer ?? 0;
   if (cfg.site.area) sitePolys = geomOf(els.get(cfg.site.area)).rings.map(r => r.map(toXY));
   const radius = cfg.site.radius;
 
@@ -395,10 +454,13 @@ for (const l of landmarks) {
     const t = el.tags || {};
     const cat = catOverride || categoryOf(t);
     const ph = partHeight(t, cat);
-    const geoms = [...g.rings.map(r => ({ pts: ringOut(r), closed: true })), ...g.lines.map(r => ({ pts: round(r), closed: false })),
+    // cfg.holes: each inner ring goes to the outer ring that contains its first point.
+    const holesOf = r => (cfg.holes && g.inners?.length ? g.inners.filter(h => pointInPoly(toXY(h[0]), r.map(toXY))).map(ringOut) : []);
+    const geoms = [...g.rings.map(r => ({ pts: ringOut(r), closed: true, holes: holesOf(r) })), ...g.lines.map(r => ({ pts: round(r), closed: false })),
       ...(g.point ? [{ pts: round([g.point]), closed: false }] : [])];
     for (const gg of geoms) {
       const p = { tag: cat, osm: keyOf(el), pts: gg.pts, closed: gg.closed, height_m: ph.h, height_source: ph.src };
+      if (gg.holes?.length) p.holes = gg.holes;
       if (t.name || nameOverride) p.name = nameOverride || t.name;
       if (t.layer) p.layer = Number(t.layer);
       parts.push(p);
@@ -407,7 +469,7 @@ for (const l of landmarks) {
   if (cfg.gateWall) {
     pushPart(main, { rings: [outline.concat([outline[0]])], lines: [] }, 'gate');
   } else {
-    pushPart(main, { rings: [outline], lines: [] });
+    pushPart(main, { rings: [mainRing], lines: [], inners: mg.inners });
   }
   if (cfg.stands) {
     const st = els.get(cfg.stands);
@@ -422,6 +484,24 @@ for (const l of landmarks) {
     pushPart(el, geomOf(el));
   }
   for (const k of pathKeys) if (!partKeys.has(k)) pushPart(els.get(k), geomOf(els.get(k)), 'path');
+  // Synthesized parts carry osm: null and a `synth` id; height from HEIGHTS (`on`) or the default.
+  for (const { s, ring } of synthRings) {
+    const cat = s.tag || 'building';
+    parts.push({ tag: cat, osm: null, synth: s.id, source: `cut from OSM ${s.from}`, pts: ringOut(ring), closed: true,
+      height_m: PART_DEFAULT[cat] ?? 0, height_source: 'estimate', ...(s.name ? { name: s.name } : {}) });
+  }
+  // cfg.ms: Microsoft ML footprints inside the site for blocks OSM does not map.
+  if (cfg.ms) {
+    let n = 0;
+    for (const p of msPolys()) {
+      if (Math.abs(ringArea(p.r)) < cfg.ms.minArea) continue;
+      if (!sitePolys.some(sp => pointInPoly(toXY(centroid(p.r)), sp))) continue;
+      const pts = simplifyRing(p.r, 0.5).map(([a, b]) => [r6(a), r6(b)]);
+      parts.push({ tag: 'building', osm: null, synth: `ms:${++n}`, source: 'Microsoft Global ML Building Footprints (ODbL)', pts, closed: true,
+        height_m: cfg.ms.h, height_source: 'estimate', name: cfg.ms.name });
+    }
+    if (!n) throw new Error(`${l.id}: cfg.ms found no Microsoft footprint inside the site`);
+  }
   // cfg.as: untagged member ways (e.g. a multipolygon outer) get a tag, a name and an estimated height.
   for (const [k, o] of Object.entries(cfg.as || {})) for (const p of parts) if (p.osm === k) {
     p.tag = o.tag; p.height_m = o.h; p.height_source = 'estimate'; if (o.name) p.name = o.name;
@@ -440,7 +520,7 @@ for (const l of landmarks) {
   // main part; for open sites (garden, square, stadium site) it is a named part and
   // the site polygon itself stays flat.
   const tallKey = cfgH?.on || cfg.main;
-  const tallParts = parts.filter(p => p.osm === tallKey && (!cfgH?.onTag || p.tag === cfgH.onTag));
+  const tallParts = parts.filter(p => (p.osm === tallKey || p.synth === tallKey) && (!cfgH?.onTag || p.tag === cfgH.onTag));
   if (!tallParts.length) throw new Error(`${l.id}: tallest element ${tallKey} is not among the parts`);
   for (const p of tallParts) { p.height_m = height; p.height_source = hsrc; }
   if (tallKey !== cfg.main) {
@@ -456,6 +536,12 @@ for (const l of landmarks) {
   await wait(300);
 
   const osmIds = [...new Set([cfg.main, cfg.stands, ...parts.map(p => p.osm)].filter(Boolean))];
+  // Per-part height overrides from HEIGHTS[id].parts: {osm key or synth id: [m, reasoning]}.
+  for (const [k, [m]] of Object.entries(cfgH?.parts || {})) {
+    const hit = parts.filter(p => p.osm === k || p.synth === k);
+    if (!hit.length) throw new Error(`${l.id}: HEIGHTS parts key ${k} is not among the parts`);
+    for (const p of hit) { p.height_m = m; p.height_source = 'estimate'; }
+  }
   out[l.id] = {
     osm: { ...parseKey(cfg.main), name: mt.name, wikidata: mt.wikidata || null },
     verify,
@@ -482,7 +568,23 @@ for (const l of landmarks) {
 }
 
 mkdirSync(dirname(OUT), { recursive: true });
-writeFileSync(OUT, JSON.stringify(out));
-writeFileSync(LANDMARKS, JSON.stringify(landmarks, null, 2) + '\n');
-console.log(`Wrote ${OUT} (${(JSON.stringify(out).length / 1024).toFixed(0)} KB) and updated landmarks.json`);
+if (ONLY) {
+  // Keep every other entry as it is; replace only the --only ids (key order follows landmarks.json).
+  const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : {};
+  const merged = {};
+  for (const l of landmarks) if (out[l.id] || prev[l.id]) merged[l.id] = out[l.id] || prev[l.id];
+  for (const k of Object.keys(prev)) if (!merged[k]) merged[k] = prev[k];
+  writeFileSync(OUT, JSON.stringify(merged));
+  const NEW = join(ROOT, 'data', 'new');
+  mkdirSync(NEW, { recursive: true });
+  for (const l of todo) {
+    const o = { osm: l.osm, lat: l.lat, lon: l.lon, model: CFG[l.id].model || l.model };
+    writeFileSync(join(NEW, `${l.id}.osm.json`), JSON.stringify(o, null, 2) + '\n');
+  }
+  console.log(`Wrote ${OUT} (${(JSON.stringify(merged).length / 1024).toFixed(0)} KB; replaced ${todo.map(l => l.id).join(', ')}) and data/new/<id>.osm.json; landmarks.json untouched`);
+} else {
+  writeFileSync(OUT, JSON.stringify(out));
+  writeFileSync(LANDMARKS, JSON.stringify(landmarks, null, 2) + '\n');
+  console.log(`Wrote ${OUT} (${(JSON.stringify(out).length / 1024).toFixed(0)} KB) and updated landmarks.json`);
+}
 for (const r of report) console.log(r);

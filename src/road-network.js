@@ -77,9 +77,17 @@ export const LANE_M = 3; // nominal lane width (m)
 const MAX_STEP = 3; // world units between points
 const ROAD_TUNNELS = new Set(['yes', 'avalanche_protector', 'flooded']);
 
-// clearance of a deck (top of the road surface) over what it spans, in m
-const CLEAR_WATER = { river: 5.5, stream: 3.8, canal: 4.5 };
-const CLEAR_WAY = 6.4; // 5.1 m headroom + 1.3 m deck, per layer
+// clearance of a deck (top of the road surface) over what it spans, in m.
+// Water: over the terrain model, which has no river channel (the Este and
+// the Torto run 2-4 m below their banks in reality, the DEM shows < 1 m):
+// a deck at bank level plus a visible gap over the water surface, and no
+// hump in a flat street. A way: over that way's own surface (a ramp or a
+// deck below counts at its real height), 5.1 m headroom + 1.3 m deck.
+export const CLEAR_WATER = { river: 2.8, stream: 2.2, canal: 2.4, other: 2.2 };
+export const CLEAR_WAY = 6.4;
+// a tunnel chain shorter than this is an underpass under a square or a
+// building: drawn as an open road, no portals, never hidden
+export const MIN_TUNNEL_M = 12;
 
 const memo = new WeakMap();
 
@@ -186,6 +194,26 @@ function build(roads, project, heightAt) {
   for (let i = 0; i < NP; i++) G[i] = heightAt(PX[i], PZ[i]);
   const Y = Float32Array.from(G);
   const HID = new Uint8Array(NP);
+  // the ground's cross slope at each point (rise per world unit to the left
+  // of the way's direction), measured over the way's half width: on a
+  // hillside the surface and the vehicles follow it (surfaceY below)
+  const SL = new Float32Array(NP);
+  for (const w of ways) {
+    const d = Math.max(0.75, (w.widthM / 2) * S);
+    const end = w.start + w.n - 1;
+    for (let i = w.start; i <= end; i++) {
+      const a = Math.max(w.start, i - 1);
+      const b = Math.min(end, i + 1);
+      const tx = PX[b] - PX[a];
+      const tz = PZ[b] - PZ[a];
+      const L = Math.hypot(tx, tz);
+      if (L < 1e-6) continue;
+      const lx = tz / L;
+      const lz = -tx / L;
+      const s = (heightAt(PX[i] + lx * d, PZ[i] + lz * d) - heightAt(PX[i] - lx * d, PZ[i] - lz * d)) / (2 * d);
+      SL[i] = Math.max(-0.6, Math.min(0.6, s));
+    }
+  }
 
   // ---- junction nodes
   let nNodes = roads.nodes || 0;
@@ -207,6 +235,32 @@ function build(roads, project, heightAt) {
     if (!w.jp.length) return -1;
     return end ? (w.jp.at(-2) === w.start + w.n - 1 ? w.jp.at(-1) : -1) : w.jp[0] === w.start ? w.jp[1] : -1;
   };
+  // short tunnel chains (tunnel ways joined end to end) are open underpasses
+  {
+    const seen = new Uint8Array(ways.length);
+    ways.forEach((w0, w0i) => {
+      if (!w0.tunnel || seen[w0i]) return;
+      const chain = [w0i];
+      seen[w0i] = 1;
+      let len = 0;
+      for (let q = 0; q < chain.length; q++) {
+        const w = ways[chain[q]];
+        len += w.len;
+        for (let k = 1; k < w.jp.length; k += 2) {
+          const nw = nodeWays[w.jp[k]];
+          for (let m = 0; m < nw.length; m += 2) {
+            const v = nw[m];
+            if (!seen[v] && ways[v].tunnel) {
+              seen[v] = 1;
+              chain.push(v);
+            }
+          }
+        }
+      }
+      for (const v of chain) ways[v].chainLen = len;
+      if (len < MIN_TUNNEL_M * S) for (const v of chain) ways[v].tunnel = false;
+    });
+  }
 
   // ---- crossings: what each candidate bridge spans (other streets, rails, rivers)
   const CELL = 20;
@@ -216,7 +270,9 @@ function build(roads, project, heightAt) {
   for (let fi = 0; fi < feats.length; fi++) {
     const f = feats[fi];
     if (!Array.isArray(f.pts) || f.pts.length < 2) continue;
-    if (f.t?.tu) continue; // what runs underground is not in the way
+    // what runs underground is not in the way (a short underpass is)
+    const own = wayOfF.get(fi);
+    if (own !== undefined ? ways[own].tunnel : f.t?.tu) continue;
     let prev = project(f.pts[0][0], f.pts[0][1]);
     for (let i = 1; i < f.pts.length; i++) {
       const p = project(f.pts[i][0], f.pts[i][1]);
@@ -275,6 +331,9 @@ function build(roads, project, heightAt) {
             const ly2 = other.t?.ly || 0;
             const isWater = other.kind === 'water';
             if (ow2 && (ow2.tagBridge || ly2 > 0) && ly2 >= w.ly) continue; // runs above or beside
+            // a way joined to this one (a stair or ramp winding under its
+            // own footbridge) would lift it again every pass
+            if (ow2 && ow2.jp.some((v, k) => k % 2 === 1 && w.jp.some((u, m) => m % 2 === 1 && u === v))) continue;
             if (!isWater && ly2 >= w.ly && !w.tagBridge) continue;
             out.push({ s: along, x: ax + u * rx, z: az + u * rz, fi: s[4], way: s[5], water: isWater ? other.t?.ww || 'stream' : null, ly: ly2, u2: v, seg: si });
           }
@@ -325,8 +384,9 @@ function build(roads, project, heightAt) {
     const y1 = G[b] + (n1 >= 0 ? NL[n1] : 0);
     const slope = w.cls.slope;
     const need = w.crossings.map((c) => {
-      const base = c.way >= 0 && ways[c.way].bridge ? wayY(c.way, c.x, c.z) : heightAt(c.x, c.z);
-      const clr = c.water ? CLEAR_WATER[c.water] ?? 4 : CLEAR_WAY * Math.max(1, w.ly - Math.max(0, c.ly));
+      // what is under it, at its own surface (a deck or a ramp below counts)
+      const base = c.way >= 0 ? Math.max(wayY(c.way, c.x, c.z), heightAt(c.x, c.z)) : heightAt(c.x, c.z);
+      const clr = c.water ? CLEAR_WATER[c.water] ?? CLEAR_WATER.other : CLEAR_WAY;
       // flat over what it spans, at least one point spacing so the deck
       // between two points never dips under the clearance
       const flat = Math.max(MAX_STEP, (c.way >= 0 ? ways[c.way].widthM / 2 + 3 : c.water === 'river' ? 10 : 3) * S);
@@ -385,6 +445,57 @@ function build(roads, project, heightAt) {
   const tunnels = [];
   const portals = [];
   const INSIDE = 4 * S; // m inside the portal where a vehicle disappears
+  const HOOD = 11 * S; // the longest portal hood (road-structures.js)
+  // Tunnel roads stay at the terrain's height (the terrain has no cuttings),
+  // so a street at ground level often runs right over or beside the mouth
+  // (an underpass under a roundabout or a motorway). `clear`: how far into
+  // the tunnel the portal's hood can reach before it meets such a street;
+  // the vehicles vanish no later than there.
+  const PCELL = 8;
+  const pgrid = new Map();
+  ways.forEach((w, wi) => {
+    if (w.tunnel || !w.car) return;
+    for (let i = w.start; i < w.start + w.n; i++) {
+      if (Y[i] - G[i] > 3 * S) continue; // a deck passes over the hood
+      const key = Math.floor(PX[i] / PCELL) * 100003 + Math.floor(PZ[i] / PCELL);
+      let c = pgrid.get(key);
+      if (!c) pgrid.set(key, (c = []));
+      c.push(i, wi);
+    }
+  });
+  function clearOf(w, x, z, dx, dz) {
+    const nodes = new Set();
+    for (let k = 1; k < w.jp.length; k += 2) nodes.add(w.jp[k]);
+    const halfW = (w.widthM / 2 + 1.7) * S;
+    let clear = HOOD;
+    const r = HOOD + 12 * S;
+    const joined = new Map();
+    for (let gx = Math.floor((x - r) / PCELL); gx <= Math.floor((x + r) / PCELL); gx++) {
+      for (let gz = Math.floor((z - r) / PCELL); gz <= Math.floor((z + r) / PCELL); gz++) {
+        const c = pgrid.get(gx * 100003 + gz);
+        if (!c) continue;
+        for (let k = 0; k < c.length; k += 2) {
+          const i = c[k];
+          const oi = c[k + 1];
+          let j = joined.get(oi);
+          if (j === undefined) {
+            const o = ways[oi];
+            j = o.jp.some((v, m) => m % 2 === 1 && nodes.has(v));
+            joined.set(oi, j);
+          }
+          if (j) continue; // the approach itself
+          const rx = PX[i] - x;
+          const rz = PZ[i] - z;
+          const u = rx * dx + rz * dz;
+          const v = Math.abs(-rx * dz + rz * dx);
+          const oh = (ways[oi].widthM / 2) * S;
+          if (u < -1 * S || u > HOOD + oh || v > halfW + oh) continue;
+          clear = Math.min(clear, Math.max(0, u - oh - 0.5 * S));
+        }
+      }
+    }
+    return clear;
+  }
   ways.forEach((w, wi) => {
     if (!w.tunnel) return;
     tunnels.push(wi);
@@ -393,11 +504,7 @@ function build(roads, project, heightAt) {
       // a portal where no other tunnel piece continues
       return !(node >= 0 && nodeWays[node].some((v, k) => k % 2 === 0 && v !== wi && ways[v].tunnel));
     });
-    for (let i = w.start; i < w.start + w.n; i++) {
-      const s = PC[i];
-      const d = Math.min(open[0] ? s : Infinity, open[1] ? w.len - s : Infinity);
-      if (d > INSIDE) HID[i] = 1;
-    }
+    const inside = [INSIDE, INSIDE];
     for (const end of [0, 1]) {
       if (!open[end]) continue;
       const i = end ? w.start + w.n - 1 : w.start;
@@ -407,7 +514,13 @@ function build(roads, project, heightAt) {
       const L = Math.hypot(dx, dz) || 1;
       dx /= L;
       dz /= L;
-      portals.push({ way: wi, x: PX[i], z: PZ[i], y: Y[i], dx, dz, widthM: w.widthM, name: w.t.name || '' });
+      const clear = clearOf(w, PX[i], PZ[i], dx, dz);
+      inside[end] = Math.min(INSIDE, clear);
+      portals.push({ way: wi, x: PX[i], z: PZ[i], y: Y[i], dx, dz, widthM: w.widthM, name: w.t.name || '', clear });
+    }
+    for (let i = w.start; i < w.start + w.n; i++) {
+      const s = PC[i];
+      if ((!open[0] || s > inside[0]) && (!open[1] || w.len - s > inside[1])) HID[i] = 1;
     }
   });
   const hiddenFeature = new Uint8Array(feats.length);
@@ -443,8 +556,15 @@ function build(roads, project, heightAt) {
     G,
     Y,
     HID,
+    SL,
     CAP,
     NL,
+    // the surface at point i, `left` world units left of the way's direction:
+    // the way's height, or the hillside where it rises above it
+    surfaceY(i, left) {
+      const h = G[i] + SL[i] * left;
+      return h > Y[i] ? h : Y[i];
+    },
     nNodes,
     nodeWays,
     bridges,
@@ -752,6 +872,10 @@ export function createFlow(net, { N = 600, rnd = Math.random, blocked = null } =
     const dv = off - vo[i];
     const r = 1.4 * S * dt;
     vo[i] += dv > r ? r : dv < -r ? -r : dv;
+    // keep right: on a two-way road never left of the innermost lane's
+    // centre (a vehicle coming off a one-way carriageway, whose lanes lie
+    // around the way line, steps over at the junction)
+    if (dTwo[d] && vo[i] < 0.5 * dLaneW[d]) vo[i] = 0.5 * dLaneW[d];
     return true;
   }
 
@@ -773,7 +897,11 @@ export function createFlow(net, { N = 600, rnd = Math.random, blocked = null } =
     const o = vo[i];
     out.x = X[a] + (X[b] - X[a]) * u - hz * o;
     out.z = Z[a] + (Z[b] - Z[a]) * u + hx * o;
-    out.y = Y[a] + (Y[b] - Y[a]) * u;
+    // on the surface under the wheels: the way's height, or the hillside
+    // where the ground rises across the road (left of the way = -o forward)
+    const left = st > 0 ? -o : o;
+    const ya = net.surfaceY(a, left);
+    out.y = ya + (net.surfaceY(b, left) - ya) * u;
     out.hidden = u < 0.5 ? HID[a] : HID[b];
     // the body turns smoothly through the polyline's joints
     if (dt > 0) {
