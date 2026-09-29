@@ -1,0 +1,49 @@
+- generic [ref=e2]:
+  - generic "Three-dimensional map of Braga" [ref=e3]
+  - banner:
+    - heading "Braga" [level=1]
+    - paragraph: Interactive 3D map of landmarks
+    - paragraph
+  - generic [ref=e4]:
+    - group "Viewing modes" [ref=e5]:
+      - button "Cinema" [ref=e6] [cursor=pointer]
+    - group "Menu" [ref=e9]:
+      - button "History" [ref=e11] [cursor=pointer]
+      - combobox "Language" [ref=e16] [cursor=pointer]:
+        - option "PT"
+        - option "EN" [selected]
+        - option "RU"
+      - button "Legend" [ref=e18] [cursor=pointer]
+      - button "Share" [ref=e20] [cursor=pointer]
+      - group "Time of day" [ref=e22]:
+        - generic [ref=e23]: "Time:"
+        - button "morning" [ref=e24] [cursor=pointer]
+        - generic [aria-hidden] [ref=e25]: ·
+        - button "day" [ref=e26] [cursor=pointer]
+        - generic [aria-hidden] [ref=e27]: ·
+        - button "sunset" [pressed] [ref=e28] [cursor=pointer]
+        - generic [aria-hidden] [ref=e29]: ·
+        - button "night" [ref=e30] [cursor=pointer]
+      - 'button "Effects: on" [pressed] [ref=e32] [cursor=pointer]'
+  - navigation "Places and routes" [ref=e33]:
+    - tabpanel "Places" [ref=e34]:
+      - group "Filter by category" [ref=e35]
+      - list [ref=e36]
+  - button "Turn the map to face north" [ref=e37] [cursor=pointer]:
+    - img [aria-hidden] [ref=e38]:
+      - generic [ref=e40]: "N"
+  - paragraph: Drag to rotate · scroll to zoom · select a marker for details
+  - paragraph: WASD — fly · Q/E — height · Shift — faster
+  - generic [aria-hidden]:
+    - generic: Q
+    - generic: W
+    - generic: E
+    - generic: A
+    - generic: S
+    - generic: D
+    - generic: Shift
+    - generic: Alt
+  - progressbar "Loading map" [ref=e44]:
+    - generic [ref=e45]:
+      - paragraph [ref=e46]: Braga
+      - paragraph [ref=e49]: Raising the buildings

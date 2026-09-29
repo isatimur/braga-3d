@@ -20,5 +20,10 @@ export const HEIGHTS = {
   'fonte-idolo': { m: 5, source: 'estimate', note: 'Single-storey interpretation centre built over the fountain (2001-2004); no published height.' },
   tibaes: { m: 28, source: 'estimate', on: 'w170604958', main_m: 14, main_source: 'estimate', note: 'Church bell towers; monastery wings ~14 m (3 storeys). No published height.' },
   biscainhos: { m: 16, source: 'estimate', note: 'Two-storey Baroque palace with high roof; no published height.' },
+  populo: { m: 26, source: 'estimate', note: 'Twin façade towers (Carlos Amarante, late 18th c.) with Baroque cupolas and crosses. No published height (pt/en Wikipedia, e-cultura, visitbraga checked 2026-09-29); the frontal Commons photo gives tower-top/façade-width about 1.2-1.4 on the 18.8 m OSM church width.' },
+  'ucp-braga': { m: 26, source: 'estimate', note: 'Faculdade de Filosofia building on Praça da Faculdade: about six storeys and a corner tower with a statue. No published height; from Commons photos.' },
+  'estadio-1-maio': { m: 30, source: 'estimate', note: 'The slender granite tower over the north entrance is the tallest element; OSM has no tower or stand objects, so the height sits on the stadium outline. Open stands about 10 m. No published height; from Commons photos.' },
+  'parque-ponte': { m: 10, source: 'estimate', on: 'w121590142', note: 'Tallest built element is the Capela de São João da Ponte (1616), single nave with bell gable; the park itself is flat. No published height.' },
+  'forum-braga': { m: 14.5, source: 'wikipedia', note: 'Pavilion clear height 11.5-14.5 m across the hall (pt.wikipedia Forum Braga; forumbraga.com/Espacos/Pavilhao).' },
   'avenida-central': { m: 8, source: 'estimate', on: 'w108153350', note: 'Tallest element on the avenue is the 1868 iron bandstand (Coreto da Avenida); garden itself is flat.' },
 };

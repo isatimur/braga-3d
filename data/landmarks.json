@@ -1691,5 +1691,562 @@
       "height_m": 8,
       "height_source": "estimate"
     }
+  },
+  {
+    "id": "populo",
+    "name_pt": "Igreja e Convento do Pópulo",
+    "name_ru": "Церковь и монастырь Популу",
+    "category": "religious",
+    "lat": 41.55197,
+    "lon": -8.42885,
+    "year": "1596",
+    "short_ru": "Августинская церковь с двумя башнями Карлуша Амаранте и стенами в сине-белых изразцах",
+    "long_ru": "Архиепископ Агоштинью де Жезуш заложил церковь в 1596 году и велел похоронить себя в ней. В конце XVIII века Карлуш Амаранте дал ей новый фасад с двумя башнями. Стены нефа и капелл покрыты сине-белыми изразцами, алтари — позолоченной резьбой. В бывшем монастыре сегодня работают службы мэрии Браги.",
+    "model": "convent",
+    "image": "assets/img/populo.jpg",
+    "image_credit": {
+      "author": "Vitor Oliveira from Torres Vedras, PORTUGAL",
+      "license": "CC BY-SA 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Convento_do_P%C3%B3pulo_-_Braga_-_Portugal_(4709722839).jpg"
+    },
+    "history_ru": "Имя церкви пришло из Рима. Архиепископ Браги Агоштинью де Жезуш был монахом-августинцем и особо чтил образ Девы Марии в римской церкви Санта-Мария-дель-Пополо. В 1595 году он передал землю и доход братьям-отшельникам святого Августина. В 1596 году заложили первый камень церкви и монастыря-коллегии. Архиепископ умер в 1609 году, и его похоронили здесь, как он хотел. В капелле-мор лежит и его преемник Алейшу де Менезеш.\n\nСтройка шла почти два века. В 1706 году начали новый клуатр, в 1755-м — фундамент монастырского фасада, в 1775-м построили орган. Старый фасад церкви грозил обрушиться. В конце XVIII века его разобрали и сложили заново по проекту Карлуша Амаранте. Так появились неоклассический портал между двумя колоннами, большое окно с балконом и две башни с барочными куполами.\n\nЧто искать внутри. Один неф накрыт каменным сводом с кессонами и четырьмя подпружными арками. Стены капелл и капеллы-мор покрыты сине-белыми сюжетными изразцами; их приписывают мастеру Антониу де Оливейре Бернардешу. Барочные алтари блестят позолоченной резьбой. В центре главного алтаря стоит образ Девы Марии Популу.\n\nВ 1834 году монашеские ордена в Португалии упразднили. С 1841 года в монастыре стоял 8-й пехотный полк. Отсюда 26 мая 1926 года вышел мятеж генерала Гомеша да Кошты, который открыл путь к диктатуре; его статуя стоит на площади перед фасадом. С 1990 года в монастыре работают службы мэрии. В 2020–2021 годах церковь отреставрировали почти за миллион евро.",
+    "facts_ru": [
+      "Первый камень церкви заложили в 1596 году.",
+      "Церковь названа в честь римской Санта-Мария-дель-Пополо.",
+      "Изразцы капелл приписывают Антониу де Оливейре Бернардешу.",
+      "Отсюда 26 мая 1926 года начался мятеж генерала Гомеша да Кошты.",
+      "Церковь и монастырь — памятник общественного значения с 1977 года."
+    ],
+    "sources": [
+      {
+        "title": "Igreja do Pópulo — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Igreja_do_P%C3%B3pulo"
+      },
+      {
+        "title": "Pópulo Church — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/P%C3%B3pulo_Church"
+      },
+      {
+        "title": "Igreja e Convento do Pópulo — e-cultura",
+        "url": "https://www.e-cultura.pt/patrimonio_item/2451"
+      },
+      {
+        "title": "Igreja e Convento do Pópulo — Visit Braga",
+        "url": "https://visitbraga.travel/en/highlights/monumentos/igreja-e-convento-do-populo/"
+      }
+    ],
+    "tip_ru": "Церковь стоит на площади Конде-де-Агролонгу, в трёх минутах ходьбы от дворца Бишкайньюш. Обойдите её с южной стороны: там стоит фонтан Популу 1844 года. Изразцовую лестницу и клуатр монастыря показывают на экскурсиях по предварительной записи.",
+    "gallery": [
+      {
+        "src": "assets/img/populo-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф под кессонным сводом; стены капелл в сине-белых изразцах",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Populo_Interior.JPG"
+        }
+      },
+      {
+        "src": "assets/img/populo-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Вид по нефу к главному алтарю",
+        "credit": {
+          "author": "Gerd Eichmann",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga-Igreja_do_Populo-04-innen-2011-gje.jpg"
+        }
+      },
+      {
+        "src": "assets/img/populo-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Позолоченный резной алтарь с образом Девы Марии",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Church_of_Populo_Braga10.jpg"
+        }
+      },
+      {
+        "src": "assets/img/populo-4.jpg",
+        "kind": "interior",
+        "caption_ru": "Орган в позолоченном корпусе на хорах",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Orgao_Populo.JPG"
+        }
+      },
+      {
+        "src": "assets/img/populo-5.jpg",
+        "kind": "exterior",
+        "caption_ru": "Клуатр монастыря с двухъярусной аркадой",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Convento_do_P%C3%B3pulo,_claustros.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "6s66I2glkKk",
+        "title": "Igreja do Pópulo",
+        "channel": "Visit Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "Pf5pL1_xKjY",
+        "title": "Património da Igreja do Pópulo renasce com um milhão do Norte 2020",
+        "channel": "NOTÍCIAS RÁPIDAS 247",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 109149780,
+      "height_m": 26,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "ucp-braga",
+    "name_pt": "Universidade Católica Portuguesa – Campus de Braga",
+    "name_ru": "Католический университет Португалии, кампус Браги",
+    "category": "education",
+    "lat": 41.55478,
+    "lon": -8.42089,
+    "year": "1947",
+    "short_ru": "Старейший вуз Браги: философский факультет иезуитов, первый в Католическом университете",
+    "long_ru": "Иезуиты открыли в Браге философский институт в 1934 году, а в 1947 году он стал папским факультетом. В 1967 году факультет вошёл в новый Католический университет Португалии и стал его первым факультетом. Сегодня в кампусе учат философии, социальным наукам и теологии. Главное здание стоит на площади Факулдаде, у иезуитской церкви Сердца Иисуса.",
+    "model": "campus",
+    "image": "assets/img/ucp-braga.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_-_Braga.jpg"
+    },
+    "history_ru": "Факультет считает себя наследником иезуитов, которые учили в Браге ещё в XVI веке. В 1934 году орден открыл на улице Сан-Барнабе философский Институт блаженного Мигела де Карвалью. Мигел де Карвалью родился в Браге в 1579 году и погиб мучеником в японском городе Омура в 1624 году. В 1942 году министерство образования признало курс института высшим курсом философских наук.\n\nВ 1947 году институт стал папским факультетом философии. Это старейшее высшее учебное заведение Браги. 13 октября 1967 года декрет Lusitanorum nobilissima gens учредил Католический университет Португалии, и брагский факультет стал его первым факультетом. В 1968 году рядом открыли факультет теологии. Факультет первым из негосударственных вузов страны стал присуждать степени лиценциата и доктора.\n\nВ 2001 году в Браге появился факультет социальных наук. 1 июня 2015 года его объединили с философским, и получился Факультет философии и социальных наук. Кампус состоит из трёх групп зданий. Кампус Камоэнс принадлежит университету, здания на площади Факулдаде — ордену иезуитов, здания на улице Санта-Маргарида — архиепархии Браги.\n\nГлавное здание на площади Факулдаде иезуиты построили на месте школы Сан-Висенте, которую когда-то подарил приходу граф Феррейра. Рядом с ним стоит небольшая церковь Сердца Иисуса. Она принадлежит соседнему дому иезуитов и открыта для прихожан. Внутри здания стоит статуя Педру Испану: философ и врач XIII века был архиепископом Браги, а потом стал папой Иоанном XXI.",
+    "facts_ru": [
+      "Факультет философии основан в 1947 году — это старейший вуз Браги.",
+      "В 1967 году он стал первым факультетом Католического университета.",
+      "Институт 1934 года назван в честь мученика Мигела де Карвалью.",
+      "В 2015 году философия и социальные науки объединились в один факультет."
+    ],
+    "sources": [
+      {
+        "title": "O Campus de Braga — Universidade Católica Portuguesa",
+        "url": "https://braga.ucp.pt/explorar/o-campus-de-braga"
+      },
+      {
+        "title": "História — Faculdade de Filosofia e Ciências Sociais",
+        "url": "https://ffcs.braga.ucp.pt/pt-pt/about-ffcs/presentation/historia"
+      },
+      {
+        "title": "Universidade Católica Portuguesa — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Universidade_Cat%C3%B3lica_Portuguesa"
+      },
+      {
+        "title": "Braga, 6.ª parte — blogue de Luís Dias Costa",
+        "url": "https://luisdiascosta.blogs.sapo.pt/9411.html"
+      }
+    ],
+    "tip_ru": "Кампус стоит в пяти минутах ходьбы к северу от Авенида-Сентрал, у сада Кампу-Нову. Это действующий университет, в здания заходят по делу. Фасад с башней и церковь Сердца Иисуса хорошо видно с площади Факулдаде.",
+    "gallery": [
+      {
+        "src": "assets/img/ucp-braga-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Большой зал факультета с рядами кресел",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_de_Braga_(3).jpg"
+        }
+      },
+      {
+        "src": "assets/img/ucp-braga-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Статуя Педру Испану, архиепископа Браги и папы Иоанна XXI",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_de_Braga_(1).jpg"
+        }
+      },
+      {
+        "src": "assets/img/ucp-braga-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Надпись у статуи: строка Данте о Педру Испану",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_de_Braga_(2).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "-FAcnJ5E3Jc",
+        "title": "UCP Braga",
+        "channel": "UCP - Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "nfMALXB85ic",
+        "title": "Católica - Braga",
+        "channel": "Vítor Sá",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 423244424,
+      "height_m": 26,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "estadio-1-maio",
+    "name_pt": "Estádio 1.º de Maio",
+    "name_ru": "Стадион 1 Мая",
+    "category": "sport",
+    "lat": 41.5389,
+    "lon": -8.42065,
+    "year": "1950",
+    "short_ru": "Гранитный стадион 1950 года с башней над входом и бронзовыми рельефами Бараты Фейу",
+    "long_ru": "Стадион открыли 28 мая 1950 года и назвали в честь переворота 1926 года. Каменные трибуны кольцом окружают поле и беговую дорожку. Над главным входом поднимается узкая гранитная башня, по бокам стоят бронзовые рельефы. Полвека здесь играла «Брага», а сегодня стадион — памятник общественного значения.",
+    "model": "stadium-old",
+    "image": "assets/img/estadio-1-maio.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_3.%C2%BA_de_Maio_-_Braga.JPG"
+    },
+    "history_ru": "В начале XX века «Спортинг Брага» играл на арендованных полях: Кампу-ду-Райу, Кампу-да-Понте, Кампу-душ-Пеойнш. Городу был нужен большой стадион, и деньги на него дало государство. Проект нарисовал архитектор Жуан Симойнш, работами руководил инженер Траваусуш Валдеш. Стадион задумали под стать Национальному стадиону в Жаморе и так же строили из камня. Первый камень заложили в 1946 году, к 21-й годовщине переворота 28 мая 1926 года.\n\n28 мая 1950 года стадион открыли президент Ошкар Кармона и глава правительства Антониу де Оливейра Салазар. Он получил имя «Стадион 28 мая». В день открытия прошёл спортивный парад и два матча: «Брага» сыграла вничью с «Порту», а «Бенфика» обыграла «Спортинг». После революции 25 апреля 1974 года стадион переименовали в «1 Мая».\n\nПлан стадиона симметричный, конструкция из гранита и железобетона. Открытые трибуны окружают поле и легкоатлетическую дорожку, по углам стоят мачты освещения. Главный фасад с закруглёнными краями смотрит на север, к нему ведёт широкая лестница. Над входом поднимается узкая призматическая башня с гербом Республики. По бокам висят бронзовые рельефы о спорте работы Бараты Фейу; на одном высечена строка Камоэнса.\n\nВ 1990 году обветшали южные трибуны, и к молодёжному чемпионату мира 1991 года стадион отремонтировали. Последний официальный матч здесь «Брага» сыграла 21 декабря 2003 года и выиграла у «Витории» из Гимарайнша 2:1. Потом клуб переехал на новый Муниципальный стадион. В 2012 году стадион 1 Мая стал памятником общественного значения. До февраля 2025 года здесь играли «Брага B» и женская команда клуба.",
+    "facts_ru": [
+      "Стадион открыли 28 мая 1950 года под именем «28 мая».",
+      "Википедия даёт 28 000 мест; после 2012 года разрешено 5000 зрителей.",
+      "Бронзовые рельефы у входа приписывают скульптору Барате Фейу.",
+      "Последний официальный матч «Браги» здесь прошёл 21 декабря 2003 года.",
+      "Стадион — памятник общественного значения с 2012 года."
+    ],
+    "sources": [
+      {
+        "title": "Estádio 1.º de Maio (Braga) — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_1.%C2%BA_de_Maio_(Braga)"
+      },
+      {
+        "title": "Estádio 1º de Maio — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Est%C3%A1dio_1%C2%BA_de_Maio"
+      },
+      {
+        "title": "Parque da Ponte — We Braga",
+        "url": "https://webraga.pt/visitar/parques/parque-da-ponte/"
+      }
+    ],
+    "tip_ru": "Стадион стоит на южном краю парка Понте. Башню и рельефы у главного входа можно смотреть снаружи в любое время. Отсюда пара минут пешком до озера парка и до Форума Браги.",
+    "gallery": [
+      {
+        "src": "assets/img/estadio-1-maio-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Каменные трибуны и поле во время матча по американскому футболу",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Futebol_Americano_em_Braga_01.JPG"
+        }
+      },
+      {
+        "src": "assets/img/estadio-1-maio-2.jpg",
+        "kind": "detail",
+        "caption_ru": "Бронзовый рельеф о спорте у главного входа",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_1.%C2%BA_de_Maio_-_Braga_Portugal.JPG"
+        }
+      },
+      {
+        "src": "assets/img/estadio-1-maio-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Портал с гербом в рамке из лавровых листьев",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_1.%C2%BA_de_Maio_-_Braga_(4).JPG"
+        }
+      },
+      {
+        "src": "assets/img/estadio-1-maio-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Башня над входом и застеклённая галерея к ложам",
+        "credit": {
+          "author": "Francisco Miguel Rodrigues at Portuguese Wikipedia",
+          "license": "Public domain",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Maratona_Est%C3%A1dio_1%C2%BA_de_Maio.JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "YYK397P8dZc",
+        "title": "#PRESEASON | REGRESSO ESTÁDIO 1º DE MAIO",
+        "channel": "SC Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "fCl2qa1fob0",
+        "title": "1º DE MAIO VÍDEO DO PROJETO APRESENTAÇÃO 2020 SC BRAGA 🏟️",
+        "channel": "SC Braga News",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "mOUPesp5S28",
+        "title": "Estádio 1º de Maio - Braga",
+        "channel": "ardrone",
+        "lang": "other"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 22660087,
+      "height_m": 30,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "parque-ponte",
+    "name_pt": "Parque da Ponte",
+    "name_ru": "Парк Понте",
+    "category": "park",
+    "lat": 41.54115,
+    "lon": -8.42,
+    "year": "1911",
+    "short_ru": "Старый городской парк у реки Эште: озеро, часовня 1616 года и праздник Сан-Жуан",
+    "long_ru": "Парк вырос на бывшей роще архиепископов, которую город получил в 1911 году. Во внешней части стоят часовня Сан-Жуан-да-Понте 1616 года, беседка для оркестра и барочные камни из снесённой церкви Ремедиуш. Во внутренней части лежит большое озеро под секвойями и кедрами. В ночь на 24 июня здесь гуляет весь город.",
+    "model": "park",
+    "image": "assets/img/parque-ponte.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Lago_do_Parque_da_Ponte_(1).jpg"
+    },
+    "history_ru": "Название пришло от средневекового моста через реку Эште на старой дороге в Гимарайнш. Камни того моста ушли в нынешний. В 1570 году, во время чумы, архиепископ Бартоломеу душ Мартириш построил здесь дом для больных. В 1615 году возникло братство Сан-Жуан-да-Понте, а в 1616 году — часовня Иоанна Крестителя; дата высечена на портале. Землёй владела архиепископская Митра, а стройку помогла оплатить семья Сотомайор.\n\nСам парк родился в 1911 году, когда город отчуждил Кинта-да-Митра, бывшую рощу архиепископов. Вокруг часовни поставили камни из разобранных дворцов и монастырей: колонны, капители, фигуры с фасада церкви Ремедиуш. Внутреннюю часть отделяет ограда старого Городского сада с Авенида-Сентрал. Там лежит большое искусственное озеро, растут секвойи, липы, кедры, падубы и камелии, есть искусственный грот.\n\nВ 1946 году на южном краю парка начали строить стадион, и вокруг него вырос спорткомплекс Понте с бассейном и павильоном Флавиу Са Лейте. Южнее работает единственный в городе кемпинг. В 2010–2011 годах внешнюю часть обновили примерно за два миллиона евро по проекту архитектора Сержиу Боржеша и ландшафтного архитектора Карлуша Аранташа. Эта работа получила национальную премию IHRU 2011 года за общественные пространства.\n\nПарк — главная сцена праздника Сан-Жуан. В ночь с 23 на 24 июня тысячи людей с молоточками идут к часовне, вокруг неё шумит народное гулянье. Когда вода в Эште была чистой, женщины Браги стирали бельё на берегу и сушили его на склоне горы Пикоту.",
+    "facts_ru": [
+      "Часовню Сан-Жуан-да-Понте построили в 1616 году.",
+      "Город получил землю парка, бывшую рощу архиепископов, в 1911 году.",
+      "Обновлённая часть занимает 24 000 кв. м, весь парк — около 5,5 га.",
+      "Реконструкция 2010–2011 годов получила национальную премию IHRU.",
+      "В ночь с 23 на 24 июня здесь проходит главное гулянье праздника Сан-Жуан."
+    ],
+    "sources": [
+      {
+        "title": "Parque da Ponte — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Parque_da_Ponte"
+      },
+      {
+        "title": "Parque de São João da Ponte — Associação Portuguesa dos Jardins Históricos",
+        "url": "https://jardinshistoricos.pt/ad/463"
+      },
+      {
+        "title": "Capela de São João da Ponte — Visit Braga",
+        "url": "https://visitbraga.travel/en/highlights/monumentos/capela-de-s-joao-da-ponte/"
+      },
+      {
+        "title": "Parque da Ponte — We Braga",
+        "url": "https://webraga.pt/visitar/parques/parque-da-ponte/"
+      }
+    ],
+    "tip_ru": "Парк начинается в конце Авенида-да-Либердаде, примерно в 20 минутах пешком от площади Республики. Обойдите озеро во внутренней части, потом выйдите к часовне Сан-Жуан и беседке. Рядом стоят стадион 1 Мая и Форум Браги.",
+    "gallery": [
+      {
+        "src": "assets/img/parque-ponte-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф часовни Сан-Жуан-да-Понте и главный алтарь",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Church_of_S%C3%A3o_Jo%C3%A3o_da_Ponte_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/parque-ponte-2.jpg",
+        "kind": "detail",
+        "caption_ru": "Позолоченная кафедра на фоне изразцов в часовне",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Capela_S%C3%A3o_Jo%C3%A3o_Braga_(1).jpg"
+        }
+      },
+      {
+        "src": "assets/img/parque-ponte-3.jpg",
+        "kind": "exterior",
+        "caption_ru": "Кованая беседка для оркестра на каменном основании",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Parque_da_Ponte_2.jpg"
+        }
+      },
+      {
+        "src": "assets/img/parque-ponte-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Лодки и каяки на озере во внутренней части парка",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Lago_do_Parque_da_Ponte_(3).jpg"
+        }
+      },
+      {
+        "src": "assets/img/parque-ponte-5.jpg",
+        "kind": "detail",
+        "caption_ru": "Иоанн Креститель в нише с фасада снесённой церкви Ремедиуш",
+        "credit": {
+          "author": "Danielafernandes02",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Conjunto_Arquitet%C3%B3nico_S%C3%A3o_Jo%C3%A3o_Batista.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "3yx0b46tCPA",
+        "title": "𝗙𝗟𝗔𝗦𝗛 𝗧𝗢𝗨𝗥𝗦: Parque da Ponte",
+        "channel": "Associação Empresarial Braga | CCI",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "Q1PJzJQdoMc",
+        "title": "Parque da Ponte - Braga, Portugal",
+        "channel": "Eu na Europa - Portugal ",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 19915700,
+      "height_m": 10,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "forum-braga",
+    "name_pt": "Forum Braga",
+    "name_ru": "Форум Браги",
+    "category": "civic",
+    "lat": 41.541,
+    "lon": -8.42255,
+    "year": "1981, 2018",
+    "short_ru": "Выставочный парк 1981 года, в 2018 году перестроенный в конгресс-центр и концертный зал",
+    "long_ru": "Выставочный парк Браги открыли в 1981 году у реки Эште. В 2017–2018 годах бюро Barbosa & Guimarães перестроило его в «Форум Браги». Здесь самый большой зрительный зал на севере Португалии и павильон на 12 000 зрителей стоя. Площадь перед зданием принимает концерты на 20 000 человек.",
+    "model": "forum",
+    "image": "assets/img/forum-braga.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Forum_Braga_(11).jpg"
+    },
+    "history_ru": "Выставочный парк Браги, Parque de Exposições, создали в 1981 году. Главным залом был Большой неф: павильон 100 на 50 метров, где проходили ярмарки, выставки и матчи на 3000 зрителей. Рядом стояли конгресс-центр с залом на 1204 места и 104 постоянных павильона. По вторникам здесь шла еженедельная городская ярмарка.\n\nС 2014 года парком управляет муниципальная компания InvestBraga. В феврале 2017 года город заказал полную перестройку за восемь миллионов евро, работы начались в июне. Проект сделало бюро Barbosa & Guimarães, архитектор Педру Гимарайнш. Архитекторы сохранили старые корпуса, но расчистили план и применили на фасадах термодревесину. С доплатами расходы выросли почти до десяти миллионов евро.\n\nФорум открывали по частям. Выставочная зона приняла ярмарку Agro в мае 2018 года, торжественное открытие прошло 11 сентября 2018 года. До апреля 2024 года комплекс носил имя спонсора: Altice Forum Braga. В 2021 году здесь работал большой центр вакцинации, прививку от COVID-19 получили более 270 тысяч человек.\n\nЧто внутри. Павильон длиной 107,5 м и шириной 46,3 м вмещает до 12 000 человек стоя, у него есть выдвижная трибуна на 1680 мест. Большой зрительный зал на 1432 места — самый большой на севере страны. Есть малый зал на 254 места, шесть конгресс-залов, галерея современного искусства и парковка на 620 машин. Название отсылает к римскому форуму Бракары-Августы.",
+    "facts_ru": [
+      "Павильон 107,5 × 46,3 м вмещает до 12 000 зрителей стоя.",
+      "Большой зал на 1432 места — самый большой на севере Португалии.",
+      "Перестройку 2017–2018 годов спроектировало бюро Barbosa & Guimarães.",
+      "С 2018 по 2024 год комплекс назывался Altice Forum Braga.",
+      "Площадь под открытым небом принимает концерты на 20 000 человек."
+    ],
+    "sources": [
+      {
+        "title": "Forum Braga — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Forum_Braga"
+      },
+      {
+        "title": "Pavilhão — Forum Braga",
+        "url": "https://www.forumbraga.com/Espacos/Pavilhao"
+      },
+      {
+        "title": "Custo do Forum Braga já supera a previsão inicial — Público",
+        "url": "https://www.publico.pt/2018/10/15/local/noticia/custo-do-forum-braga-ja-supera-a-previsao-inicial-em-quase-dois-milhoes-de-euros-1847613"
+      },
+      {
+        "title": "Altice Fórum Braga — Enes Consulting",
+        "url": "https://www.enes.pt/pt/obras/projetos/parque-empresarial-de-braga/"
+      }
+    ],
+    "tip_ru": "Форум стоит у западного края парка Понте, в пяти минутах от стадиона 1 Мая. Программу концертов, ярмарок и конгрессов смотрите на forumbraga.com. В здании работает галерея современного искусства Forum Arte Braga.",
+    "gallery": [
+      {
+        "src": "assets/img/forum-braga-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Ряды кресел и балкон Большого зрительного зала",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Forum_Braga_(7).jpg"
+        }
+      },
+      {
+        "src": "assets/img/forum-braga-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Павильон под стальной фермой, с галереей второго этажа",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Forum_Braga_(9).jpg"
+        }
+      },
+      {
+        "src": "assets/img/forum-braga-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Один из залов конгресс-центра со световыми линиями",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Forum_Braga_(8).jpg"
+        }
+      },
+      {
+        "src": "assets/img/forum-braga-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Буквы FORUM на площади перед входом",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Forum_Braga_(14).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "uCDpSNRKVNw",
+        "title": "Behind the Design - Forum Braga",
+        "channel": "Lunawood",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "u76x15TaRo8",
+        "title": "Inauguração do Altice Forum Braga",
+        "channel": "Câmara Municipal de Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "uO4jK0zcSyk",
+        "title": "Forum Braga",
+        "channel": "Câmara Municipal de Braga",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "relation",
+      "id": 19915703,
+      "height_m": 14.5,
+      "height_source": "wikipedia"
+    }
   }
 ]

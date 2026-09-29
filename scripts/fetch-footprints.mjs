@@ -91,6 +91,41 @@ const CFG = {
     cats: ['water', 'monument', 'building'],
     include: ['w108153350'], streets: /^Avenida (Central|da Liberdade)$/,
   },
+  // --- added 2026-09-29 ---
+  populo: {
+    // Main = the church. The convent wing w149489952 is the other outer of the convent
+    // relation r13337530; Biscainhos, the Patronato and the Convento do Salvador touch the site.
+    main: 'w109149780', name: /Pópulo/, site: { buffer: 3 },
+    cats: ['building', 'water'], include: ['w149489952', 'n13347111330'],
+    exclude: ['r13337528', 'r13337529', 'r13337531', 'w993581849'],
+    // Untagged outer of r13337530: the three-storey convent wing (now council offices), ~14 m.
+    as: { w149489952: { tag: 'building', h: 14, name: 'Convento do Pópulo' } },
+  },
+  'ucp-braga': {
+    // Main = the Faculdade de Filosofia building on Praça da Faculdade (with the Jesuit church
+    // of the Sagrado Coração on its front). Parts: every building of Campus Camões (area w107495353).
+    main: 'w423244424', name: /Universidade Católica/, site: { area: 'w107495353', buffer: 0 }, paths: true,
+    cats: ['building', 'pitch', 'garden', 'water'], include: ['w118358119', 'w107495353', 'w660855628'],
+  },
+  'estadio-1-maio': {
+    // OSM has no stand buildings: the stands are the ring between the stadium outline and the track.
+    main: 'w22660087', name: /1º de Maio/, site: { buffer: 0 }, cats: ['pitch', 'building'],
+    include: ['w22660434', 'r2215785'], pitch: 'w22660434',
+  },
+  'parque-ponte': {
+    // The whole park relation; parts: chapel, lake, pavilions, bandstand, amphitheatre, footpaths
+    // and the Rio Este river area on its north edge. Forum and stadium are separate landmarks.
+    main: 'r19915700', name: /Parque da Ponte/, site: { buffer: 0 }, paths: true,
+    cats: ['building', 'church', 'water', 'garden', 'monument', 'pitch'],
+    include: ['w1190012855', 'w1190016746', 'r19915859'],
+    exclude: ['r19915703', 'w22660087', 'w22660434'],
+  },
+  'forum-braga': {
+    // OSM still names the building relation "Altice Forum" (the 2018-2024 name).
+    main: 'r19915703', name: /Forum/, site: { buffer: 0 }, cats: ['building'],
+    include: ['w591643569', 'w1373821120'],
+    exclude: ['r19915700', 'w22660087'],
+  },
 };
 
 // Verified or estimated heights, used when OSM has no height / levels tag (or force).
@@ -124,6 +159,7 @@ for (const l of landmarks) {
   q += `way(${a})["railway"="funicular"];wr(${a})["leisure"~"garden|pitch|park"];wr(${a})["natural"="water"];`;
   q += `nwr(${a})["amenity"="fountain"];wr(${a})["place"="square"];nwr(${a})["historic"];`;
   if (CFG[l.id].streets) q += `way(${a})["highway"]["name"~"${CFG[l.id].streets.source}"];`;
+  if (CFG[l.id].paths) q += `way(${a})["highway"~"^(footway|path|pedestrian)$"];`;
 }
 q += ');out geom;';
 const elements = await overpass(q, { label: 'footprints' });
@@ -289,12 +325,14 @@ for (const l of landmarks) {
   const radius = cfg.site.radius;
 
   const partKeys = new Set();
+  const pathKeys = new Set(); // cfg.paths: footways inside the site, tagged 'path'
   for (const [k, el] of els) {
     if (k === cfg.main || k === cfg.site.area || k === cfg.gateWall || k === cfg.stands) continue;
     if ((cfg.exclude || []).includes(k)) continue;
     const g = geomOf(el);
     if (!allPts(g).length) continue;
     const cat = categoryOf(el.tags);
+    if (cfg.paths && /^(footway|path|pedestrian)$/.test(el.tags?.highway || '') && inSite(g, sitePolys, buffer)) { pathKeys.add(k); continue; }
     if (!catMatches(cat, cfg.cats)) continue;
     if (cat === 'street') continue;
     const ok = radius ? dist(center(g), [l.lat, l.lon]) <= radius : inSite(g, sitePolys, buffer);
@@ -335,6 +373,11 @@ for (const l of landmarks) {
     if (!el) { missing.push(k); continue; }
     pushPart(el, geomOf(el));
   }
+  for (const k of pathKeys) if (!partKeys.has(k)) pushPart(els.get(k), geomOf(els.get(k)), 'path');
+  // cfg.as: untagged member ways (e.g. a multipolygon outer) get a tag, a name and an estimated height.
+  for (const [k, o] of Object.entries(cfg.as || {})) for (const p of parts) if (p.osm === k) {
+    p.tag = o.tag; p.height_m = o.h; p.height_source = 'estimate'; if (o.name) p.name = o.name;
+  }
   if (missing.length) console.warn(`${l.id}: include ids not returned: ${missing.join(', ')}`);
 
   // Height of the landmark.
@@ -357,7 +400,7 @@ for (const l of landmarks) {
     parts[0].height_m = cfgH?.main_m ?? (flat ? 0 : parts[0].height_m);
     parts[0].height_source = cfgH?.main_m != null ? cfgH.main_source || 'estimate' : flat ? 'flat' : parts[0].height_source;
   }
-  for (const p of parts) if (['garden', 'square', 'site', 'street', 'pitch', 'stairs', 'funicular'].includes(p.tag) && !tallParts.includes(p)) {
+  for (const p of parts) if (['garden', 'square', 'site', 'street', 'pitch', 'stairs', 'funicular', 'path'].includes(p.tag) && !tallParts.includes(p)) {
     p.height_m = 0; p.height_source = 'flat';
   }
 
@@ -379,7 +422,7 @@ for (const l of landmarks) {
     ...(hnote ? { height_note: hnote } : {}),
     ...(cfg.pitch ? { pitch_bearing_deg: minAreaRect(allPts(geomOf(els.get(cfg.pitch)))).bearing } : {}),
     osm_ids: osmIds,
-    exclude_outline: !['avenida-central', 'praca-republica', 'santa-barbara'].includes(l.id),
+    exclude_outline: !['avenida-central', 'praca-republica', 'santa-barbara', 'parque-ponte'].includes(l.id),
     main_offset_m: Math.round(dMain),
   };
   l.osm = { type: parseKey(cfg.main).type, id: parseKey(cfg.main).id, height_m: height, height_source: hsrc };

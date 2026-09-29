@@ -22,6 +22,13 @@ All photos come from Wikimedia Commons. Files in `assets/img/` are the Commons t
 | tibaes | Mosteiro Tibaes (1).JPG | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Mosteiro_Tibaes_(1).JPG |
 | biscainhos | Biscainhos 2023 (9).jpg | Joseolgon | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Biscainhos_2023_(9).jpg |
 | avenida-central | Braga, Avenida Central.jpg | K. Kendall from Portland, OR, USA | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Braga,_Avenida_Central.jpg |
+| populo | Convento do Pópulo - Braga - Portugal (4709722839).jpg | Vitor Oliveira from Torres Vedras, PORTUGAL | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Convento_do_P%C3%B3pulo_-_Braga_-_Portugal_(4709722839).jpg |
+| ucp-braga | Faculdade de Filosofia - Braga.jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_-_Braga.jpg |
+| estadio-1-maio | Estádio 3.º de Maio - Braga.JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_3.%C2%BA_de_Maio_-_Braga.JPG |
+| parque-ponte | Lago do Parque da Ponte (1).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lago_do_Parque_da_Ponte_(1).jpg |
+| forum-braga | Forum Braga (11).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(11).jpg |
+
+The five main photos added on 2026-09-29 (populo to forum-braga) are 1600 px Commons thumbnails, re-encoded with ImageMagick to under 600 KB, like the gallery photos below. We did not crop or edit them.
 
 ## Gallery photos
 
@@ -88,12 +95,33 @@ The `gallery` photos in `data/landmarks.json` also come from Wikimedia Commons. 
 | avenida-central-2.jpg | exterior | Coreto da Avenida.JPG | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Coreto_da_Avenida.JPG |
 | avenida-central-3.jpg | exterior | Braga Avenida Central 377.jpg | GFreihalter | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Braga_Avenida_Central_377.jpg |
 | avenida-central-4.jpg | exterior | Braga (14004080952).jpg | jad99 from Graz, Austria | CC BY-SA 2.0 | https://commons.wikimedia.org/wiki/File:Braga_(14004080952).jpg |
+| populo-1.jpg | interior | Populo Interior.JPG | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Populo_Interior.JPG |
+| populo-2.jpg | interior | Braga-Igreja do Populo-04-innen-2011-gje.jpg | Gerd Eichmann | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Braga-Igreja_do_Populo-04-innen-2011-gje.jpg |
+| populo-3.jpg | detail | Interior of Church of Populo Braga10.jpg | Joseolgon | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Interior_of_Church_of_Populo_Braga10.jpg |
+| populo-4.jpg | interior | Orgao Populo.JPG | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Orgao_Populo.JPG |
+| populo-5.jpg | exterior | Convento do Pópulo, claustros.jpg | Sara silva | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Convento_do_P%C3%B3pulo,_claustros.jpg |
+| ucp-braga-1.jpg | interior | Faculdade de Filosofia de Braga (3).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_de_Braga_(3).jpg |
+| ucp-braga-2.jpg | interior | Faculdade de Filosofia de Braga (1).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_de_Braga_(1).jpg |
+| ucp-braga-3.jpg | detail | Faculdade de Filosofia de Braga (2).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Faculdade_de_Filosofia_de_Braga_(2).jpg |
+| estadio-1-maio-1.jpg | interior | Futebol Americano em Braga 01.JPG | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Futebol_Americano_em_Braga_01.JPG |
+| estadio-1-maio-2.jpg | detail | Estádio 1.º de Maio - Braga Portugal.JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_1.%C2%BA_de_Maio_-_Braga_Portugal.JPG |
+| estadio-1-maio-3.jpg | exterior | Estádio 1.º de Maio - Braga (4).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_1.%C2%BA_de_Maio_-_Braga_(4).JPG |
+| estadio-1-maio-4.jpg | exterior | Maratona Estádio 1º de Maio.JPG | Francisco Miguel Rodrigues at Portuguese Wikipedia | Public domain | https://commons.wikimedia.org/wiki/File:Maratona_Est%C3%A1dio_1%C2%BA_de_Maio.JPG |
+| parque-ponte-1.jpg | interior | Church of São João da Ponte (1).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Church_of_S%C3%A3o_Jo%C3%A3o_da_Ponte_(1).JPG |
+| parque-ponte-2.jpg | detail | Capela São João Braga (1).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Capela_S%C3%A3o_Jo%C3%A3o_Braga_(1).jpg |
+| parque-ponte-3.jpg | exterior | Parque da Ponte 2.jpg | Joseolgon | CC0 | https://commons.wikimedia.org/wiki/File:Parque_da_Ponte_2.jpg |
+| parque-ponte-4.jpg | exterior | Lago do Parque da Ponte (3).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lago_do_Parque_da_Ponte_(3).jpg |
+| parque-ponte-5.jpg | detail | Conjunto Arquitetónico São João Batista.jpg | Danielafernandes02 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Conjunto_Arquitet%C3%B3nico_S%C3%A3o_Jo%C3%A3o_Batista.jpg |
+| forum-braga-1.jpg | interior | Forum Braga (7).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(7).jpg |
+| forum-braga-2.jpg | interior | Forum Braga (9).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(9).jpg |
+| forum-braga-3.jpg | interior | Forum Braga (8).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(8).jpg |
+| forum-braga-4.jpg | exterior | Forum Braga (14).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(14).jpg |
 
 ## Panoramas
 
 No image panoramas. On 2026-09-28 we searched Wikimedia Commons for 2:1 equirectangular 360° panoramas of Braga. We used text search, the 360° panorama categories, and geosearch around every landmark. We found no true 360° panorama of any landmark, There is no `assets/pano/` folder yet.
 
-As a fallback, six `panorama` fields link to true 360° YouTube videos (`"type": "youtube"`). We host no video files; the videos belong to their channels. We checked each id twice: the oEmbed endpoint gave the title and channel, and the watch page reports a spherical projection (`"projectionType":"MESH"` or `"EQUIRECTANGULAR"`). We viewed the storyboard thumbnail sheets to confirm the place. `node scripts/check-data.mjs --online` repeats both checks. The other ten landmarks stay `null`.
+As a fallback, six `panorama` fields link to true 360° YouTube videos (`"type": "youtube"`). We host no video files; the videos belong to their channels. We checked each id twice: the oEmbed endpoint gave the title and channel, and the watch page reports a spherical projection (`"projectionType":"MESH"` or `"EQUIRECTANGULAR"`). We viewed the storyboard thumbnail sheets to confirm the place. `node scripts/check-data.mjs --online` repeats both checks. The other fifteen landmarks stay `null`. For the five landmarks added on 2026-09-29 we searched YouTube with the 360° filter and checked the storyboards of the three Braga 360° videos we found (dvB37MaNnlA, BSZQPKVCIIs, Zyxh7N7JpGs); none shows these sites.
 
 | Landmark id | YouTube id | Title | Channel |
 |---|---|---|---|
@@ -124,7 +152,7 @@ Landmark coordinates come from Wikidata, Wikipedia and OSM Nominatim.
 
 ## Landmark dimensions
 
-`data/dimensions.json` holds real-world sizes for the 16 landmarks, so the models can be built at 1:1 metres. Each number names its source in `sources[]`. A published number carries the URL and the quoted value. Few heights are published, so many numbers are estimates: we measured them from the OSM outlines above, the EU-DEM terrain, and the Wikimedia Commons photos listed in this file, and each estimate states its reasoning. `node scripts/check-dimensions.mjs` validates the file.
+`data/dimensions.json` holds real-world sizes for all the landmarks, so the models can be built at 1:1 metres. Each number names its source in `sources[]`. A published number carries the URL and the quoted value. Few heights are published, so many numbers are estimates: we measured them from the OSM outlines above, the EU-DEM terrain, and the Wikimedia Commons photos listed in this file, and each estimate states its reasoning. `node scripts/check-dimensions.mjs` validates the file.
 
 Published figures come from these pages (facts only; no text or images copied):
 
@@ -143,5 +171,10 @@ Published figures come from these pages (facts only; no text or images copied):
 | termas-romanas | http://bragapatrimonio.blogspot.com/p/termas-romanas-maximinos.html |
 | tibaes | https://www.mosteirodetibaes.gov.pt/conjunto-monastico/o-mosteiro-e-os-seus-espacos/, https://pt.wikipedia.org/wiki/Mosteiro_de_Tib%C3%A3es |
 | arco-porta-nova, fonte-idolo | No published dimensions found; all numbers are estimates. |
+| populo | https://www.e-cultura.pt/patrimonio_item/2451, https://anightingalesings.blogs.sapo.pt/igreja-do-populo-braga-visitar-sem-6090 |
+| ucp-braga | https://pt.wikipedia.org/wiki/Universidade_Cat%C3%B3lica_Portuguesa |
+| estadio-1-maio | https://pt.wikipedia.org/wiki/Est%C3%A1dio_1.%C2%BA_de_Maio_(Braga), https://en.wikipedia.org/wiki/Est%C3%A1dio_1%C2%BA_de_Maio |
+| parque-ponte | https://jardinshistoricos.pt/ad/463, https://pt.wikipedia.org/wiki/Parque_da_Ponte |
+| forum-braga | https://www.forumbraga.com/Espacos/Pavilhao, https://www.forumbraga.com/Espacos/GrandeAuditorio, https://pt.wikipedia.org/wiki/Forum_Braga |
 
 We take only facts (numbers and counts) from these pages and cite each one; we reproduce no article text.

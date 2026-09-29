@@ -1,10 +1,10 @@
 {
   "_meta": {
-    "about": "Real-world dimensions of the 16 landmarks, for re-authoring the procedural models at 1:1 metres. Every numeric leaf under footprint_m, height_m, elements and facade_azimuth_deg has an entry in sources[] (by path). An entry has either a url (published figure) or source:'estimate' with reasoning.",
+    "about": "Real-world dimensions of the landmarks, for re-authoring the procedural models at 1:1 metres. Every numeric leaf under footprint_m, height_m, elements and facade_azimuth_deg has an entry in sources[] (by path). An entry has either a url (published figure) or source:'estimate' with reasoning.",
     "units": "metres unless the key says otherwise; heights are above the local ground at the main entrance",
     "facade_azimuth_deg": "compass direction (0-360, clockwise from north) that the main facade looks towards. footprints.json bearing_deg is a folded long axis in [0,180) and cannot say which end is the front; facade_axis_rel says how the azimuth relates to it.",
     "osm_geometry": "extent_m, edge lengths and edge normals were measured from data/footprints.json outlines with scripts/geo-lib.mjs minAreaRect/toXY; ground heights from data/terrain.json (EU-DEM 25 m).",
-    "checked": "2026-09-28"
+    "checked": "2026-09-29"
   },
   "bom-jesus": {
     "footprint_m": { "length": 55.1, "width": 34.3, "matches_osm": true,
@@ -269,6 +269,401 @@
       { "paths": ["footprint_m.length", "footprint_m.width", "elements.bandstand_diameter_m", "elements.monuments"], "source": "estimate", "fact": "OSM geometry", "reasoning": "footprints.json extent_m; bandstand way 108153350 is 7.9 x 7.8 m; 4 OSM monument nodes." },
       { "paths": ["elements.pyramids"], "url": "https://www.cm-braga.pt/archive/doc/GUIA_VERDE_DE_BRAGA.pdf", "fact": "pyramids and trees", "value": "tres piramides que simbolizam os tres sacro-montes; frondosas tilias delimitam um extenso relvado" },
       { "paths": ["height_m.total", "height_m.trees", "height_m.bandstand", "height_m.pyramids", "height_m.monuments", "elements.tree_rows"], "source": "estimate", "fact": "heights", "reasoning": "No published figures. Mature lime trees in two rows along the lawn, about 15 m; octagonal iron bandstand with cupola about 8 m; granite pyramids and statues about 4 m." }
+    ],
+    "confidence": "medium"
+  },
+  "populo": {
+    "footprint_m": {
+      "length": 62.5,
+      "width": 18.8,
+      "matches_osm": true,
+      "note": "OSM way 109149780 is the church alone (nave, chancel and the two towers on the east front). The convent wing is the untagged outer w149489952 of relation r13337530 (67 x 37 m, 2509 m²), south of the church."
+    },
+    "height_m": {
+      "total": 26,
+      "towers": 26,
+      "nave_ridge": 16,
+      "convent_wing": 14
+    },
+    "elements": {
+      "towers": 2,
+      "portal_columns": 2,
+      "nave_transverse_arches": 4,
+      "side_chapels": 3,
+      "convent_wing_length_m": 67.1
+    },
+    "facade_faces": "E",
+    "facade_azimuth_deg": 73,
+    "facade_axis_rel": "bearing_deg (long axis 72.8; the front is its east-north-east end)",
+    "facade_note": "The twin-towered Neoclassical front by Carlos Amarante looks ENE onto Largo do Pópulo and Praça Conde de Agrolongo (Campo da Vinha); the convent wing runs south from the church.",
+    "sources": [
+      {
+        "paths": [
+          "facade_azimuth_deg"
+        ],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "OSM long axis 72.8 deg; Largo do Pópulo (w363504384) and Praça Conde de Agrolongo lie east of the church, and the Commons photos show the towered front on that side."
+      },
+      {
+        "paths": [
+          "footprint_m.length",
+          "footprint_m.width",
+          "elements.convent_wing_length_m"
+        ],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w109149780; minAreaRect of w149489952."
+      },
+      {
+        "paths": [
+          "elements.towers",
+          "elements.portal_columns",
+          "elements.nave_transverse_arches"
+        ],
+        "url": "https://www.e-cultura.pt/patrimonio_item/2451",
+        "fact": "towers, portal, vault",
+        "value": "cúpulas das duas torres que flanqueiam o templo; o portal é enquadrado por duas colunas; abóbada de cantaria, com quatro arcos torais e caixotões de granito"
+      },
+      {
+        "paths": [
+          "elements.side_chapels"
+        ],
+        "url": "https://anightingalesings.blogs.sapo.pt/igreja-do-populo-braga-visitar-sem-6090",
+        "fact": "side chapels",
+        "value": "nave única coberta por abóbada de berço com caixões de pedra, com 3 capelas laterais intercomunicantes"
+      },
+      {
+        "paths": [
+          "height_m.total",
+          "height_m.towers",
+          "height_m.nave_ridge",
+          "height_m.convent_wing"
+        ],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published height. In the frontal Commons photo (Igreja do Pópulo, fachada principal.jpg) the tower tops with crosses stand about 1.2-1.4 times the front width, and the front is 18.8 m wide in OSM: about 24-27 m. Nave ridge from the cornice line, about 16 m. The convent wing has three storeys, about 14 m."
+      }
+    ],
+    "confidence": "medium"
+  },
+  "ucp-braga": {
+    "footprint_m": {
+      "length": 47.9,
+      "width": 22.3,
+      "matches_osm": true,
+      "note": "OSM way 423244424 is the Faculdade de Filosofia building on Praça da Faculdade (Jesuit property). The Igreja dos Jesuítas (Sagrado Coração, w118358119, 26 x 9 m) stands on its front. Campus Camões is the separate area w107495353 (191 x 118 m) about 150 m east; its buildings are parts in footprints.json."
+    },
+    "height_m": {
+      "total": 26,
+      "tower": 26,
+      "main_block": 20,
+      "church": 10
+    },
+    "elements": {
+      "building_groups": 3,
+      "storeys": 6,
+      "campus_camoes_area_m2": 17194
+    },
+    "facade_faces": "W",
+    "facade_azimuth_deg": 270,
+    "facade_axis_rel": "bearing_deg + 90 (long axis 179.5; the front is the long west side)",
+    "facade_note": "The long west side faces Praça da Faculdade and Rua de São Barnabé; the small Jesuit church of the Sagrado Coração (w118358119) stands about 30 m further west. A local history blog says the church sits in the centre of the faculty front, which suggests the towered faculty block is partly unmapped in OSM between the two ways. Verify against photos before modelling.",
+    "sources": [
+      {
+        "paths": [
+          "facade_azimuth_deg"
+        ],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "The OSM building runs north-south (179.5 deg). The Jesuit church w118358119, described as part of the faculty front (blog of Luís Dias Costa), lies about 30 m west of it, so the front looks west. The OSM geometry between the two ways is incomplete."
+      },
+      {
+        "paths": [
+          "footprint_m.length",
+          "footprint_m.width",
+          "elements.campus_camoes_area_m2"
+        ],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w423244424; ringArea of w107495353."
+      },
+      {
+        "paths": [
+          "elements.building_groups"
+        ],
+        "url": "https://pt.wikipedia.org/wiki/Universidade_Cat%C3%B3lica_Portuguesa",
+        "fact": "campus composition",
+        "value": "integra os edifícios do Campus Camões (propriedade da UCP), da Praça da Faculdade (propriedade da Companhia de Jesus), e da Rua de Santa Margarida (propriedade da Arquidiocese de Braga)"
+      },
+      {
+        "paths": [
+          "height_m.total",
+          "height_m.tower",
+          "height_m.main_block",
+          "height_m.church",
+          "elements.storeys"
+        ],
+        "source": "estimate",
+        "fact": "heights and storeys",
+        "reasoning": "No published figure; construction year not found either. Commons photo Faculdade de Filosofia - Braga.jpg shows about six storeys (3.3 m each, about 20 m) and a corner tower about a storey and a half higher with a statue. The church front about 10 m."
+      }
+    ],
+    "confidence": "low"
+  },
+  "estadio-1-maio": {
+    "footprint_m": {
+      "length": 223,
+      "width": 144.4,
+      "matches_osm": true,
+      "note": "OSM way 22660087 (leisure=stadium) is the whole bowl: stands, track and pitch. OSM has no stand or tower objects; the stands are the ring between this outline and the running track r2215785 (186 x 91 m outer). Pitch w22660434, long axis 164.8 deg."
+    },
+    "height_m": {
+      "total": 30,
+      "entrance_tower": 30,
+      "stands": 10
+    },
+    "elements": {
+      "pitch_length_m": 106.4,
+      "pitch_width_m": 65.7,
+      "track_outer_length_m": 185.7,
+      "track_outer_width_m": 91.2,
+      "capacity_original": 28000,
+      "capacity_licensed": 5000,
+      "floodlight_masts": 4,
+      "entrance_openings": 6,
+      "bronze_panels": 2
+    },
+    "facade_faces": "N",
+    "facade_azimuth_deg": 345,
+    "facade_axis_rel": "bearing_deg + 180 (long axis 164.9; the main front is the north-north-west end)",
+    "facade_note": "The main front faces north, towards Parque da Ponte and Avenida Dr. Francisco Pires Gonçalves: rounded ends, a wide two-flight staircase, six openings and the slender prismatic tower with the arms of the Republic, flanked by two bronze panels. The glazed corridor to the tribune runs along the west stand.",
+    "sources": [
+      {
+        "paths": [
+          "facade_azimuth_deg"
+        ],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "en.wikipedia: 'The main facade, facing the north'. The OSM long axis is 164.9 deg, so its north end looks 345 deg."
+      },
+      {
+        "paths": [
+          "footprint_m.length",
+          "footprint_m.width",
+          "elements.pitch_length_m",
+          "elements.pitch_width_m",
+          "elements.track_outer_length_m",
+          "elements.track_outer_width_m"
+        ],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m; minAreaRect of the pitch w22660434 and the track outer w166258320."
+      },
+      {
+        "paths": [
+          "elements.capacity_original"
+        ],
+        "url": "https://pt.wikipedia.org/wiki/Est%C3%A1dio_1.%C2%BA_de_Maio_(Braga)",
+        "fact": "capacity",
+        "value": "Com capacidade de 28 000 espectadores (webraga.pt gives 30 000; the figures conflict)"
+      },
+      {
+        "paths": [
+          "elements.capacity_licensed",
+          "elements.floodlight_masts",
+          "elements.entrance_openings",
+          "elements.bronze_panels"
+        ],
+        "url": "https://en.wikipedia.org/wiki/Est%C3%A1dio_1%C2%BA_de_Maio",
+        "fact": "architecture",
+        "value": "limiting its capacity to 5000 seats; four lampposts at the corners; six openings that line, symmetrically, prismatic tower; two sculpture panels in bronze"
+      },
+      {
+        "paths": [
+          "height_m.total",
+          "height_m.entrance_tower",
+          "height_m.stands"
+        ],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published height. In Commons photos (Estádio 3.º de Maio - Braga.JPG, Maratona Estádio 1º de Maio.JPG) the tower stands about six times the 4-5 m height of the pillars of the glazed tribune corridor: about 30 m. Open stands about 10 m at the back."
+      }
+    ],
+    "confidence": "medium"
+  },
+  "parque-ponte": {
+    "footprint_m": {
+      "length": 398.5,
+      "width": 219.1,
+      "matches_osm": true,
+      "note": "OSM relation 19915700 is the whole park (53 582 m²), outer and inner parts; Forum Braga (r19915703) borders it on the west and the 1.º de Maio stadium on the south. Parts: lake w22660782, chapel w121590142, bandstand w1190012855, amphitheatre w1190016746, pavilions, 27 footpaths and the Rio Este river area r19915859."
+    },
+    "height_m": {
+      "total": 10,
+      "chapel": 10,
+      "bandstand": 7
+    },
+    "elements": {
+      "park_area_ha": 5.5,
+      "osm_area_m2": 53582,
+      "renovated_area_m2": 24000,
+      "renovated_covered_area_m2": 729.8,
+      "lake_length_m": 128.8,
+      "lake_width_m": 39.7,
+      "lake_area_m2": 4036,
+      "chapel_length_m": 20.2,
+      "chapel_width_m": 10.6,
+      "bandstand_diameter_m": 7.9,
+      "amphitheatre_diameter_m": 31
+    },
+    "facade_faces": "none",
+    "facade_azimuth_deg": 63,
+    "facade_axis_rel": "bearing_deg (long axis of the park)",
+    "facade_note": "A park has no single front. The outer part with the chapel, bandstand and cross lies east and north; the inner part with the lake lies west, behind the railing from the old Jardim Público. The main entrance is from Avenida da Liberdade / Largo de São João da Ponte on the north-east.",
+    "sources": [
+      {
+        "paths": [
+          "facade_azimuth_deg",
+          "footprint_m.length",
+          "footprint_m.width",
+          "elements.osm_area_m2",
+          "elements.lake_length_m",
+          "elements.lake_width_m",
+          "elements.lake_area_m2",
+          "elements.chapel_length_m",
+          "elements.chapel_width_m",
+          "elements.bandstand_diameter_m",
+          "elements.amphitheatre_diameter_m"
+        ],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m, area_m2 and bearing_deg; minAreaRect and ringArea of the listed part ways."
+      },
+      {
+        "paths": [
+          "elements.park_area_ha"
+        ],
+        "url": "https://jardinshistoricos.pt/ad/463",
+        "fact": "park area",
+        "value": "Parque urbano, com cerca de 5,5 ha"
+      },
+      {
+        "paths": [
+          "elements.renovated_area_m2",
+          "elements.renovated_covered_area_m2"
+        ],
+        "url": "https://pt.wikipedia.org/wiki/Parque_da_Ponte",
+        "fact": "renovated area",
+        "value": "O Parque tem 24 mil m2 (área coberta de 729,80 m2 e área descoberta de 23.270,20 m2) - this is the 2010-2011 renovated São João part, not the whole park"
+      },
+      {
+        "paths": [
+          "height_m.total",
+          "height_m.chapel",
+          "height_m.bandstand"
+        ],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published figure. The chapel (1616) is a single-nave church about 20 x 11 m with a bell gable, about 10 m; the iron bandstand on its rock base about 7 m, from Commons photos."
+      }
+    ],
+    "confidence": "medium"
+  },
+  "forum-braga": {
+    "footprint_m": {
+      "length": 201.1,
+      "width": 107.9,
+      "matches_osm": true,
+      "note": "OSM relation 19915703 (still named 'Altice Forum') is the whole building: pavilion plus congress centre. Parts: the outdoor zone / 620-space car park w591643569 (167 x 131 m) on the west and the Grande Auditório room outline w1373821120 (40 x 37 m)."
+    },
+    "height_m": {
+      "total": 14.5,
+      "pavilion_max": 14.5,
+      "pavilion_min": 11.5,
+      "auditorium_stage_clear": 9.49
+    },
+    "elements": {
+      "pavilion_length_m": 107.5,
+      "pavilion_width_m": 46.3,
+      "pavilion_floor0_m2": 5000,
+      "pavilion_floor1_m2": 2800,
+      "pavilion_standing_capacity": 12000,
+      "retractable_seats": 1680,
+      "grand_auditorium_seats": 1432,
+      "stage_width_m": 16.59,
+      "stage_depth_m": 10.79,
+      "proscenium_width_m": 13,
+      "proscenium_height_m": 8,
+      "small_auditorium_seats": 254,
+      "congress_rooms": 6,
+      "parking_spaces": 620,
+      "outdoor_area_m2": 26000,
+      "outdoor_concert_capacity": 20000
+    },
+    "facade_faces": "W",
+    "facade_azimuth_deg": 255,
+    "facade_axis_rel": "bearing_deg + 90 (long axis 164.7; the entrance front is the long west side)",
+    "facade_note": "The entrance canopy and the FORUM letters face the outdoor square and car park on the west; the east side backs onto Parque da Ponte.",
+    "sources": [
+      {
+        "paths": [
+          "facade_azimuth_deg"
+        ],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "OSM long axis 164.7 deg; the outdoor zone w591643569 in front of the entrance (Commons Forum Braga (11)-(14).jpg) lies west of the building, normal 254.7 deg."
+      },
+      {
+        "paths": [
+          "footprint_m.length",
+          "footprint_m.width"
+        ],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of r19915703."
+      },
+      {
+        "paths": [
+          "height_m.total",
+          "height_m.pavilion_max",
+          "height_m.pavilion_min",
+          "elements.pavilion_length_m",
+          "elements.pavilion_width_m",
+          "elements.pavilion_floor0_m2",
+          "elements.pavilion_floor1_m2",
+          "elements.pavilion_standing_capacity",
+          "elements.retractable_seats"
+        ],
+        "url": "https://www.forumbraga.com/Espacos/Pavilhao",
+        "fact": "pavilion",
+        "value": "107,5m de comprimento por 46,3m de largura; Altura: variável transversalmente entre os 11,5m e os 14,5m; PISO 0 5.000 m²; PISO 1 2.800 m²; até 12.000 pessoas em pé; bancada retrátil, com 1.680 lugares"
+      },
+      {
+        "paths": [
+          "elements.grand_auditorium_seats",
+          "elements.stage_width_m",
+          "elements.stage_depth_m",
+          "height_m.auditorium_stage_clear",
+          "elements.proscenium_width_m",
+          "elements.proscenium_height_m"
+        ],
+        "url": "https://www.forumbraga.com/Espacos/GrandeAuditorio",
+        "fact": "grand auditorium",
+        "value": "lotação máxima de 1432 lugares sentados; PALCO 16,59m de largura por 10,79m de profundidade, 9,49m de pé direito; Boca de Cena 13,00m por 8,00m"
+      },
+      {
+        "paths": [
+          "elements.small_auditorium_seats",
+          "elements.congress_rooms",
+          "elements.outdoor_area_m2",
+          "elements.outdoor_concert_capacity",
+          "elements.parking_spaces"
+        ],
+        "url": "https://pt.wikipedia.org/wiki/Forum_Braga",
+        "fact": "other spaces",
+        "value": "pequeno auditório 254 lugares sentados; 6 salas de congressos; área total de 26.000 m²; concertos ao ar livre para mais de 20 000 pessoas; estacionamento para 620 automóveis"
+      }
     ],
     "confidence": "medium"
   }
