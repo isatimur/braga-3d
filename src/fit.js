@@ -59,10 +59,14 @@ export function shrinkCheck(fit) {
 //   base:   'min' (lowest raw terrain under the outline, default) |
 //           { part: RegExp, stat: 'min' | 'mean' } (terrain under a part)
 //   pad:    'model' (level under the model box, default) |
-//           { parts: [RegExp] } (level under the box of those parts only)
+//           { parts: [RegExp] } (level under the box of those parts only) |
+//           { box: { x0, x1, z0, z1 } } (an explicit local box, metres);
+//           optional margin (m, default 2) and fall (falloff, m)
 //   extent: OSM set the whole model must match: 'outline' (default) |
 //           [RegExp] (outline plus the parts whose name or tag matches)
 //   view:   camera bearing offset from the front, radians (default 0.6)
+//   heightRel: measure the height on the builder's 'height' group from its
+//           own floor (draped sites whose y carries the slope)
 //   note:   why the rule exists (goes into the report)
 export const FIT_RULES = {};
 
@@ -178,14 +182,18 @@ export function fitLandmark(l, ctx) {
   // falloff and level profile are known before the build, so the builder
   // gets the visible ground (terrain with this pad) as footprint.ground
   let partPad = null;
-  if (rule.pad && rule.pad.parts) {
-    const pts = frame.parts.filter((p) => rule.pad.parts.some((re) => matches(p, re))).flatMap((p) => p.pts);
+  if (rule.pad && (rule.pad.parts || rule.pad.box)) {
+    // rule.pad.box: an explicit local box { x0, x1, z0, z1 } (metres) for
+    // a building whose OSM box reaches over its neighbour (Forum Braga)
+    const B = rule.pad.box;
+    const pts = B ? [[B.x0, B.z0], [B.x1, B.z1]] : frame.parts.filter((p) => rule.pad.parts.some((re) => matches(p, re))).flatMap((p) => p.pts);
     if (pts.length) {
       const b = bbox(pts);
       const m = rule.pad.margin ?? 2;
       const hu = b.d / 2 + m;
       const hv = b.w / 2 + m;
-      const fallM = THREE.MathUtils.clamp(Math.max(hu, hv) * S * 0.25, 5, 16) / S;
+      // rule.pad.fall: falloff in metres (default 5..16 world units)
+      const fallM = rule.pad.fall ?? THREE.MathUtils.clamp(Math.max(hu, hv) * S * 0.25, 5, 16) / S;
       partPad = { cx: b.cx, cz: b.cz, hu, hv, fallM, level: rule.pad.level || (() => 0) };
     }
   }
@@ -336,8 +344,13 @@ export function fitLandmark(l, ctx) {
   const size = { x: mb.max.x - mb.min.x, z: mb.max.z - mb.min.z };
   const main = groups.main || null;
   // height of the tallest element: the main block, or a separate part the
-  // builder marks as the 'height' group (e.g. the Tibães church towers)
-  const H = main ? Math.max(main.max.y, groups.height?.max.y ?? -Infinity) : mb.max.y;
+  // builder marks as the 'height' group (e.g. the Tibães church towers).
+  // rule.heightRel (draped sites on a slope, Parque da Ponte): the height
+  // of the 'height' group above its own footing (group box, floor to top),
+  // since y on such a site also carries the terrain relief.
+  const H = rule.heightRel && groups.height
+    ? groups.height.max.y - groups.height.min.y
+    : main ? Math.max(main.max.y, groups.height?.max.y ?? -Infinity) : mb.max.y;
   const dimsH = dims?.height_m?.total ?? null;
   const deviation = {
     site: Math.max(dev(size.x, eb.w), dev(size.z, eb.d)),

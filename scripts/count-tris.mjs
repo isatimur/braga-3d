@@ -1,7 +1,7 @@
 // Prints triangles and real size (metres) of every landmark model, built on
 // its footprint exactly as the app builds it (src/fit.js), and fails if a
 // model is outside 4k..35k triangles (moving pieces included), has NaNs,
-// or the total is over 320k.
+// or the total is over 400k (21 landmarks).
 // Usage: npm run check:models
 import { readFileSync } from 'node:fs';
 import { createProjection } from '../src/geo.js';
@@ -10,7 +10,7 @@ import { triangleCount } from '../src/models.js';
 
 const MAX_MODEL = 35000;
 const MIN_MODEL = 4000;
-const MAX_TOTAL = 320000;
+const MAX_TOTAL = 400000;
 
 const load = (f) => JSON.parse(readFileSync(new URL(`../data/${f}`, import.meta.url), 'utf8'));
 const list = load('landmarks.json');

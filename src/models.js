@@ -33,8 +33,13 @@ import santaBarbara from './models/santabarbara.js';
 import estadio from './models/estadio.js';
 import termas from './models/termas.js';
 import fonteIdolo from './models/fonteidolo.js';
+import populo from './models/populo.js';
+import ucp from './models/ucp.js';
+import maio from './models/maio.js';
+import parque from './models/parque.js';
+import forum from './models/forum.js';
 
-const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo };
+const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo, ...populo, ...ucp, ...maio, ...parque, ...forum };
 
 export { PALETTE, MAT, triangleCount };
 
@@ -58,6 +63,11 @@ export const LANDMARK_SPECS = {
   tibaes: { type: 'monastery', h: 112, yaw: 0 },
   biscainhos: { type: 'museum', h: 40, yaw: 1.06 },
   'avenida-central': { type: 'avenue', h: 44, yaw: Math.PI / 2 },
+  populo: { type: 'convent', h: 26, yaw: 0 },
+  'ucp-braga': { type: 'campus', h: 26, yaw: 0 },
+  'estadio-1-maio': { type: 'stadium-old', h: 30, yaw: 0 },
+  'parque-ponte': { type: 'park', h: 10, yaw: 0 },
+  'forum-braga': { type: 'forum', h: 14.5, yaw: 0 },
 };
 
 const BUILDERS = METRIC;

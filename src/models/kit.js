@@ -17,6 +17,7 @@ export const PALETTE = {
   graniteLight: 0xcdc5b2,
   graniteWarm: 0xc6b597,
   graniteGrey: 0x8f9291,
+  graniteGold: 0xc4a574, // the golden granite of the Pópulo front (photos)
   plaster: 0xf0ebe0,
   cream: 0xe9dcb4,
   ochre: 0xe3cf88,
@@ -57,7 +58,7 @@ export const PALETTE = {
 export const MAT = { flat: 0, ashlar: 1, tile: 2, render: 3, azulejo: 4, leaf: 5, slate: 6, water: 7, smooth: 8, metal: 9 };
 
 const MAT_OF = {
-  granite: MAT.ashlar, graniteDark: MAT.ashlar, graniteLight: MAT.ashlar, graniteWarm: MAT.ashlar, graniteGrey: MAT.ashlar,
+  granite: MAT.ashlar, graniteDark: MAT.ashlar, graniteLight: MAT.ashlar, graniteWarm: MAT.ashlar, graniteGrey: MAT.ashlar, graniteGold: MAT.ashlar,
   plaster: MAT.render, cream: MAT.render, ochre: MAT.render, rose: MAT.render, white: MAT.render,
   terracotta: MAT.tile, slate: MAT.slate, lead: MAT.slate, maroon: MAT.smooth, wood: MAT.smooth,
   azulejo: MAT.azulejo,
