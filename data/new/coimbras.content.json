@@ -1,0 +1,109 @@
+{
+ "id": "coimbras",
+ "name_pt": "Capela e Casa dos Coimbras",
+ "name_ru": "Капелла и дом Коимбраш",
+ "category": "religious",
+ "year": "1525–1528",
+ "short_ru": "Капелла-башня XVI века с каменным алтарём и изразцами о Сотворении мира",
+ "long_ru": "Жуан де Коимбра, провизор архиепархии Браги, построил эту капеллу-башню в 1525–1528 годах. Снаружи её украшают зубцы, статуи и галерея с кованой решёткой. Внутри — нервюрный свод, расписной каменный алтарь и сине-белые изразцы. Рядом стоит дом Коимбраш с мануэлинскими окнами: его разобрали в начале XX века и собрали заново у капеллы в 1924 году.",
+ "image": "assets/img/coimbras.jpg",
+ "image_credit": {
+  "author": "Gerd Eichmann",
+  "license": "CC BY-SA 4.0",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Braga-Sao_Joao_do_Souto-04-2011-gje.jpg"
+ },
+ "history_ru": "Капеллу построил доктор Жуан де Коимбра, провизор архиепархии Браги при архиепископе Диогу де Соузе. В 1505 году он купил дом у церкви Сан-Жуан-ду-Соуту. В 1525 году он начал рядом частную капеллу во имя Непорочного зачатия Девы Марии. Латинская надпись на стене сообщает, что он посвятил её Богородице в 1528 году. В 1530 году Жуан де Коимбра учредил майорат: земли и дома переходили к старшим сыновьям рода, а капелла стала семейной усыпальницей.\n\nКапелла похожа на квадратную башню с зубцами. Строили её мастера из Бискайи. Статуи снаружи вырезал скульптор Одарт. Перед входом стоит галерея на колоннах с кованой решёткой и гербом Коимбра, над порталом — герб архиепископа Диогу де Соузы.\n\nЧто искать внутри. Нервюрный свод усыпан золочёными розетками, в центре — герб основателя. Каменный ренессансный ретабль приписывают молодому Жуану де Руану. В его нишах стоят расписные фигуры Девы Марии с Младенцем, святой Анны и святого Иоакима. Рядом — скульптурная группа Положения во гроб; отсюда второе имя капеллы, Сеньор-Морту («Умерший Господь»). Стены покрыты сине-белыми изразцами XVIII века со сценами Сотворения мира.\n\nКапелла примыкала к романской церкви Сан-Жуан-ду-Соуту. Церковь позже перестроили, а капелла осталась прежней. В 1910 году она стала национальным памятником. Дом Коимбраш стоял примерно в ста метрах отсюда. В начале XX века город расчищал площадь, и дом разобрали. В 1924 году его собрали заново рядом с капеллой и сохранили мануэлинские окна и двери. Потомки основателя до сих пор собираются здесь на мессу 8 декабря, как завещал Жуан де Коимбра.",
+ "facts_ru": [
+  "Латинская надпись на стене датирует посвящение капеллы 1528 годом.",
+  "Каменный ретабль приписывают молодому Жуану де Руану.",
+  "Капелла — национальный памятник с 16 июня 1910 года.",
+  "Дом Коимбраш разобрали в начале XX века и собрали заново в 1924 году.",
+  "Потомки основателя каждый год собираются здесь на мессу 8 декабря."
+ ],
+ "sources": [
+  {
+   "title": "Casa e Capela dos Coimbras — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Casa_e_Capela_dos_Coimbras"
+  },
+  {
+   "title": "Capela dos Coimbras — Wikipedia (en)",
+   "url": "https://en.wikipedia.org/wiki/Capela_dos_Coimbras"
+  },
+  {
+   "title": "Capela de Nossa Senhora da Conceição (Casa dos Coimbras) — e-cultura",
+   "url": "https://www.e-cultura.pt/patrimonio_item/3733"
+  },
+  {
+   "title": "Capela dos Coimbras. João de Coimbra, Braga, 1530 — Vínculo do Mês, NOVA FCSH",
+   "url": "https://www.vinculum.fcsh.unl.pt/wp-content/uploads/2022/06/VdM-Junho-22-Capela-dos-Coimbra_PT.pdf"
+  }
+ ],
+ "tip_ru": "Капелла стоит на площади Сан-Жуан-ду-Соуту, в трёх минутах ходьбы от собора. Вход платный; часы работы уточните на сайте Visit Braga. Рассмотрите решётку галереи: в ней прячутся путти с гербом Коимбра. До церкви Сан-Маркуш — пара минут пешком.",
+ "gallery": [
+  {
+   "src": "assets/img/coimbras-1.jpg",
+   "kind": "interior",
+   "caption_ru": "Каменный ретабль: Дева Мария с Младенцем между святым Иоакимом и святой Анной",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(1).JPG"
+   }
+  },
+  {
+   "src": "assets/img/coimbras-2.jpg",
+   "kind": "interior",
+   "caption_ru": "Скульптурная группа Положения во гроб",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(6).JPG"
+   }
+  },
+  {
+   "src": "assets/img/coimbras-3.jpg",
+   "kind": "interior",
+   "caption_ru": "Нервюрный свод с золочёными розетками и гербом основателя",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(17).JPG"
+   }
+  },
+  {
+   "src": "assets/img/coimbras-4.jpg",
+   "kind": "detail",
+   "caption_ru": "Латинская надпись: Жуан де Коимбра посвятил капеллу Богородице в 1528 году",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(21).JPG"
+   }
+  },
+  {
+   "src": "assets/img/coimbras-5.jpg",
+   "kind": "detail",
+   "caption_ru": "Мануэлинское окно дома Коимбраш",
+   "credit": {
+    "author": "Alvesgaspar",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Braga_March_2016-38.jpg"
+   }
+  }
+ ],
+ "panorama": null,
+ "videos": [
+  {
+   "youtube_id": "nE_ClNJsVbo",
+   "title": "Capela dos Coimbras 500 anos",
+   "channel": "Capela dos Coimbras",
+   "lang": "pt"
+  },
+  {
+   "youtube_id": "BgAFfoVmerk",
+   "title": "CAPELA DOS COIMBRAS EM BRAGA",
+   "channel": "portugallook",
+   "lang": "pt"
+  }
+ ]
+}

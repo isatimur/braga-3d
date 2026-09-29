@@ -1,0 +1,88 @@
+{
+  "osm": {
+    "type": "node",
+    "id": 2806164031,
+    "name": "Colégio Leonardo da Vinci",
+    "wikidata": null
+  },
+  "verify": "no wikidata; OSM has only the school node (amenity=school, ref 500616). Outline and buildings from Microsoft ML footprints, matched to the roofs on aerial imagery (reference only).",
+  "outline": [[41.55709, -8.41661], [41.55752, -8.41677], [41.55747, -8.41706], [41.55731, -8.417], [41.5573, -8.41708], [41.55714, -8.41702], [41.55717, -8.41688], [41.55711, -8.41685], [41.55713, -8.41675], [41.55707, -8.41672]],
+  "parts": [
+    {
+      "tag": "building",
+      "osm": null,
+      "synth": "ms:1",
+      "source": "Microsoft Global ML Building Footprints (ODbL)",
+      "pts": [[41.55709, -8.41661], [41.55752, -8.41677], [41.55747, -8.41706], [41.55731, -8.417], [41.5573, -8.41708], [41.55714, -8.41702], [41.55717, -8.41688], [41.55711, -8.41685], [41.55713, -8.41675], [41.55707, -8.41672]],
+      "closed": true,
+      "height_m": 10.5,
+      "height_source": "estimate",
+      "name": "Sede (Rua Conselheiro Bento Miguel 10)"
+    },
+    {
+      "tag": "building",
+      "osm": null,
+      "synth": "ms:2",
+      "source": "Microsoft Global ML Building Footprints (ODbL)",
+      "pts": [[41.55703, -8.41683], [41.5571, -8.41685], [41.55709, -8.41694], [41.55702, -8.41692]],
+      "closed": true,
+      "height_m": 4,
+      "height_source": "estimate",
+      "name": "Anexo do recreio"
+    },
+    {
+      "tag": "building",
+      "osm": null,
+      "synth": "ms:3",
+      "source": "Microsoft Global ML Building Footprints (ODbL)",
+      "pts": [[41.557, -8.417], [41.55687, -8.41698], [41.55688, -8.41679], [41.55701, -8.41681]],
+      "closed": true,
+      "height_m": 14.5,
+      "height_source": "estimate",
+      "name": "Polo (casa de Santa Margarida)"
+    },
+    {
+      "tag": "building",
+      "osm": null,
+      "synth": "ms:4",
+      "source": "Microsoft Global ML Building Footprints (ODbL)",
+      "pts": [[41.55676, -8.41694], [41.55677, -8.41682], [41.55683, -8.41683], [41.55682, -8.41695]],
+      "closed": true,
+      "height_m": 3.5,
+      "height_source": "estimate",
+      "name": "Anexo do polo"
+    },
+    {
+      "tag": "other",
+      "osm": null,
+      "synth": "sketch:recreio",
+      "source": "estimate: the open yard between the Microsoft footprints (checked against aerial imagery, reference only)",
+      "pts": [[41.557134, -8.417028], [41.557166, -8.41688], [41.557109, -8.416857], [41.557093, -8.416936], [41.557028, -8.416924], [41.557012, -8.416996]],
+      "closed": true,
+      "height_m": 0,
+      "height_source": "flat",
+      "name": "Recreio"
+    },
+    {
+      "tag": "garden",
+      "osm": null,
+      "synth": "sketch:jardim",
+      "source": "estimate: the wooded plot east of the polo house, west of the Colégio Dom Diogo de Sousa boundary (OSM w109262693), checked against aerial imagery (reference only)",
+      "pts": [[41.557064, -8.416806], [41.557087, -8.416605], [41.556933, -8.416552], [41.556815, -8.416542], [41.556802, -8.41677], [41.557014, -8.41678]],
+      "closed": true,
+      "height_m": 0,
+      "height_source": "flat",
+      "name": "Jardim do polo"
+    }
+  ],
+  "centroid": [41.557296, -8.416851],
+  "bearing_deg": 164.4,
+  "extent_m": [50.8, 31.4],
+  "area_m2": 1210,
+  "height_m": 10.5,
+  "height_source": "estimate",
+  "height_note": "No published heights. The sede (Microsoft ML footprint, ML height 10.5 m) is an older tiled house on Rua Conselheiro Bento Miguel with two-storey school wings under white roofs behind it: about 10.5 m. The polo house on the Santa Margarida side has three tall storeys (school photo): eaves about 12 m, hip-roof ridge about 14.5 m.",
+  "osm_ids": [],
+  "exclude_outline": true,
+  "main_offset_m": 31
+}

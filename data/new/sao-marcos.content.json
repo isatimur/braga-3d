@@ -1,0 +1,115 @@
+{
+ "id": "sao-marcos",
+ "name_pt": "Igreja e Hospital de São Marcos",
+ "name_ru": "Церковь и госпиталь Сан-Маркуш",
+ "category": "religious",
+ "year": "XVIII век",
+ "short_ru": "Барочный фасад госпиталя со статуями апостолов; в бывших палатах теперь отель",
+ "long_ru": "Архиепископ Диогу де Соуза основал госпиталь Сан-Маркуш в 1508 году. В XVIII веке Карлуш Амаранте дал ему церковь с двумя башнями и длинный фасад со статуями апостолов на балюстраде. Госпиталь лечил горожан до 2011 года. С 2018 года в его северном корпусе работает отель, а церковь по-прежнему принадлежит братству Мизерикордия.",
+ "image": "assets/img/sao-marcos.jpg",
+ "image_credit": {
+  "author": "John Samuel",
+  "license": "CC BY-SA 4.0",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_de_S%C3%A3o_Marcos_(Braga)_01.jpg"
+ },
+ "history_ru": "У этого места долгая история. Архиепископ Родригу да Кунья записал предание: магистр тамплиеров Гуалдин Паиш привёз из Святой земли мощи святого Жуана Маркуша. Мощи положили в часовню, они прославились исцелениями, и рядом появился приют для больных. В 1508 году архиепископ Диогу де Соуза заменил три маленьких приюта одним госпиталем Сан-Маркуш. В 1559 году архиепископ Бартоломеу душ Мартириш передал его братству Санта-Каза-да-Мизерикордия; братство управляло им до 1975 года.\n\nВ XVIII веке северный корпус и церковь построили по проекту Карлуша Амаранте. Боковые крылья спроектировал и построил каменотёс Жозе Фернандеш да Граса по прозвищу Ландин. Стройка церкви надолго вставала. С 1794 года её продолжили на деньги архиепископа Каэтану Брандана. В 1798 году он же открыл при госпитале хирургическую школу.\n\nЧто искать на фасаде. Две башни церкви поднимаются над длинным симметричным корпусом. По балюстраде стоят фигуры в полный рост: апостолы Пётр, Андрей, Иоанн, Иаков и другие святые. В нише над входом — святой Марк в епископском облачении. Внутри — позолоченный главный алтарь, расписной купол и каменный ковчег с латинской надписью «Святые кости божественного Иоанна Марка».\n\nФасады госпиталя и церкви — памятник общественного значения с 1956 года. Госпиталь работал до 2011 года, пока не открылась новая больница Браги. Мизерикордия сдала часть зданий гостиничной сети «Вила Гале». Отель на 123 номера открылся в 2018 году; его корпуса названы именами трёх архиепископов. Церковь, капелла Сан-Бенту и аптека Мизерикордии в отель не вошли.",
+ "facts_ru": [
+  "Госпиталь основал архиепископ Диогу де Соуза в 1508 году.",
+  "Церковь и северный корпус построены по проекту Карлуша Амаранте.",
+  "Госпиталь принимал больных больше 500 лет, до 2011 года.",
+  "Отель на 123 номера открылся в бывшем госпитале в 2018 году.",
+  "Фасады госпиталя и церкви — памятник общественного значения с 1956 года."
+ ],
+ "sources": [
+  {
+   "title": "Hospital de São Marcos — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Hospital_de_S%C3%A3o_Marcos"
+  },
+  {
+   "title": "Igreja de São Marcos (Braga) — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Igreja_de_S%C3%A3o_Marcos_(Braga)"
+  },
+  {
+   "title": "Igreja e Antigo Hospital de São Marcos — Visit Braga",
+   "url": "https://visitbraga.travel/en/highlights/monumentos/igreja-de-sao-marcos/"
+  },
+  {
+   "title": "O Vila Galé Collection Braga é um hotel que nasceu velho — Público",
+   "url": "https://www.publico.pt/2018/06/12/fugas/noticia/o-vila-gale-collection-braga-e-um-hotel-que-nasceu-velho-1834115"
+  }
+ ],
+ "tip_ru": "Церковь стоит на площади Карлуша Амаранте, рядом с дворцом Райу. Вход свободный, но открыта она недолго: по будням и в воскресенье — около часа утром, в субботу закрыта. Часы уточните на сайте Visit Braga. Фасад со статуями лучше всего видно из сквера перед ним.",
+ "gallery": [
+  {
+   "src": "assets/img/sao-marcos-1.jpg",
+   "kind": "interior",
+   "caption_ru": "Позолоченный главный алтарь церкви",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Marcos-Braga_(10).JPG"
+   }
+  },
+  {
+   "src": "assets/img/sao-marcos-2.jpg",
+   "kind": "interior",
+   "caption_ru": "Ковчег с надписью «Святые кости божественного Иоанна Марка»",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Marcos-Braga_(16).JPG"
+   }
+  },
+  {
+   "src": "assets/img/sao-marcos-3.jpg",
+   "kind": "detail",
+   "caption_ru": "Статуи апостолов на балюстраде госпиталя",
+   "credit": {
+    "author": "Sara silva",
+    "license": "CC BY-SA 3.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_Sao_Marcos_(15).jpg"
+   }
+  },
+  {
+   "src": "assets/img/sao-marcos-4.jpg",
+   "kind": "detail",
+   "caption_ru": "Святой Марк в нише над входом в церковь",
+   "credit": {
+    "author": "Sara silva",
+    "license": "CC BY-SA 3.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_Sao_Marcos_(13).jpg"
+   }
+  },
+  {
+   "src": "assets/img/sao-marcos-5.jpg",
+   "kind": "exterior",
+   "caption_ru": "Двор бывшего госпиталя, сегодня — отель",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_of_S%C3%A3o_Marcos_(10).jpg"
+   }
+  }
+ ],
+ "panorama": null,
+ "videos": [
+  {
+   "youtube_id": "RrKosC2W7co",
+   "title": "Igreja de S. Marcos",
+   "channel": "Visit Braga",
+   "lang": "pt"
+  },
+  {
+   "youtube_id": "TdwGGq6XEQY",
+   "title": "Igreja de S. Marcos. Braga - Apresentação do órgão de tubos",
+   "channel": "António Simões",
+   "lang": "pt"
+  },
+  {
+   "youtube_id": "MTEUvygZ0jw",
+   "title": "Espaços&Casas 534, Vila Galé Collection Braga",
+   "channel": "gotofilms",
+   "lang": "pt"
+  }
+ ]
+}

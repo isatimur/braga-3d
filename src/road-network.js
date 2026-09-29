@@ -360,6 +360,9 @@ function build(roads, project, heightAt) {
     bridges.push(wi);
   });
   bridges.sort((a, b) => ways[a].ly - ways[b].ly);
+  // junction nodes where only bridge pieces meet
+  const onlyBridges = new Uint8Array(nNodes);
+  for (let n = 0; n < nNodes; n++) onlyBridges[n] = nodeWays[n].length > 0 && nodeWays[n].every((v, k) => k % 2 === 1 || ways[v].bridge) ? 1 : 0;
   const wayY = (wi, x, z) => {
     // height of a way's surface nearest to (x, z)
     const w = ways[wi];
@@ -380,8 +383,15 @@ function build(roads, project, heightAt) {
     const b = a + w.n - 1;
     const n0 = endNode(w, 0);
     const n1 = endNode(w, 1);
-    const y0 = G[a] + (n0 >= 0 ? NL[n0] : 0);
-    const y1 = G[b] + (n1 >= 0 ? NL[n1] : 0);
+    let y0 = G[a] + (n0 >= 0 ? NL[n0] : 0);
+    let y1 = G[b] + (n1 >= 0 ? NL[n1] : 0);
+    // a footway piece that ends where only other bridge pieces join (the
+    // tangle of crossings and paths on and around a deck) comes down to the
+    // ground only where a path on the ground joins it: level otherwise
+    if (w.kind === 'foot') {
+      if (n0 >= 0 && onlyBridges[n0] && y1 - G[b] > y0 - G[a]) y0 = G[a] + (y1 - G[b]);
+      if (n1 >= 0 && onlyBridges[n1] && y0 - G[a] > y1 - G[b]) y1 = G[b] + (y0 - G[a]);
+    }
     const slope = w.cls.slope;
     const need = w.crossings.map((c) => {
       // what is under it, at its own surface (a deck or a ramp below counts)
@@ -402,10 +412,55 @@ function build(roads, project, heightAt) {
       y = Math.max(y, G[i] + 0.8 * S * inner);
       Y[i] = y;
     }
-    if (n0 >= 0) NL[n0] = Math.max(NL[n0], Y[a] - G[a]);
-    if (n1 >= 0) NL[n1] = Math.max(NL[n1], Y[b] - G[b]);
+    // every junction on the deck lifts what joins there: the approaches at
+    // the ends, and a crossing or a slip road in the middle of the span
+    let changed = false;
+    for (let k = 0; k < w.jp.length; k += 2) {
+      const node = w.jp[k + 1];
+      const l = Y[w.jp[k]] - G[w.jp[k]];
+      if (l > NL[node] + 0.01) {
+        NL[node] = l;
+        changed = true;
+      }
+    }
+    return changed;
   }
-  for (let pass = 0; pass < 3; pass++) for (const wi of bridges) deck(wi);
+  for (let pass = 0; pass < 8; pass++) {
+    let changed = false;
+    for (const wi of bridges) changed = deck(wi) || changed;
+    if (!changed) break;
+  }
+  // footway and cycleway pieces tagged bridge that join a road deck (the
+  // crossings and paths drawn on it): their surface is the deck itself
+  // ... and the sidewalks of a road bridge, mapped as separate footways
+  // alongside it (most of their points within the deck's half width + 7 m;
+  // at Avenida da Liberdade over the Este two carriageways and two
+  // sidewalks share one structure, the sidewalks 6 m off the road edge)
+  const carDecks = bridges.filter((wi) => ways[wi].kind !== 'foot' && ways[wi].kind !== 'rail');
+  for (const wi of bridges) {
+    const w = ways[wi];
+    if (w.kind !== 'foot') continue;
+    for (let k = 1; k < w.jp.length && !w.onDeck; k += 2) {
+      const nw = nodeWays[w.jp[k]];
+      for (let m = 0; m < nw.length; m += 2) {
+        const o = ways[nw[m]];
+        if (o !== w && o.bridge && o.kind !== 'foot' && o.kind !== 'rail') w.onDeck = true;
+      }
+    }
+    if (w.onDeck) continue;
+    let near = 0;
+    for (let i = w.start; i < w.start + w.n; i++) {
+      let hit = false;
+      for (const ci of carDecks) {
+        const c = ways[ci];
+        const r = (c.widthM / 2 + 7) * S;
+        for (let j = c.start; j < c.start + c.n && !hit; j++) if ((PX[j] - PX[i]) ** 2 + (PZ[j] - PZ[i]) ** 2 < r * r) hit = true;
+        if (hit) break;
+      }
+      if (hit) near++;
+    }
+    if (near >= 0.7 * w.n) w.onDeck = true;
+  }
 
   // approach ramps: the lift spreads from the bridge ends along the
   // connected ways, falling at the class's slope

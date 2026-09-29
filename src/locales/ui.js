@@ -104,5 +104,5 @@ export const messages = {
   'маршрут: ищем…': ['rota: a procurar…', 'route: looking up…'], 'маршрут неизвестен': ['rota desconhecida', 'route unknown'],
   'набор высоты': ['a subir', 'climbing'], 'снижение': ['a descer', 'descending'], 'ровный полёт': ['voo nivelado', 'level flight'],
   'км/ч': ['km/h', 'km/h'], 'км': ['km', 'km'], 'курс': ['rumo', 'track'], 'до': ['até', 'to'],
-  'нажмите — маршрут и трек': ['clique para ver a rota e o trajeto', 'click for the route and track'],
+  'нажмите, чтобы закрепить и открыть трек': ['clique para fixar e abrir o trajeto', 'click to pin and open the track'],
 };

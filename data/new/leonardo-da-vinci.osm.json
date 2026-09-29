@@ -1,0 +1,11 @@
+{
+  "osm": {
+    "type": "node",
+    "id": 2806164031,
+    "height_m": 14.5,
+    "height_source": "estimate"
+  },
+  "lat": 41.55751,
+  "lon": -8.41708,
+  "model": "school-ldv"
+}

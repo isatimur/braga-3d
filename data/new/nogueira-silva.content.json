@@ -1,0 +1,115 @@
+{
+ "id": "nogueira-silva",
+ "name_pt": "Museu Nogueira da Silva",
+ "name_ru": "Музей Ногейры да Силвы",
+ "category": "museum",
+ "year": "1975",
+ "short_ru": "Дом-музей мецената на Авенида-Сентрал: искусство XV–XX веков и сад во французском духе",
+ "long_ru": "Предприниматель и коллекционер Антониу Ногейра да Силва завещал свой дом, сад и коллекцию Университету Минью в 1975 году. Дом построили в 1950–1960-х годах по проекту Раула Родригеша Лимы. Внутри — живопись, мебель, серебро, китайский фарфор, слоновая кость и гобелены. За домом лежит сад с самшитовыми партерами, статуями и изразцами.",
+ "image": "assets/img/nogueira-silva.jpg",
+ "image_credit": {
+  "author": "Jose Goncalves (Joseolgon)",
+  "license": "CC BY-SA 3.0",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Museunogueirasilvabraga.jpg"
+ },
+ "history_ru": "Антониу Аугушту Ногейра да Силва (1901–1976) родился в Порту, в семье бражской буржуазии; его родные торговали шерстью и работали в банках. Состояние ему принесла «Каза-да-Сорте» — лотерейная контора, которую он открыл в Браге в 1933 году. Потом её отделения появились по всей Португалии и в колониях. Ещё до революции 1974 года он передал фирму её работникам.\n\nНогейра да Силва много жертвовал городу. Он построил квартал со школой, достроил базилику Конгрегадуш и помог основать Католический университет. В 1964 году Брага сделала его почётным гражданином. Дом на Авенида-Сентрал спроектировал Раул Родригеш Лима, автор кинотеатров и дворцов правосудия. Дом строили в два этапа, в 1950-х и 1960-х годах, и рассчитывали на большие приёмы.\n\nВ сентябре 1975 года Ногейра да Силва завещал дом, сад и коллекцию Университету Минью, а в 1976 году умер. Вещи он покупал в 1960-е годы на аукционах и у антикваров. Что искать в залах: итальянский сундук-кассоне XV века с росписью, китайский фарфор для экспорта в Европу, луза-могольскую пластину из слоновой кости XVII века. Главная картина португальской школы — «Тайная вечеря» Андре Гонсалвеша. В доме также работают галерея современного искусства, фототека и библиотека по истории искусства.\n\nСад разбит во французском духе: партеры в рамке из самшита, магнолии и барочный фонтан из старой усадьбы в Гуалтаре. Среди зелени стоят керамика Жорже Баррадаша, два голландских изразцовых панно XVIII века и копия XIX века с «Аполлона и Дафны» Бернини.",
+ "facts_ru": [
+  "Дом, сад и коллекцию завещали Университету Минью в сентябре 1975 года.",
+  "Дом построен в 1950–1960-х годах по проекту Раула Родригеша Лимы.",
+  "Самая редкая вещь — расписной итальянский сундук-кассоне XV века.",
+  "Ногейра да Силва оплатил западную башню базилики Конгрегадуш.",
+  "Барочный фонтан в саду привезли из старой усадьбы в Гуалтаре."
+ ],
+ "sources": [
+  {
+   "title": "Museu Nogueira da Silva — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Museu_Nogueira_da_Silva"
+  },
+  {
+   "title": "Nogueira da Silva Museum — Wikipedia (en)",
+   "url": "https://en.wikipedia.org/wiki/Nogueira_da_Silva_Museum"
+  },
+  {
+   "title": "O Museu: história e edifício — Museu Nogueira da Silva, Universidade do Minho",
+   "url": "http://www.mns.uminho.pt/files/midle_museu.html"
+  },
+  {
+   "title": "Coleção e jardim — Museu Nogueira da Silva, Universidade do Minho",
+   "url": "http://www.mns.uminho.pt/files/midle_cj.html"
+  }
+ ],
+ "tip_ru": "Музей стоит на Авенида-Сентрал, 61, почти напротив базилики Конгрегадуш. Часы работы и цены уточните на сайте музея: по воскресеньям, понедельникам и праздникам он обычно закрыт. После залов обязательно выйдите в сад.",
+ "gallery": [
+  {
+   "src": "assets/img/nogueira-silva-1.jpg",
+   "kind": "interior",
+   "caption_ru": "Мраморная лестница с латунными перилами",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Museu_Nogueira_da_Silva_(1).jpg"
+   }
+  },
+  {
+   "src": "assets/img/nogueira-silva-2.jpg",
+   "kind": "interior",
+   "caption_ru": "Холл с хрустальными люстрами и гобеленом",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Museu_Nogueira_da_Silva_(6).jpg"
+   }
+  },
+  {
+   "src": "assets/img/nogueira-silva-3.jpg",
+   "kind": "interior",
+   "caption_ru": "Кабинет-библиотека хозяина дома",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Biblioteca_Museu_Nogueira_da_Silva.jpg"
+   }
+  },
+  {
+   "src": "assets/img/nogueira-silva-4.jpg",
+   "kind": "exterior",
+   "caption_ru": "Мраморные статуи вдоль дорожки в саду",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Nogueira_da_Silva_Garden_(3).jpg"
+   }
+  },
+  {
+   "src": "assets/img/nogueira-silva-5.jpg",
+   "kind": "detail",
+   "caption_ru": "«Аполлон и Дафна» в саду — копия XIX века со скульптуры Бернини",
+   "credit": {
+    "author": "Jose Goncalves",
+    "license": "CC BY-SA 3.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Museu_Nogueira_da_Silva_-_Apolo_e_Dafne.JPG"
+   }
+  }
+ ],
+ "panorama": null,
+ "videos": [
+  {
+   "youtube_id": "rSsOvoceREw",
+   "title": "Museu Nogueira da Silva - Espaços com Alma",
+   "channel": "Câmara Municipal de Braga",
+   "lang": "pt"
+  },
+  {
+   "youtube_id": "KSSDAxwJpek",
+   "title": "Museu Nogueira da Silva - Obras italianas",
+   "channel": "Museu Nogueira da Silva Universidade do Minho",
+   "lang": "pt"
+  },
+  {
+   "youtube_id": "5zz0HJFj8h8",
+   "title": "Museu Nogueira da Silva, Braga - PORTUGAL",
+   "channel": "Olhar Brasileiro em Portugal",
+   "lang": "pt"
+  }
+ ]
+}

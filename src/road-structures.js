@@ -93,7 +93,8 @@ const PARAPET_M = 1.05;
 
 // opts: { halfW (world), lift (world, the ribbon lift over y), col, pierCol,
 //   style: 'beam' | 'arch', spacingM, keepOut: [[s0, s1], ...] no piers there,
-//   rail: bool (open railings), abut: [bool, bool] }
+//   rail: bool (open railings), abut: [bool, bool],
+//   open(i, side) -> bool: no side wall or parapet on segment i, side 1 left / -1 right }
 export function bridgeGeometry(T, pts, opts) {
   const n = pts.length;
   if (n < 2) return 0;
@@ -137,6 +138,9 @@ export function bridgeGeometry(T, pts, opts) {
     const ba = bottom(i);
     const bb = bottom(i + 1);
     for (const side of [1, -1]) {
+      // no parapet where the edge runs onto another deck (two carriageways
+      // on one structure, a slip road leaving the deck)
+      if (opts.open && opts.open(i, side)) continue;
       const ex = side * halfW;
       const ox = side * (halfW + parW);
       // edge lines

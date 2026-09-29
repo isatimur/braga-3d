@@ -2,8 +2,8 @@
   "osm": {
     "type": "way",
     "id": 104691209,
-    "height_m": 10,
-    "height_source": "estimate"
+    "height_m": 12.8,
+    "height_source": "osm building:levels×3.2"
   },
   "lat": 41.5462,
   "lon": -8.4273,

@@ -918,7 +918,7 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
     } else setText(c.dist, '');
     c.dist.hidden = !c.dist.textContent;
     c.link.hidden = !c.link.getAttribute('href');
-    setText(c.hint, st.pinned ? '' : t('нажмите — маршрут и трек'));
+    setText(c.hint, st.pinned ? '' : t('нажмите, чтобы закрепить и открыть трек'));
   }
   const label = createHoverLabel({
     canvas: renderer.domElement,
@@ -952,7 +952,13 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
   hint.visible = false;
   hint.renderOrder = 27;
   root.add(hint);
-  const HINT_KM = 160; // past ~75 km the map compression folds it onto the haze edge anyway
+  // A destination on the map (< 80 km, Porto for arrivals): a straight line
+  // down to the airport. Farther: a ray along the initial great-circle
+  // bearing, 700 units (2.8 km) long. (Following the whole great circle
+  // through the distance compression folds it along the haze rim and points
+  // the wrong way.)
+  const NEAR_KM = 80;
+  const RAY = 700;
   function updateHint() {
     const i = label.shownKey != null ? cardSlot : -1;
     const n = i >= 0 && used[i] && hexOf[i] === label.shownKey ? info[i] : null;
@@ -962,34 +968,33 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       hint.visible = false;
       return;
     }
-    const R = Math.PI / 180;
-    const v = (la, lo) => [Math.cos(la * R) * Math.cos(lo * R), Math.cos(la * R) * Math.sin(lo * R), Math.sin(la * R)];
-    const A = v(n.lat, n.lon);
-    const B = v(de.lat, de.lon);
-    const total = haversineKm(n.lat, n.lon, de.lat, de.lon);
-    const span = Math.min(1, HINT_KM / Math.max(1, total));
-    // the fix's own map spot, to offset the line onto the drawn aircraft
-    const p0 = project(n.lat, n.lon);
-    const r0 = Math.hypot(p0.x, p0.z);
-    const f0 = r0 > 1e-6 ? compress(r0) / r0 : 1;
-    const ox = PX[i] - p0.x * f0;
-    const oz = PZ[i] - p0.z * f0;
+    const km = haversineKm(n.lat, n.lon, de.lat, de.lon);
+    let ex;
+    let ez;
+    if (km < NEAR_KM) {
+      const p = project(de.lat, de.lon);
+      const r = Math.hypot(p.x, p.z);
+      const f = r > 1e-6 ? compress(r) / r : 1;
+      ex = p.x * f;
+      ez = p.z * f;
+    } else {
+      // initial bearing, 0 north, clockwise; north is -z on the map
+      const R = Math.PI / 180;
+      const p1 = n.lat * R;
+      const p2 = de.lat * R;
+      const dl = (de.lon - n.lon) * R;
+      const b = Math.atan2(Math.sin(dl) * Math.cos(p2), Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl));
+      ex = PX[i] + Math.sin(b) * RAY;
+      ez = PZ[i] - Math.cos(b) * RAY;
+    }
     for (let s = 0; s < HINT_N; s++) {
-      const f = (s / (HINT_N - 1)) * span;
-      const x = A[0] * (1 - f) + B[0] * f;
-      const y = A[1] * (1 - f) + B[1] * f;
-      const z = A[2] * (1 - f) + B[2] * f;
-      const p = project(Math.atan2(z, Math.hypot(x, y)) / R, Math.atan2(y, x) / R);
-      const rr = Math.hypot(p.x, p.z);
-      const fc = rr > 1e-6 ? compress(rr) / rr : 1;
-      const w = 1 - s / (HINT_N - 1);
-      const wx = p.x * fc + ox * w;
-      const wz = p.z * fc + oz * w;
-      // level at first, down to the ground when the destination is near
-      const k = span >= 1 ? f : 0;
+      const f = s / (HINT_N - 1);
+      const wx = PX[i] + (ex - PX[i]) * f;
+      const wz = PZ[i] + (ez - PZ[i]) * f;
       const gy = heightAt(wx, wz) + 10 * S;
       hPos[s * 3] = wx;
-      hPos[s * 3 + 1] = Math.max(gy, PY[i] * (1 - k) + gy * k);
+      // down to the airport when it is near, level otherwise
+      hPos[s * 3 + 1] = km < NEAR_KM ? Math.max(gy, PY[i] + (gy - PY[i]) * f) : Math.max(gy, PY[i]);
       hPos[s * 3 + 2] = wz;
     }
     hPosA.needsUpdate = true;
@@ -1043,6 +1048,9 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
     label,
     // tests: feed a canned answer ({ now, ac: [...] } in the api/adsb.js format)
     mock(j) {
+      // a real poll still in flight would land after the mock and replace it
+      ctl?.abort();
+      ctl = null;
       src = j.src || 'mock';
       status = 'ok';
       lastAnswer = { src, count: (j.ac || []).length, errors: [], at: new Date().toISOString() };

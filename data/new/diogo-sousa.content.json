@@ -1,0 +1,109 @@
+{
+  "id": "diogo-sousa",
+  "name_pt": "Museu de Arqueologia D. Diogo de Sousa",
+  "name_ru": "Археологический музей имени Диогу де Соузы",
+  "category": "museum",
+  "year": "1918, 2007",
+  "short_ru": "Археологический музей римской Бракары-Августы: от палеолита до Средних веков",
+  "long_ru": "Музей основали в 1918 году, но собственное здание он получил только в 2007-м. Его построили архитекторы Карлуш Гимарайнш и Луиш Соареш Карнейру в самой ценной археологической зоне римской Бракары-Августы. Коллекция рассказывает о севере Португалии от палеолита до Средних веков. Здесь хранится одно из лучших в Европе собраний римских мильных камней.",
+  "image": "assets/img/diogo-sousa.jpg",
+  "image_credit": {
+    "author": "Joseolgon",
+    "license": "CC0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Museu_Regional_de_Arqueologia_Dom_Diogo_de_Sousa.jpg"
+  },
+  "history_ru": "Музей носит имя Диогу де Соузы (1461–1532), архиепископа Браги с 1505 года. Он перестроил город и одним из первых стал беречь наследие римской Бракары-Августы. Архиепископ собрал римские мильные камни и поставил их на поле Сант-Ана, нынешней Авениде-Сентрал. Получился первый в городе «музей под открытым небом». В 1769 году архиепископ Гашпар де Браганса перенёс камни на аллею Карвальейраш.\n\nГородской совет решил создать музей ещё в 1892 году, но решение осталось на бумаге. Музей официально основали декретом от 28 марта 1918 года как музей археологии и искусства. Он занял залы Архиепископского дворца, но до 1980 года работал нерегулярно. В 1980 году его возродили как Региональный археологический музей.\n\nСтроительство нового здания началось около 1990 года. Вскоре его заморозили: новое руководство музейной службы назвало проект «белым слоном». Работы возобновили в 2001 году, и 29 июня 2007 года музей открылся. Проект сделали архитекторы школы Порту Карлуш Гимарайнш и Луиш Соареш Карнейру. Здание состоит из трёх корпусов: технического с реставрационной лабораторией, кафе и публичного с залами, аудиторией, библиотекой и магазином. Сады вокруг открыты для всех.\n\nВ фондах более 30 тысяч предметов. Римские мильные камни из описи Капелы — национальный памятник с 1910 года. Один римский мозаичный пол показан на том месте, где его нашли. В 2018–2019 годах немецкие меценаты Бюлер-Брокгауз подарили музею почти 300 античных предметов. Среди них — прижизненный бюст императора Августа, единственный в Португалии.",
+  "facts_ru": [
+    "Музей основан декретом от 28 марта 1918 года.",
+    "Новое здание открылось 29 июня 2007 года.",
+    "В фондах более 30 тысяч предметов — от палеолита до Средних веков.",
+    "Прижизненный бюст императора Августа из дара Бюлер-Брокгауз — единственный в Португалии.",
+    "Мильные камни из описи Капелы — национальный памятник с 1910 года."
+  ],
+  "sources": [
+    {
+      "title": "Museu de Arqueologia Dom Diogo de Sousa — Wikipédia (pt)",
+      "url": "https://pt.wikipedia.org/wiki/Museu_de_Arqueologia_Dom_Diogo_de_Sousa"
+    },
+    {
+      "title": "História e Edifício — Museu D. Diogo de Sousa",
+      "url": "https://www.maddiogosousa.gov.pt/historia/"
+    },
+    {
+      "title": "D. Diogo de Sousa Archaeology Museum — Museus e Monumentos de Portugal",
+      "url": "https://www.museusemonumentos.pt/en/museus-e-monumentos/museu-de-arqueologia-d-diogo-de-sousa"
+    },
+    {
+      "title": "Museu D. Diogo de Sousa: 100 anos a guardar o passado do Noroeste — Público",
+      "url": "https://www.publico.pt/2018/03/28/local/noticia/museu-d-diogo-de-sousa-100-anos-a-guardar-o-passado-do-noroeste-1808353"
+    }
+  ],
+  "tip_ru": "Музей открыт со вторника по воскресенье с 10:00 до 17:30, полный билет стоит 5 евро. Сады вокруг здания открыты бесплатно. Рядом, на холме Сивидаде, можно осмотреть римские термы.",
+  "gallery": [
+    {
+      "src": "assets/img/diogo-sousa-1.jpg",
+      "kind": "interior",
+      "caption_ru": "Зал античных ваз и скульптур в стеклянных витринах",
+      "credit": {
+        "author": "Joseolgon",
+        "license": "CC BY 4.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Collections_of_the_D._Diogo_de_Sousa_Museum_04.jpg"
+      }
+    },
+    {
+      "src": "assets/img/diogo-sousa-2.jpg",
+      "kind": "interior",
+      "caption_ru": "Статуя императора Августа в светлом вестибюле музея",
+      "credit": {
+        "author": "Joseolgon",
+        "license": "CC BY-SA 4.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Museu_D._Diogo_de_Sousa_in_2016_(1).JPG"
+      }
+    },
+    {
+      "src": "assets/img/diogo-sousa-3.jpg",
+      "kind": "detail",
+      "caption_ru": "Золотые шейные гривны железного века",
+      "credit": {
+        "author": "Joseolgon",
+        "license": "CC0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Museu_Dom_Diogo_de_Sousa_12.jpg"
+      }
+    },
+    {
+      "src": "assets/img/diogo-sousa-4.jpg",
+      "kind": "detail",
+      "caption_ru": "Мозаика «Свадьба Пелопса и Гипподамии»",
+      "credit": {
+        "author": "Joseolgon",
+        "license": "CC BY 4.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Casamento_de_Pelops_e_Hipodamia.jpg"
+      }
+    },
+    {
+      "src": "assets/img/diogo-sousa-5.jpg",
+      "kind": "exterior",
+      "caption_ru": "Белые корпуса музея и мощёный двор",
+      "credit": {
+        "author": "Joseolgon",
+        "license": "CC BY-SA 4.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Museu_D._Diogo_de_Sousa_in_2016_(2).JPG"
+      }
+    }
+  ],
+  "panorama": null,
+  "videos": [
+    {
+      "youtube_id": "slPPPCKLFEI",
+      "title": "Flash Tours 2ªed: Museu D. Diogo de Sousa",
+      "channel": "Visit Braga",
+      "lang": "pt"
+    },
+    {
+      "youtube_id": "V1iJyzcK3k8",
+      "title": "Museu Dom Diogo de Sousa - Braga, Portugal",
+      "channel": "Olhar Brasileiro em Portugal",
+      "lang": "pt"
+    }
+  ]
+}

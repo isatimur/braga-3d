@@ -666,5 +666,454 @@
       }
     ],
     "confidence": "medium"
+  },
+  "uminho-gualtar": {
+    "footprint_m": {
+      "length": 814.7,
+      "width": 763,
+      "matches_osm": true,
+      "note": "OSM way 165563981 is the whole Campus de Gualtar (amenity=university, 40.2 ha). Parts in footprints.json: 102 buildings (every OSM building inside the campus, including the old farmhouses along the lane on the west side), 4 pitches, 3 gardens, 5 water features, 194 footpaths and the Prometeu sculpture. The whole campus is exclude_outline: false, but all its buildings are parts, so buildings.json no longer draws any of them: the model must draw every building part."
+    },
+    "height_m": {
+      "total": 19.2,
+      "teaching_blocks": 12.8
+    },
+    "elements": {
+      "campus_area_m2": 402482,
+      "osm_buildings": 102,
+      "built_area_m2": 71265,
+      "pitches": 4,
+      "tallest_building_levels": 6,
+      "university_founded": 1973,
+      "sports_complex_opened": 1992
+    },
+    "facade_faces": "none",
+    "facade_azimuth_deg": 180,
+    "facade_axis_rel": "none (an open campus); the azimuth points from the campus centre to the main entrance at the Rotunda da Universidade do Minho",
+    "facade_note": "A campus has no single façade. The main entrance and welcome sign (OSM node 11757335784, direction=150) stand at the Rotunda da Universidade do Minho on the south edge; Rua da Universidade runs along the east and south-east edge.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width", "elements.campus_area_m2", "elements.osm_buildings", "elements.built_area_m2", "elements.pitches"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m and ringArea of w165563981; count and summed ringArea of the building parts; count of leisure=pitch parts."
+      },
+      {
+        "paths": ["height_m.total", "elements.tallest_building_levels"],
+        "source": "estimate",
+        "fact": "tallest building",
+        "reasoning": "OSM building:levels=6 on the Instituto para a Bio-Sustentabilidade (w448580564), x 3.2 m. No published building heights for the campus (uminho.pt, pt/en Wikipedia, campi.uminho.pt checked)."
+      },
+      {
+        "paths": ["height_m.teaching_blocks"],
+        "source": "estimate",
+        "fact": "school buildings",
+        "reasoning": "OSM gives 3-4 levels on the school buildings (Escola de Psicologia and Instituto de Educação 4, Escola de Ciências and ILCH 3); 4 x 3.2 m."
+      },
+      {
+        "paths": ["elements.university_founded"],
+        "url": "https://pt.wikipedia.org/wiki/Universidade_do_Minho",
+        "fact": "founding of the university",
+        "value": "11 de agosto de 1973"
+      },
+      {
+        "paths": ["elements.sports_complex_opened"],
+        "url": "https://www.sas.uminho.pt/desporto/complexo-desportivo-de-gualtar",
+        "fact": "Complexo Desportivo de Gualtar",
+        "value": "no ano lectivo de 1992/1993"
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "main entrance direction",
+        "reasoning": "Bearing from the campus centroid to the welcome sign at the Rotunda da Universidade do Minho (OSM), about 180 deg."
+      }
+    ],
+    "confidence": "medium"
+  },
+  "dmaria-ii": {
+    "footprint_m": {
+      "length": 206.6,
+      "width": 119.9,
+      "matches_osm": true,
+      "note": "OSM way 21372352 is the school site (amenity=school, 23073 m²; the 1964 record gives 23625 m²). OSM maps only one building, the north-west wing w473728998 (113.8 x 36.3 m). The other blocks exist only in the Microsoft ML building footprints: two merged polygons (170.5 x 80.7 m, 4432 m², and 141.1 x 57.1 m, 3002 m²) that cover the renovated blocks A-G; they are parts with osm:null and synth ms:1 / ms:2. The MS outlines merge several blocks and covered walkways; verify against aerial photos before modelling."
+    },
+    "height_m": {
+      "total": 13,
+      "nw_wing": 13,
+      "parque_escolar_blocks": 12
+    },
+    "elements": {
+      "site_area_m2": 23625,
+      "covered_area_1964_m2": 2960,
+      "floor_area_1964_m2": 7060,
+      "classrooms_1964": 24,
+      "blocks": 8,
+      "storeys": 3
+    },
+    "facade_faces": "NW",
+    "facade_azimuth_deg": 308,
+    "facade_axis_rel": "bearing_deg + 270 (long axis 39.4; the front is the long north-west side)",
+    "facade_note": "The address and main gate are on Rua 25 de Abril, along the long north-west side of the site; the OSM wing w473728998 lines that side. Avenida João XXI runs along the south-east side.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w21372352."
+      },
+      {
+        "paths": ["elements.site_area_m2", "elements.covered_area_1964_m2", "elements.floor_area_1964_m2"],
+        "url": "http://asap-ehc.tecnico.ulisboa.pt/database/escola.php?id=28",
+        "fact": "Liceu Feminino de Braga (1961-1964) areas; the page blocks automated fetches, figures read from its indexed text",
+        "value": "Área do terreno: 23.625 m²; Área Coberta: 2960 m²; Superfície de pavimentos: 7060 m²"
+      },
+      {
+        "paths": ["elements.classrooms_1964"],
+        "url": "https://www.aedonamaria.pt/content/escola-secundaria-d-maria-ii-sede",
+        "fact": "original school",
+        "value": "liceu feminino com 24 salas"
+      },
+      {
+        "paths": ["elements.blocks"],
+        "url": "https://dstsa.pt/portfolio/escola-dona-maria-ii/",
+        "fact": "blocks of the Parque Escolar renovation (A, B, C1, C2, D, E, F, G)",
+        "value": "Bloco A (Nova Construção – Edifício dos laboratórios), Bloco B ..., Bloco C2 ..., Bloco D (Nova Construção – Espaços Desportivos Cobertos e Descoberto) ... Bloco C1 ... Bloco E (Requalificação – Sala Polivalente, Balneários e Museu), Bloco F ... e Bloco G"
+      },
+      {
+        "paths": ["height_m.total", "height_m.nw_wing", "height_m.parque_escolar_blocks", "elements.storeys"],
+        "source": "estimate",
+        "fact": "heights and storeys",
+        "reasoning": "No published height. 7060 m² of floors on 2960 m² covered gives about 2.4 floors on average, so three storeys at most: 3 x 3.8 m + parapet about 13 m for the 1964 wing; the 2011 blocks two to three storeys, about 12 m."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "Outward normal of the north-west edge of w21372352 (308 deg), which faces Rua 25 de Abril, the street of the school address."
+      }
+    ],
+    "confidence": "low"
+  },
+  "sao-frutuoso": {
+    "footprint_m": {
+      "length": 13.3,
+      "width": 11.5,
+      "matches_osm": true,
+      "note": "OSM way 159104082 is the Greek-cross chapel, attached to the east side of the Igreja de São Jerónimo de Real (w131049722, 41.3 x 28.4 m, the former Franciscan church). The Convento de São Francisco (w159104084, 37.8 x 28.8 m) lies east of it; all three sit in the religious precinct w1329661274 (140 x 116 m)."
+    },
+    "height_m": {
+      "total": 9,
+      "apses": 5
+    },
+    "elements": {
+      "apses": 4,
+      "columns_1696": 24,
+      "precinct_area_m2": 8883
+    },
+    "facade_faces": "W",
+    "facade_azimuth_deg": 250,
+    "facade_axis_rel": "bearing_deg + 90 (long axis 160; the west arm)",
+    "facade_note": "The west arm is the entrance (en.wikipedia), but today it opens into the Igreja de São Jerónimo de Real; the chapel has no street façade. Its free arms face north, east and south; the forecourt of the church lies south-west.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width", "elements.precinct_area_m2"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w159104082; ringArea of w1329661274."
+      },
+      {
+        "paths": ["elements.apses"],
+        "url": "https://imovel.patrimoniocultural.gov.pt/detalhes.php?code=70191",
+        "fact": "plan",
+        "value": "planta centralizada, de quatro ábsides iguais articuladas em redor de um cruzeiro quadrangular"
+      },
+      {
+        "paths": ["elements.columns_1696"],
+        "url": "https://en.wikipedia.org/wiki/Chapel_of_S%C3%A3o_Frutuoso",
+        "fact": "columns described by Frei Manuel de Monforte, 1696",
+        "value": "in this so small space this church has 24 columns"
+      },
+      {
+        "paths": ["height_m.total", "height_m.apses"],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published height (DGPC, pt/en/gl Wikipedia, e-cultura checked). The crossing tower rises over single-storey apses on a 13 x 11 m plan: apses about 5 m, tower top about 9 m, in proportion to the plan and to photos."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "entrance direction",
+        "reasoning": "Outward normal of the west arm edges of w159104082 (249-251 deg); en.wikipedia names the west arm as the entrance."
+      }
+    ],
+    "confidence": "low"
+  },
+  "diogo-sousa": {
+    "footprint_m": {
+      "length": 127,
+      "width": 124.6,
+      "matches_osm": true,
+      "note": "OSM way 104691209 is the museum site (tourism=museum). Buildings: the exhibition body w108351556 (59.0 x 38.8 m, 2 levels), the four-level block w444600885 (29.2 x 18.9 m), the one-level wing w439194283 (43.0 x 13.2 m) and a roofed structure w1256950800 (22.0 x 8.3 m). Gardens include the Jardim dos Miliários w439195566 (39.4 x 38.2 m). Which OSM block is the technical sector and which the cafeteria is not stated in any source; verify against photos."
+    },
+    "height_m": {
+      "total": 12.8,
+      "technical_block": 12.8,
+      "exhibition_body": 10,
+      "low_wing": 3.2
+    },
+    "elements": {
+      "bodies": 3,
+      "exhibition_body_length_m": 59,
+      "exhibition_body_width_m": 38.8,
+      "miliarios_garden_area_m2": 1485
+    },
+    "facade_faces": "W",
+    "facade_azimuth_deg": 250,
+    "facade_axis_rel": "bearing_deg + 180 (site long axis 70; the front is the west-south-west side)",
+    "facade_note": "The address and entrance side is Rua dos Bombeiros Voluntários, west-south-west of the site; the Jardim dos Miliários lies at the north-west corner.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width", "elements.exhibition_body_length_m", "elements.exhibition_body_width_m", "elements.miliarios_garden_area_m2"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w104691209; minAreaRect of w108351556; ringArea of w439195566."
+      },
+      {
+        "paths": ["elements.bodies"],
+        "url": "https://www.maddiogosousa.gov.pt/edificio/",
+        "fact": "building layout (architects Carlos Guimarães and Luís Soares Carneiro)",
+        "value": "O edifício desenvolve-se em três corpos, articulados entre si – o sector técnico e de serviços, a cafetaria e a área destinada ao público."
+      },
+      {
+        "paths": ["height_m.total", "height_m.technical_block", "height_m.low_wing"],
+        "source": "estimate",
+        "fact": "block heights",
+        "reasoning": "OSM building:levels=4 on w444600885 and 1 on w439194283, x 3.2 m. No published height."
+      },
+      {
+        "paths": ["height_m.exhibition_body"],
+        "source": "estimate",
+        "fact": "exhibition body",
+        "reasoning": "OSM building:levels=2 on w108351556; the exhibition halls are double-height, so about 2 x 4.5 m + parapet = 10 m rather than 6.4 m."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "entrance direction",
+        "reasoning": "Outward normal of the west edges of w104691209 (250 deg), which face Rua dos Bombeiros Voluntários (the address street)."
+      }
+    ],
+    "confidence": "low"
+  },
+  "coimbras": {
+    "footprint_m": {
+      "length": 12.25,
+      "width": 6.25,
+      "matches_osm": false,
+      "note": "The chapel is small: 12.25 x 6.25 m. In OSM it is the square tower w1343853590 (7.0 x 6.3 m) at the south-west end of the chapel way w223138080. That way is 36.8 x 13.7 m because it also covers the Igreja de São João do Souto, to which the chapel is attached. The annex w1343853591 (6.3 x 2.9 m) stands beside the tower, and the Casa dos Coimbras (w146342996, 24.4 x 22.6 m, rebuilt 1924) stands to the east. Model the tower-chapel on w1343853590 plus the adjoining south-west end of w223138080."
+    },
+    "height_m": {
+      "total": 16,
+      "tower": 16,
+      "church_body": 12,
+      "casa": 12
+    },
+    "elements": {
+      "registers": 2,
+      "osm_tower_side_m": 7,
+      "osm_chapel_way_length_m": 36.8
+    },
+    "facade_faces": "SW",
+    "facade_azimuth_deg": 238,
+    "facade_axis_rel": "bearing_deg + 180 (long axis 58.6; the front is the south-west end)",
+    "facade_note": "The tower front with the Manueline portal and the Coimbra arms faces Largo de São João do Souto, south-west of the chapel. Low confidence: check photos.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width"],
+        "url": "https://en.wikipedia.org/wiki/Capela_dos_Coimbras",
+        "fact": "chapel size (infobox, no inline citation)",
+        "value": "length = 12.25 m; width = 6.25 m"
+      },
+      {
+        "paths": ["elements.registers"],
+        "url": "https://imovel.patrimoniocultural.gov.pt/detalhes.php?code=70651",
+        "fact": "plan and front",
+        "value": "um modelo de 'igreja-torre', com planta quadrada ... a fachada, edificada como um torreão, divide-se em dois registos distintos"
+      },
+      {
+        "paths": ["elements.osm_tower_side_m", "elements.osm_chapel_way_length_m"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "minAreaRect of w1343853590 and footprints.json extent_m of w223138080."
+      },
+      {
+        "paths": ["height_m.total", "height_m.tower", "height_m.church_body", "height_m.casa"],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published height. The tower front has two registers plus merlons and pinnacles, about 2.5 times its 6.25 m width in photos: about 16 m. The attached church body and the three-storey Casa dos Coimbras about 12 m."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "The chapel stands beside Largo de São João do Souto (visitbraga, eixoatlantico); the outward normal of the south-west end of w223138080 at the tower is 238 deg."
+      }
+    ],
+    "confidence": "low"
+  },
+  "congregados": {
+    "footprint_m": {
+      "length": 37.9,
+      "width": 25.1,
+      "matches_osm": true,
+      "note": "OSM way 121590117 is the church: a 25.1 m wide front block with the two towers on Avenida Central, and the narrower nave and chancel behind it to the south. The former Oratorian convent is the UMinho area w121590125 (45.6 x 36.7 m) east of the church; it has no building tag in OSM and is a part with tag building and 14 m."
+    },
+    "height_m": {
+      "total": 32,
+      "towers": 32,
+      "nave_ridge": 18,
+      "convent": 14
+    },
+    "elements": {
+      "towers": 2,
+      "west_tower_completed": 1964,
+      "facade_width_m": 25.1
+    },
+    "facade_faces": "N",
+    "facade_azimuth_deg": 352,
+    "facade_axis_rel": "bearing_deg + 180 (long axis 172.2; the front is the north end)",
+    "facade_note": "The twin-towered front by André Soares looks north onto Avenida Central and its garden; the east tower is 18th century, the west tower was finished in 1964.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width", "elements.facade_width_m"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w121590117; length of its north edge (25.1 m)."
+      },
+      {
+        "paths": ["elements.towers", "elements.west_tower_completed"],
+        "url": "https://pt.wikipedia.org/wiki/Bas%C3%ADlica_dos_Congregados",
+        "fact": "towers",
+        "value": "uma avioneta embateu com uma asa na torre nascente (a única existente na altura) ... tendo a torre poente sido concluída em 1964"
+      },
+      {
+        "paths": ["height_m.total", "height_m.towers", "height_m.nave_ridge", "height_m.convent"],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published height (pt/en Wikipedia, visitbraga, archdiocese pages checked). Tower tops about 1.3 x the 25.1 m front width in frontal photos: about 32 m. Nave ridge about 18 m. The convent has three storeys, about 14 m."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "Outward normal of the 25.1 m north edge of w121590117 (352 deg), which faces Avenida Central 20 m away."
+      }
+    ],
+    "confidence": "medium"
+  },
+  "nogueira-silva": {
+    "footprint_m": {
+      "length": 35.1,
+      "width": 23.8,
+      "matches_osm": false,
+      "note": "OSM tags the whole plot (w219034582, 155.3 x 48.2 m) as one building. The house is synthesized from the plot's own nodes south of the garden edge (part synth:nogueira-house, 35.1 x 23.8 m, used as the outline); the plot is a flat 'site' part and the garden w952323813 (113.4 x 39.0 m) lies behind the house. The strip west of the garden (about 17 x 44 m) is not described anywhere; it is left flat."
+    },
+    "height_m": {
+      "total": 13
+    },
+    "elements": {
+      "storeys": 3,
+      "garden_area_m2": 3607,
+      "plot_area_m2": 5166
+    },
+    "facade_faces": "S",
+    "facade_azimuth_deg": 178,
+    "facade_axis_rel": "bearing_deg (long axis 177.6; the front is the south end)",
+    "facade_note": "The house front looks south onto Avenida Central (No. 61); the French-style garden is behind it to the north.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width", "elements.garden_area_m2", "elements.plot_area_m2"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of the synthesized house ring; ringArea of w952323813 and w219034582."
+      },
+      {
+        "paths": ["height_m.total", "elements.storeys"],
+        "source": "estimate",
+        "fact": "height",
+        "reasoning": "No published height or storey count (webraga, en.wikipedia, SIPA 21296 unreachable). The house (1950s-60s, architect Raul Rodrigues de Lima) reads as three storeys under a pitched roof on the avenue: about 13 m."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "Outward normal of the south edge of the house ring (178 deg), on Avenida Central."
+      }
+    ],
+    "confidence": "low"
+  },
+  "sao-marcos": {
+    "footprint_m": {
+      "length": 29.7,
+      "width": 15.2,
+      "matches_osm": true,
+      "note": "OSM way 363528976 is the church at the north tip of the former hospital. The former north pavilion, now the Vila Galé Collection hotel, is r17978905 (80.4 x 61.0 m, with a 23.5 x 23.4 m courtyard kept as `holes`); its outer ring also covers the church footprint. Later hospital wings to the south: r8340055 (48.9 x 42.0 m, with a courtyard hole) and w146343003 (53.9 x 15.4 m)."
+    },
+    "height_m": {
+      "total": 20,
+      "facade": 20,
+      "nave_ridge": 15,
+      "hospital_block": 16
+    },
+    "elements": {
+      "facade_statues": 12,
+      "hospital_founded": 1508,
+      "hotel_rooms": 123,
+      "courtyard_side_m": 23.5
+    },
+    "facade_faces": "NW",
+    "facade_azimuth_deg": 332,
+    "facade_axis_rel": "bearing_deg + 180 (long axis 152.5; the front is the north-north-west end)",
+    "facade_note": "The convex Baroque front by Carlos Amarante, crowned by statues of the apostles, looks north-north-west onto Largo Carlos Amarante; the hospital wings run south-east behind it.",
+    "sources": [
+      {
+        "paths": ["footprint_m.length", "footprint_m.width", "elements.courtyard_side_m"],
+        "source": "estimate",
+        "fact": "OSM geometry",
+        "reasoning": "footprints.json extent_m of w363528976; minAreaRect of the inner ring of r17978905."
+      },
+      {
+        "paths": ["elements.facade_statues"],
+        "url": "https://pt.wikipedia.org/wiki/Igreja_de_S%C3%A3o_Marcos_(Braga)",
+        "fact": "statues on the front (12 names listed; allaboutportugal.pt says eight)",
+        "value": "As estátuas na fachada representam São Simão, São Bartolomeu, São Tiago Menor, São João Evangelista, Santo André, São Pedro, São Paulo, São Tiago Maior, São Tomé, São Filipe, São Matias e São Lucas."
+      },
+      {
+        "paths": ["elements.hospital_founded"],
+        "url": "https://pt.wikipedia.org/wiki/Hospital_de_S%C3%A3o_Marcos",
+        "fact": "hospital founding",
+        "value": "O Hospital como instituição formal na sua forma atual só foi fundado em 1508."
+      },
+      {
+        "paths": ["elements.hotel_rooms"],
+        "url": "https://www.vilagale.com/en/hotels-portugal/hotels-porto-and-north/vila-gale-collection-braga/",
+        "fact": "hotel in the former north pavilion",
+        "value": "Vila Galé Collection Braga offers 123 rooms"
+      },
+      {
+        "paths": ["height_m.total", "height_m.facade", "height_m.nave_ridge", "height_m.hospital_block"],
+        "source": "estimate",
+        "fact": "heights",
+        "reasoning": "No published height. The front with its statue crown stands about 1.3 x its 15 m width in photos: about 20 m; nave ridge about 15 m. The hospital pavilion has three tall storeys plus roof, about 16 m."
+      },
+      {
+        "paths": ["facade_azimuth_deg"],
+        "source": "estimate",
+        "fact": "facade direction",
+        "reasoning": "The long axis of w363528976 is 152.5 deg and Largo Carlos Amarante lies at 333 deg from its centroid, so the front looks 332 deg."
+      }
+    ],
+    "confidence": "medium"
   }
 }

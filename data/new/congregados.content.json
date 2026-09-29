@@ -1,0 +1,115 @@
+{
+ "id": "congregados",
+ "name_pt": "Basílica dos Congregados",
+ "name_ru": "Базилика Конгрегадуш",
+ "category": "religious",
+ "year": "XVIII век",
+ "short_ru": "Барочная церковь ораторианцев с фасадом Андре Соареша; вторую башню достроили в 1964 году",
+ "long_ru": "Монахи-ораторианцы заложили церковь в 1703 году и освятили её в 1717-м. Фасад по проекту Андре Соареша сложили в 1761–1766 годах, но башни и статуи тогда не закончили. Западную башню достроили только в 1964 году на деньги мецената Ногейры да Силвы. С 1975 года церковь носит титул малой базилики.",
+ "image": "assets/img/congregados.jpg",
+ "image_credit": {
+  "author": "Tournasol7",
+  "license": "CC BY-SA 4.0",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Basilica_dos_Congregados_(2).jpg"
+ },
+ "history_ru": "Конгрегация Оратория святого Филиппа Нери пришла в Брагу в 1686 году по приглашению каноника Жуана де Мейры Карилью. Братья построили дом и коллегию, а в 1703 году заложили церковь; работами руководил мастер Мануэл Фернандеш да Силва. По разрешению архиепископа Родригу де Моуры Телеша церковь благословили 27 октября 1717 года.\n\nФасад придумал Андре Соареш, главный архитектор барочной Браги. Галисийский каменщик Паулу Видал сложил его в 1761–1766 годах. Соареш нарисовал и арку хоров, и корпус органа, и алтарь Скорбящей Богоматери. Но фасад остался недостроенным: одна башня стояла без купола, другая поднялась лишь до половины. В 1769 году по приказу маркиза Помбала церковь закрыли и открыли снова только в 1777 году.\n\nВ 1834 году монашеские ордена в Португалии упразднили, и дом ораторианцев перешёл к государству. Здесь работали публичная библиотека, лицей, позже школа учителей; сегодня в здании — музыкальный факультет Университета Минью. Церковь с 1845 года служит братству Скорбящей Богоматери. 14 июля 1944 года маленький самолёт задел крылом восточную башню и разбился; пилот погиб.\n\nФасад закончили только в XX веке. Меценат Антониу Аугушту Ногейра да Силва оплатил западную башню по проекту архитектора Алберту да Силвы Бессы; её завершили в 1964 году. В том же году в ниши фасада подняли статуи святого Филиппа Нери и святого Мартина Думийского работы Мануэла да Силвы Ногейры. 15 марта 1975 года Святой Престол дал церкви титул малой базилики.",
+ "facts_ru": [
+  "Церковь заложили в 1703 году и благословили 27 октября 1717 года.",
+  "Фасад по проекту Андре Соареша сложили в 1761–1766 годах.",
+  "Западную башню достроили только в 1964 году.",
+  "В 1944 году самолёт задел крылом восточную башню и разбился.",
+  "Малая базилика с 1975 года; памятник общественного значения с 1993 года."
+ ],
+ "sources": [
+  {
+   "title": "Basílica dos Congregados — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Bas%C3%ADlica_dos_Congregados"
+  },
+  {
+   "title": "Convento dos Congregados — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Convento_dos_Congregados"
+  },
+  {
+   "title": "História dos Congregados — Arquidiocese de Braga",
+   "url": "https://www.arquidiocese-braga.pt/noticia/2016-11-24-historia-dos-congregados-13420"
+  },
+  {
+   "title": "André Soares — Wikipédia (pt)",
+   "url": "https://pt.wikipedia.org/wiki/Andr%C3%A9_Soares"
+  }
+ ],
+ "tip_ru": "Базилика стоит на Авенида-Сентрал, в пяти минутах ходьбы от площади Республики. Вход свободный. Через дорогу, в ста метрах, — музей Ногейры да Силвы: его основатель оплатил западную башню. Вечером фасад красиво подсвечен.",
+ "gallery": [
+  {
+   "src": "assets/img/congregados-1.jpg",
+   "kind": "interior",
+   "caption_ru": "Неф и главный алтарь под расписным сводом",
+   "credit": {
+    "author": "Tournasol7",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Basilica_dos_Congregados_(4).jpg"
+   }
+  },
+  {
+   "src": "assets/img/congregados-2.jpg",
+   "kind": "interior",
+   "caption_ru": "Вид на неф и алтарь с хоров",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Congregados_2019_(1).jpg"
+   }
+  },
+  {
+   "src": "assets/img/congregados-3.jpg",
+   "kind": "interior",
+   "caption_ru": "Орган в позолоченном корпусе на хорах",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 3.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Congregados_Pipe_Organ.jpg"
+   }
+  },
+  {
+   "src": "assets/img/congregados-4.jpg",
+   "kind": "detail",
+   "caption_ru": "Святой Филипп Нери в нише фасада, статуя 1964 года",
+   "credit": {
+    "author": "Joseolgon",
+    "license": "CC BY-SA 3.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Filipe_de_Nery.JPG"
+   }
+  },
+  {
+   "src": "assets/img/congregados-5.jpg",
+   "kind": "exterior",
+   "caption_ru": "Две башни базилики в вечернем свете",
+   "credit": {
+    "author": "Pedro Teles",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Torres_da_Bas%C3%ADlica_dos_Congregados.jpg"
+   }
+  }
+ ],
+ "panorama": null,
+ "videos": [
+  {
+   "youtube_id": "UeQdJpchHLI",
+   "title": "Ep12 - Basílica dos Congregados",
+   "channel": "Arquidiocese de Braga",
+   "lang": "pt"
+  },
+  {
+   "youtube_id": "jodkXBZniDc",
+   "title": "Inside Braga’s Baroque Masterpiece: Basilica dos Congregados - Hidden Catholic Treasures Revealed!",
+   "channel": "Catholic Churches around the World ",
+   "lang": "en"
+  },
+  {
+   "youtube_id": "esgdKLFnVKo",
+   "title": "CONVENTO E BASÍLICA DOS CONGREGADOS, BRAGA",
+   "channel": "Rui Sousa",
+   "lang": "pt"
+  }
+ ]
+}

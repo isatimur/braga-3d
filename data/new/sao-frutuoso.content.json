@@ -1,0 +1,115 @@
+{
+  "id": "sao-frutuoso",
+  "name_pt": "Capela de São Frutuoso de Montélios",
+  "name_ru": "Капелла Святого Фруктуоза в Монтелиосе",
+  "category": "religious",
+  "year": "VII–X века",
+  "short_ru": "Раннесредневековая капелла-мавзолей в форме креста рядом с францисканским монастырём",
+  "long_ru": "По преданию, святой Фруктуоз, епископ Браги, в VII веке построил здесь капеллу как свою гробницу. Многие историки сегодня относят нынешнее здание к началу X века. Внутри — подковообразные арки на колоннах и купол над центром креста. Рядом стоит францисканский монастырь 1523 года; капелла — национальный памятник с 1944 года.",
+  "image": "assets/img/sao-frutuoso.jpg",
+  "image_credit": {
+    "author": "Joseolgon, edited by MenkinAlRire",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:Capela_de_S%C3%A3o_Frutuoso_2018_(2)-638.jpg"
+  },
+  "history_ru": "Фруктуоз был вестготским монахом и основал много монастырей. С 654 года он епископ Думе, с 656-го — епископ Браги. По преданию, на холме Монтелиос он основал монастырь Святого Спасителя и велел построить капеллу как свою гробницу. Его ученик Валерий писал, что святого похоронили здесь; Фруктуоз умер в 665 году. Слово «Монтелиос» значит «маленькая гора».\n\nДата постройки спорна. Капеллу перестроили и заново украсили в IX–X веках. Государственная служба культуры Португалии считает, что нынешнее здание скорее относится к началу X века. Тогда при заселении края королём Альфонсо III культ епископа возродился. План — греческий крест: снаружи прямоугольные объёмы, внутри три рукава заканчиваются полукруглыми апсидами. Их отделяют тройные аркады с подковообразными арками, над средокрестием стоит купол. Историки сравнивают план с мавзолеем Галлы Плацидии в Равенне.\n\nВ 1102 году архиепископ Компостелы Диего Хельмирес увёз мощи святого в Сантьяго. В 1523 году архиепископ Диогу де Соуза основал рядом францисканский монастырь и не дал снести капеллу. В XVIII веке её встроили в новую церковь монастыря Святого Франциска и сильно переделали. Архитектор Эрнесту Корроди описал памятник в 1897 году, а в 1931 году началась реставрация по исходному плану. С 1944 года капелла — национальный памятник.\n\nВ 1966 году Компостела вернула мощи Браге, и их хранили в соборе. 18 октября 2025 года их перенесли в капеллу, спустя более 900 лет. В 2024 году закончилась реставрация монастыря за 2,5 миллиона евро. Теперь маршрут проходит через два этажа монастыря, мавзолей, церковь и ризницу.",
+  "facts_ru": [
+    "План капеллы — греческий крест с куполом над средокрестием.",
+    "Государственная служба культуры датирует здание скорее началом X века.",
+    "В 1102 году мощи святого увезли в Сантьяго-де-Компостелу.",
+    "Мощи святого Фруктуоза вернулись в капеллу 18 октября 2025 года.",
+    "Капелла — национальный памятник Португалии с 1944 года."
+  ],
+  "sources": [
+    {
+      "title": "Capela de São Frutuoso de Montélios — Cultura Portugal",
+      "url": "https://culturaportugal.gov.pt/pt/conhecer/local/pc-locais/capela-de-sao-frutuoso-de-montelios/"
+    },
+    {
+      "title": "Chapel of São Frutuoso — Wikipedia (en)",
+      "url": "https://en.wikipedia.org/wiki/Chapel_of_S%C3%A3o_Frutuoso"
+    },
+    {
+      "title": "Frutuoso de Braga — Wikipédia (pt)",
+      "url": "https://pt.wikipedia.org/wiki/Frutuoso_de_Braga"
+    },
+    {
+      "title": "Histórico Convento de São Francisco em Real reabriu depois de obras de 2,5 milhões — O Vilaverdense",
+      "url": "https://ovilaverdense.pt/historico-convento-de-sao-francisco-em-real-braga-reabriu-depois-de-obras-de-25-milhoes/"
+    }
+  ],
+  "tip_ru": "Капелла стоит в приходе Реал, примерно в 2 км к северо-западу от центра. Вход — через церковь Святого Франциска, капелла лежит ниже её пола. Часы работы уточняйте заранее: после реставрации 2024 года монастырь принимает посетителей по маршруту с гидом.",
+  "gallery": [
+    {
+      "src": "assets/img/sao-frutuoso-1.jpg",
+      "kind": "interior",
+      "caption_ru": "Вид сквозь тройные подковообразные аркады к выходу",
+      "credit": {
+        "author": "Alvesgaspar",
+        "license": "CC BY-SA 4.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:S%C3%A3o_Frutuoso_March_2016-2.jpg"
+      }
+    },
+    {
+      "src": "assets/img/sao-frutuoso-2.jpg",
+      "kind": "interior",
+      "caption_ru": "Купол над средокрестием",
+      "credit": {
+        "author": "GFreihalter",
+        "license": "CC BY-SA 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_523.jpg"
+      }
+    },
+    {
+      "src": "assets/img/sao-frutuoso-3.jpg",
+      "kind": "interior",
+      "caption_ru": "Тройная аркада на колоннах перед одной из апсид",
+      "credit": {
+        "author": "GFreihalter",
+        "license": "CC BY-SA 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_513.jpg"
+      }
+    },
+    {
+      "src": "assets/img/sao-frutuoso-4.jpg",
+      "kind": "detail",
+      "caption_ru": "Резной фриз с листьями над колоннами",
+      "credit": {
+        "author": "GFreihalter",
+        "license": "CC BY-SA 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_524.jpg"
+      }
+    },
+    {
+      "src": "assets/img/sao-frutuoso-5.jpg",
+      "kind": "exterior",
+      "caption_ru": "Фасад церкви Святого Франциска, рядом с которой стоит капелла",
+      "credit": {
+        "author": "François Philipp from Darmstadt, Germany",
+        "license": "CC BY 2.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Church_of_S%C3%A3o_Francisco_and_Capela_de_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios,_Braga_(10248447556).jpg"
+      }
+    }
+  ],
+  "panorama": null,
+  "videos": [
+    {
+      "youtube_id": "BK4eXon22Ak",
+      "title": "Ep9 - São Frutuoso I Caminhos de Fé",
+      "channel": "Arquidiocese de Braga",
+      "lang": "pt"
+    },
+    {
+      "youtube_id": "fid4SakT0mc",
+      "title": "São Frutuoso de Braga",
+      "channel": "Guilherme Na Europa",
+      "lang": "pt"
+    },
+    {
+      "youtube_id": "tYld7M5GBsk",
+      "title": "Igreja de S. Francisco e Capela de S. Frutuoso - Braga",
+      "channel": "Baptista de Barros",
+      "lang": "pt"
+    }
+  ]
+}

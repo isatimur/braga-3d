@@ -1,0 +1,105 @@
+{
+  "id": "uminho-gualtar",
+  "name_pt": "Universidade do Minho – Campus de Gualtar",
+  "name_ru": "Университет Минью, кампус Гуалтар",
+  "category": "education",
+  "year": "1986–1993",
+  "short_ru": "Главный кампус Университета Минью: учебные корпуса, библиотека и парк на востоке Браги",
+  "long_ru": "Университет Минью основали в 1973 году, первые занятия прошли в 1975 году. Кампус Гуалтар начали строить в 1986 году, первую очередь открыли в 1993-м. Сегодня это самый большой кампус университета: здесь учатся юристы, медики, психологи, экономисты и естественники. Между корпусами — газоны, деревья и статуя Прометея.",
+  "image": "assets/img/uminho-gualtar.jpg",
+  "image_credit": {
+    "author": "Tiagoramalho1974",
+    "license": "CC BY-SA 4.0",
+    "source_url": "https://commons.wikimedia.org/wiki/File:EM_2021_a%C3%A9rea.jpg"
+  },
+  "history_ru": "Университет Минью создали 11 августа 1973 года декретом-законом 402/73, вместе с университетами Авейру и Новым университетом Лиссабона. Эти «новые университеты» заметно изменили высшее образование Португалии. Первые занятия прошли в 1975/76 учебном году. Будущие учителя, филологи и инженеры тогда учились в разных зданиях Браги, например в учебном комплексе на улице Дон-Педру V.\n\nВ 1976 году правительство решило разместить университет в двух городах: в Браге и Гимарайнше. Первый камень кампуса Гуалтар заложили в 1986 году, первую очередь открыли в 1993-м. Кампус лежит на восточной окраине Браги, в приходе Гуалтар, на правом берегу реки Эште. По местной истории, на этой земле когда-то стоял средневековый монастырь Святого Михаила.\n\nСегодня Гуалтар — самый большой кампус университета. Здесь работают школы права, естественных наук, психологии, медицины, сестринского дела, экономики и управления, институты социальных наук, образования и гуманитарных наук, а также часть инженерной школы. На кампусе три учебных комплекса. Рядом стоят Центральная библиотека, столовая, медпункт и спортивный комплекс. Ректорат остаётся в центре города, на площади Ларгу-ду-Пасу.\n\nВ 2025 году в университете, в Браге и Гимарайнше, училась 21 тысяча студентов. С 2016 года он работает как публичный фонд с правом частного управления. В 2023 году университет стал почётным членом ордена Народного просвещения.",
+  "facts_ru": [
+    "Университет основан 11 августа 1973 года, первые занятия прошли в 1975/76 учебном году.",
+    "Первый камень кампуса Гуалтар заложили в 1986 году, первую очередь открыли в 1993-м.",
+    "Гуалтар — самый большой кампус университета; второй его город — Гимарайнш.",
+    "В 2025 году в университете училась 21 тысяча студентов.",
+    "В 2023 году университет стал почётным членом ордена Народного просвещения."
+  ],
+  "sources": [
+    {
+      "title": "História — Universidade do Minho",
+      "url": "https://www.uminho.pt/PT/uminho/Informacao-Institucional/Paginas/Historia.aspx"
+    },
+    {
+      "title": "Os campi: Descrição — Universidade do Minho",
+      "url": "https://www.uminho.pt/PT/viver/os-campi/Paginas/Descricao.aspx"
+    },
+    {
+      "title": "Universidade do Minho — Wikipédia (pt)",
+      "url": "https://pt.wikipedia.org/wiki/Universidade_do_Minho"
+    },
+    {
+      "title": "Texto para o número 33 da revista Monumentos — RepositóriUM",
+      "url": "https://repositorium.uminho.pt/server/api/core/bitstreams/d41c9f44-c9ca-4ed8-ba2a-30b7108925b4/content"
+    }
+  ],
+  "tip_ru": "Кампус лежит на востоке Браги, в приходе Гуалтар, и открыт для прогулок. Пройдите от статуи Прометея к Центральной библиотеке и учебным комплексам. Схема корпусов есть на сайте campi.uminho.pt.",
+  "gallery": [
+    {
+      "src": "assets/img/uminho-gualtar-1.jpg",
+      "kind": "exterior",
+      "caption_ru": "Корпус № 4 со стеклянным фасадом и бетонными башнями",
+      "credit": {
+        "author": "Aren Noronha",
+        "license": "CC BY-SA 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Building_4_of_the_University_of_Minho,_Gualtar_campus_in_Braga,_Portugal.jpg"
+      }
+    },
+    {
+      "src": "assets/img/uminho-gualtar-2.jpg",
+      "kind": "exterior",
+      "caption_ru": "Фасад Центральной библиотеки университета",
+      "credit": {
+        "author": "Mind Booster Noori",
+        "license": "CC BY-SA 3.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:University_of_Minho_General_Library.jpg"
+      }
+    },
+    {
+      "src": "assets/img/uminho-gualtar-3.jpg",
+      "kind": "detail",
+      "caption_ru": "Стеклянный вход в Центральную библиотеку, в нём отражается двор кампуса",
+      "credit": {
+        "author": "Mind Booster Noori",
+        "license": "CC0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Biblioteca_Geral_da_UM.jpg"
+      }
+    },
+    {
+      "src": "assets/img/uminho-gualtar-4.jpg",
+      "kind": "exterior",
+      "caption_ru": "Статуя Прометея на площади кампуса",
+      "credit": {
+        "author": "Waldir",
+        "license": "CC BY-SA 4.0",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Prometeu_Uminho_2.jpg"
+      }
+    }
+  ],
+  "panorama": null,
+  "videos": [
+    {
+      "youtube_id": "pYOfRVfmaw4",
+      "title": "Tour Pela Universidade Do Minho | Estudar em Portugal",
+      "channel": "Os Bratugas",
+      "lang": "pt"
+    },
+    {
+      "youtube_id": "d6pNruepTZM",
+      "title": "TOUR PELA UNIVERSIDADE DO MINHO - BRAGA/PORTUGAL",
+      "channel": "Adrielle Dona",
+      "lang": "pt"
+    },
+    {
+      "youtube_id": "smx1pUtfAjM",
+      "title": "Encontro Caixa Alumni UMinho 2022 chega ao campus de Gualtar",
+      "channel": "Alumni UMinho",
+      "lang": "pt"
+    }
+  ]
+}

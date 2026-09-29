@@ -176,6 +176,16 @@ Published figures come from these pages (facts only; no text or images copied):
 | estadio-1-maio | https://pt.wikipedia.org/wiki/Est%C3%A1dio_1.%C2%BA_de_Maio_(Braga), https://en.wikipedia.org/wiki/Est%C3%A1dio_1%C2%BA_de_Maio |
 | parque-ponte | https://jardinshistoricos.pt/ad/463, https://pt.wikipedia.org/wiki/Parque_da_Ponte |
 | forum-braga | https://www.forumbraga.com/Espacos/Pavilhao, https://www.forumbraga.com/Espacos/GrandeAuditorio, https://pt.wikipedia.org/wiki/Forum_Braga |
+| uminho-gualtar | https://pt.wikipedia.org/wiki/Universidade_do_Minho, https://www.sas.uminho.pt/desporto/complexo-desportivo-de-gualtar |
+| dmaria-ii | Atlas of School Architecture in Portugal (ASAP): http://asap-ehc.tecnico.ulisboa.pt/database/escola.php?id=28, https://www.aedonamaria.pt/content/escola-secundaria-d-maria-ii-sede, https://dstsa.pt/portfolio/escola-dona-maria-ii/ |
+| sao-frutuoso | https://imovel.patrimoniocultural.gov.pt/detalhes.php?code=70191, https://en.wikipedia.org/wiki/Chapel_of_S%C3%A3o_Frutuoso |
+| diogo-sousa | https://www.maddiogosousa.gov.pt/edificio/ |
+| coimbras | https://en.wikipedia.org/wiki/Capela_dos_Coimbras, https://imovel.patrimoniocultural.gov.pt/detalhes.php?code=70651 |
+| congregados | https://pt.wikipedia.org/wiki/Bas%C3%ADlica_dos_Congregados |
+| nogueira-silva | No published dimensions found; all numbers are estimates. |
+| sao-marcos | https://pt.wikipedia.org/wiki/Igreja_de_S%C3%A3o_Marcos_(Braga), https://pt.wikipedia.org/wiki/Hospital_de_S%C3%A3o_Marcos, https://www.vilagale.com/en/hotels-portugal/hotels-porto-and-north/vila-gale-collection-braga/ |
+
+The school blocks of `dmaria-ii` that OSM does not map come from the Microsoft Global ML Building Footprints (ODbL 1.0, https://github.com/microsoft/GlobalMLBuildingFootprints); in `data/footprints.json` they are parts with `osm: null` and a `synth` id `ms:<n>`.
 
 We take only facts (numbers and counts) from these pages and cite each one; we reproduce no article text.
 

@@ -248,7 +248,8 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
     const T = surf[w.kind];
     if (!T) continue;
     // footways: only their bridges (the paths themselves are not in the core)
-    if (w.kind === 'foot' && !w.bridge) continue;
+    // (and not the crossings on a road deck: the deck is their surface)
+    if (w.kind === 'foot' && (!w.bridge || w.onDeck)) continue;
     const h = (w.widthM / 2) * S;
     strip(T, net, w.start, w.start + w.n - 1, 0, h, RIBBON_LIFT, colOf(surfaceOf(w.f)));
   }
@@ -299,8 +300,47 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
   const pier = lin(PIER);
   const granite = lin(GRANITE);
   let archBridges = 0;
+  // the drawn decks, for the parapets between decks side by side
+  const decks = net.bridges
+    .filter((wi) => !net.ways[wi].onDeck)
+    .map((wi) => {
+      const w = net.ways[wi];
+      let x0 = Infinity;
+      let x1 = -Infinity;
+      let z0 = Infinity;
+      let z1 = -Infinity;
+      for (let i = w.start; i < w.start + w.n; i++) {
+        x0 = Math.min(x0, X[i]);
+        x1 = Math.max(x1, X[i]);
+        z0 = Math.min(z0, Z[i]);
+        z1 = Math.max(z1, Z[i]);
+      }
+      const r = (w.widthM / 2 + 1) * S;
+      return { wi, w, x0: x0 - r, x1: x1 + r, z0: z0 - r, z1: z1 + r, half: (w.widthM / 2) * S };
+    });
+  // is (x, z, y) on the surface of another deck (in plan, and within 1.5 m in height)?
+  function onOtherDeck(self, x, z, y) {
+    for (const d of decks) {
+      if (d.wi === self || x < d.x0 || x > d.x1 || z < d.z0 || z > d.z1) continue;
+      const w = d.w;
+      for (let i = w.start; i < w.start + w.n - 1; i++) {
+        const ax = X[i];
+        const az = Z[i];
+        const dx = X[i + 1] - ax;
+        const dz = Z[i + 1] - az;
+        const L2 = dx * dx + dz * dz || 1e-9;
+        const u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+        const px = ax + dx * u - x;
+        const pz = az + dz * u - z;
+        if (px * px + pz * pz > (d.half + 0.2 * S) ** 2) continue;
+        if (Math.abs(Y[i] + (Y[i + 1] - Y[i]) * u - y) < 1.5 * S) return true;
+      }
+    }
+    return false;
+  }
   for (const wi of net.bridges) {
     const w = net.ways[wi];
+    if (w.onDeck) continue;
     const pts = [];
     for (let i = w.start; i < w.start + w.n; i++) pts.push({ x: X[i], z: Z[i], y: Y[i], g: G[i], s: net.C[i] });
     const arch = w.t.bs === 'arch' || ARCH.test(w.t.name || '') || ARCH.test(w.t.bn || '');
@@ -319,6 +359,17 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
       spacingM: w.hw === 'motorway' || w.hw === 'trunk' ? 32 : w.kind === 'rail' ? 24 : 20,
       keepOut,
       railing: w.kind === 'foot',
+      open(k, side) {
+        // the edge at the segment's middle, just outside the parapet
+        const i = w.start + k;
+        const dx = X[i + 1] - X[i];
+        const dz = Z[i + 1] - Z[i];
+        const L = Math.hypot(dx, dz) || 1;
+        const e = (w.widthM / 2 + 0.6) * S * side;
+        const x = (X[i] + X[i + 1]) / 2 + (dz / L) * e;
+        const z = (Z[i] + Z[i + 1]) / 2 - (dx / L) * e;
+        return onOtherDeck(wi, x, z, (Y[i] + Y[i + 1]) / 2);
+      },
     });
   }
   const earth = lin(EARTH);
