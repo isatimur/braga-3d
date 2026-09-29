@@ -2,7 +2,7 @@
 // Network first for pages and data (fresh deploys win), cache first for
 // hashed bundles, photos, models and icons. Same origin only:
 // fonts, Wikimedia and YouTube go straight to the network.
-const VERSION = 'braga-v2';
+const VERSION = 'braga-v3';
 const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {

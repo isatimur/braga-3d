@@ -331,20 +331,21 @@ function enc(pts, o) {
 // close to them and the ML outlines there are usually right.
 function loadRoadSegs() {
   const segs = [];
-  const push = (ll, half) => {
+  const push = (ll, half, minor = false) => {
     const xy = ll.map(toXY);
-    for (let i = 1; i < xy.length; i++) segs.push({ a: xy[i - 1], b: xy[i], half, box: { x0: Math.min(xy[i - 1][0], xy[i][0]), x1: Math.max(xy[i - 1][0], xy[i][0]), y0: Math.min(xy[i - 1][1], xy[i][1]), y1: Math.max(xy[i - 1][1], xy[i][1]) } });
+    for (let i = 1; i < xy.length; i++) segs.push({ a: xy[i - 1], b: xy[i], half, minor, box: { x0: Math.min(xy[i - 1][0], xy[i][0]), x1: Math.max(xy[i - 1][0], xy[i][0]), y0: Math.min(xy[i - 1][1], xy[i][1]), y1: Math.max(xy[i - 1][1], xy[i][1]) } });
   };
-  const DEFAULT_W = { primary: 10, secondary: 7 };
+  const DEFAULT_W = { primary: 10, secondary: 7, minor: 5 };
   const core = JSON.parse(readFileSync(join(ROOT, 'data', 'roads.json'), 'utf8'));
   for (const f of core.features || []) {
     const t = f.t || {};
     const bridge = !!t.br;
-    if (!bridge && f.kind !== 'primary' && f.kind !== 'secondary') continue;
-    const lanes = t.ln > 0 ? t.ln : f.kind === 'primary' ? 2 : 2;
+    if (f.kind !== 'primary' && f.kind !== 'secondary' && f.kind !== 'minor') continue;
+    const lanes = t.ln > 0 ? t.ln : 2;
     const wide = /motorway|trunk/.test(t.hw || '');
-    const widthM = Math.max(DEFAULT_W[f.kind] || 7, lanes * 3.5 + (wide ? 3 : 0));
-    push(f.pts, widthM / 2 + (bridge ? 3 : 2));
+    const widthM = Math.max(DEFAULT_W[f.kind] || 5, lanes * 3.5 + (wide ? 3 : 0));
+    // minor streets count only for elongated polygons (see inCorridor)
+    push(f.pts, widthM / 2 + (bridge ? 3 : 2), f.kind === 'minor' && !bridge);
   }
   const idxFile = join(ROOT, 'data', 'tiles', 'index.json');
   if (existsSync(idxFile)) {
@@ -356,7 +357,7 @@ function loadRoadSegs() {
       const tile = JSON.parse(readFileSync(file, 'utf8'));
       for (const rec of tile.r || []) {
         const kind = kinds[rec[0]];
-        if (kind !== 'primary' && kind !== 'secondary') continue;
+        if (kind !== 'primary' && kind !== 'secondary' && kind !== 'minor') continue;
         const pts = [];
         let x = 0;
         let y = 0;
@@ -365,7 +366,7 @@ function loadRoadSegs() {
           y += rec[i + 1];
           pts.push([(tile.o[0] + y) / 1e5, (tile.o[1] + x) / 1e5]);
         }
-        if (pts.length >= 2) push(pts, DEFAULT_W[kind] / 2 + 2);
+        if (pts.length >= 2) push(pts, DEFAULT_W[kind] / 2 + 2, kind === 'minor');
       }
     }
   }
@@ -462,20 +463,37 @@ function build() {
     const t = Math.max(0, Math.min(1, ((x - s.a[0]) * dx + (y - s.a[1]) * dy) / l2));
     return Math.hypot(x - (s.a[0] + t * dx), y - (s.a[1] + t * dy));
   };
+  // A viaduct outline is long and thin and follows the road on top of it,
+  // whatever the road's class; a house beside a minor street is not.
+  const elongated = (P) => {
+    const diag = Math.hypot(P.box.x1 - P.box.x0, P.box.y1 - P.box.y0);
+    const width = P.area / Math.max(diag, 1);
+    return diag >= 45 && diag / Math.max(width, 1) >= 4;
+  };
   const inCorridor = (P) => {
     const near = segIdx.query({ x0: P.box.x0 - 20, x1: P.box.x1 + 20, y0: P.box.y0 - 20, y1: P.box.y1 + 20 });
     if (!near.length) return false;
     const pts = samples(P);
-    let hit = 0;
+    const n = pts.length / 2;
+    let hitMain = 0;
+    let hitAny = 0;
     for (let i = 0; i < pts.length; i += 2) {
+      let main = false;
+      let any = false;
       for (const s of near) {
         if (distToSeg(pts[i], pts[i + 1], s) <= s.half) {
-          hit++;
-          break;
+          any = true;
+          if (!s.minor) {
+            main = true;
+            break;
+          }
         }
       }
+      if (main) hitMain++;
+      if (any) hitAny++;
     }
-    return hit / (pts.length / 2) >= 0.6;
+    if (hitMain / n >= 0.6) return true;
+    return elongated(P) && hitAny / n >= 0.5;
   };
   c.roadCorridor = 0;
   // ---- big ML blobs in the historic centre: OSM coverage there is complete,
