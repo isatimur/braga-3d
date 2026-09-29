@@ -35,6 +35,7 @@ const PLANE_SCALE = 6;
 const R0 = 700;
 const RMAX = 1800;
 const STALE_S = 60; // drop an aircraft not heard of for this long
+const VR_S = 20; // extrapolate a climb or descent this long at most
 
 // ---------------------------------------------------------------- labels
 // A DOM label that follows one of a set of world points, picked on screen
@@ -431,7 +432,7 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
         const dt = (tNow - T0[i]) / 1000;
         const oldX = X0[i] + VX[i] * dt + OX[i];
         const oldZ = Z0[i] + VZ[i] * dt + OZ[i];
-        const oldA = A0[i] + VR[i] * dt + OA[i];
+        const oldA = A0[i] + VR[i] * Math.min(dt, VR_S) + OA[i];
         const ndt = (tNow - tFix) / 1000;
         OX[i] = oldX - (k.x + Math.sin(tr) * gs * ndt);
         OZ[i] = oldZ - (k.z - Math.cos(tr) * gs * ndt);
@@ -476,6 +477,10 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       const served = Date.parse(r.headers.get('date') || '') || Date.now();
       const ageS = Math.max(0, (served - (j.now || served)) / 1000);
       if (ageS > 120) throw new Error('stale answer (offline?)');
+      // an offline copy from the service worker (public/sw.js is network
+      // first) carries its own old Date: check it against this device's
+      // clock too, with room for a clock that is a few minutes off
+      if (Date.now() - served > 10 * 60e3) throw new Error('stale answer (cached copy)');
       j.ageS = ageS;
       if (my !== ctl || !active) return; // left live mode meanwhile
       src = j.src;
@@ -566,7 +571,8 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       OA[i] -= OA[i] * k;
       const x = X0[i] + VX[i] * tt + OX[i];
       const z = Z0[i] + VZ[i] * tt + OZ[i];
-      const alt = Math.max(0, A0[i] + VR[i] * tt + OA[i]);
+      // climb or descent: 20 s at most (a flare or a level-off is not in the data)
+      const alt = Math.max(0, A0[i] + VR[i] * Math.min(tt, VR_S) + OA[i]);
       const r = Math.hypot(x, z);
       const f = r > 1e-6 ? compress(r) / r : 1;
       const wx = x * f;
@@ -642,7 +648,7 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
       const n = info[i];
       if (!n) return '';
       const dt = Math.min((performance.now() - T0[i]) / 1000, 90);
-      const alt = Math.max(0, A0[i] + VR[i] * dt);
+      const alt = Math.max(0, A0[i] + VR[i] * Math.min(dt, VR_S));
       return `<b>${esc(n.flight)}</b> · ${fmtN.format(Math.round(alt / 10) * 10)} ${t('м')}${n.type ? ` <span class="dim">· ${esc(n.type)}</span>` : ''}`;
     },
     px: 26,
@@ -650,7 +656,8 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
 
   function badge() {
     if (!active) return null;
-    if (status === 'ok' || src) return `${t('Над Брагой сейчас:')} ${total} ${plural(total, ['самолёт', 'самолёта', 'самолётов'])}`;
+    // the source is named: adsb.fi and OpenSky ask to be cited
+    if (status === 'ok' || src) return `${t('Над Брагой сейчас:')} ${total} ${plural(total, ['самолёт', 'самолёта', 'самолётов'])}${src ? ` · ${src === 'opensky' ? 'OpenSky' : src}` : ''}`;
     if (status === 'idle' || status === 'fetching') return null;
     return `${t('Самолёты:')} ${t('нет данных')}`;
   }

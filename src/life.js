@@ -416,7 +416,10 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
     weighedFor = demand;
     acc = 0;
     for (let i = 0; i < lanes.length; i++) {
-      acc += baseW[i] * (laneAxis[i] ? 1 + 2.5 * demand : 1);
+      // Avenida da Liberdade (axis 1) is short and central: at peak it
+      // fills up far more than the long EN 101 and A 11 corridors
+      const ax = laneAxis[i];
+      acc += baseW[i] * (ax === 1 ? 1 + 10 * demand : ax ? 1 + 2.5 * demand : 1);
       cdf[i] = acc;
     }
   }

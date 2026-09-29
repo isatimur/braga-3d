@@ -3,11 +3,10 @@
 //   - data: data/gtfs/schedule.json, built by scripts/fetch-gtfs.mjs from
 //     the TUB static GTFS (https://www.tub.pt/developer/gtfs/feed/tub.zip,
 //     listed on dados.gov.pt): 80 lines, their shapes, and every trip's stop
-//     times, grouped into patterns. Loaded at run time, a few seconds after
-//     the map starts (about 190 KB gzipped), not bundled;
-//   - clock: the real Lisbon time in live mode («Сейчас в Браге», or ?now=),
-//     else the hour of the time-of-day preset (traffic-model.js
-//     PRESET_HOUR), running at 1x from there; the weekday is today's;
+//     times, grouped into patterns. Loaded at run time the first time live
+//     mode turns on (about 190 KB gzipped), not bundled;
+//   - only in live mode («Сейчас в Браге»): the clock is the real Lisbon
+//     time (or ?now=, running at 1x from that instant);
 //   - every trip running now is placed on its shape between the two stops
 //     it lies between, by its stop times; after midnight the previous
 //     service day's late trips still run;
@@ -274,8 +273,24 @@ export function createLiveBus({ scene, camera, renderer, project, heightAt, mobi
   }
 
   // ---- per frame
+  let shown = false;
   function update(adt, dt, view) {
     const tNow = performance.now();
+    // only in live mode («Сейчас в Браге»); the schedule loads on the first switch-on
+    if (!live?.live) {
+      if (shown) {
+        shown = false;
+        mesh.visible = false;
+        mesh.count = 0;
+        nSel = 0;
+        running = 0;
+        baseMode = '';
+        lastSelect = -Infinity;
+        label.hide();
+      }
+      return;
+    }
+    shown = true;
     if (!data) {
       if (status === 'waiting' && tNow > loadAt) load();
       return;
@@ -343,8 +358,8 @@ export function createLiveBus({ scene, camera, renderer, project, heightAt, mobi
   });
 
   function badge() {
-    if (!data) return null;
-    return `${t('Автобусы TUB:')} ${running} ${t('на линиях')} · ${t('по расписанию')}`;
+    if (!live?.live || !data) return null;
+    return `${t('Автобусы TUB:')} ${running} ${t('на линиях')} (${t(TUB_RT_URL && rtKey ? 'в реальном времени' : 'по расписанию')})`;
   }
 
   return {

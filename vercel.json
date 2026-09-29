@@ -4,6 +4,9 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "cleanUrls": true,
+  "functions": {
+    "api/adsb.js": { "maxDuration": 20 }
+  },
   "redirects": [
     {
       "source": "/(.*)",
@@ -30,6 +33,10 @@
     {
       "source": "/data/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+    },
+    {
+      "source": "/data/tiles/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
     },
     {
       "source": "/og/(.*)",

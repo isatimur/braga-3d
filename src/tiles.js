@@ -103,6 +103,8 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
   let castNow = true;
   const nFetch = [0, 0];
   const nBuild = [0, 0];
+  const nBuildNear = [0, 0, 0]; // sum, count, max (ms)
+  const nBuildFar = [0, 0, 0];
 
   // ------------------------------------------------------------ start
   async function start() {
@@ -212,7 +214,6 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       w.postMessage(init);
       workers.push(W);
     }
-    debug.tiles = api;
   }
 
   const land = { tex: null, data: null, w: 0, h: 0, ny: 0, rect: null };
@@ -338,6 +339,13 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     if (!T || m.id !== T.reqId) return; // superseded or dropped
     T.loading = false;
     if (m.type === 'error') {
+      // a tile the index lists but the server does not have (a partial
+      // deploy): given up at once, without noise
+      if (/HTTP 404|is not JSON/.test(m.error)) {
+        stats.missing = (stats.missing || 0) + 1;
+        if (T.state === 'loading') T.state = 'failed';
+        return;
+      }
       stats.errors++;
       T.tries++;
       T.retryAt = clock + 5 * T.tries;
@@ -349,6 +357,10 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     nFetch[1] += m.stats.fetchMs > 0 ? 1 : 0;
     nBuild[0] += m.stats.buildMs;
     nBuild[1]++;
+    const bl = m.lod === 'near' ? nBuildNear : nBuildFar;
+    bl[0] += m.stats.buildMs;
+    bl[1]++;
+    bl[2] = Math.max(bl[2], m.stats.buildMs);
     const firstShow = T.state !== 'shown';
     const born = firstShow ? clock : clock - 10; // an LOD switch does not fade
     const prev = T.lod;
@@ -549,7 +561,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
         continue;
       }
       if (T.loading || T.state === 'failed' || d >= R) continue;
-      if (T.state === 'idle' && clock < T.retryAt) continue;
+      if (clock < T.retryAt) continue; // after an error (a failed LOD switch too)
       if (T.state === 'idle' || (T.state === 'shown' && T.lod !== lodWant)) cands.push({ T, lod: lodWant, p: T.prio * (lodWant === 'near' ? 3 : 1) * (T.state === 'shown' ? 0.8 : 1) });
     }
     cands.sort((a, b) => b.p - a.p);
@@ -677,6 +689,8 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       meshes: meshes + lineMeshes.length,
       fetchMs: nFetch[1] ? +(nFetch[0] / nFetch[1]).toFixed(1) : 0,
       buildMs: nBuild[1] ? +(nBuild[0] / nBuild[1]).toFixed(1) : 0,
+      buildNearMs: nBuildNear[1] ? [+(nBuildNear[0] / nBuildNear[1]).toFixed(1), +nBuildNear[2].toFixed(1)] : 0,
+      buildFarMs: nBuildFar[1] ? [+(nBuildFar[0] / nBuildFar[1]).toFixed(1), +nBuildFar[2].toFixed(1)] : 0,
       landMB: land.data ? +(land.data.byteLength / 1048576).toFixed(1) : 0,
     });
     if (debug.stats) debug.stats.tiles = stats;
@@ -695,6 +709,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       const t0 = performance.now();
       return new Promise((res) => {
         const tick = () => {
+          if (off || failed) return res(stats);
           const busy = !index || inflight > 0 || ready.length > 0 || quiet < 2 || [...groups.values()].some((G) => G.dirty);
           if (!busy || performance.now() - t0 > timeoutMs) {
             refreshStats();
@@ -707,5 +722,6 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     },
     fadeS: FADE_S,
   };
+  debug.tiles = api;
   return api;
 }

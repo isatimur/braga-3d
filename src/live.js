@@ -143,7 +143,8 @@ const CSS = `
 .life-badge .badge-more { display: none; margin-left: 8px; padding: 0 6px; font: inherit; font-size: 11px; line-height: 16px; color: var(--gold); background: rgba(224, 169, 72, 0.12); border: 1px solid rgba(224, 169, 72, 0.35); border-radius: 8px; cursor: pointer; }
 .life-badge .badge-more:focus-visible { outline: 1px solid var(--gold); outline-offset: 1px; }
 @media (max-width: 900px) {
-  .life-badge { font-size: 11.5px; white-space: normal; }
+  /* denser: map labels pass under the badge on phones */
+  .life-badge { font-size: 11.5px; white-space: normal; background: rgba(26, 21, 16, 0.72); }
   .life-badge .badge-more { display: inline-block; }
   .life-badge:not(.is-open) .badge-line { display: none; }
   .life-badge .badge-line { font-size: 11px; }
@@ -272,13 +273,19 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
   const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
   // ?now=2026-09-28T19:30 (Lisbon local time, or any ISO instant): a fixed
   // clock for tests and screenshots
+  // The clock starts at that instant and runs at 1x (a frozen clock would
+  // make the buses jump back every second).
   let fixedNow = null;
+  let fixedAt = 0;
   const qNow = query.get('now');
   if (qNow) {
     const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(qNow) ? qNow : `${qNow}${lisbonOffset(new Date(qNow + 'Z'))}`);
-    if (!isNaN(d)) fixedNow = d;
+    if (!isNaN(d)) {
+      fixedNow = d;
+      fixedAt = performance.now();
+    }
   }
-  const now = () => fixedNow || new Date();
+  const now = () => (fixedNow ? new Date(fixedNow.getTime() + (performance.now() - fixedAt)) : new Date());
 
   let live = false;
   let manualWeather = null; // a state picked by hand while live
@@ -502,6 +509,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
     // tests: a fixed clock, and a canned reading instead of the network
     setNow(d) {
       fixedNow = d ? new Date(d) : null;
+      fixedAt = performance.now();
       if (live) {
         tickSun(false);
         updateBadge();
