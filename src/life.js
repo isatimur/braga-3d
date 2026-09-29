@@ -24,7 +24,8 @@ import { S } from './geo.js';
 import { t } from './i18n.js';
 import { createWeather, addScaled } from './weather.js';
 import { createLive } from './live.js';
-import { createTrafficModel, axisAt } from './traffic-model.js';
+import { createTrafficModel } from './traffic-model.js';
+import { buildNetwork, createFlow } from './road-network.js';
 
 // shared by the materials here: night 0..1 and the emissive boost (above
 // the bloom threshold when post-processing is on)
@@ -305,21 +306,31 @@ function buildFunicular({ project, heightAt, items }) {
 }
 
 // ------------------------------------------------------------ traffic
-const TRAFFIC = {
-  primary: { lane: 1.9 * S, kmh: [40, 55] },
-  secondary: { lane: 1.4 * S, kmh: [30, 45] },
-};
-// pedestrian centre (lat, lon, radius m): no traffic
+// pedestrian centre (lat, lon, radius m): no traffic on its streets (the
+// tunnels under it still carry theirs)
 const CAR_FREE = [
   [41.5499, -8.4272, 230], // Sé, Rua do Souto, Largo do Paço
   [41.5513, -8.4232, 60], // Praça da República (the square itself)
 ];
 const PAINT = [0xf1f1ee, 0xa9afb4, 0x1d1f22, 0x2b3f63, 0x9e2a24, 0x8a7a66].map((h) => new THREE.Color(h));
+const LORRY_PAINT = [0xf1f1ee, 0xe8e4da, 0x2c4a7a, 0x9e2a24, 0x3d5c3a].map((h) => new THREE.Color(h));
+// the main axes by their OSM name and ref (traffic-model.js AXIS_IDS order)
+const AXIS_OF = (t) => (t.name === 'Avenida da Liberdade' ? 1 : /EN 101/.test(t.ref || '') ? 2 : /A 11|CSB|EN 14/.test(t.ref || '') || /Circular Sul de Braga/.test(t.name || '') ? 3 : 0);
+const MAJOR = new Set(['motorway', 'trunk', 'primary', 'motorway_link', 'trunk_link', 'primary_link']);
 
-function vehicleGeometry(van) {
-  const parts = van
-    ? [box(1.9, 0.3, 4.6, 0, 0, 0, 0x151515), box(2.0, 1.95, 5.2, 0, 0.3, 0, 0xffffff), box(2.02, 0.7, 0.9, 0, 1.3, 2.0, 0x3a3f44)]
-    : [box(1.7, 0.3, 3.6, 0, 0, 0, 0x151515), box(1.8, 0.7, 4.4, 0, 0.3, 0, 0xffffff), box(1.6, 0.55, 2.3, 0, 1.0, -0.2, 0x4a4f55)];
+// 0 car, 1 van, 2 lorry; +z is the front (head lamps), metres to world
+function vehicleGeometry(type) {
+  const parts =
+    type === 2
+      ? [
+          box(2.3, 0.45, 12.6, 0, 0.15, 0, 0x151515),
+          box(2.5, 2.7, 2.3, 0, 0.4, 5.1, 0xffffff), // cab
+          box(2.52, 0.9, 1.2, 0, 1.75, 5.7, 0x2f3438), // windscreen band
+          box(2.55, 3.1, 10, 0, 0.75, -1.3, 0xd8d6d0), // box trailer
+        ]
+      : type === 1
+        ? [box(1.9, 0.3, 4.6, 0, 0, 0, 0x151515), box(2.0, 1.95, 5.2, 0, 0.3, 0, 0xffffff), box(2.02, 0.7, 0.9, 0, 1.3, 2.0, 0x3a3f44)]
+        : [box(1.7, 0.3, 3.6, 0, 0, 0, 0x151515), box(1.8, 0.7, 4.4, 0, 0.3, 0, 0xffffff), box(1.6, 0.55, 2.3, 0, 1.0, -0.2, 0x4a4f55)];
   const g = mergeGeometries(parts);
   g.scale(S, S, S);
   return g;
@@ -336,136 +347,64 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
   const zones = CAR_FREE.map(([la, lo, r]) => ({ ...project(la, lo), r: r * S }));
   const blocked = (x, z) => zones.some((q) => (x - q.x) ** 2 + (z - q.z) ** 2 < q.r * q.r);
 
-  // ---- lanes: densified polylines with heights, in flat typed arrays
-  const X = [];
-  const Y = [];
-  const Z = [];
-  const C = [];
-  const lanes = []; // { start, n, total, kind, keyA, keyB, cx, cz }
-  const MAX = 3; // world units between points
-  for (const f of roads.features || []) {
-    const st = TRAFFIC[f.kind];
-    if (!st || !Array.isArray(f.pts) || f.pts.length < 2) continue;
-    const pts = f.pts.map((q) => project(q[0], q[1]));
-    if (pts.some((p) => blocked(p.x, p.z))) continue;
-    const start = X.length;
-    let cum = 0;
-    for (let i = 0; i < pts.length; i++) {
-      if (i === 0) {
-        X.push(pts[0].x);
-        Z.push(pts[0].z);
-        C.push(0);
-        continue;
-      }
-      const a = pts[i - 1];
-      const b = pts[i];
-      const L = Math.hypot(b.x - a.x, b.z - a.z);
-      if (L < 1e-4) continue;
-      const n = Math.max(1, Math.ceil(L / MAX));
-      for (let j = 1; j <= n; j++) {
-        X.push(a.x + ((b.x - a.x) * j) / n);
-        Z.push(a.z + ((b.z - a.z) * j) / n);
-        cum += L / n;
-        C.push(cum);
-      }
-    }
-    const n = X.length - start;
-    if (n < 2 || cum < 4) {
-      X.length = Z.length = C.length = start;
-      continue;
-    }
-    const key = (i) => `${Math.round(X[i] * 2)},${Math.round(Z[i] * 2)}`;
-    lanes.push({ start, n, total: cum, kind: f.kind, keyA: key(start), keyB: key(start + n - 1), cx: X[start + (n >> 1)], cz: Z[start + (n >> 1)] });
-  }
-  if (!lanes.length) return null;
-  for (let i = 0; i < X.length; i++) Y.push(heightAt(X[i], Z[i]) + 0.13);
-  const PX = new Float32Array(X);
-  const PY = new Float32Array(Y);
-  const PZ = new Float32Array(Z);
-  const PC = new Float32Array(C);
-  // ends: node key -> [lane * 2 + (0 start | 1 end)]
-  const nodes = new Map();
-  lanes.forEach((l, i) => {
-    for (const [k, e] of [[l.keyA, 0], [l.keyB, 1]]) {
-      if (!nodes.has(k)) nodes.set(k, []);
-      nodes.get(k).push(i * 2 + e);
-    }
-  });
-  const ends = lanes.map((l) => [nodes.get(l.keyA), nodes.get(l.keyB)]);
-  // the main axes (traffic-model.js): a lane is on an axis when its middle
-  // and one end lie within 8 units (32 m) of the corridor
-  const axes = model?.axes;
-  const laneAxis = new Uint8Array(lanes.length);
-  const lanePrimary = new Uint8Array(lanes.length);
-  lanes.forEach((l, i) => {
-    lanePrimary[i] = l.kind === 'primary' ? 1 : 0;
-    if (!axes || !axes.ids.length) return;
-    const a = axisAt(axes, l.cx, l.cz, 8);
-    if (a && (axisAt(axes, X[l.start], Z[l.start], 8) === a || axisAt(axes, X[l.start + l.n - 1], Z[l.start + l.n - 1], 8) === a)) laneAxis[i] = a;
-  });
-  // spawn weight: length, more in the city than out in the hills; primary
-  // roads carry more, and the axes more still as the demand rises
-  const cdf = new Float32Array(lanes.length);
-  const baseW = new Float32Array(lanes.length);
-  lanes.forEach((l, i) => {
-    baseW[i] = l.total * (0.04 + Math.exp(-Math.hypot(l.cx, l.cz) / 420)) * (lanePrimary[i] ? 1.8 : 1);
-  });
-  let acc = 0;
-  let weighedFor = -1;
-  function weigh(demand) {
-    weighedFor = demand;
-    acc = 0;
-    for (let i = 0; i < lanes.length; i++) {
-      // Avenida da Liberdade (axis 1) is short and central: at peak it
-      // fills up far more than the long EN 101 and A 11 corridors
-      const ax = laneAxis[i];
-      acc += baseW[i] * (ax === 1 ? 1 + 10 * demand : ax ? 1 + 2.5 * demand : 1);
-      cdf[i] = acc;
-    }
-  }
-  weigh(model ? model.state.demand : 0);
-  const pickLane = (r) => {
-    const v = r * acc;
-    let lo = 0;
-    let hi = cdf.length - 1;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (cdf[mid] < v) lo = mid + 1;
-      else hi = mid;
-    }
-    return lo;
-  };
-
-  // ---- vehicles
+  // ---- the junction graph of the real streets (road-network.js): shared
+  // OSM nodes, one-way streets, roundabouts, bridges and tunnels
+  const net = buildNetwork(roads, project, heightAt);
+  const g = net.graph;
+  if (!g.n) return null;
   // buffers for the peak (traffic-model.js): 600, or 300 on phones
   const N = mobile ? 300 : 600;
   const rnd = lcg(20260928);
-  const vl = new Int32Array(N);
-  const vs = new Float32Array(N);
-  const vd = new Int8Array(N);
-  const vg = new Int32Array(N); // segment cursor (point index within the lane)
-  const vsp = new Float32Array(N);
-  const vt = new Uint8Array(N);
+  const flow = createFlow(net, { N, rnd, blocked });
+  if (!flow) return null;
+  const nD = g.n;
+  // per directed lane: the main axis (1..3) from the OSM name and ref, a
+  // major-road flag, the distance from the centre, the lorry share
+  const laneAxis = new Uint8Array(nD);
+  const lanePrimary = new Uint8Array(nD);
+  const laneFast = new Uint8Array(nD);
+  const centreW = new Float32Array(nD);
+  const RMAX = 1150; // world units (4.6 km) from the centre: then respawn
+  for (let d = 0; d < nD; d++) {
+    const w = net.ways[g.way[d]];
+    laneAxis[d] = AXIS_OF(w.t);
+    lanePrimary[d] = MAJOR.has(w.hw) ? 1 : 0;
+    laneFast[d] = w.hw === 'motorway' || w.hw === 'trunk' || w.hw === 'motorway_link' ? 1 : 0;
+    const m = (g.A[d] + g.B[d]) >> 1;
+    const r = Math.hypot(net.X[m], net.Z[m]);
+    // more in the city than out in the hills; the motorways keep a dense flow
+    centreW[d] = r > RMAX - 30 ? 0 : laneFast[d] ? 0.5 : 0.04 + Math.exp(-r / 420);
+  }
+  let weighedFor = -1;
+  function weigh(demand) {
+    weighedFor = demand;
+    // Avenida da Liberdade (axis 1) is short and central: at peak it fills
+    // up far more than the long EN 101 and A 11 corridors
+    flow.weigh((d, base) => {
+      const ax = laneAxis[d];
+      return base * centreW[d] * (ax === 1 ? 1 + 10 * demand : ax ? 1 + 2.5 * demand : 1);
+    });
+  }
+  weigh(model ? model.state.demand : 0);
+
+  // ---- vehicles: lorries on the motorways, vans everywhere
+  const vt = flow.vt;
   const vc = new Uint8Array(N);
   function spawn(i) {
-    const l = pickLane(rnd());
-    vl[i] = l;
-    vs[i] = rnd() * lanes[l].total;
-    vd[i] = rnd() < 0.5 ? 1 : -1;
-    vg[i] = 1;
+    flow.spawn(i);
+    const d = flow.vd[i];
+    const r = rnd();
+    vt[i] = r < (laneFast[d] ? 0.24 : 0.03) ? 2 : r < (laneFast[d] ? 0.36 : 0.15) ? 1 : 0;
+    vc[i] = vt[i] === 2 ? Math.floor(rnd() * LORRY_PAINT.length) : vt[i] ? (rnd() < 0.8 ? 0 : 1) : Math.floor(rnd() * PAINT.length);
   }
-  for (let i = 0; i < N; i++) {
-    spawn(i);
-    const st = TRAFFIC[lanes[vl[i]].kind];
-    vsp[i] = ((st.kmh[0] + rnd() * (st.kmh[1] - st.kmh[0])) / 3.6) * S;
-    vt[i] = rnd() < 0.14 ? 1 : 0;
-    vc[i] = vt[i] ? (rnd() < 0.8 ? 0 : 1) : Math.floor(rnd() * PAINT.length);
-  }
+  for (let i = 0; i < N; i++) spawn(i);
 
   const lampsCar = lampChunk(0.55, 0.85);
-  const meshes = [false, true].map((van) => {
-    const m = new THREE.InstancedMesh(vehicleGeometry(van), lifeMaterial({ roughness: 0.38, metalness: 0.25, lamps: van ? lampChunk(0.6, 0.95) : lampsCar }), N);
-    m.name = van ? 'traffic-vans' : 'traffic-cars';
+  const LAMPS = [lampsCar, lampChunk(0.6, 0.95), lampChunk(0.8, 1.15)];
+  const NAMES = ['traffic-cars', 'traffic-vans', 'traffic-lorries'];
+  const meshes = [0, 1, 2].map((type) => {
+    const m = new THREE.InstancedMesh(vehicleGeometry(type), lifeMaterial({ roughness: 0.38, metalness: 0.25, lamps: LAMPS[type] }), type === 2 ? Math.ceil(N * 0.4) : N);
+    m.name = NAMES[type];
     m.frustumCulled = false; // culled per vehicle below
     m.castShadow = false;
     m.receiveShadow = true;
@@ -553,16 +492,16 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
 
   const group = new THREE.Group();
   group.name = 'traffic';
-  group.add(meshes[0], meshes[1], lights);
+  group.add(meshes[0], meshes[1], meshes[2], lights);
 
-  const RMAX2 = 1150 * 1150; // world units (4.6 km) from the centre: then respawn
+  const RMAX2 = RMAX * RMAX;
   let visible = 0;
   let active = N;
   let flowT = 0; // seconds, for the stop-and-go waves
   const ms = model?.state;
   function speedK(i) {
     if (!ms) return 1;
-    const l = vl[i];
+    const l = flow.vd[i];
     const ax = laneAxis[l];
     if (!ax) return lanePrimary[l] ? ms.primaryK : ms.freeK;
     let k = ms.axisK;
@@ -570,75 +509,15 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
     if (jam > 0.02) {
       // a wave of slow traffic travelling against the flow (about 280 m
       // long, 5 m/s back), and a queue in the last 40 m before a junction
-      const w = 0.5 + 0.5 * Math.sin(vd[i] * vs[i] * 0.09 + flowT * 0.11 + ax);
+      const w = 0.5 + 0.5 * Math.sin(-flow.vs[i] * 0.09 + (l & 7) * 3.1 + flowT * 0.11 + ax);
       k *= 1 - 0.8 * jam * (w * w * (3 - 2 * w));
-      const left = vd[i] > 0 ? lanes[l].total - vs[i] : vs[i];
+      const left = g.len[l] - flow.vs[i];
       if (left < 10) k *= 1 - 0.75 * jam * (1 - left / 10);
     }
     return Math.max(0.06, k);
   }
-  function advance(i, dt) {
-    let s = vs[i] + vd[i] * vsp[i] * speedK(i) * dt;
-    let l = vl[i];
-    for (let guard = 0; guard < 4 && (s < 0 || s > lanes[l].total); guard++) {
-      const atEnd = s > lanes[l].total;
-      const over = atEnd ? s - lanes[l].total : -s;
-      const list = ends[l][atEnd ? 1 : 0];
-      // another street at this node, else a U-turn
-      let pick = -1;
-      if (list.length > 1) {
-        const o = Math.floor(rnd() * list.length);
-        for (let k = 0; k < list.length; k++) {
-          const c = list[(o + k) % list.length];
-          if (c >> 1 !== l) {
-            pick = c;
-            break;
-          }
-        }
-      }
-      if (pick < 0) {
-        vd[i] = -vd[i];
-        s = atEnd ? lanes[l].total - over : over;
-      } else {
-        l = pick >> 1;
-        const fromStart = (pick & 1) === 0;
-        vd[i] = fromStart ? 1 : -1;
-        s = fromStart ? over : lanes[l].total - over;
-        vg[i] = fromStart ? 1 : lanes[l].n - 1;
-      }
-      vl[i] = l;
-    }
-    vs[i] = THREE.MathUtils.clamp(s, 0, lanes[l].total);
-  }
 
-  const pos = { x: 0, y: 0, z: 0, hx: 0, hz: 1 };
-  function locate(i) {
-    const L = lanes[vl[i]];
-    const base = L.start;
-    let g = THREE.MathUtils.clamp(vg[i], 1, L.n - 1);
-    const s = vs[i];
-    while (g < L.n - 1 && PC[base + g] < s) g++;
-    while (g > 1 && PC[base + g - 1] > s) g--;
-    vg[i] = g;
-    const a = base + g - 1;
-    const b = base + g;
-    const seg = Math.max(1e-6, PC[b] - PC[a]);
-    const u = THREE.MathUtils.clamp((s - PC[a]) / seg, 0, 1);
-    let hx = (PX[b] - PX[a]) / seg;
-    let hz = (PZ[b] - PZ[a]) / seg;
-    if (vd[i] < 0) {
-      hx = -hx;
-      hz = -hz;
-    }
-    const lane = TRAFFIC[L.kind].lane;
-    // drive on the right: offset to the right of the travel direction
-    pos.x = PX[a] + (PX[b] - PX[a]) * u - hz * lane;
-    pos.z = PZ[a] + (PZ[b] - PZ[a]) * u + hx * lane;
-    pos.y = PY[a] + (PY[b] - PY[a]) * u;
-    pos.hx = hx;
-    pos.hz = hz;
-    return pos;
-  }
+  const pos = { x: 0, y: 0, z: 0, hx: 0, hz: 1, dy: 0, hidden: 0 };
 
   function inView(frustum, x, y, z, r) {
     const p = frustum.planes;
@@ -646,7 +525,8 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
     return true;
   }
 
-  const counts = [0, 0]; // visible cars, vans (reused every frame)
+  const counts = [0, 0, 0]; // visible cars, vans, lorries (reused every frame)
+  const caps = meshes.map((m) => m.instanceMatrix.count);
   const streakAttrs = [lpAttr, ldAttr];
   function update(dt, camera, frustum, { night, camDist, width, height }) {
     flowT += dt;
@@ -659,56 +539,66 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
     } else active = Math.round(N * 0.5 * (1 - 0.2 * night));
     const bodies = camDist < 2800;
     const showLights = night > 0.02;
-    counts[0] = counts[1] = 0;
+    counts[0] = counts[1] = counts[2] = 0;
     let nl = 0;
     const cx = camera.position.x;
     const cz = camera.position.z;
     for (let i = 0; i < active; i++) {
-      if (dt > 0) advance(i, dt);
-      const p = locate(i);
+      if (dt > 0 && !flow.step(i, dt, speedK(i))) {
+        // a one-way street that ends (or the map edge): it leaves the map
+        spawn(i);
+        flow.locate(i, pos, -1);
+        continue;
+      }
+      const p = flow.locate(i, pos, dt);
       if (p.x * p.x + p.z * p.z > RMAX2) {
         spawn(i);
         continue;
       }
-      if (!inView(frustum, p.x, p.y, p.z, 2)) continue;
+      // inside a tunnel: out of sight until the other portal
+      if (p.hidden) continue;
+      if (!inView(frustum, p.x, p.y, p.z, 3)) continue;
       const t = vt[i];
-      if (bodies && (p.x - cx) ** 2 + (p.z - cz) ** 2 < 2800 * 2800) {
+      if (bodies && counts[t] < caps[t] && (p.x - cx) ** 2 + (p.z - cz) ** 2 < 2800 * 2800) {
         const m = meshes[t];
         const k = counts[t]++;
         const e = m.instanceMatrix.array;
         const o = k * 16;
-        // yaw only: +z of the vehicle along the travel direction
+        // +z of the vehicle along the travel direction, pitched with the
+        // ramp; x stays level (the body does not roll)
+        const cp = 1 / Math.sqrt(1 + p.dy * p.dy);
+        const sp = p.dy * cp;
         e[o] = p.hz;
         e[o + 1] = 0;
         e[o + 2] = -p.hx;
         e[o + 3] = 0;
-        e[o + 4] = 0;
-        e[o + 5] = 1;
-        e[o + 6] = 0;
+        e[o + 4] = -p.hx * sp;
+        e[o + 5] = cp;
+        e[o + 6] = -p.hz * sp;
         e[o + 7] = 0;
-        e[o + 8] = p.hx;
-        e[o + 9] = 0;
-        e[o + 10] = p.hz;
+        e[o + 8] = p.hx * cp;
+        e[o + 9] = sp;
+        e[o + 10] = p.hz * cp;
         e[o + 11] = 0;
         e[o + 12] = p.x;
-        e[o + 13] = p.y;
+        e[o + 13] = p.y + 0.13;
         e[o + 14] = p.z;
         e[o + 15] = 1;
-        PAINT[vc[i]].toArray(m.instanceColor.array, k * 3);
+        (t === 2 ? LORRY_PAINT : PAINT)[vc[i]].toArray(m.instanceColor.array, k * 3);
       }
       if (showLights) {
-        const half = (t ? 2.6 : 2.2) * S;
+        const half = (t === 2 ? 6.4 : t ? 2.6 : 2.2) * S;
         const o = nl * 3;
         lp[o] = p.x + p.hx * half;
-        lp[o + 1] = p.y + 0.7 * S;
+        lp[o + 1] = p.y + 0.13 + 0.7 * S;
         lp[o + 2] = p.z + p.hz * half;
         ld[o] = p.hx;
         ld[o + 1] = p.hz;
-        ld[o + 2] = vsp[i] * 2.5 + 2 * half; // the path of the last 2.5 s
+        ld[o + 2] = flow.vv[i] * 2.5 + 2 * half; // the path of the last 2.5 s
         nl++;
       }
     }
-    for (let t = 0; t < 2; t++) {
+    for (let t = 0; t < 3; t++) {
       const m = meshes[t];
       m.count = counts[t];
       m.visible = counts[t] > 0;
@@ -733,16 +623,25 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
       }
       lmat.uniforms.uView.value.set(width, height);
     }
-    visible = counts[0] + counts[1];
+    visible = counts[0] + counts[1] + counts[2];
   }
 
+  let laneLen = 0;
+  for (let d = 0; d < nD; d++) laneLen += g.len[d];
   return {
     object: group,
     update,
+    flow,
+    net,
     stats: {
-      lanes: lanes.length,
+      // the graph: junction nodes, edges (street pieces between them),
+      // directed lanes (one per allowed direction)
+      nodes: g.nodes,
+      edges: g.edges,
+      lanes: nD,
+      oneWay: g.rev.filter((r) => r < 0).length,
       vehicles: N,
-      laneKm: +(lanes.reduce((s, l) => s + l.total, 0) / S / 1000).toFixed(1),
+      laneKm: +(laneLen / S / 1000).toFixed(1),
       axisLanes: [1, 2, 3].map((a) => laneAxis.filter((v) => v === a).length),
     },
     // tests: mean speed factor of the active vehicles on the axes and off them
@@ -752,7 +651,7 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
       let so = 0;
       let no = 0;
       for (let i = 0; i < active; i++) {
-        if (laneAxis[vl[i]]) {
+        if (laneAxis[flow.vd[i]]) {
           sa += speedK(i);
           na++;
         } else {

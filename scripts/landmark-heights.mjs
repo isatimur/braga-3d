@@ -25,5 +25,14 @@ export const HEIGHTS = {
   'estadio-1-maio': { m: 30, source: 'estimate', note: 'The slender granite tower over the north entrance is the tallest element; OSM has no tower or stand objects, so the height sits on the stadium outline. Open stands about 10 m. No published height; from Commons photos.' },
   'parque-ponte': { m: 10, source: 'estimate', on: 'w121590142', note: 'Tallest built element is the Capela de São João da Ponte (1616), single nave with bell gable; the park itself is flat. No published height.' },
   'forum-braga': { m: 14.5, source: 'wikipedia', note: 'Pavilion clear height 11.5-14.5 m across the hall (pt.wikipedia Forum Braga; forumbraga.com/Espacos/Pavilhao).' },
+  // --- second batch, 2026-09-29 (placeholder values; refined below after research) ---
+  'uminho-gualtar': { m: 19.2, source: 'osm building:levels×3.2', on: 'w448580564', note: 'placeholder' },
+  'dmaria-ii': { m: 14, source: 'estimate', on: 'w473728998', note: 'placeholder' },
+  'sao-frutuoso': { m: 9, source: 'estimate', note: 'placeholder' },
+  'diogo-sousa': { m: 10, source: 'estimate', on: 'w108351556', note: 'placeholder' },
+  coimbras: { m: 17, source: 'estimate', note: 'placeholder' },
+  congregados: { m: 30, source: 'estimate', note: 'placeholder' },
+  'nogueira-silva': { m: 14, source: 'estimate', note: 'placeholder' },
+  'sao-marcos': { m: 22, source: 'estimate', note: 'placeholder' },
   'avenida-central': { m: 8, source: 'estimate', on: 'w108153350', note: 'Tallest element on the avenue is the 1868 iron bandstand (Coreto da Avenida); garden itself is flat.' },
 };

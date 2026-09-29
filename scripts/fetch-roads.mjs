@@ -1,143 +1,266 @@
 // Fetch the Braga street network from OpenStreetMap (Overpass API) and write data/roads.json.
-// Node 22, no dependencies. Run: node scripts/fetch-roads.mjs
-import { writeFileSync, mkdirSync } from 'node:fs';
+// Node 22, no dependencies.
+//   node scripts/fetch-roads.mjs            (use the cached raw reply if there is one)
+//   node scripts/fetch-roads.mjs --fetch    (always ask Overpass again)
+//
+// data/roads.json, v2:
+//   { v: 2, origin, bbox, nodes: n, features: [{ kind, pts, t?, j? }] }
+//   kind  primary | secondary | minor | foot | rail | water (the draw buckets)
+//   pts   [[lat, lon], ...] simplified to 5 m (roundabouts and links 1.5 m)
+//   t     the tags that matter for drawing and traffic (only those present):
+//           hw  highway class (motorway, trunk_link, residential ...)
+//           name, ref
+//           ow  1 = one way along pts, -1 = one way against pts (OSM oneway,
+//               implied for motorway, motorway_link and roundabouts)
+//           ln, lf, lb  lanes, lanes:forward, lanes:backward (integers)
+//           br  bridge value (yes, viaduct ...), bs bridge:structure
+//           tu  tunnel value (yes, building_passage, culvert ...)
+//           ly  layer (integer), ms maxspeed (km/h), sf surface, jn junction
+//   j     junctions: flat [pointIndex, nodeId, ...]. nodeId is a dense index
+//         shared by every feature through the same OSM node: the traffic
+//         graph joins streets there. Every feature end is listed too.
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { gzipSync, gunzipSync } from 'node:zlib';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { BBOX, ORIGIN, overpass, simplify, r5 } from './geo-lib.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'data', 'roads.json');
+const RAW = join(ROOT, 'data', '.cache', 'roads-raw.json.gz');
 
-// West edge is -8.490 (not -8.455) so the bbox includes Mosteiro de Tibães (lon -8.4788).
-const BBOX = { s: 41.52, w: -8.49, n: 41.575, e: -8.36 };
-const ORIGIN = { lat: 41.5503, lon: -8.42 };
-const TOLERANCE_M = 5;
-
-const MIRRORS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
-];
-
+const ROADS = 'motorway|trunk|primary|secondary|tertiary|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|unclassified|residential|living_street|pedestrian';
+const FOOT = 'footway|path|cycleway|steps|service|track|bridleway';
 const b = `${BBOX.s},${BBOX.w},${BBOX.n},${BBOX.e}`;
-const QUERY = `[out:json][timeout:180];
+const QUERY = `[out:json][timeout:240];
 (
-  way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|pedestrian|living_street)$"](${b});
+  way["highway"~"^(${ROADS})$"](${b});
+  way["highway"~"^(${FOOT})$"]["bridge"]["bridge"!="no"](${b});
   way["waterway"~"^(river|stream)$"](${b});
   way["railway"="rail"](${b});
 );
-out geom;`;
+out body geom;`;
 
+// draw bucket per highway class
 const KIND = {
   motorway: 'primary', trunk: 'primary', primary: 'primary',
-  secondary: 'secondary', tertiary: 'secondary',
+  motorway_link: 'primary', trunk_link: 'primary', primary_link: 'primary',
+  secondary: 'secondary', tertiary: 'secondary', secondary_link: 'secondary', tertiary_link: 'secondary',
+  unclassified: 'minor', residential: 'minor', living_street: 'minor', pedestrian: 'minor',
 };
+const kindOf = (t) => (t.waterway ? 'water' : t.railway ? 'rail' : KIND[t.highway] || (t.highway ? 'foot' : null));
 
-const wait = ms => new Promise(res => setTimeout(res, ms));
-
-async function fetchOverpass() {
-  let lastErr;
-  for (let round = 0; round < 3; round++) {
-    for (const url of MIRRORS) {
-      try {
-        console.log(`Overpass: ${url} (round ${round + 1})`);
-        const r = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'braga-3d-data/1.0' },
-          body: 'data=' + encodeURIComponent(QUERY),
-        });
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const j = await r.json();
-        if (!Array.isArray(j.elements) || j.elements.length === 0) throw new Error('empty response');
-        return j.elements;
-      } catch (e) {
-        lastErr = e;
-        console.warn(`  failed: ${e.message}`);
-        await wait(5000 * (round + 1));
-      }
-    }
+const int = (v) => {
+  const m = String(v ?? '').match(/^-?\d+/);
+  return m ? parseInt(m[0], 10) : null;
+};
+function maxspeed(v) {
+  if (v == null) return null;
+  const s = String(v);
+  if (/^PT:urban$/i.test(s)) return 50;
+  if (/^PT:rural$/i.test(s)) return 90;
+  if (/^PT:motorway$/i.test(s)) return 120;
+  if (/^PT:trunk$/i.test(s)) return 100;
+  const n = parseFloat(s);
+  if (!(n > 0)) return null;
+  return Math.round(/mph/.test(s) ? n * 1.609 : n);
+}
+function oneway(t) {
+  const o = String(t.oneway ?? '').toLowerCase();
+  if (o === 'yes' || o === 'true' || o === '1') return 1;
+  if (o === '-1' || o === 'reverse') return -1;
+  if (o === 'no' || o === 'false' || o === '0') return 0;
+  if (o === 'reversible' || o === 'alternating') return 0;
+  if (t.highway === 'motorway' || t.highway === 'motorway_link') return 1;
+  if (t.junction === 'roundabout' || t.junction === 'circular') return 1;
+  return 0;
+}
+function tagsOf(t) {
+  const o = {};
+  if (t.highway) o.hw = t.highway;
+  if (t.railway) o.rw = t.railway;
+  if (t.waterway) o.ww = t.waterway;
+  if (t.name) o.name = t.name;
+  if (t.ref) o.ref = t.ref;
+  if (t.highway) {
+    const ow = oneway(t);
+    if (ow) o.ow = ow;
+    const ln = int(t.lanes);
+    if (ln > 0 && ln < 10) o.ln = ln;
+    const lf = int(t['lanes:forward']);
+    if (lf > 0 && lf < 8) o.lf = lf;
+    const lb = int(t['lanes:backward']);
+    if (lb > 0 && lb < 8) o.lb = lb;
+    const ms = maxspeed(t.maxspeed);
+    if (ms) o.ms = ms;
+    if (t.surface) o.sf = t.surface;
+    if (t.junction) o.jn = t.junction;
+    if (t.access === 'no' || t.motor_vehicle === 'no' || t.motorcar === 'no') o.nocar = 1;
   }
-  throw new Error(`All Overpass mirrors failed: ${lastErr?.message}`);
+  if (t.bridge && t.bridge !== 'no') o.br = t.bridge;
+  if (t['bridge:structure']) o.bs = t['bridge:structure'];
+  if (t['bridge:name']) o.bn = t['bridge:name'];
+  if (t.tunnel && t.tunnel !== 'no') o.tu = t.tunnel;
+  if (t['tunnel:name']) o.tn = t['tunnel:name'];
+  const ly = int(t.layer);
+  if (ly) o.ly = ly;
+  return o;
 }
 
-// Local equirectangular projection in metres around ORIGIN.
-const M_LAT = 111320;
-const M_LON = 111320 * Math.cos((ORIGIN.lat * Math.PI) / 180);
-const toXY = ([lat, lon]) => [(lon - ORIGIN.lon) * M_LON, (lat - ORIGIN.lat) * M_LAT];
-
-function segDist(p, a, b) {
-  const dx = b[0] - a[0], dy = b[1] - a[1];
-  const len2 = dx * dx + dy * dy;
-  let t = len2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / len2 : 0;
-  t = Math.max(0, Math.min(1, t));
-  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-}
-
-// Iterative Douglas-Peucker on projected points; returns kept indices.
-function simplify(pts, tol) {
-  if (pts.length <= 2) return pts.map((_, i) => i);
-  const xy = pts.map(toXY);
-  const keep = new Uint8Array(pts.length);
-  keep[0] = keep[pts.length - 1] = 1;
-  const stack = [[0, pts.length - 1]];
-  while (stack.length) {
-    const [i, j] = stack.pop();
-    let max = 0, idx = -1;
-    for (let k = i + 1; k < j; k++) {
-      const d = segDist(xy[k], xy[i], xy[j]);
-      if (d > max) { max = d; idx = k; }
-    }
-    if (max > tol && idx > 0) { keep[idx] = 1; stack.push([i, idx], [idx, j]); }
+async function load() {
+  if (!process.argv.includes('--fetch') && existsSync(RAW)) {
+    console.log(`using cached ${RAW}`);
+    return JSON.parse(gunzipSync(readFileSync(RAW)).toString('utf8'));
   }
-  const out = [];
-  keep.forEach((v, i) => v && out.push(i));
-  return out;
-}
-
-const r5 = v => Math.round(v * 1e5) / 1e5;
-
-function kindOf(tags) {
-  if (tags.waterway) return 'water';
-  if (tags.railway) return 'rail';
-  return KIND[tags.highway] || 'minor';
+  const els = await overpass(QUERY, { label: 'roads', rounds: 4 });
+  mkdirSync(dirname(RAW), { recursive: true });
+  writeFileSync(RAW, gzipSync(JSON.stringify(els)));
+  return els;
 }
 
 // Overpass returns whole ways, which can run km past the bbox. Split each way into
 // runs of in-bbox points; keep one outside neighbour on each side so lines reach the edge.
 const inBox = ([lat, lon]) => lat >= BBOX.s && lat <= BBOX.n && lon >= BBOX.w && lon <= BBOX.e;
-function clip(pts) {
+function clipRuns(pts) {
   const runs = [];
   let cur = null;
   for (let i = 0; i < pts.length; i++) {
     if (inBox(pts[i])) {
-      if (!cur) { cur = i > 0 ? [pts[i - 1]] : []; }
-      cur.push(pts[i]);
+      if (!cur) cur = i > 0 ? [i - 1] : [];
+      cur.push(i);
     } else if (cur) {
-      cur.push(pts[i]);
+      cur.push(i);
       runs.push(cur);
       cur = null;
     }
   }
   if (cur) runs.push(cur);
-  return runs.filter(r => r.length >= 2);
+  return runs.filter((r) => r.length >= 2);
 }
 
-const elements = await fetchOverpass();
+const elements = await load();
+const ways = elements.filter((e) => e.type === 'way' && e.geometry?.length >= 2 && e.nodes?.length === e.geometry.length && kindOf(e.tags || {}));
+
+// how many street ways use each OSM node: 2+ is a junction
+const use = new Map();
+for (const w of ways) {
+  if (!w.tags.highway) continue;
+  const seen = new Set();
+  for (const id of w.nodes) {
+    if (seen.has(id)) continue; // a closed way touches its first node twice
+    seen.add(id);
+    use.set(id, (use.get(id) || 0) + 1);
+  }
+}
+const dense = new Map();
+const nodeId = (osm) => {
+  let v = dense.get(osm);
+  if (v === undefined) dense.set(osm, (v = dense.size));
+  return v;
+};
+
 const features = [];
 const counts = {};
-for (const el of elements) {
-  if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) continue;
-  const kind = kindOf(el.tags || {});
-  for (const raw of clip(el.geometry.map(g => [g.lat, g.lon]))) {
-    const pts = simplify(raw, TOLERANCE_M).map(i => [r5(raw[i][0]), r5(raw[i][1])]);
-    const dedup = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1]);
-    if (dedup.length < 2) continue;
+const structures = { bridges: [], tunnels: [] };
+for (const w of ways) {
+  const tags = w.tags;
+  const kind = kindOf(tags);
+  const t = tagsOf(tags);
+  const pts = w.geometry.map((g) => [g.lat, g.lon]);
+  const fine = tags.junction === 'roundabout' || tags.junction === 'circular' || /_link$/.test(tags.highway || '') || t.br || t.tu;
+  const tol = fine ? 1.5 : 5;
+  const isStreet = !!tags.highway;
+  for (const run of clipRuns(pts)) {
+    // simplify piecewise between the points that must stay: the run's ends
+    // and every junction node, so shared nodes survive in both ways
+    const keep = [0];
+    for (let k = 1; k < run.length - 1; k++) if (isStreet && (use.get(w.nodes[run[k]]) || 0) > 1) keep.push(k);
+    keep.push(run.length - 1);
+    const outPts = [];
+    const outIds = [];
+    for (let s = 0; s < keep.length - 1; s++) {
+      const a = keep[s];
+      const bb = keep[s + 1];
+      const piece = [];
+      for (let k = a; k <= bb; k++) piece.push(k);
+      const sub = simplify(piece.map((k) => pts[run[k]]), tol);
+      // map simplified points back to their run indices (simplify keeps order)
+      let q = 0;
+      const idx = [];
+      for (const k of piece) {
+        if (q < sub.length && pts[run[k]] === sub[q]) {
+          idx.push(k);
+          q++;
+        }
+      }
+      for (let m = s === 0 ? 0 : 1; m < idx.length; m++) {
+        outPts.push(pts[run[idx[m]]]);
+        outIds.push(w.nodes[run[idx[m]]]);
+      }
+    }
+    const P = [];
+    const J = [];
+    for (let k = 0; k < outPts.length; k++) {
+      const p = [r5(outPts[k][0]), r5(outPts[k][1])];
+      const osm = outIds[k];
+      const end = k === 0 || k === outPts.length - 1;
+      const junction = isStreet && (end || (use.get(osm) || 0) > 1);
+      if (P.length && P.at(-1)[0] === p[0] && P.at(-1)[1] === p[1]) {
+        // rounded onto the previous point: the junction id moves there
+        if (junction) {
+          if (J.length && J.at(-2) === P.length - 1) J[J.length - 1] = nodeId(osm);
+          else J.push(P.length - 1, nodeId(osm));
+        }
+        continue;
+      }
+      if (junction) J.push(P.length, nodeId(osm));
+      P.push(p);
+    }
+    if (P.length < 2) continue;
+    // a closed way (roundabout) ends where it starts: same node id both ends
+    const f = { kind, pts: P };
+    if (Object.keys(t).length) f.t = t;
+    if (J.length) f.j = J;
+    features.push(f);
     counts[kind] = (counts[kind] || 0) + 1;
-    features.push({ kind, pts: dedup });
+    if (t.br || (t.ly > 0 && !t.tu)) structures.bridges.push(f);
+    if (t.tu || t.ly < 0) structures.tunnels.push(f);
   }
 }
 if (features.length === 0) throw new Error('No features after conversion');
 
+// every street piece must know the nodes at both its ends
+let loose = 0;
+for (const f of features) {
+  if (!f.t?.hw) continue;
+  const j = f.j || [];
+  const has = (i) => j.some((v, k) => k % 2 === 0 && v === i);
+  if (!has(0) || !has(f.pts.length - 1)) loose++;
+}
+console.log(`street pieces without both end nodes: ${loose}`);
+if (loose) throw new Error('junction ids lost');
+
+// the named bridges of OSM (man_made=bridge outlines), for the report
+const BR_RAW = join(ROOT, 'data', '.cache', 'bridges-raw.json.gz');
+let named = [];
+try {
+  if (!process.argv.includes('--fetch') && existsSync(BR_RAW)) named = JSON.parse(gunzipSync(readFileSync(BR_RAW)).toString('utf8'));
+  else {
+    named = await overpass(`[out:json][timeout:90];(way["man_made"="bridge"](${b});relation["man_made"="bridge"](${b}););out tags center;`, { label: 'bridges', rounds: 2, allowEmpty: true });
+    writeFileSync(BR_RAW, gzipSync(JSON.stringify(named)));
+  }
+} catch (e) {
+  console.warn(`man_made=bridge query failed: ${e.message}`);
+}
+if (process.argv.includes('--list')) for (const e of named) if (e.tags?.name) console.log('  NAMED', e.tags.name, e.center?.lat, e.center?.lon, e.tags['bridge:structure'] || '', e.tags.material || '');
+
 mkdirSync(dirname(OUT), { recursive: true });
-const json = JSON.stringify({ origin: ORIGIN, bbox: BBOX, features });
+const json = JSON.stringify({ v: 2, source: '© OpenStreetMap contributors, ODbL 1.0', origin: ORIGIN, bbox: BBOX, nodes: dense.size, features });
 writeFileSync(OUT, json);
-console.log(`Wrote ${OUT}: ${features.length} features, ${(json.length / 1024 / 1024).toFixed(2)} MB`, counts);
+console.log(`Wrote ${OUT}: ${features.length} features, ${dense.size} junction nodes, ${(json.length / 1024 / 1024).toFixed(2)} MB`, counts);
+const label = (f) => `${f.kind}/${f.t.hw || f.t.rw || f.t.ww} ${f.t.name || f.t.bn || f.t.tn || ''} ${f.t.ref || ''} br=${f.t.br || ''} tu=${f.t.tu || ''} ly=${f.t.ly ?? ''}`.replace(/\s+/g, ' ');
+console.log(`bridges ${structures.bridges.length}, tunnels ${structures.tunnels.length}`);
+if (process.argv.includes('--list')) {
+  for (const f of structures.bridges) console.log('  B', label(f), f.pts[0]);
+  for (const f of structures.tunnels) console.log('  T', label(f), f.pts[0]);
+}

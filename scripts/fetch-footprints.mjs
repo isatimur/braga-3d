@@ -26,6 +26,11 @@ const OUT = join(ROOT, 'data', 'footprints.json');
 //  include   extra OSM keys always added as parts; exclude: keys never added.
 //  height    fallback / override {m, source, note, force}. `force` is used only
 //            where the OSM tag is clearly wrong for the real building.
+//  fetchR    Overpass candidate radius in metres (default 300); for large sites.
+//  exclude_outline  false = open site: buildings.json keeps ordinary buildings under
+//            the outline (default: false only for the squares, gardens and the avenue).
+//  as        {key: {tag, h, name}}: give an untagged part a tag, height and name.
+//  paths     true = add the footways inside the site as 'path' parts.
 // ---------------------------------------------------------------------------
 const CFG = {
   'bom-jesus': {
@@ -126,6 +131,49 @@ const CFG = {
     include: ['w591643569', 'w1373821120'],
     exclude: ['r19915700', 'w22660087'],
   },
+  // --- added 2026-09-29 (second batch) ---
+  'uminho-gualtar': {
+    // Main = the campus area (amenity=university). Parts: every building, pitch, garden and footpath
+    // inside it. The campus is ~815 x 763 m, so candidates are fetched within 650 m.
+    main: 'w165563981', name: /Campus de Gualtar/, site: { buffer: 0 }, fetchR: 650, paths: true,
+    cats: ['building', 'pitch', 'garden', 'square', 'water', 'monument'], include: ['n698815548'],
+    exclude_outline: false,
+  },
+  'dmaria-ii': {
+    // Main = the school site (amenity=school); OSM maps one school building inside it.
+    main: 'w21372352', name: /Dona Maria II/, site: { buffer: 0 }, paths: true,
+    cats: ['building', 'pitch', 'garden'], exclude_outline: false,
+  },
+  'sao-frutuoso': {
+    // Main = the Visigothic chapel. Site = the religious precinct w1329661274 with the church of
+    // São Jerónimo de Real (the former Franciscan church) and the Convento de São Francisco.
+    main: 'w159104082', name: /São Frutuoso/, site: { area: 'w1329661274', buffer: 0 },
+    cats: ['building', 'church', 'garden'], include: ['w1329661274', 'w131049722', 'w159104084'],
+  },
+  'diogo-sousa': {
+    // Main = the museum site (tourism=museum area): exhibition building, wings and gardens.
+    main: 'w104691209', name: /Diogo de Sousa/, site: { buffer: 0 },
+    cats: ['building', 'garden', 'monument'], exclude_outline: false,
+  },
+  coimbras: {
+    // Main = the chapel (Capela de Nossa Senhora da Conceição); the Casa dos Coimbras shares its Wikidata item.
+    main: 'w223138080', name: /Conceição/, site: { buffer: 0 }, cats: [], include: ['w146342996'],
+  },
+  congregados: {
+    // Main = the basilica; the convent / college is the UMinho area w121590125 beside it.
+    main: 'w121590117', name: /Congregados/, site: { buffer: 2 }, cats: ['building'], include: ['w121590125'],
+    as: { w121590125: { tag: 'building', h: 14, name: 'Convento dos Congregados' } },
+  },
+  'nogueira-silva': {
+    // OSM tags the whole plot (house + garden) as one building=yes way; the garden is a separate way inside it.
+    main: 'w219034582', name: /Nogueira da Silva/, site: { buffer: 0 }, cats: ['garden', 'building', 'water', 'monument'],
+  },
+  'sao-marcos': {
+    // Main = the church; parts: the hospital wings (r8340055, w146343003) and the former hospital
+    // block now the Vila Galé hotel (r17978905).
+    main: 'w363528976', name: /São Marcos/, site: { buffer: 2 }, cats: ['building'],
+    include: ['r8340055', 'w146343003', 'r17978905'],
+  },
 };
 
 // Verified or estimated heights, used when OSM has no height / levels tag (or force).
@@ -153,7 +201,7 @@ if (byType.n.length) q += `node(id:${byType.n.join(',')});`;
 if (byType.w.length) q += `way(id:${byType.w.join(',')});`;
 if (byType.r.length) q += `relation(id:${byType.r.join(',')});`;
 for (const l of landmarks) {
-  const R = CFG[l.id].site.radius ? CFG[l.id].site.radius + 50 : l.id === 'bom-jesus' ? 700 : l.id === 'avenida-central' ? 700 : 300;
+  const R = CFG[l.id].fetchR || (CFG[l.id].site.radius ? CFG[l.id].site.radius + 50 : l.id === 'bom-jesus' ? 700 : l.id === 'avenida-central' ? 700 : 300);
   const a = `around:${R},${l.lat},${l.lon}`;
   q += `wr(${a})["building"];way(${a})["highway"="steps"];way(${a})["highway"="footway"]["name"~"Escad"];`;
   q += `way(${a})["railway"="funicular"];wr(${a})["leisure"~"garden|pitch|park"];wr(${a})["natural"="water"];`;
@@ -422,7 +470,8 @@ for (const l of landmarks) {
     ...(hnote ? { height_note: hnote } : {}),
     ...(cfg.pitch ? { pitch_bearing_deg: minAreaRect(allPts(geomOf(els.get(cfg.pitch)))).bearing } : {}),
     osm_ids: osmIds,
-    exclude_outline: !['avenida-central', 'praca-republica', 'santa-barbara', 'parque-ponte'].includes(l.id),
+    // Open sites (a square, a garden, a campus) keep the ordinary buildings inside their outline.
+    exclude_outline: cfg.exclude_outline ?? !['avenida-central', 'praca-republica', 'santa-barbara', 'parque-ponte'].includes(l.id),
     main_offset_m: Math.round(dMain),
   };
   l.osm = { type: parseKey(cfg.main).type, id: parseKey(cfg.main).id, height_m: height, height_source: hsrc };

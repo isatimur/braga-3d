@@ -2248,5 +2248,61 @@
       "height_m": 14.5,
       "height_source": "wikipedia"
     }
+  },
+  {
+    "id": "uminho-gualtar",
+    "lat": 41.5612,
+    "lon": -8.3972,
+    "category": "education",
+    "model": "university"
+  },
+  {
+    "id": "dmaria-ii",
+    "lat": 41.54866,
+    "lon": -8.41778,
+    "category": "education",
+    "model": "school"
+  },
+  {
+    "id": "sao-frutuoso",
+    "lat": 41.56034,
+    "lon": -8.43884,
+    "category": "religious",
+    "model": "visigothic"
+  },
+  {
+    "id": "diogo-sousa",
+    "lat": 41.5462,
+    "lon": -8.4273,
+    "category": "museum",
+    "model": "museum-roman"
+  },
+  {
+    "id": "coimbras",
+    "lat": 41.54992,
+    "lon": -8.42474,
+    "category": "religious",
+    "model": "chapel-manueline"
+  },
+  {
+    "id": "congregados",
+    "lat": 41.55111,
+    "lon": -8.42135,
+    "category": "religious",
+    "model": "basilica-twin"
+  },
+  {
+    "id": "nogueira-silva",
+    "lat": 41.55191,
+    "lon": -8.42179,
+    "category": "museum",
+    "model": "house-museum"
+  },
+  {
+    "id": "sao-marcos",
+    "lat": 41.54889,
+    "lon": -8.42329,
+    "category": "religious",
+    "model": "hospital-church"
   }
 ]
