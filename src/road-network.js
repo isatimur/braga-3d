@@ -964,14 +964,30 @@ export function createFlow(net, { N = 600, rnd = Math.random, blocked = null } =
       let sx = vhx[i] + (hx - vhx[i]) * kk;
       let sz = vhz[i] + (hz - vhz[i]) * kk;
       const l2 = Math.hypot(sx, sz) || 1;
-      vhx[i] = sx / l2;
-      vhz[i] = sz / l2;
+      sx /= l2;
+      sz /= l2;
+      // never more than 60 degrees behind the lane (a hairpin, a U-turn at a
+      // dead end): the body must not face against the traffic
+      const dot = sx * hx + sz * hz;
+      if (dot < -0.95) {
+        sx = hx;
+        sz = hz;
+      } else if (dot < 0.5) {
+        const k = hx * sz - hz * sx >= 0 ? 0.8660254 : -0.8660254;
+        sx = hx * 0.5 - hz * k;
+        sz = hx * k + hz * 0.5;
+      }
+      vhx[i] = sx;
+      vhz[i] = sz;
     } else if (dt < 0) {
       vhx[i] = hx;
       vhz[i] = hz;
     }
     out.hx = vhx[i];
     out.hz = vhz[i];
+    // the lane's own direction here (for the checks)
+    out.sx = hx;
+    out.sz = hz;
     // the pitch on ramps and decks
     out.dy = (Y[b] - Y[a]) / L;
     return out;

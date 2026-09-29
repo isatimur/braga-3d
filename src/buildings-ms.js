@@ -27,8 +27,9 @@ const SCHEDULE_S = 0.25;
 const MAX_FETCH = 4;
 // far LOD: smaller footprints are left out. OSM tiles use 20 m²; the ML
 // footprints hold many more sheds and annexes, and below 60 m² a box beyond
-// 4 km is about a pixel: 60 keeps ~70 % of the ring and saves ~190k tris.
-const FAR_MIN_M2 = 60;
+// 4 km is about a pixel. 60 m² cost ~655k tris in the overview; 100 m²
+// costs ~561k and the overview looks the same.
+const FAR_MIN_M2 = 100;
 const CAST_U = 3000 * S; // shadows while the camera is within 3 km of the focus
 const DEBUG_ROOF =new THREE.Color(0x2f7dff);
 

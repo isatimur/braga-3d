@@ -9,6 +9,8 @@
 //     such a lane;
 //   - vehicles keep right: on two-way roads the offset is always right of
 //     the centre line (zero tolerance);
+//   - every body faces the way it drives: never more than 60 degrees off
+//     its lane (the smoothed heading in locate() is clamped);
 //   - no visible vehicle sits below the ground;
 //   - every bridge deck with something under it clears it (CLEAR_WATER over
 //     the water, CLEAR_WAY over the surface of a way, its ramp or deck
@@ -216,6 +218,9 @@ let twoWaySteps = 0;
 let respawns = 0;
 let stepsN = 0;
 let speedSum = 0;
+let headSteps = 0;
+let headBack = 0;
+let headWide = 0;
 const onClass = {};
 const dt = 1 / 30;
 for (let f = 0; f < secs * 30; f++) {
@@ -234,6 +239,11 @@ for (let f = 0; f < secs * 30; f++) {
       if ((w.ow === 1 && !fwd) || (w.ow === -1 && fwd)) against++;
     }
     if (!p.hidden && p.y < proj.heightAt(p.x, p.z) - 1.2 * S && !w.tunnel) under++;
+    // the body faces the way it drives: within 60 degrees of the lane
+    headSteps++;
+    const hd = p.hx * p.sx + p.hz * p.sz;
+    if (hd <= 0) headBack++;
+    if (hd < 0.5 - 1e-4) headWide++;
     if (isRound(w)) {
       if (!laneCw[d]) roundOk++;
       else roundWrong++;
@@ -253,6 +263,9 @@ console.log('vehicles by class at the end', onClass);
 console.log(`one-way compliance: ${pct(against, oneWaySteps)} % of ${oneWaySteps} vehicle-steps`);
 console.log(`roundabouts anticlockwise: ${pct(roundWrong, roundOk + roundWrong)} % of ${roundOk + roundWrong} vehicle-steps`);
 console.log(`keep right on two-way roads: ${pct(leftSide, twoWaySteps)} % of ${twoWaySteps} vehicle-steps`);
+console.log(`body heading with the lane: ${pct(headBack, headSteps)} % of ${headSteps} vehicle-steps (within 60 degrees: ${pct(headWide, headSteps)} %)`);
+if (headBack) err(`${headBack} vehicle-steps with the body facing against its lane`);
+if (headWide) err(`${headWide} vehicle-steps with the body more than 60 degrees off its lane`);
 if (against) err(`${against} vehicle-steps against a one-way way`);
 if (roundWrong) err(`roundabouts: ${roundWrong} clockwise samples`);
 if (under) err(`${under} vehicle-steps below the ground`);
