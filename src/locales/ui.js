@@ -3,7 +3,10 @@ export const messages = {
   // cinema and story modes (tour.js, story.js)
   'Режимы просмотра': ['Modos de visualização', 'Viewing modes'],
   'Кино': ['Cinema', 'Cinema'], 'История (режим)': ['História', 'Story'],
-  'Фильм о Браге: 16 мест с утра до ночи': ['Um filme sobre Braga: 16 lugares, da manhã à noite', 'A film of Braga: 16 places from morning to night'],
+  // static title in index.html; tour.js replaces it with the counted one
+  'Фильм о Браге с утра до ночи': ['Um filme sobre Braga, da manhã à noite', 'A film of Braga from morning to night'],
+  // {n}: the number of places with its word ("21 место", "21 lugares", "21 places")
+  'Фильм о Браге: {n} с утра до ночи': ['Um filme sobre Braga: {n}, da manhã à noite', 'A film of Braga: {n} from morning to night'],
   '2000 лет истории Браги': ['2000 anos de história de Braga', '2,000 years of Braga’s history'],
   'Управление фильмом': ['Controlos do filme', 'Film controls'], 'Ход фильма': ['Progresso do filme', 'Film progress'],
   'Пауза': ['Pausa', 'Pause'], 'Продолжить': ['Continuar', 'Resume'], 'Пауза (Space)': ['Pausa (espaço)', 'Pause (Space)'],
@@ -45,7 +48,7 @@ export const messages = {
   'Возводим здания': ['A construir os edifícios', 'Raising the buildings'], 'Сажаем леса': ['A plantar as matas', 'Planting the woods'], 'Готово': ['Pronto', 'Ready'], 'Первый кадр': ['A preparar a primeira imagem', 'Preparing the first frame'],
   'Не удалось запустить карту. Нужен браузер с поддержкой WebGL.': ['Não foi possível iniciar o mapa. Utilize um navegador com suporte para WebGL.', 'Could not start the map. A browser with WebGL support is required.'],
   'к маршруту': ['voltar ao percurso', 'back to route'], 'Ссылка скопирована:': ['Ligação copiada:', 'Link copied:'], 'Скопируйте ссылку:': ['Copie a ligação:', 'Copy this link:'],
-  'Храмы': ['Templos', 'Religious sites'], 'Город': ['Cidade', 'City'], 'Сады': ['Jardins', 'Gardens'], 'Музеи': ['Museus', 'Museums'],
+  'Храмы': ['Templos', 'Religious sites'], 'Город': ['Cidade', 'City'], 'Сады': ['Jardins', 'Gardens'], 'Музеи': ['Museus', 'Museums'], 'Образование': ['Educação', 'Education'],
   'Спорт': ['Desporto', 'Sport'], 'Археология': ['Arqueologia', 'Archaeology'], 'Памятники': ['Monumentos', 'Monuments'],
   'Дворцы': ['Palácios', 'Palaces'], 'Природа': ['Natureza', 'Nature'], 'Разное': ['Outros', 'Other'],
   'Фото': ['Fotografia', 'Photo'], 'Панорама': ['Panorama', 'Panorama'], 'Видео 360°': ['Vídeo 360°', '360° video'], 'Маршрут': ['Percurso', 'Route'],

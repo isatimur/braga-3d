@@ -24,6 +24,8 @@ const SHOT_CLEAR = 10 * S;
 // az: radians added to the bearing; elev: radians above the horizon;
 // k: distance multiplier on the fitted distance. primary: frame only the
 // first focus landmark (the others are too far away to share a close view).
+// frame: frame only the first n focus landmarks. The rest of the focus
+// list only keeps its map labels on during the chapter.
 const VIEWS = {
   bracara: { az: 0.2, elev: 0.5, k: 1.3, primary: true },
   gallaecia: { az: -0.5, elev: 0.5, k: 1.2 },
@@ -32,9 +34,9 @@ const VIEWS = {
   walls: { az: -0.25, elev: 0.5, k: 1.1 },
   baroque: { az: 0.2, elev: 0.3, k: 0.8, primary: true },
   avenue: { az: 0.15, elev: 0.45, k: 0.85 },
-  sameiro: { az: -0.2, elev: 0.28, k: 1.25 },
+  sameiro: { az: -0.2, elev: 0.28, k: 1.25, primary: true },
   stadium: { az: 0.25, elev: 0.42, k: 1.1 },
-  unesco: { az: -0.35, elev: 0.3, k: 0.9 },
+  unesco: { az: -0.35, elev: 0.3, k: 0.9, frame: 2 },
 };
 
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
@@ -135,7 +137,7 @@ export function createStory(ctx) {
     const all = (c.focus || []).map((id) => byId.get(id)).filter(Boolean);
     if (!all.length) return null;
     const v = VIEWS[c.id] || { az: 0, elev: 0.45, k: 1 };
-    const focus = v.primary ? all.slice(0, 1) : all;
+    const focus = all.slice(0, v.frame ?? (v.primary ? 1 : all.length));
     const box = new THREE.Box3();
     for (const it of focus) box.union(it.box);
     const size = box.getSize(new THREE.Vector3());

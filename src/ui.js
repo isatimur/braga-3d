@@ -16,6 +16,8 @@ const CATEGORY_RU = {
   park: t('Сады'),
   garden: t('Сады'),
   museum: t('Музеи'),
+  education: t('Образование'),
+  university: t('Образование'),
   sport: t('Спорт'),
   archaeology: t('Археология'),
   street: t('Улицы'),

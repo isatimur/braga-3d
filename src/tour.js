@@ -1,4 +1,4 @@
-// Cinema mode: an auto-guided film through all sixteen landmarks.
+// Cinema mode: an auto-guided film through every landmark in CINEMA_ORDER.
 //
 // One timeline of segments: a flight in from wherever the camera is, then
 // for each landmark a 12–18 s shot, joined by flights over the city. The
@@ -20,6 +20,7 @@ import * as THREE from 'three';
 import { S } from './geo.js';
 import { t } from './i18n.js';
 import { assetUrl } from './data.js';
+import { placesWord } from './ui.js';
 
 const CELL = 10; // skyline cell, world units (40 m)
 export const FLIGHT_CLEARANCE = 60 * S; // 60 m over terrain and roofs
@@ -125,14 +126,17 @@ export function flightCurve(from, to, sky, { clear = FLIGHT_CLEARANCE } = {}) {
 }
 
 // ------------------------------------------------------------ shots
-// Order: the cathedral first, the old town in the morning, the baroque
-// east side by day, the Roman west and the far monastery toward sunset,
-// the stadium, then Bom Jesus at dusk and Sameiro at night.
+// Order: the cathedral and Pópulo first, the old town in the morning, the
+// university, the baroque east side and the Roman west by day, down to
+// Parque da Ponte; Forum Braga, the theatre and the far monastery toward
+// sunset, the two stadiums, then Bom Jesus at dusk and Sameiro at night.
 export const CINEMA_ORDER = [
   { id: 'se-braga', shot: 'crane', dur: 16, time: 'morning' },
+  { id: 'populo', shot: 'dolly', dur: 12, time: 'morning' },
   { id: 'torre-menagem', shot: 'rise', dur: 13, time: 'morning' },
   { id: 'praca-republica', shot: 'orbit', dur: 14, time: 'morning' },
   { id: 'avenida-central', shot: 'dolly', dur: 14, time: 'morning' },
+  { id: 'ucp-braga', shot: 'crane', dur: 12, time: 'day' },
   { id: 'santa-barbara', shot: 'orbit', dur: 13, time: 'day' },
   { id: 'biscainhos', shot: 'crane', dur: 13, time: 'day' },
   { id: 'arco-porta-nova', shot: 'dolly', dur: 12, time: 'day' },
@@ -141,8 +145,14 @@ export const CINEMA_ORDER = [
   { id: 'palacio-raio', shot: 'orbit', dur: 13, time: 'day' },
   // below street level in a courtyard: only a steep view reaches it
   { id: 'fonte-idolo', shot: 'crane', dur: 12, time: 'day', minElev: 1.05 },
+  // a slow orbit over the lake and the São João chapel
+  { id: 'parque-ponte', shot: 'orbit', dur: 13, time: 'day' },
+  // along the timber façade
+  { id: 'forum-braga', shot: 'dolly', dur: 12, time: 'sunset' },
   { id: 'theatro-circo', shot: 'dolly', dur: 13, time: 'sunset' },
   { id: 'tibaes', shot: 'orbit', dur: 15, time: 'sunset' },
+  // the old stadium (1950), then the new one (2003)
+  { id: 'estadio-1-maio', shot: 'rise', dur: 12, time: 'sunset' },
   { id: 'estadio-braga', shot: 'rise', dur: 15, time: 'sunset' },
   { id: 'bom-jesus', shot: 'dolly', dur: 18, time: 'sunset' },
   // night falls during the last shot, 6 s in
@@ -275,6 +285,13 @@ export function createCinema(ctx) {
   const tmp = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
   const byId = new Map(ctx.items.map((it) => [it.data.id, it]));
   const order = CINEMA_ORDER.filter((o) => byId.has(o.id));
+  const dropped = CINEMA_ORDER.filter((o) => !byId.has(o.id)).map((o) => o.id);
+  if (dropped.length) console.warn('[braga] cinema: no landmark for', dropped.join(', '));
+  const missing = ctx.items.filter((it) => !CINEMA_ORDER.some((o) => o.id === it.data.id)).map((it) => it.data.id);
+  if (missing.length) console.warn('[braga] cinema: not in CINEMA_ORDER:', missing.join(', '));
+  // the button title counts the places the film really shows
+  const toggle = document.getElementById('cinema-toggle');
+  if (toggle) toggle.title = t('Фильм о Браге: {n} с утра до ночи').replace('{n}', `${order.length} ${placesWord(order.length)}`);
 
   function viewBand() {
     const W = window.innerWidth;
