@@ -1,0 +1,18 @@
+{
+  "id": "braga",
+  "name": { "pt": "Braga", "en": "Braga", "ru": "Брага" },
+  "domain": "https://braga-3d.com",
+  "origin": { "lat": 41.5503, "lon": -8.42 },
+  "core_bbox": { "s": 41.52, "w": -8.49, "n": 41.575, "e": -8.36 },
+  "wide_bbox": { "s": 41.47, "w": -8.55, "n": 41.63, "e": -8.30 },
+  "terrain": { "dataset": "eudem25m", "spacing_m": 110, "datum_note": "y=0 at the centre DEM height" },
+  "timezone": "Europe/Lisbon",
+  "locale_default": "ru",
+  "season_default": "auto",
+  "transit": { "gtfs_url": "https://www.tub.pt/developer/gtfs/feed/tub.zip", "operator": "TUB", "gtfs_rt": null },
+  "aircraft": { "lat": 41.55, "lon": -8.42, "radius_nm": 40 },
+  "weather": { "lat": 41.5503, "lon": -8.42 },
+  "start_view": { "landmark": "se-braga", "narrow_landmark": "se-braga" },
+  "landmarks_file": "data/landmarks.json",
+  "notes": "Reference city. Every constant here used to be hard-coded; the refactor makes src/ and scripts/ read this file."
+}
