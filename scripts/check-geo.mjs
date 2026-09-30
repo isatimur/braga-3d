@@ -4,24 +4,28 @@
 import { readFileSync, statSync } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { CITY, CORE_BBOX, dataPath } from './geo-lib.mjs';
+import { loadLandmarks } from './city-lib.mjs';
 
 // --city <id> picks the city (default braga).
 const P = f => dataPath(f);
 const errors = [], warnings = [];
 const err = m => errors.push(m), warn = m => warnings.push(m);
-const load = f => { try { return JSON.parse(readFileSync(f === 'landmarks.json' ? CITY.landmarksPath : P(f), 'utf8')); } catch (e) { err(`${f}: ${e.message}`); return null; } };
+// landmarks.json, or (before the landmark agents merge it) the candidates that have a new/<id>.osm.json.
+const load = f => { try { return f === 'landmarks.json' ? loadLandmarks() : JSON.parse(readFileSync(P(f), 'utf8')); } catch (e) { err(`${f}: ${e.message}`); return null; } };
 const isLL = p => Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180;
 const M_LAT = 111320, M_LON = 111320 * Math.cos((CITY.origin.lat * Math.PI) / 180);
 const distM = (a, b) => Math.hypot((a[0] - b[0]) * M_LAT, (a[1] - b[1]) * M_LON);
 
 // A city whose pipeline has not run yet: say so and stop, no errors.
 if (CITY.id !== 'braga') {
-  const need = ['buildings.json', 'terrain.json', 'footprints.json'].map(P).concat(CITY.landmarksPath);
+  const need = ['buildings.json', 'terrain.json', 'footprints.json'].map(P);
   const missing = need.filter(f => !existsSync(f));
+  if (!existsSync(CITY.landmarksPath) && !loadLandmarks().length) missing.push(CITY.landmarksPath);
   if (missing.length) {
     console.log(`no data yet for ${CITY.id}; missing: ${missing.map(f => f.replace(`${dataPath()}/`, '')).join(', ')}`);
     process.exit(0);
   }
+  if (!existsSync(CITY.landmarksPath)) console.log(`${CITY.id}: no landmarks.json yet; checking the candidates with a ${CITY.data_dir}/new/<id>.osm.json`);
 }
 
 const landmarks = load('landmarks.json') || [];
@@ -108,8 +112,13 @@ if (ter) {
   // Bom Jesus: the basilica terrace is ~410 m, not the ~560 m of the Monte Espinho summit.
   // EU-DEM gives 410 m and SRTM 414 m at the basilica; both give ~300 m at the stair
   // foot, a ~112 m rise that matches the published 116 m of the staircase.
-  // Expected ranges exist for Braga only; other cities: probe heights must be finite.
-  const RANGES_BY_CITY = { braga: { centre: [150, 250], 'bom-jesus': [350, 450], sameiro: [520, 600] } };
+  // Guimarães: the Toural / Oliveira centre is about 190 m, the castle hill about 230 m; the
+  // penha probe sits on the slope below the 613 m summit (pt.wikipedia Santuário da Penha), EU-DEM 555 m.
+  // Other cities: probe heights must be finite.
+  const RANGES_BY_CITY = {
+    braga: { centre: [150, 250], 'bom-jesus': [350, 450], sameiro: [520, 600] },
+    guimaraes: { centre: [160, 220], castelo: [200, 260], penha: [500, 620] },
+  };
   const ranges = RANGES_BY_CITY[CITY.id] || {};
   const got = {};
   for (const [k, [la, lo]] of Object.entries(CITY.probes)) {

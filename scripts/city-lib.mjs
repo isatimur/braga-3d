@@ -125,3 +125,18 @@ export const landmarksPath = () => CITY.landmarksPath;
 
 // The path a message shows: "data/x.json" for Braga, "data/guimaraes/x.json" for others.
 export const dataRel = (...parts) => join(CITY.data_dir, ...parts);
+
+// The landmark list a script works on. landmarks.json when it exists (Braga); otherwise
+// the city's landmark_candidates, each completed from data/<id>/new/<id>.osm.json
+// ({osm, lat, lon, model}) when that file exists. So the geodata scripts can run before
+// the landmark agents have merged landmarks.json. `withPos` keeps only entries with a position.
+export function loadLandmarks({ withPos = true } = {}) {
+  if (existsSync(CITY.landmarksPath)) return JSON.parse(readFileSync(CITY.landmarksPath, 'utf8'));
+  const list = (CITY.landmark_candidates || []).map((c) => {
+    const f = join(CITY.dataDir, 'new', `${c.id}.osm.json`);
+    if (!existsSync(f)) return { ...c };
+    const o = JSON.parse(readFileSync(f, 'utf8'));
+    return { ...c, lat: o.lat, lon: o.lon, model: o.model, osm: o.osm };
+  });
+  return withPos ? list.filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lon)) : list;
+}

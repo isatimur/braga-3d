@@ -10,7 +10,7 @@
 //  - facade_faces agrees with facade_azimuth_deg (8-point compass), confidence is high|medium|low.
 // Prints a table and exits 1 on any error.
 import { readFileSync } from 'node:fs';
-import { CITY, dataPath } from './city-lib.mjs';
+import { CITY, dataPath, loadLandmarks } from './city-lib.mjs';
 
 // --city <id> picks the city (default braga).
 const readJson = p => JSON.parse(readFileSync(p, 'utf8'));
@@ -20,7 +20,8 @@ const isStr = v => typeof v === 'string' && v.trim().length > 0;
 const isUrl = v => isStr(v) && /^https?:\/\/\S+$/.test(v);
 
 const dims = readJson(dataPath('dimensions.json'));
-const lm = readJson(CITY.landmarksPath);
+// landmarks.json, or (before the landmark agents merge it) the candidates that have a new/<id>.osm.json.
+const lm = loadLandmarks();
 const lmList = Array.isArray(lm) ? lm : lm.landmarks || Object.values(lm);
 const wanted = lmList.map(l => l.id);
 const ids = Object.keys(dims).filter(k => !k.startsWith('_'));

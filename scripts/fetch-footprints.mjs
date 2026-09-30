@@ -16,6 +16,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { overpass, wait, toXY, toLL, r6, ringArea, centroid, minAreaRect, tagHeight, simplifyRing, CITY, dataPath, cachePath, dataRel, USER_AGENT } from './geo-lib.mjs';
+import { loadLandmarks } from './city-lib.mjs';
 
 // --city <id> picks the city (default braga). The landmark table below is per city.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -45,6 +46,15 @@ const OUT = dataPath('footprints.json');
 //            (data/.cache/ms-raw/bbox.json, see fetch-ms-buildings.mjs) whose centre is
 //            inside the site and whose area is >= minArea m², for blocks OSM does not map.
 //  model     proposed model type, written to data/new/<id>.osm.json by --only runs.
+//  at        [lat, lon] of the landmark for a city whose landmarks.json does not exist yet
+//            (the list then comes from cities/<id>.json landmark_candidates).
+//  area      true = the main object is a closed way that OSM tags as a barrier (a castle wall
+//            ring): read it as an area anyway.
+//  hull      true = the outline is the convex hull of every ring of the main object (a
+//            multipolygon of scattered tanks), not its largest ring.
+//  gateTag   part tag of the synthesized rectangle in gateWall mode (default 'gate').
+//  aerialway OSM way key of a cable car: the way becomes a 'cable' line part and its
+//            aerialway=pylon nodes become 'pylon' point parts (with 'cable' in cats).
 // ---------------------------------------------------------------------------
 // Braga's landmark table (the ids are Braga landmarks). Other cities: add an entry to
 // OVERRIDES_BY_CITY below; with none, this script has no landmark configuration to apply.
@@ -202,7 +212,134 @@ const BRAGA_CFG = {
     include: ['r8340055', 'w146343003', 'r17978905'], model: 'hospital-church',
   },
 };
-const OVERRIDES_BY_CITY = { braga: BRAGA_CFG };
+// Guimarães (2026-09-30). Objects picked from Overpass name searches in the wide bbox and a
+// per-site scan of buildings, historic, leisure, aerialway and city_wall objects; each main
+// object carries the expected name and (where tagged) the Wikidata item of the landmark.
+const GUIMARAES_CFG = {
+  castelo: {
+    // Main = the castle wall ring (barrier=wall, historic=castle; read as an area). Parts: the
+    // keep w346365691 (height=27 in OSM) and the seven wall towers w807304448-454 (layer=1).
+    main: 'w346365692', name: /Castelo de Guimarães/, at: [41.44791, -8.29045], area: true, site: { buffer: 5 },
+    cats: ['tower', 'building'], exclude: ['w104203858', 'w32501063'], model: 'castle',
+    // The ring itself is the crenellated curtain wall: a closed 'wall' part (its height from HEIGHTS main_m).
+    as: { w346365692: { tag: 'wall', h: 12, name: 'Muralha do Castelo' } },
+  },
+  'paco-duques': {
+    // Main = the palace multipolygon; the inner ring is the central courtyard (kept as a hole).
+    main: 'r2433235', name: /Paço dos Duques/, at: [41.44646, -8.29101], site: { buffer: 0 }, cats: [], holes: true,
+    exclude: ['w32501063'], model: 'ducal-palace',
+  },
+  'sao-miguel-castelo': {
+    main: 'w104203858', name: /São Miguel do Castelo/, at: [41.44726, -8.29099], site: { buffer: 0 }, cats: [],
+    exclude: ['w32501063'], model: 'chapel-romanesque',
+  },
+  oliveira: {
+    // Main = the collegiate church. Parts: the Padrão do Salado (building=yes + historic=monument in
+    // OSM, re-tagged 'monument') and the Largo da Oliveira. The Museu de Alberto Sampaio is its own landmark.
+    main: 'w167517737', name: /Oliveira/, at: [41.44293, -8.29246], site: { buffer: 3 },
+    cats: ['monument', 'square', 'water'], include: ['w820481033', 'w167517738'],
+    exclude: ['w255483376', 'w255486350', 'n10147700362'],
+    as: { w820481033: { tag: 'monument', h: 9, name: 'Padrão do Salado' } }, model: 'church',
+  },
+  'sao-tiago': {
+    // Main = the square (place=square, pedestrian area). Parts: the 3-4 storey houses that front it
+    // (addr:street "Praça de São Tiago" in OSM) so the model has the real enclosure.
+    main: 'w32501267', name: /São Tiago/, at: [41.44337, -8.29318], site: { buffer: 0 }, cats: ['water'],
+    include: ['w473881520', 'w473881521', 'w473881522', 'w473881523', 'w473881524', 'w473881525', 'w473881526', 'w473881527',
+      'w473881528', 'w473881529', 'w473881530', 'w473881531', 'w473881532', 'w1427926768'],
+    exclude: ['w167517738'], exclude_outline: false, model: 'plaza',
+  },
+  toural: {
+    // Main = the square way with the Wikidata item (w1463370179 is the pedestrian surface of the same
+    // square, left out). Parts: the Chafariz do Toural and the Igreja de São Pedro on its north-west side.
+    main: 'w591247671', name: /Toural/, at: [41.44173, -8.29561], site: { buffer: 2 }, cats: ['water'],
+    include: ['w591247672', 'w254317701'], exclude: ['w1463370179', 'w134126321', 'w255483374'],
+    as: { w591247672: { tag: 'water', h: 6, name: 'Chafariz do Toural' } }, exclude_outline: false, model: 'plaza',
+  },
+  penha: {
+    // Main = the sanctuary church. Site = the Penha park w565428859 (boulders, chapels, hotel, gardens,
+    // footpaths). The Teleférico de Guimarães is a 'cable' line with its pylons and both stations.
+    main: 'w342339768', name: /Penha/, at: [41.43180, -8.26985], site: { area: 'w565428859', buffer: 10 }, fetchR: 450, paths: true,
+    cats: ['building', 'church', 'garden', 'water', 'monument', 'cable'], aerialway: 'w104203846',
+    include: ['w104203846', 'w104203786', 'w104203806', 'w565428859'],
+    as: { w565428859: { tag: 'garden', h: 0, name: 'Parque da Penha' } }, model: 'cable-car',
+  },
+  'santos-passos': {
+    // Main = the church; the Largo de São Gualter garden lies on its axis in front of the stairs.
+    main: 'w166138931', name: /Santos Passos/, at: [41.44086, -8.28970], site: { buffer: 2 }, cats: ['garden'],
+    include: ['w451046703'], model: 'basilica-twin',
+  },
+  'sao-francisco': {
+    // Church + convent multipolygon; the two inner rings are the cloister and a light well (holes).
+    main: 'r2836771', name: /São Francisco/, at: [41.44062, -8.29233], site: { buffer: 0 }, cats: [], holes: true, model: 'convent',
+  },
+  'alberto-sampaio': {
+    // The museum occupies the cloister and chapter house of the collegiate church, north of it.
+    main: 'w255483376', name: /Alberto Sampaio/, at: [41.44290, -8.29228], site: { buffer: 0 }, cats: [],
+    exclude: ['w167517737', 'w255486350'], model: 'museum',
+  },
+  muralha: {
+    // Main = the "Muralhas de Guimarães" site relation (two wall ways). The outline is a synthesized
+    // 20 x 8 m rectangle on the 12.5 m wall stub w255483374 at the Torre da Alfândega (node
+    // n12200073501, "Aqui nasceu Portugal"); the 270 m stretch w150780884 along Avenida Alberto
+    // Sampaio is a 'wall' line part.
+    main: 'r19901679', name: /Muralhas de Guimarães/, at: [41.44135, -8.29505], gateWall: 'w255483374', gateTag: 'tower',
+    site: { radius: 1 }, cats: [], include: ['w150780884', 'w255483374'], model: 'city-wall',
+  },
+  'plataforma-artes': {
+    // Main = the CIAJG museum block (the OSM name is the museum, Q85124666). Parts: the raised
+    // square w171548441 (layer=1) and the two bar buildings of the creative labs / workshops.
+    main: 'w454870532', name: /José de Guimarães/, at: [41.44300, -8.29765], site: { buffer: 3 }, cats: ['square'],
+    include: ['w171548441', 'w454870535', 'w664204282'],
+    as: {
+      w171548441: { tag: 'square', h: 0, name: 'Plataforma das Artes e da Criatividade' },
+      w454870535: { tag: 'building', h: 12, name: 'Laboratórios Criativos (Plataforma das Artes)' },
+      w664204282: { tag: 'building', h: 12, name: 'Oficinas Emergentes (Plataforma das Artes)' },
+    }, model: 'arts-platform',
+  },
+  couros: {
+    // Main = the "Zona de Couros" tannery multipolygon: seven groups of granite tanks along the
+    // Ribeira de Couros. Outline = their convex hull; each ring is a 1.2 m 'ruins' part.
+    main: 'r19769884', name: /Couros/, at: [41.43986, -8.29316], hull: true, site: { buffer: 0 }, cats: [],
+    include: ['w820481034'],
+    as: { r19769884: { tag: 'ruins', h: 1.2, name: 'Tanques de Couros' }, w820481034: { tag: 'water', h: 1, name: 'Lavadouro de Couros' } },
+    exclude_outline: false, model: 'tannery',
+  },
+  'santa-marinha': {
+    // Main = the monastery / pousada block; site = its garden w220350965 with the church of Santa
+    // Marinha and the pools. Houses and garages of the neighbours inside the garden edge are left out.
+    main: 'w230976313', name: /Santa Marinha/, at: [41.44295, -8.27660], site: { area: 'w220350965', buffer: 3 },
+    cats: ['building', 'church', 'garden', 'water'], include: ['w257159145', 'w220350965'],
+    exclude: ['w257162810', 'w1289681072', 'w1289681073', 'w257164636', 'w1289681070', 'w257164641', 'w230976315', 'w257164642'],
+    as: { w220350965: { tag: 'garden', h: 0, name: 'Jardim da Pousada de Santa Marinha' } }, model: 'monastery',
+  },
+  'estadio-afonso-henriques': {
+    // Main = the leisure=stadium way (Q1057274). Parts: the 14 grandstand ways (four stands in two
+    // tiers) and the pitch. r2835546 (building=stadium) is the same outline and is left out.
+    main: 'w211693383', name: /Afonso Henriques/, at: [41.44589, -8.30099], site: { buffer: 0 }, cats: ['stand', 'pitch'],
+    include: ['w189966626'], exclude: ['r2835546'], pitch: 'w189966626', model: 'stadium',
+  },
+  'uminho-azurem': {
+    // Main = the campus area (amenity=university). Parts: every building, pitch, garden and footpath inside it.
+    main: 'w182091438', name: /Azurém/, at: [41.45264, -8.28991], site: { buffer: 0 }, fetchR: 450, paths: true,
+    cats: ['building', 'pitch', 'garden', 'water'], exclude_outline: false, model: 'university',
+  },
+  briteiros: {
+    // Main = the protected archaeological site (Q1094262). Parts: the mapped rampart lines
+    // (barrier=city_wall), the reconstructed round houses and the chapel of São Romão on the summit.
+    main: 'w184819483', name: /Briteiros/, at: [41.52813, -8.31639], site: { buffer: 0 }, fetchR: 400,
+    cats: ['wall', 'building', 'church', 'ruins'], exclude_outline: false, model: 'citania',
+    include: ['w448104412', 'w176845321', 'w448104413', 'w448106887', 'w1430010225', 'w1430010398', 'w527213977', 'w527213978', 'w527213979', 'w527217517'],
+  },
+  'vila-flor': {
+    // Main = the 18th-c. palace. Parts: the 2005 Grande and Pequeno Auditório, the garden, its
+    // fountain and the arts-centre site polygon (flat).
+    main: 'w130533853', name: /Vila Flor/, at: [41.43732, -8.29505], site: { buffer: 0 }, cats: [],
+    include: ['w130533849', 'w130533855', 'w339820300', 'w340095744', 'w130533846'],
+    as: { w130533846: { tag: 'site', h: 0, name: 'Centro Cultural Vila Flor (site)' } }, model: 'palace',
+  },
+};
+const OVERRIDES_BY_CITY = { braga: BRAGA_CFG, guimaraes: GUIMARAES_CFG };
 const CFG = OVERRIDES_BY_CITY[CITY.id] || {};
 
 // Verified or estimated heights, used when OSM has no height / levels tag (or force).
@@ -210,7 +347,17 @@ const CFG = OVERRIDES_BY_CITY[CITY.id] || {};
 import { HEIGHTS } from './landmark-heights.mjs';
 
 // ---------------------------------------------------------------------------
-const landmarks = JSON.parse(readFileSync(LANDMARKS, 'utf8'));
+// The landmark list: landmarks.json, or (before the landmark agents merge it) the city's
+// landmark_candidates placed by cfg.at. Candidates without a config are dropped with a message.
+const HAVE_LANDMARKS_FILE = existsSync(LANDMARKS);
+let landmarks = loadLandmarks({ withPos: false });
+if (!HAVE_LANDMARKS_FILE) {
+  const dropped = landmarks.filter(l => !CFG[l.id]).map(l => l.id);
+  if (dropped.length) console.warn(`${CITY.id}: no landmarks.json yet; candidates without a config are skipped: ${dropped.join(', ')}`);
+  landmarks = landmarks.filter(l => CFG[l.id]).map(l => ({ ...l, lat: l.lat ?? CFG[l.id].at?.[0], lon: l.lon ?? CFG[l.id].at?.[1] }));
+  const noPos = landmarks.filter(l => !Number.isFinite(l.lat) || !Number.isFinite(l.lon)).map(l => l.id);
+  if (noPos.length) throw new Error(`No position (cfg.at) for: ${noPos.join(', ')}`);
+}
 const missingCfg = landmarks.filter(l => !CFG[l.id]).map(l => l.id);
 if (missingCfg.length) throw new Error(`No config for: ${missingCfg.join(', ')} (city ${CITY.id}: add the landmarks to OVERRIDES_BY_CITY in scripts/fetch-footprints.mjs)`);
 const onlyArg = process.argv.slice(2).find(a => a.startsWith('--only='));
@@ -239,7 +386,7 @@ const dist = (a, b) => { const p = toXY(a), q = toXY(b); return Math.hypot(p[0] 
 const explicit = new Set();
 for (const l of todo) {
   const c = CFG[l.id];
-  [c.main, c.site.area, c.gateWall, c.stands, ...(c.include || []), ...(c.synth || []).map(s => s.from)].filter(Boolean).forEach(k => explicit.add(k));
+  [c.main, c.site.area, c.gateWall, c.stands, c.aerialway, ...(c.include || []), ...(c.synth || []).map(s => s.from)].filter(Boolean).forEach(k => explicit.add(k));
 }
 const byType = { n: [], w: [], r: [] };
 for (const k of explicit) byType[k[0]].push(k.slice(1));
@@ -247,6 +394,8 @@ let q = '[out:json][timeout:180];(';
 if (byType.n.length) q += `node(id:${byType.n.join(',')});`;
 if (byType.w.length) q += `way(id:${byType.w.join(',')});`;
 if (byType.r.length) q += `relation(id:${byType.r.join(',')});`;
+// Cable cars: the pylon nodes of the aerialway way (tagged nodes, fetched with the way).
+for (const l of todo) if (CFG[l.id].aerialway) q += `way(${CFG[l.id].aerialway.slice(1)});node(w)["aerialway"];`;
 for (const l of todo) {
   const R = CFG[l.id].fetchR || (CFG[l.id].site.radius ? CFG[l.id].site.radius + 50 : l.id === 'bom-jesus' ? 700 : l.id === 'avenida-central' ? 700 : 300);
   const a = `around:${R},${l.lat},${l.lon}`;
@@ -255,6 +404,8 @@ for (const l of todo) {
   q += `nwr(${a})["amenity"="fountain"];wr(${a})["place"="square"];nwr(${a})["historic"];`;
   if (CFG[l.id].streets) q += `way(${a})["highway"]["name"~"${CFG[l.id].streets.source}"];`;
   if (CFG[l.id].paths) q += `way(${a})["highway"~"^(footway|path|pedestrian)$"];`;
+  if (CFG[l.id].cats.includes('wall')) q += `way(${a})["barrier"="city_wall"];`;
+  if (CFG[l.id].cats.includes('cable')) q += `nwr(${a})["aerialway"];`;
 }
 q += ');out geom;';
 const elements = await overpass(q, { label: 'footprints' });
@@ -278,12 +429,15 @@ function joinRings(ways) {
   return rings;
 }
 const isClosed = p => p.length >= 4 && p[0][0] === p.at(-1)[0] && p[0][1] === p.at(-1)[1];
+// cfg.area: closed barrier ways read as areas (a castle wall ring).
+const AREA_KEYS = new Set(Object.values(CFG).filter(c => c.area).map(c => c.main));
 // Returns {rings:[closed rings], lines:[open lines], point}
 function geomOf(el) {
   if (el.type === 'node') return { rings: [], lines: [], point: [el.lat, el.lon] };
   if (el.type === 'way') {
     const p = (el.geometry || []).map(g => [g.lat, g.lon]);
-    const area = isClosed(p) && !(el.tags?.highway && !el.tags?.area && el.tags.highway !== 'pedestrian') && !el.tags?.barrier && !el.tags?.railway;
+    const area = isClosed(p) && (AREA_KEYS.has(keyOf(el)) ||
+      (!(el.tags?.highway && !el.tags?.area && el.tags.highway !== 'pedestrian') && !el.tags?.barrier && !el.tags?.railway && !(el.tags?.aerialway && !el.tags?.building)));
     return area ? { rings: [p], lines: [] } : { rings: [], lines: [p] };
   }
   const outers = (el.members || []).filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry?.length >= 2)
@@ -321,8 +475,24 @@ function inSite(g, sitePolys, buffer) {
   return sitePolys.some(p => pointInPoly(c, p) || distToPoly(c, p) <= buffer);
 }
 
+// Convex hull of [lat,lon] points (Andrew's monotone chain), for cfg.hull outlines.
+function hullLL(pts) {
+  const p = pts.map(q => [...toXY(q), q]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return pts.slice();
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cross(lo.at(-2), lo.at(-1), q) <= 0) lo.pop(); lo.push(q); }
+  for (const q of p.reverse()) { while (up.length >= 2 && cross(up.at(-2), up.at(-1), q) <= 0) up.pop(); up.push(q); }
+  const h = lo.slice(0, -1).concat(up.slice(0, -1)).map(q => q[2]);
+  return h.concat([h[0]]);
+}
+
 function categoryOf(t = {}) {
   if (t.railway === 'funicular') return 'funicular';
+  if (/^(gondola|cable_car|chair_lift|mixed_lift)$/.test(t.aerialway || '')) return 'cable';
+  if (t.aerialway === 'pylon') return 'pylon';
+  if (t.barrier === 'city_wall' || t.historic === 'citywalls') return 'wall';
+  if (t.building === 'no') { t = { ...t }; delete t.building; }
   if (t.highway === 'steps' || (t.highway === 'footway' && /Escad/.test(t.name || ''))) return 'stairs';
   if (t.building === 'stadium' || t.building === 'grandstand') return 'stand';
   if (t.leisure === 'pitch') return 'pitch';
@@ -342,7 +512,7 @@ function categoryOf(t = {}) {
 const catMatches = (cat, cats) => cats.includes(cat) || (cats.includes('building') && ['church', 'tower', 'stand'].includes(cat));
 
 // Default part heights when OSM has no height tag (stated estimates).
-const PART_DEFAULT = { church: 10, building: 7, tower: 15, stand: 25, gate: 10, ruins: 1.5, monument: 4, water: 1.5 };
+const PART_DEFAULT = { church: 10, building: 7, tower: 15, stand: 25, gate: 10, ruins: 1.5, monument: 4, water: 1.5, wall: 8, pylon: 12 };
 function partHeight(t, cat) {
   if (Number(t.layer) < 0 || t.location === 'underground') return { h: 0, src: 'underground' };
   const th = tagHeight(t);
@@ -406,9 +576,10 @@ for (const l of todo) {
     outline = rectAroundLine(wall, Math.max(wallLen, h.width_m || 0), h.depth_m || 3);
   } else {
     if (!mg.rings.length) throw new Error(`${l.id}: main object has no closed ring`);
-    outline = mg.rings.reduce((a, b) => (Math.abs(ringArea(b)) > Math.abs(ringArea(a)) ? b : a));
+    outline = cfg.hull ? hullLL(mg.rings.flat()) : mg.rings.reduce((a, b) => (Math.abs(ringArea(b)) > Math.abs(ringArea(a)) ? b : a));
   }
-  const mainPoint = mg.point || center(mg);
+  // gateWall mode: the landmark sits at the gate / tower, not at the mean of every wall way of the main.
+  const mainPoint = cfg.gateWall ? center(geomOf(els.get(cfg.gateWall))) : mg.point || center(mg);
   const dMain = dist(mainPoint, [l.lat, l.lon]);
   if (dMain > 250) throw new Error(`${l.id}: main object is ${Math.round(dMain)} m from the landmark coordinate`);
 
@@ -431,8 +602,9 @@ for (const l of todo) {
   const axisPts = cfg.axisFrom ? allPts(geomOf(els.get(cfg.axisFrom))) : outline;
   const rect = minAreaRect(axisPts);
 
-  // Site polygons for part collection (the main object's ring, even when a synth ring is the outline).
-  let sitePolys = [mainRing.map(toXY)], buffer = cfg.site.buffer ?? 0;
+  // Site polygons for part collection (the main object's ring, even when a synth ring is the outline;
+  // every ring of a multi-ring main such as the tannery tanks).
+  let sitePolys = (cfg.hull ? mg.rings : [mainRing]).map(r => r.map(toXY)), buffer = cfg.site.buffer ?? 0;
   if (cfg.site.area) sitePolys = geomOf(els.get(cfg.site.area)).rings.map(r => r.map(toXY));
   const radius = cfg.site.radius;
 
@@ -452,6 +624,11 @@ for (const l of todo) {
   }
   for (const k of cfg.include || []) partKeys.add(k);
   if (cfg.streets) for (const [k, el] of els) if (el.tags?.highway && cfg.streets.test(el.tags.name || '')) partKeys.add(k);
+  // cfg.aerialway: the cable's pylon nodes, wherever they stand along the line.
+  if (cfg.aerialway) {
+    const line = els.get(cfg.aerialway);
+    for (const n of line?.nodes || []) if (els.get(`n${n}`)?.tags?.aerialway === 'pylon') partKeys.add(`n${n}`);
+  }
 
   // The main object is always the first part.
   const parts = [];
@@ -472,7 +649,9 @@ for (const l of todo) {
     }
   };
   if (cfg.gateWall) {
-    pushPart(main, { rings: [outline.concat([outline[0]])], lines: [] }, 'gate');
+    pushPart(main, { rings: [outline.concat([outline[0]])], lines: [] }, cfg.gateTag || 'gate');
+  } else if (cfg.hull) {
+    pushPart(main, { rings: mg.rings, lines: [] });
   } else {
     pushPart(main, { rings: [mainRing], lines: [], inners: mg.inners });
   }
@@ -529,11 +708,11 @@ for (const l of todo) {
   if (!tallParts.length) throw new Error(`${l.id}: tallest element ${tallKey} is not among the parts`);
   for (const p of tallParts) { p.height_m = height; p.height_source = hsrc; }
   if (tallKey !== cfg.main) {
-    const flat = ['garden', 'square', 'site', 'street', 'pitch'].includes(parts[0].tag);
+    const flat = ['garden', 'square', 'site', 'street', 'pitch', 'ruins'].includes(parts[0].tag) && !(cfg.as?.[cfg.main]?.h > 0);
     parts[0].height_m = cfgH?.main_m ?? (flat ? 0 : parts[0].height_m);
     parts[0].height_source = cfgH?.main_m != null ? cfgH.main_source || 'estimate' : flat ? 'flat' : parts[0].height_source;
   }
-  for (const p of parts) if (['garden', 'square', 'site', 'street', 'pitch', 'stairs', 'funicular', 'path'].includes(p.tag) && !tallParts.includes(p)) {
+  for (const p of parts) if (['garden', 'square', 'site', 'street', 'pitch', 'stairs', 'funicular', 'cable', 'path'].includes(p.tag) && !tallParts.includes(p)) {
     p.height_m = 0; p.height_source = 'flat';
   }
 
@@ -573,7 +752,18 @@ for (const l of todo) {
 }
 
 mkdirSync(dirname(OUT), { recursive: true });
-if (ONLY) {
+if (!HAVE_LANDMARKS_FILE && !ONLY) {
+  // A city before its landmarks.json: the full footprints file plus one new/<id>.osm.json per
+  // landmark for the agents that merge landmarks.json; nothing else is written.
+  writeFileSync(OUT, JSON.stringify(out));
+  const NEW = dataPath('new');
+  mkdirSync(NEW, { recursive: true });
+  for (const l of todo) {
+    const o = { osm: l.osm, lat: l.lat, lon: l.lon, model: CFG[l.id].model || l.model };
+    writeFileSync(join(NEW, `${l.id}.osm.json`), JSON.stringify(o, null, 2) + '\n');
+  }
+  console.log(`Wrote ${OUT} (${(JSON.stringify(out).length / 1024).toFixed(0)} KB) and ${dataRel('new')}/<id>.osm.json for ${todo.length} landmarks; no landmarks.json yet (the landmark agents write it)`);
+} else if (ONLY) {
   // Keep every other entry as it is; replace only the --only ids (key order follows landmarks.json).
   const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : {};
   const merged = {};
