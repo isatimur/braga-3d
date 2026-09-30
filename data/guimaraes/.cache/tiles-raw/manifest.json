@@ -3254,6 +3254,141 @@
    "mirror": "overpass-api.de",
    "osm": "2026-09-30T22:21:41Z",
    "at": "2026-09-30T22:22:43.085Z"
+  },
+  "8_18": {
+   "ok": true,
+   "elements": 74,
+   "gz": 15229,
+   "ms": 8966,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:22:35Z",
+   "at": "2026-09-30T22:24:37.802Z"
+  },
+  "9_18": {
+   "ok": true,
+   "elements": 61,
+   "gz": 16769,
+   "ms": 2014,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:23:40Z",
+   "at": "2026-09-30T22:25:40.614Z"
+  },
+  "10_18": {
+   "ok": true,
+   "elements": 180,
+   "gz": 29749,
+   "ms": 28156,
+   "mirror": "maps.mail.ru",
+   "osm": "2026-09-30T22:23:40Z",
+   "at": "2026-09-30T22:26:10.280Z"
+  },
+  "11_18": {
+   "ok": true,
+   "elements": 133,
+   "gz": 25540,
+   "ms": 5789,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:24:41Z",
+   "at": "2026-09-30T22:26:17.576Z"
+  },
+  "12_18": {
+   "ok": true,
+   "elements": 78,
+   "gz": 19632,
+   "ms": 1453,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:24:41Z",
+   "at": "2026-09-30T22:26:20.533Z"
+  },
+  "3_18": {
+   "ok": true,
+   "elements": 56,
+   "gz": 13401,
+   "ms": 2463,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:25:42Z",
+   "at": "2026-09-30T22:26:47.895Z"
+  },
+  "13_18": {
+   "ok": true,
+   "elements": 58,
+   "gz": 12827,
+   "ms": 1903,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:25:42Z",
+   "at": "2026-09-30T22:27:43.859Z"
+  },
+  "14_18": {
+   "ok": true,
+   "elements": 23,
+   "gz": 8315,
+   "ms": 5439,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:26:44Z",
+   "at": "2026-09-30T22:28:15.104Z"
+  },
+  "15_18": {
+   "ok": true,
+   "elements": 12,
+   "gz": 4599,
+   "ms": 48497,
+   "mirror": "overpass.kumi.systems",
+   "osm": "2026-05-31T22:37:44Z",
+   "at": "2026-09-30T22:28:33.860Z"
+  },
+  "17_18": {
+   "ok": true,
+   "elements": 26,
+   "gz": 14315,
+   "ms": 1162,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:27:47Z",
+   "at": "2026-09-30T22:28:57.287Z"
+  },
+  "16_18": {
+   "ok": true,
+   "elements": 20,
+   "gz": 10699,
+   "ms": 29533,
+   "mirror": "overpass.kumi.systems",
+   "osm": "2026-06-01T08:52:28Z",
+   "at": "2026-09-30T22:29:05.760Z"
+  },
+  "18_18": {
+   "ok": true,
+   "elements": 12,
+   "gz": 9282,
+   "ms": 59373,
+   "mirror": "overpass.kumi.systems",
+   "osm": "2026-05-31T22:37:44Z",
+   "at": "2026-09-30T22:29:58.163Z"
+  },
+  "19_18": {
+   "ok": true,
+   "elements": 6,
+   "gz": 5420,
+   "ms": 768,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:28:46Z",
+   "at": "2026-09-30T22:30:23.393Z"
+  },
+  "21_18": {
+   "ok": true,
+   "elements": 70,
+   "gz": 14461,
+   "ms": 13761,
+   "mirror": "maps.mail.ru",
+   "osm": "2026-09-30T22:28:46Z",
+   "at": "2026-09-30T22:30:38.661Z"
+  },
+  "20_18": {
+   "ok": true,
+   "elements": 40,
+   "gz": 14166,
+   "ms": 1222,
+   "mirror": "overpass-api.de",
+   "osm": "2026-09-30T22:29:48Z",
+   "at": "2026-09-30T22:31:07.362Z"
   }
  }
 }
