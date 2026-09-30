@@ -3,3 +3,5 @@ dist
 data/.cache
 docs
 .DS_Store
+data/guimaraes
+assets/img/guimaraes
