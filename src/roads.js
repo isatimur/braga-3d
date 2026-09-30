@@ -46,6 +46,8 @@ const PIER = 0xa39e94;
 const GRANITE = 0x978d7f;
 const PORTAL = 0xb3aea4;
 const EARTH = 0x5d6b3f;
+// the bridge and portal colours, for the streamed tiles (src/tiles.js)
+export const STRUCTURE_COLORS = { concrete: CONCRETE, pier: PIER, granite: GRANITE, portal: PORTAL, earth: EARTH };
 const MARK = 0xe9e7e0;
 const SIDEWALK = 0x9f998f;
 const ISLAND = 0x5b7a3c;

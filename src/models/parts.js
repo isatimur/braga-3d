@@ -452,3 +452,61 @@ export function chapel(k, x, y, z, s, ry = 0) {
   k.lathe(PROFILES.finial, 6, 'granite', 0, s * 1.55, 0, { sr: s * 0.12, sh: s * 0.35, flat: true });
   k.pop();
 }
+
+// ---- cheap windows for large rendered / concrete blocks (uminho, dmaria, ...)
+import { edges as _planEdges } from './geom.js';
+
+// Flat window on a wall face of the current transform: a frame plane and a
+// glass plane (4 triangles). y = sill.
+export function flatWindow(k, x, y, w, h, z, o = {}) {
+  const f = o.frame ?? 0.09;
+  k.add(new THREE.PlaneGeometry(w + 2 * f, h + 2 * f), o.trim ?? 'graniteDark', { x, y: y + h / 2, z, mat: MAT.flat });
+  k.add(new THREE.PlaneGeometry(w, h), o.pane ?? 'glass', { x, y: y + h / 2, z: z + 0.02, mat: MAT.flat, emit: o.emit ?? 0.14 });
+  return k;
+}
+
+// Punched windows on every edge of a plan polygon: per storey n bays of
+// flatWindow. o: storeys (count), first (sill of the first floor), storey
+// (floor height), w, h, bay, margin, minLen, trim, pane, emit, lit(rnd) ->
+// emit override, out (offset from the wall), only(e) -> false to skip an edge.
+export function punchedWindows(k, pts, y0, o = {}) {
+  const storeys = o.storeys ?? 2;
+  const sh = o.storey ?? 3.2;
+  const bay = o.bay ?? 3.2;
+  const margin = o.margin ?? 1.2;
+  for (const e of _planEdges(pts)) {
+    if (e.len < (o.minLen ?? bay + margin)) continue;
+    if (o.only && !o.only(e)) continue;
+    const n = Math.max(1, Math.floor((e.len - margin * 2) / bay));
+    const pitch = (e.len - margin * 2) / n;
+    const fs = o.flip ? -1 : 1; // flip: the wall faces the other way (a courtyard hole)
+    k.push({ x: e.mx + fs * e.nx * (o.out ?? 0.03), y: y0, z: e.mz + fs * e.nz * (o.out ?? 0.03), ry: e.ry + (o.flip ? Math.PI : 0) });
+    for (let s = 0; s < storeys; s++) {
+      for (let i = 0; i < n; i++) {
+        const u = -((n - 1) * pitch) / 2 + i * pitch;
+        const emit = o.lit ? o.lit(k.rnd) : o.emit;
+        flatWindow(k, u, (o.first ?? 1.0) + s * sh, o.w ?? 1.2, o.h ?? 1.5, 0, { trim: o.trim, pane: o.pane, emit, frame: o.frame });
+      }
+    }
+    k.pop();
+  }
+  return k;
+}
+
+// Ribbon (band) windows on every edge of a plan polygon: per storey one
+// dark strip and one glass strip (4 triangles), between margins.
+export function ribbonWindows(k, pts, y0, o = {}) {
+  const storeys = o.storeys ?? 2;
+  const sh = o.storey ?? 3.2;
+  for (const e of _planEdges(pts)) {
+    if (e.len < (o.minLen ?? 6)) continue;
+    if (o.only && !o.only(e)) continue;
+    const w = e.len - (o.margin ?? 1.6) * 2;
+    if (w < 2) continue;
+    const fs = o.flip ? -1 : 1;
+    k.push({ x: e.mx + fs * e.nx * (o.out ?? 0.03), y: y0, z: e.mz + fs * e.nz * (o.out ?? 0.03), ry: e.ry + (o.flip ? Math.PI : 0) });
+    for (let s = 0; s < storeys; s++) flatWindow(k, 0, (o.first ?? 0.9) + s * sh, w, o.h ?? 1.5, 0, { trim: o.trim, pane: o.pane, emit: o.emit, frame: o.frame ?? 0.14 });
+    k.pop();
+  }
+  return k;
+}

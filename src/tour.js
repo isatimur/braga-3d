@@ -126,37 +126,52 @@ export function flightCurve(from, to, sky, { clear = FLIGHT_CLEARANCE } = {}) {
 }
 
 // ------------------------------------------------------------ shots
-// Order: the cathedral and Pópulo first, the old town in the morning, the
-// university, the baroque east side and the Roman west by day, down to
-// Parque da Ponte; Forum Braga, the theatre and the far monastery toward
-// sunset, the two stadiums, then Bom Jesus at dusk and Sameiro at night.
+// Order: the cathedral, Pópulo and the avenue in the morning, the schools,
+// the university, the Roman west and the baroque centre by day, down to
+// Parque da Ponte; Forum Braga, the theatre, São Frutuoso and the far
+// monastery toward sunset, the two stadiums, then Bom Jesus at dusk and
+// Sameiro at night. About 8 minutes in all.
 export const CINEMA_ORDER = [
-  { id: 'se-braga', shot: 'crane', dur: 16, time: 'morning' },
-  { id: 'populo', shot: 'dolly', dur: 12, time: 'morning' },
-  { id: 'torre-menagem', shot: 'rise', dur: 13, time: 'morning' },
-  { id: 'praca-republica', shot: 'orbit', dur: 14, time: 'morning' },
-  { id: 'avenida-central', shot: 'dolly', dur: 14, time: 'morning' },
-  { id: 'ucp-braga', shot: 'crane', dur: 12, time: 'day' },
-  { id: 'santa-barbara', shot: 'orbit', dur: 13, time: 'day' },
-  { id: 'biscainhos', shot: 'crane', dur: 13, time: 'day' },
-  { id: 'arco-porta-nova', shot: 'dolly', dur: 12, time: 'day' },
-  { id: 'termas-romanas', shot: 'crane', dur: 13, time: 'day' },
-  { id: 'santa-cruz', shot: 'dolly', dur: 13, time: 'day' },
-  { id: 'palacio-raio', shot: 'orbit', dur: 13, time: 'day' },
+  { id: 'se-braga', shot: 'crane', dur: 14, time: 'morning' },
+  // the Manueline chapel-tower beside the cathedral
+  { id: 'coimbras', shot: 'dolly', dur: 10, time: 'morning' },
+  { id: 'populo', shot: 'dolly', dur: 10, time: 'morning' },
+  { id: 'torre-menagem', shot: 'rise', dur: 11, time: 'morning' },
+  { id: 'praca-republica', shot: 'orbit', dur: 12, time: 'morning' },
+  { id: 'avenida-central', shot: 'dolly', dur: 11, time: 'morning' },
+  // the museum garden, then the Congregados facade along the avenue
+  { id: 'nogueira-silva', shot: 'orbit', dur: 10, time: 'morning' },
+  { id: 'congregados', shot: 'dolly', dur: 10, time: 'morning' },
+  { id: 'ucp-braga', shot: 'crane', dur: 11, time: 'day' },
+  // two schools and the university campus, north-east
+  { id: 'leonardo-da-vinci', shot: 'rise', dur: 9, time: 'day' },
+  { id: 'uminho-gualtar', shot: 'crane', dur: 11, time: 'day' },
+  { id: 'dmaria-ii', shot: 'crane', dur: 9, time: 'day' },
+  { id: 'santa-barbara', shot: 'orbit', dur: 11, time: 'day' },
+  { id: 'biscainhos', shot: 'crane', dur: 11, time: 'day' },
+  { id: 'arco-porta-nova', shot: 'dolly', dur: 10, time: 'day' },
+  // the Roman museum, then the baths beside it
+  { id: 'diogo-sousa', shot: 'crane', dur: 10, time: 'day' },
+  { id: 'termas-romanas', shot: 'crane', dur: 11, time: 'day' },
+  { id: 'santa-cruz', shot: 'dolly', dur: 10, time: 'day' },
+  { id: 'sao-marcos', shot: 'rise', dur: 9, time: 'day' },
+  { id: 'palacio-raio', shot: 'orbit', dur: 11, time: 'day' },
   // below street level in a courtyard: only a steep view reaches it
-  { id: 'fonte-idolo', shot: 'crane', dur: 12, time: 'day', minElev: 1.05 },
+  { id: 'fonte-idolo', shot: 'crane', dur: 10, time: 'day', minElev: 1.05 },
   // a slow orbit over the lake and the São João chapel
-  { id: 'parque-ponte', shot: 'orbit', dur: 13, time: 'day' },
+  { id: 'parque-ponte', shot: 'orbit', dur: 11, time: 'day' },
   // along the timber façade
-  { id: 'forum-braga', shot: 'dolly', dur: 12, time: 'sunset' },
-  { id: 'theatro-circo', shot: 'dolly', dur: 13, time: 'sunset' },
-  { id: 'tibaes', shot: 'orbit', dur: 15, time: 'sunset' },
+  { id: 'forum-braga', shot: 'dolly', dur: 10, time: 'sunset' },
+  { id: 'theatro-circo', shot: 'dolly', dur: 11, time: 'sunset' },
+  // the Visigothic chapel, on the way out to Tibaes
+  { id: 'sao-frutuoso', shot: 'crane', dur: 11, time: 'sunset' },
+  { id: 'tibaes', shot: 'orbit', dur: 13, time: 'sunset' },
   // the old stadium (1950), then the new one (2003)
-  { id: 'estadio-1-maio', shot: 'rise', dur: 12, time: 'sunset' },
-  { id: 'estadio-braga', shot: 'rise', dur: 15, time: 'sunset' },
-  { id: 'bom-jesus', shot: 'dolly', dur: 18, time: 'sunset' },
+  { id: 'estadio-1-maio', shot: 'rise', dur: 10, time: 'sunset' },
+  { id: 'estadio-braga', shot: 'rise', dur: 12, time: 'sunset' },
+  { id: 'bom-jesus', shot: 'dolly', dur: 15, time: 'sunset' },
   // night falls during the last shot, 6 s in
-  { id: 'sameiro', shot: 'rise', dur: 18, time: 'sunset', then: 'night', at: 6 },
+  { id: 'sameiro', shot: 'rise', dur: 16, time: 'sunset', then: 'night', at: 6 },
 ];
 
 // Framing numbers for one landmark at its real size. A draped site (Bom

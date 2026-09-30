@@ -307,6 +307,56 @@ const RKIND = {
   service: 3, track: 4,
 };
 const WATER_W = { river: 12, canal: 6, stream: 3 };
+// Street records (tile format v2): [kind, hw, flags, ly, pts, j]
+//   hw     index into HW (the OSM highway class, -1 for rail)
+//   flags  RF_* bits: one way along / against pts, bridge, tunnel, roundabout,
+//          arch bridge
+//   ly     OSM layer (integer, 0 if none)
+//   pts    [x0, y0, dx, dy, ...] as before
+//   j      junctions: flat [pointIndex, nodeId, ...] (pointIndex counts the
+//          points in pts). nodeId is dense over all tiles, shared by every
+//          street through the same OSM node, as data/roads.json `j` (its own
+//          numbering). Cut points on a tile edge carry none: match those by
+//          position with the neighbour tile.
+// A bridge or tunnel way is not clipped: it is written whole, in the one
+// tile that holds its vertex centroid, and left out of the others, so its
+// deck (or portals) can be built in one piece (src/tile-worker.js).
+const HW = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link', 'residential', 'pedestrian', 'living_street', 'unclassified', 'service', 'track'];
+const RF_OW_FWD = 1, RF_OW_BACK = 2, RF_BRIDGE = 4, RF_TUNNEL = 8, RF_ROUNDABOUT = 16, RF_ARCH = 32;
+function onewayOf(t) {
+  const o = String(t.oneway ?? '').toLowerCase();
+  if (o === 'yes' || o === 'true' || o === '1') return 1;
+  if (o === '-1' || o === 'reverse') return -1;
+  if (o === 'no' || o === 'false' || o === '0' || o === 'reversible' || o === 'alternating') return 0;
+  if (t.highway === 'motorway' || t.highway === 'motorway_link') return 1;
+  if (t.junction === 'roundabout' || t.junction === 'circular') return 1;
+  return 0;
+}
+// same rules as scripts/fetch-roads.mjs tagsOf (br, tu, ly, ow, jn)
+function roadFlags(t) {
+  let f = 0;
+  if (t.highway) {
+    const ow = onewayOf(t);
+    if (ow > 0) f |= RF_OW_FWD;
+    else if (ow < 0) f |= RF_OW_BACK;
+    if (t.junction === 'roundabout' || t.junction === 'circular') f |= RF_ROUNDABOUT;
+  }
+  if (t.bridge && t.bridge !== 'no') f |= RF_BRIDGE;
+  if (t['bridge:structure'] === 'arch') f |= RF_ARCH;
+  if (t.tunnel && t.tunnel !== 'no') f |= RF_TUNNEL;
+  return f;
+}
+const layerOf = (t) => {
+  const n = parseInt(String(t.layer ?? ''), 10);
+  return Number.isFinite(n) ? Math.max(-5, Math.min(5, n)) : 0;
+};
+// the ways of a tile that have geometry and nodes, deduped by id across tiles
+function* streetWays(elements) {
+  for (const el of elements) {
+    if (el.type !== 'way' || !el.tags?.highway || RKIND[el.tags.highway] == null || !el.nodes) continue;
+    yield el;
+  }
+}
 
 // area kinds: nature.json's nine plus built-up land (the ground's grey where
 // OSM has the land use but not yet every house)
@@ -409,7 +459,69 @@ function enc(pts, o) {
   return out;
 }
 
-function buildTile(t, elements, areaPolys, level) {
+// A street polyline as enc() does, plus its junctions: [pointIndex, nodeId]
+// pairs for the points that idOf(p) knows. Points rounded onto the previous
+// one are dropped; a junction moves onto the point that stays.
+function encRoad(pts, o, idOf) {
+  const e = [];
+  const j = [];
+  let px = null, py = null, n = 0;
+  for (const p of pts) {
+    const x = q5(p[1]) - o[1];
+    const y = q5(p[0]) - o[0];
+    const id = idOf(p);
+    if (px === null) e.push(x, y);
+    else if (x !== px || y !== py) e.push(x - px, y - py);
+    else {
+      if (id !== undefined) {
+        if (j.length && j.at(-2) === n - 1) j[j.length - 1] = id;
+        else j.push(n - 1, id);
+      }
+      continue;
+    }
+    if (id !== undefined) j.push(n, id);
+    n++;
+    px = x;
+    py = y;
+  }
+  return { e, j };
+}
+// Douglas-Peucker that keeps every point `must` holds (the junction nodes,
+// so the streets stay joined), piece by piece between them
+function simplifyKeep(run, tol, must) {
+  const keep = [0];
+  for (let k = 1; k < run.length - 1; k++) if (must.has(run[k])) keep.push(k);
+  keep.push(run.length - 1);
+  const out = [];
+  for (let s = 0; s + 1 < keep.length; s++) {
+    const sub = simplify(run.slice(keep[s], keep[s + 1] + 1), tol);
+    for (let m = s === 0 ? 0 : 1; m < sub.length; m++) out.push(sub[m]);
+  }
+  return out;
+}
+// Dense ids for the OSM nodes where street ways meet (2+ ways, or a way's
+// end), over every raw tile, so the ids do not depend on --only.
+function loadJunctions() {
+  const use = new Map();
+  const ends = new Set();
+  const seenWay = new Set();
+  for (const t of TILES) {
+    if (!existsSync(rawFile(t.key))) continue;
+    for (const el of streetWays(readRaw(t.key))) {
+      if (seenWay.has(el.id)) continue;
+      seenWay.add(el.id);
+      const seen = new Set();
+      for (const id of el.nodes) if (!seen.has(id)) (seen.add(id), use.set(id, (use.get(id) || 0) + 1));
+      ends.add(el.nodes[0]);
+      ends.add(el.nodes.at(-1));
+    }
+  }
+  const dense = new Map();
+  for (const [id, n] of use) if (n > 1 || ends.has(id)) dense.set(id, dense.size);
+  return dense;
+}
+
+function buildTile(t, elements, areaPolys, level, junctions) {
   const box = tileBox(t.x, t.y);
   const o = [q5(box.s), q5(box.w)];
   const tol = [
@@ -418,7 +530,7 @@ function buildTile(t, elements, areaPolys, level) {
     { road: 4, fine: 4, coarse: 12, minBld: 20, dropTrack: false },
     { road: 5, fine: 5, coarse: 16, minBld: 30, dropTrack: true },
   ][level];
-  const out = { v: 1, x: t.x, y: t.y, bbox: [box.s, box.w, box.n, box.e].map(f5).map(Number), o, b: [], r: [], w: [], a: [] };
+  const out = { v: 2, x: t.x, y: t.y, bbox: [box.s, box.w, box.n, box.e].map(f5).map(Number), o, b: [], r: [], w: [], a: [] };
   const counts = { buildings: 0, lines: 0, water: 0, areas: 0, skippedCore: 0 };
 
   for (const el of elements) {
@@ -483,11 +595,29 @@ function buildTile(t, elements, areaPolys, level) {
     }
     if (kind < 0 || (tol.dropTrack && (kind === 3 || kind === 4))) continue;
     if (tags.area === 'yes') continue; // pedestrian squares drawn as outlines
-    for (const run of clipLine(pts, box)) {
-      const s = simplify(run, tol.road);
-      const e = enc(s, o);
+    const flags = roadFlags(tags);
+    const hw = tags.highway ? HW.indexOf(tags.highway) : -1;
+    const ly = layerOf(tags);
+    // the OSM node of each vertex, where it is a junction (highways only)
+    const nodeOf = new Map();
+    if (tags.highway && el.nodes?.length === pts.length) pts.forEach((p, i) => junctions.has(el.nodes[i]) && nodeOf.set(p, junctions.get(el.nodes[i])));
+    const idOf = (p) => nodeOf.get(p);
+    const structure = flags & (RF_BRIDGE | RF_TUNNEL);
+    let runs;
+    if (structure) {
+      // whole, in the tile of its centroid (see the format note above)
+      let la = 0, lo = 0;
+      for (const p of pts) (la += p[0], lo += p[1]);
+      la /= pts.length;
+      lo /= pts.length;
+      if (!(la >= box.s && la < box.n && lo >= box.w && lo < box.e)) continue;
+      runs = [pts];
+    } else runs = clipLine(pts, box);
+    for (const run of runs) {
+      const s = simplifyKeep(run, structure ? Math.min(tol.road, 2) : tol.road, nodeOf);
+      const { e, j } = encRoad(s, o, idOf);
       if (e.length >= 4) {
-        out.r.push([kind, ...e]);
+        out.r.push([kind, hw, flags, ly, e, j]);
         counts.lines++;
       }
     }
@@ -519,6 +649,8 @@ function buildAll() {
   mkdirSync(OUT_DIR, { recursive: true });
   const man = loadManifest();
   const areaPolys = loadAreas();
+  const junctions = loadJunctions();
+  console.log(`street junction nodes: ${junctions.size}`);
   const index = [];
   let total = 0;
   let missing = 0;
@@ -532,7 +664,7 @@ function buildAll() {
     const els = readRaw(t.key);
     let res;
     for (let level = 0; level < 4; level++) {
-      res = buildTile(t, els, areaPolys, level);
+      res = buildTile(t, els, areaPolys, level, junctions);
       if (res.json.length <= MAX_TILE_BYTES) break;
     }
     if (res.json.length > MAX_TILE_BYTES) console.warn(`${t.key}: ${(res.json.length / 1024).toFixed(0)} KB even at the coarsest level`);
@@ -556,13 +688,13 @@ function buildAll() {
   }
   const fetched = TILES.filter((t) => man.done[t.key]?.ok).length;
   const doc = {
-    v: 1,
+    v: 2,
     source: '© OpenStreetMap contributors, ODbL 1.0 (Overpass API)',
     fetched: Object.values(man.done).map((d) => d.osm).filter(Boolean).sort().at(-1) || null,
     origin: ORIGIN,
     core: CORE_BBOX,
     grid: { bbox: G.bbox, nx: G.nx, ny: G.ny, dLat: G.dLat, dLon: G.dLon, core: G.core },
-    kinds: { b: BK, r: RK, a: AK },
+    kinds: { b: BK, r: RK, a: AK, hw: HW },
     coverage: { tiles: TILES.length, fetched, written: index.length, pct: +((100 * fetched) / TILES.length).toFixed(1) },
     bytes: total,
     gz: index.reduce((s, t) => s + t.gz, 0),

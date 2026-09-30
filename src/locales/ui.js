@@ -5,7 +5,7 @@ export const messages = {
   'Кино': ['Cinema', 'Cinema'], 'История (режим)': ['História', 'Story'],
   // static title in index.html; tour.js replaces it with the counted one
   'Фильм о Браге с утра до ночи': ['Um filme sobre Braga, da manhã à noite', 'A film of Braga from morning to night'],
-  // {n}: the number of places with its word ("21 место", "21 lugares", "21 places")
+  // {n}: the number of places with its word ("30 мест", "30 locais", "30 places")
   'Фильм о Браге: {n} с утра до ночи': ['Um filme sobre Braga: {n}, da manhã à noite', 'A film of Braga: {n} from morning to night'],
   '2000 лет истории Браги': ['2000 anos de história de Braga', '2,000 years of Braga’s history'],
   'Управление фильмом': ['Controlos do filme', 'Film controls'], 'Ход фильма': ['Progresso do filme', 'Film progress'],

@@ -116,7 +116,10 @@ export function buildingColors(seed, k, areaM2, wc = _wc, rc = _rc) {
 // (positive area), no closing duplicate; h metres; heightAt(x, z) the ground.
 // The core (below) and the streamed tiles (src/tile-worker.js) both call it.
 const contour = [];
-export function extrudeBuilding(T, pts, h, k, areaM2, seedIndex, heightAt) {
+// roofOnly: the very far LOD (beyond ~6 km, a house is a few pixels): the
+// flat roof at the same height and colour, without the walls (2 triangles
+// for a box instead of 10).
+export function extrudeBuilding(T, pts, h, k, areaM2, seedIndex, heightAt, roofOnly = false) {
   const n = pts.length;
   const gs = pts.map((p) => heightAt(p.x, p.z));
   const gmin = Math.min(...gs);
@@ -130,7 +133,7 @@ export function extrudeBuilding(T, pts, h, k, areaM2, seedIndex, heightAt) {
   let run = 0;
 
   // walls: 4 vertices each, darker at the foot (cheap ambient occlusion)
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n && !roofOnly; i++) {
     const a = pts[i];
     const b = pts[(i + 1) % n];
     const dx = b.x - a.x;
@@ -156,10 +159,16 @@ export function extrudeBuilding(T, pts, h, k, areaM2, seedIndex, heightAt) {
   for (const p of pts) contour.push(new THREE.Vector2(p.x, p.z));
   const faces = THREE.ShapeUtils.triangulateShape(contour, []);
   const v0 = T.pos.length / 3;
+  // roof-only: the missing walls were ~35 % of the house's pixels seen from
+  // above at an angle, and lighter than the roof: blend their colour in
+  const W = roofOnly ? 0.35 : 0;
+  const cr = rc.r * (1 - W) + wc.r * 0.81 * W;
+  const cg = rc.g * (1 - W) + wc.g * 0.81 * W;
+  const cb = rc.b * (1 - W) + wc.b * 0.81 * W;
   for (const p of pts) {
     T.pos.push(p.x, top, p.z);
     T.nor.push(0, 1, 0);
-    T.col.push(rc.r, rc.g, rc.b);
+    T.col.push(cr, cg, cb);
     T.wall.push(0, -1, 0, seed);
   }
   for (const [a, b, c] of faces) {
@@ -305,11 +314,13 @@ export function buildBuildings(data, project, heightAt, masks = { outlines: [], 
   const tileOf = (it) => {
     const key = `${Math.floor(it.cx / S / TILE_M)},${Math.floor(it.cz / S / TILE_M)}`;
     let t = tiles.get(key);
-    if (!t) tiles.set(key, (t = { key, pos: [], nor: [], col: [], wall: [], idx: [] }));
+    if (!t) tiles.set(key, (t = { key, pos: [], nor: [], col: [], wall: [], idx: [], roofs: { pos: [], nor: [], col: [], wall: [], idx: [] } }));
     return t;
   };
   for (const it of keep) {
-    extrudeBuilding(tileOf(it), it.pts, it.h, it.k, it.areaM2, it.seed, heightAt);
+    const T = tileOf(it);
+    extrudeBuilding(T, it.pts, it.h, it.k, it.areaM2, it.seed, heightAt);
+    extrudeBuilding(T.roofs, it.pts, it.h, it.k, it.areaM2, it.seed, heightAt, true);
     stats.built++;
   }
 
@@ -325,6 +336,18 @@ export function buildBuildings(data, project, heightAt, masks = { outlines: [], 
     g.computeBoundingBox();
     const mesh = new THREE.Mesh(g, material);
     mesh.name = `buildings-${T.key}`;
+    mesh.userData.full = g;
+    if (T.roofs.idx.length) {
+      const r = new THREE.BufferGeometry();
+      r.setAttribute('position', new THREE.Float32BufferAttribute(T.roofs.pos, 3));
+      r.setAttribute('normal', new THREE.Float32BufferAttribute(T.roofs.nor, 3));
+      r.setAttribute('color', new THREE.Float32BufferAttribute(T.roofs.col, 3));
+      r.setAttribute('aWall', new THREE.Float32BufferAttribute(T.roofs.wall, 4));
+      r.setIndex(T.roofs.idx);
+      r.boundingSphere = g.boundingSphere;
+      r.boundingBox = g.boundingBox;
+      mesh.userData.roofs = r;
+    }
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.matrixAutoUpdate = false;
@@ -333,6 +356,22 @@ export function buildBuildings(data, project, heightAt, masks = { outlines: [], 
     stats.triangles += T.idx.length / 3;
     stats.vertices += T.pos.length / 3;
   }
+  // Very far tiles draw their roofs only: a tile wholly beyond 6 km from the
+  // camera (`cam`) and 3 km from the focus. Called by src/tiles.js.
+  const VFAR = 6000 * S;
+  const KEEP = 3000 * S;
+  group.userData.updateLod = (cam, focus) => {
+    for (const mesh of group.children) {
+      const roofs = mesh.userData.roofs;
+      if (!roofs) continue;
+      const bs = mesh.userData.full.boundingSphere;
+      const dc = Math.hypot(bs.center.x - cam.x, bs.center.y - cam.y, bs.center.z - cam.z) - bs.radius;
+      const df = Math.hypot(bs.center.x - focus.x, bs.center.z - focus.z) - bs.radius;
+      const now = mesh.geometry === roofs;
+      const want = df > KEEP && dc > (now ? VFAR * 0.9 : VFAR);
+      if (want !== now) mesh.geometry = want ? roofs : mesh.userData.full;
+    }
+  };
   // projected footprints, for the nature layer's masks
   return { group, stats, material, footprints: keep.map((it) => it.pts) };
 }

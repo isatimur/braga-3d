@@ -39,8 +39,16 @@ import maio from './models/maio.js';
 import parque from './models/parque.js';
 import forum from './models/forum.js';
 import leonardo from './models/leonardo.js';
+import coimbras from './models/coimbras.js';
+import congregados from './models/congregados.js';
+import nogueira from './models/nogueira.js';
+import saoMarcos from './models/saomarcos.js';
+import uminho from './models/uminho.js';
+import dmaria from './models/dmaria.js';
+import frutuoso from './models/frutuoso.js';
+import diogoSousa from './models/diogosousa.js';
 
-const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo, ...populo, ...ucp, ...maio, ...parque, ...forum, ...leonardo };
+const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo, ...populo, ...ucp, ...maio, ...parque, ...forum, ...leonardo, ...coimbras, ...congregados, ...nogueira, ...saoMarcos, ...uminho, ...dmaria, ...frutuoso, ...diogoSousa };
 
 export { PALETTE, MAT, triangleCount };
 
@@ -70,6 +78,14 @@ export const LANDMARK_SPECS = {
   'parque-ponte': { type: 'park', h: 10, yaw: 0 },
   'forum-braga': { type: 'forum', h: 14.5, yaw: 0 },
   'leonardo-da-vinci': { type: 'school-ldv', h: 14.5, yaw: 0 },
+  coimbras: { type: 'chapel-manueline', h: 16, yaw: 0 },
+  congregados: { type: 'basilica-twin', h: 32, yaw: 0 },
+  'nogueira-silva': { type: 'house-museum', h: 13, yaw: 0 },
+  'sao-marcos': { type: 'hospital-church', h: 20, yaw: 0 },
+  'uminho-gualtar': { type: 'university', h: 19.2, yaw: 0 },
+  'dmaria-ii': { type: 'school', h: 13, yaw: 0 },
+  'sao-frutuoso': { type: 'visigothic', h: 9, yaw: 0 },
+  'diogo-sousa': { type: 'museum-roman', h: 12.8, yaw: 0 },
 };
 
 const BUILDERS = METRIC;

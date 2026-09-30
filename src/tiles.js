@@ -27,7 +27,7 @@ import { S } from './geo.js';
 import { assetUrl } from './data.js';
 import { groundAxes } from './scene.js';
 import { BUILDING_UNIFORMS, createBuildingMaterial, FADE_S, FADE_VERT_PARS, FADE_VERT, FADE_FRAG_PARS, FADE_FRAG } from './buildings.js';
-import { SURFACE } from './roads.js';
+import { SURFACE, STRUCTURE_COLORS } from './roads.js';
 import { TREE_TABLES } from './nature.js';
 
 const LAND_PX = 64; // land-cover pixels per tile side (~15 m)
@@ -35,6 +35,9 @@ const GROUP = 3; // far LOD: tiles per merged block side
 const MAX_INFLIGHT = 6;
 const SLICE_MS = 2; // main-thread budget per frame for new geometry
 const SCHEDULE_S = 0.25;
+const VFAR_U = 6000 * S; // far tiles beyond this from the camera: roof-only houses
+const FOCUS_KEEP_U = 3000 * S; // ... and only beyond this from the focus (the orbit target)
+const CAST_U = 700; // shadows only within 2.8 km of the focus (as buildings-ms.js)
 const ROAD_WIDTHS = { primary: 8, secondary: 5, minor: 3, service: 3, track: 2.5, rail: 2.5 };
 const ROAD_COLORS = { ...SURFACE, service: 0x777066, track: 0x7d6c55 };
 
@@ -100,8 +103,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
   let treesDirty = false;
   let sinceTrees = 0;
   let treeKey = '';
-  let castNow = true;
-  const nFetch = [0, 0];
+  let castNow = true;  const nFetch = [0, 0];
   const nBuild = [0, 0];
   const nBuildNear = [0, 0, 0]; // sum, count, max (ms)
   const nBuildFar = [0, 0, 0];
@@ -189,6 +191,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       kinds: doc.kinds,
       roadWidths: ROAD_WIDTHS,
       roadColors: Object.fromEntries(Object.entries(ROAD_COLORS).map(([k, v]) => [k, linear(v)])),
+      structureColors: Object.fromEntries(Object.entries(STRUCTURE_COLORS).map(([k, v]) => [k, linear(v)])),
       waterColor: linear(0x24404c),
       trees: TREE_TABLES,
       treesPerM2: 1 / 2500,
@@ -377,7 +380,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       if (m.mesh.s) addMesh(T, geometryOf(m.mesh.s, born, false), matS, `tile-streets-${T.key}`, false);
       if (m.mesh.w) addMesh(T, geometryOf(m.mesh.w, born, false), matW, `tile-water-${T.key}`, false);
     } else {
-      T.far = { b: m.mesh.b, w: m.mesh.w, born };
+      T.far = { b: m.mesh.b, bv: m.mesh.bv, w: m.mesh.w, born };
       const G = groupOf(T);
       G.members.add(T);
       G.dirty = true;
@@ -447,7 +450,9 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     G.tris = 0;
     G.mesh = G.wmesh = null;
     const members = [...G.members];
-    const gb = mergeFar(members.filter((T) => T.far.b).map((T) => ({ p: T.far.b, b: T.far.born })), G.key, true);
+    // tiles beyond VFAR_M draw their roof-only variant (no walls)
+    const pick = (T) => (T.vf && T.far.bv ? T.far.bv : T.far.b);
+    const gb = mergeFar(members.filter(pick).map((T) => ({ p: pick(T), b: T.far.born })), G.key, true);
     const gw = mergeFar(members.filter((T) => T.far.w).map((T) => ({ p: T.far.w, b: T.far.born })), G.key, false);
     const put = (g, mat, name) => {
       if (!g) return null;
@@ -555,6 +560,13 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       const inView = _frustum.intersectsBox(T.box);
       T.prio = (inView ? 1 : 0.3) / Math.max(d3, 25);
       const lodWant = d3 < nearU ? 'near' : d3 > nearU * 1.2 ? 'far' : T.lod || 'far';
+      // very far: roof-only houses, when the tile is 6 km from the camera
+      // and 3 km from the focus (hysteresis of 10 %)
+      const vf = dFoc > FOCUS_KEEP_U && d3 > (T.vf ? VFAR_U * 0.9 : VFAR_U);
+      if (vf !== !!T.vf) {
+        T.vf = vf;
+        if (T.lod === 'far' && T.far) groupOf(T).dirty = true;
+      }
       if (T.lod === 'near') T.prio *= 2;
       if (T.state === 'shown' && d > 2 * R) {
         unload(T);
@@ -649,10 +661,22 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     // shadows from the near tiles like the core: only when they can be seen
     const focus = camera.userData.focus;
     const camDist = focus ? camera.position.distanceTo(focus) : 0;
-    const cast = camDist < 4000;
+    const cast = camDist < CAST_U;
     if (cast !== castNow) {
       castNow = cast;
       for (const m of group.children) if (m.userData.casts) m.castShadow = cast;
+    }
+    if (frames % 15 === 0) {
+      // The OSM core (buildings.js) and the landmarks follow the same rule.
+      // Set every time: main.js also sets the core's flag (at 4000 units).
+      const core = scene.getObjectByName('buildings');
+      if (core) for (const m of core.children) if (m.isMesh) m.castShadow = cast;
+      core?.userData.updateLod?.(camera.position, focus || camera.position);
+      scene.getObjectByName('landmarks')?.traverse((m) => {
+        if (!m.isMesh) return;
+        if (m.userData.castOrig === undefined) m.userData.castOrig = m.castShadow || !cast; // meshes seen while off keep their casting
+        m.castShadow = cast && m.userData.castOrig;
+      });
     }
     // the thin river line follows the core's (hidden in a close-up)
     for (const l of lineMeshes) l.visible = l.userData.core.visible;

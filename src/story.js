@@ -29,8 +29,8 @@ const SHOT_CLEAR = 10 * S;
 const VIEWS = {
   bracara: { az: 0.2, elev: 0.5, k: 1.3, primary: true },
   gallaecia: { az: -0.5, elev: 0.5, k: 1.2 },
-  suebi: { az: 0.9, elev: 0.62, k: 2.4 },
-  cathedral: { az: 0, elev: 0.34, k: 1.05 },
+  suebi: { az: 0.9, elev: 0.62, k: 2.4, primary: true },
+  cathedral: { az: 0, elev: 0.34, k: 1.05, primary: true },
   walls: { az: -0.25, elev: 0.5, k: 1.1 },
   baroque: { az: 0.2, elev: 0.3, k: 0.8, primary: true },
   avenue: { az: 0.15, elev: 0.45, k: 0.85 },

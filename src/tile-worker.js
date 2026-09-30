@@ -149,20 +149,38 @@ function ribbon(T, pts, halfW, col, lift, maxSeg) {
 }
 
 // line segments (x, y, z pairs) along a polyline, draped
-function segments(out, pts, lift, maxSeg) {
+function segments(out, pts, lift, maxSeg, merge) {
   for (let i = 0; i + 1 < pts.length; i++) {
     const A = pts[i];
     const B = pts[i + 1];
     const n = Math.max(1, Math.ceil(Math.hypot(B.x - A.x, B.z - A.z) / maxSeg));
-    for (let s = 0; s < n; s++) {
-      const ax = A.x + ((B.x - A.x) * s) / n;
-      const az = A.z + ((B.z - A.z) * s) / n;
-      const bx = A.x + ((B.x - A.x) * (s + 1)) / n;
-      const bz = A.z + ((B.z - A.z) * (s + 1)) / n;
-      out.push(ax, ground(ax, az) + lift, az, bx, ground(bx, bz) + lift, bz);
+    // ground heights at the n + 1 sub-points; a run of them is one segment
+    // while every point between stays within LINE_TOL of the chord (a
+    // straight street on a slope needs no 24 m pieces: ~4x fewer instances)
+    const hs = [];
+    for (let s = 0; s <= n; s++) hs.push(ground(A.x + ((B.x - A.x) * s) / n, A.z + ((B.z - A.z) * s) / n) + lift);
+    let s0 = 0;
+    while (s0 < n) {
+      let s1 = s0 + 1;
+      while (s1 < n) {
+        const t = s1 + 1;
+        let ok = true;
+        for (let m = s0 + 1; m <= s1; m++) {
+          const yc = hs[s0] + ((hs[t] - hs[s0]) * (m - s0)) / (t - s0);
+          if (!merge || Math.abs(hs[m] - yc) > LINE_TOL) {
+            ok = false;
+            break;
+          }
+        }
+        if (!ok) break;
+        s1 = t;
+      }
+      out.push(A.x + ((B.x - A.x) * s0) / n, hs[s0], A.z + ((B.z - A.z) * s0) / n, A.x + ((B.x - A.x) * s1) / n, hs[s1], A.z + ((B.z - A.z) * s1) / n);
+      s0 = s1;
     }
   }
 }
+const LINE_TOL = 0.1; // world units (0.4 m)
 
 // densify a closed ring so a draped polygon follows the ground
 function densify(ring, step) {
@@ -326,6 +344,8 @@ function buildTile(tile, key, lod, extras) {
 
   // ---- buildings
   const B = newT(true);
+  // far LOD: also the roof-only variant for the very far blocks (tiles.js VFAR_M)
+  const Bv = near ? null : newT(true);
   const foot = []; // world footprints, for the rasters
   for (let i = 0; i < tile.b.length; i++) {
     const rec = tile.b[i];
@@ -335,6 +355,7 @@ function buildTile(tile, key, lod, extras) {
     if (!near && f.areaM2 < 20) continue;
     const pts = near ? f.pts : orientedBox(f.pts);
     extrudeBuilding(B, pts, rec[0] / 10, K.b[rec[1]] || 'other', f.areaM2, seedBase + i, ground);
+    if (Bv) extrudeBuilding(Bv, pts, rec[0] / 10, K.b[rec[1]] || 'other', f.areaM2, seedBase + i, ground, true);
     stats.buildings++;
   }
 
@@ -345,6 +366,7 @@ function buildTile(tile, key, lod, extras) {
   for (const l of lines) {
     if (!near && l.kind !== 'primary' && l.kind !== 'secondary') continue;
     ribbon(Sx, l.pts, (RW[l.kind] * S) / 2, cfg.roadColors[l.kind], near ? 0.14 : 0.2, near ? 3 : 8);
+    if (Bv) ribbon(Bv, l.pts, (RW[l.kind] * S) / 2, cfg.roadColors[l.kind], 0.2, 8);
   }
 
   // ---- water: rivers and lakes
@@ -355,6 +377,7 @@ function buildTile(tile, key, lod, extras) {
   for (const a of areas) if (a.k === 'water') waterPoly(W, a.rings, cfg.waterColor, near ? 6 : 20);
 
   out.b = pack(B);
+  if (Bv) out.bv = pack(Bv);
   if (near) out.s = pack(Sx);
   out.w = pack(W);
 
@@ -365,10 +388,10 @@ function buildTile(tile, key, lod, extras) {
     const ls = [];
     const lw = [];
     for (const l of lines) {
-      if (l.kind === 'primary') segments(lp, l.pts, 0.35, 6);
-      else if (l.kind === 'secondary') segments(ls, l.pts, 0.35, 6);
+      if (l.kind === 'primary') segments(lp, l.pts, 0.35, 6, false); // additive glow: the overlaps at the joints are part of its look
+      else if (l.kind === 'secondary') segments(ls, l.pts, 0.35, 6, true);
     }
-    for (const r of rivers) if (r.w >= 6) segments(lw, r.pts, 0.35, 6);
+    for (const r of rivers) if (r.w >= 6) segments(lw, r.pts, 0.35, 6, true);
 
     // ---- rasters over the tile: land cover 64 x 64, occupancy 512 x 512
     const [s, w, n, e] = tile.bbox;
@@ -538,7 +561,7 @@ self.onmessage = async (ev) => {
       const t1 = performance.now();
       const r = buildTile(tile, m.key, m.lod, m.extras);
       const buildMs = performance.now() - t1;
-      const transfer = [...buffersOf(r.mesh.b), ...buffersOf(r.mesh.s), ...buffersOf(r.mesh.w)];
+      const transfer = [...buffersOf(r.mesh.b), ...buffersOf(r.mesh.bv), ...buffersOf(r.mesh.s), ...buffersOf(r.mesh.w)];
       if (r.extras) transfer.push(r.extras.land.buffer, r.extras.trees.buffer, r.extras.lines.primary.buffer, r.extras.lines.secondary.buffer, r.extras.lines.water.buffer);
       self.postMessage({ type: 'tile', id: m.id, key: m.key, lod: m.lod, mesh: r.mesh, extras: r.extras, stats: { ...r.stats, fetchMs, buildMs } }, transfer);
     } catch (e) {

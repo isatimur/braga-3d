@@ -31,6 +31,8 @@ const MAX_FETCH = 4;
 // costs ~561k and the overview looks the same.
 const FAR_MIN_M2 = 100;
 const CAST_U = 3000 * S; // shadows while the camera is within 3 km of the focus
+const VFAR_U = 6000 * S; // far LOD beyond this from the camera: roof-only houses
+const FOCUS_KEEP_U = 3000 * S; // ... and only beyond this from the focus
 const DEBUG_ROOF =new THREE.Color(0x2f7dff);
 
 // ------------------------------------------------------------ helpers
@@ -366,7 +368,13 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         const h = J.h(rec);
         const T = J.tileOf ? J.tileOf(f) : J.T;
         extrudeBuilding(T, f.pts, h, 'ms', f.areaM2, J.seed + i, ground);
-        if (J.Tfar && f.areaM2 >= FAR_MIN_M2) extrudeBuilding(J.Tfar, orientedBox(f.pts), h, 'ms', f.areaM2, J.seed + i, ground);
+        if (J.Tfar && f.areaM2 >= FAR_MIN_M2) {
+          const box = orientedBox(f.pts);
+          extrudeBuilding(J.Tfar, box, h, 'ms', f.areaM2, J.seed + i, ground);
+          extrudeBuilding(J.Tvf, box, h, 'ms', f.areaM2, J.seed + i, ground, true);
+        }
+        // the core: the same building, roof only, for the tiles far from view
+        if (J.tileOfVf) extrudeBuilding(J.tileOfVf(f), f.pts, h, 'ms', f.areaM2, J.seed + i, ground, true);
         J.n++;
         J.cents.push(f.cx, f.cz);
       }
@@ -394,6 +402,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
     }
     stats.coreInput = doc.buildings.length;
     const cells = new Map();
+    const cellsVf = new Map();
     const t0 = performance.now();
     jobs.push({
       prio: Infinity,
@@ -410,14 +419,23 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         if (!T) cells.set(key, (T = newT()));
         return T;
       },
+      tileOfVf(f) {
+        const key = `${Math.floor(f.cx / S / CORE_TILE_M)},${Math.floor(f.cz / S / CORE_TILE_M)}`;
+        let T = cellsVf.get(key);
+        if (!T) cellsVf.set(key, (T = newT()));
+        return T;
+      },
       done() {
         stats.core = this.n;
         for (const [key, T] of cells) {
           const p = pack(T, tint);
           if (!p) continue;
           const g = geometryOf([{ p, born: clock }]);
+          const pv = pack(cellsVf.get(key), tint);
           const mesh = new THREE.Mesh(g, material);
           mesh.name = `buildings-ms-${key}`;
+          mesh.userData.full = g;
+          if (pv) mesh.userData.roofs = geometryOf([{ p: pv, born: clock }]);
           mesh.matrixAutoUpdate = false;
           mesh.castShadow = castNow;
           mesh.receiveShadow = true;
@@ -483,6 +501,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
     const o = tile.o;
     const Tn = newT();
     const Tf = newT();
+    const Tvf = newT();
     const job = {
       prio: T.prio,
       recs: tile.b,
@@ -492,6 +511,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       seed: (T.x * 131 + T.y * 7919) * 100003 + 0x4d53,
       T: Tn,
       Tfar: Tf,
+      Tvf,
       decode(rec) {
         const pts = [];
         let x = 0;
@@ -509,6 +529,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         if (id !== T.reqId) return;
         T.near = pack(Tn, tint);
         T.far = pack(Tf, tint);
+        T.vfar = pack(Tvf, tint);
         T.count = this.n;
         T.cents = this.cents;
         T.state = 'built';
@@ -568,7 +589,8 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       G.mesh = null;
       G.bytes = 0;
     }
-    const list = [...G.members].filter((T) => T.far).map((T) => ({ p: T.far, born: T.born }));
+    // tiles beyond VFAR_U draw the roof-only variant (no walls)
+    const list = [...G.members].filter((T) => T.far).map((T) => ({ p: T.vf && T.vfar ? T.vfar : T.far, born: T.born }));
     const g = list.length ? geometryOf(list) : null;
     if (g) {
       const mesh = new THREE.Mesh(g, material);
@@ -587,7 +609,8 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
     setLod(T, null);
     if (T.job) T.job.cancelled = true;
     T.job = null;
-    T.near = T.far = null;
+    T.near = T.far = T.vfar = null;
+    T.vf = false;
     T.cents = null;
     T.state = 'idle';
     T.reqId++;
@@ -614,6 +637,16 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         continue;
       }
       if (T.state === 'built') {
+        // very far: roof-only houses, when the tile is 6 km from the camera
+        // and 3 km from the focus (hysteresis of 10 %)
+        const vf = dFoc > FOCUS_KEEP_U && d3 > (T.vf ? VFAR_U * 0.9 : VFAR_U);
+        if (vf !== !!T.vf) {
+          T.vf = vf;
+          if (T.lod === 'far') {
+            groupOf(T).dirty = true;
+            changed = true;
+          }
+        }
         const want = d3 < nearU ? 'near' : d3 > nearU * 1.2 ? 'far' : T.lod || 'far';
         if (want !== T.lod) {
           setLod(T, want);
@@ -622,6 +655,19 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
         continue;
       }
       if (T.state === 'idle' && d < R && !(clock < T.retryAt)) cands.push(T);
+    }
+    // the core's outer 2 km tiles: roof-only when wholly beyond 6 km (camera) and 3 km (focus)
+    for (const m of coreMeshes) {
+      const roofs = m.userData.roofs;
+      if (!roofs) continue;
+      const full = m.userData.full;
+      if (!full.boundingSphere) full.computeBoundingSphere();
+      const bs = full.boundingSphere;
+      const dc = Math.hypot(bs.center.x - cam.x, bs.center.z - cam.z, altU) - bs.radius;
+      const df = Math.hypot(bs.center.x - focus.x, bs.center.z - focus.z) - bs.radius;
+      const roofNow = m.geometry === roofs;
+      const want = df > FOCUS_KEEP_U && dc > (roofNow ? VFAR_U * 0.9 : VFAR_U);
+      if (want !== roofNow) m.geometry = want ? roofs : full;
     }
     jobs.sort((a, b) => b.prio - a.prio);
     cands.sort((a, b) => b.prio - a.prio);
