@@ -79,7 +79,11 @@ if (bld) {
     kinds[b.k] = (kinds[b.k] || 0) + 1;
   }
   if (!bld.origin || !Number.isFinite(bld.origin.lat)) err('buildings: origin missing');
-  if (B.length < 5000) err(`buildings: only ${B.length} buildings`);
+  // OSM coverage differs per city: Braga's core has ~17k buildings, Guimarães' ~3.8k
+  // (the Microsoft layer fills the rest). Braga keeps its historical floor.
+  const MIN_BUILDINGS_BY_CITY = { braga: 5000, guimaraes: 3000 };
+  const minBuildings = MIN_BUILDINGS_BY_CITY[CITY.id] ?? 1000;
+  if (B.length < minBuildings) err(`buildings: only ${B.length} buildings (min ${minBuildings} for ${CITY.id})`);
   if (bad) err(`buildings: ${bad} invalid entries`);
   if (outside) warn(`buildings: ${outside} start more than ~500 m outside the bbox`);
   if (size > 8 * 1024 * 1024) err(`buildings: file ${(size / 1048576).toFixed(2)} MB > 8 MB`);
