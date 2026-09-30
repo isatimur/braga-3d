@@ -2,9 +2,11 @@ import { defineConfig } from 'vite';
 import { cpSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// In dev, Vite serves /data and /assets straight from the project root.
-// For the build, copy them into dist/ when they exist. The bundle goes to
-// dist/static so it never collides with assets/img from the data pipeline.
+// In dev, Vite serves /data, /assets and /cities straight from the project
+// root. For the build, copy them into dist/ when they exist. The bundle goes
+// to dist/static so it never collides with assets/img from the data
+// pipeline. cities/<id>.json is the per-city config src/city.js fetches;
+// VITE_CITY=<id> at build time pins the city (one Vercel project per city).
 const ROOT = import.meta.dirname;
 
 function copyRuntimeData() {
@@ -16,7 +18,7 @@ function copyRuntimeData() {
       outDir = cfg.build.outDir;
     },
     closeBundle() {
-      for (const dir of ['data', 'assets']) {
+      for (const dir of ['data', 'assets', 'cities']) {
         const src = resolve(ROOT, dir);
         if (!existsSync(src)) {
           console.warn(`[copy-runtime-data] ${dir}/ not found, skipped (app will use placeholders)`);

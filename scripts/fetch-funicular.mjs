@@ -18,11 +18,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { overpass, r6 } from './geo-lib.mjs';
+import { overpass, r6, CITY, dataPath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'life.json');
-const FOOT = JSON.parse(readFileSync(join(ROOT, 'data', 'footprints.json'), 'utf8'));
+// Braga-only: the Bom Jesus funicular and its named fountains are not generalised.
+if (CITY.id !== 'braga') {
+  console.log('fetch-funicular is Braga-only (life.json is hand-curated per city)');
+  process.exit(0);
+}
+const OUT = dataPath('life.json');
+const FOOT = JSON.parse(readFileSync(dataPath('footprints.json'), 'utf8'));
 const OFFLINE = process.argv.includes('--offline');
 
 const TOP = [41.5549, -8.377];
@@ -156,4 +160,4 @@ const out = {
   fountains,
 };
 writeFileSync(OUT, JSON.stringify(out, null, 1) + '\n');
-console.log(`data/life.json: ${tracks.length} tracks (${out.funicular.lengths_m.join(', ')} m), ${fountains.length} fountains; ${track.source}`);
+console.log(`${dataRel('life.json')}:${tracks.length} tracks (${out.funicular.lengths_m.join(', ')} m), ${fountains.length} fountains; ${track.source}`);

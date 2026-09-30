@@ -2,8 +2,9 @@
 // garden (way 287120520) as parts of the Pópulo footprint, from an Overpass
 // `out geom` dump saved at /tmp/populo-square.json. Idempotent.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { dataRel } from './city-lib.mjs';
 
-const FP = 'data/footprints.json';
+const FP = dataRel('footprints.json'); // Braga-specific content (populo); --city only moves the path
 const fp = JSON.parse(readFileSync(FP, 'utf8'));
 const dump = JSON.parse(readFileSync(process.argv[2] || '/tmp/populo-square.json', 'utf8'));
 const want = { 363504384: { tag: 'square', name: 'Largo do Pópulo', height_m: 0 }, 287120520: { tag: 'garden', name: 'Campo da Vinha', height_m: 0 } };

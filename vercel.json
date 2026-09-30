@@ -5,8 +5,8 @@
   "framework": "vite",
   "cleanUrls": true,
   "functions": {
-    "api/adsb.js": { "maxDuration": 20 },
-    "api/route.js": { "maxDuration": 10 }
+    "api/adsb.js": { "maxDuration": 20, "includeFiles": "cities/*.json" },
+    "api/route.js": { "maxDuration": 10, "includeFiles": "cities/*.json" }
   },
   "redirects": [
     {

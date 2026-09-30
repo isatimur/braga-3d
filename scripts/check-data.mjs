@@ -1,19 +1,25 @@
-// Validate data/landmarks.json and data/routes.json against the content contract.
+// Validate <data dir>/landmarks.json and routes.json against the content contract.
 // Node 22, no dependencies. Run: node scripts/check-data.mjs [--online]
 // --online also re-checks every YouTube id through the oEmbed endpoint, and checks
 // that every 360° panorama video reports a spherical projection on its watch page.
 import { readFileSync, existsSync, openSync, readSync, closeSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CITY, dataPath, dataRel } from './city-lib.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// Node 22, no dependencies. --city <id> picks the city (default braga).
+if (CITY.id !== 'braga' && !existsSync(CITY.landmarksPath)) {
+  console.log(`no landmarks yet for ${CITY.id}`);
+  process.exit(0);
+}
 const ONLINE = process.argv.includes('--online');
 const errors = [];
 const warns = [];
 const err = (where, msg) => errors.push(`${where}: ${msg}`);
 const warn = (where, msg) => warns.push(`${where}: ${msg}`);
 
-const readJson = p => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
+const readJson = p => JSON.parse(readFileSync(p, 'utf8'));
 const isStr = v => typeof v === 'string' && v.trim().length > 0;
 const isUrl = v => isStr(v) && /^https?:\/\/\S+$/.test(v);
 
@@ -64,7 +70,7 @@ function checkImage(where, src, { maxBytes, pano } = {}) {
 }
 
 // ---------- landmarks ----------
-const landmarks = readJson('data/landmarks.json');
+const landmarks = readJson(CITY.landmarksPath);
 if (!Array.isArray(landmarks)) throw new Error('landmarks.json must be an array');
 const ids = new Set();
 const BASE = ['id', 'name_pt', 'name_ru', 'category', 'lat', 'lon', 'year', 'short_ru', 'long_ru', 'model', 'image', 'image_credit'];
@@ -167,7 +173,7 @@ for (const l of landmarks) {
 }
 
 // ---------- routes ----------
-const routesFile = readJson('data/routes.json');
+const routesFile = readJson(dataPath('routes.json'));
 const routes = routesFile.routes;
 const MODES = new Set(['foot', 'bus', 'funicular', 'taxi']);
 if (!Array.isArray(routes) || routes.length !== 3) err('routes', 'need exactly 3 routes');
@@ -193,7 +199,8 @@ for (const r of routes || []) {
     if (!Array.isArray(g.pts) || g.pts.length < 2) err(gw, 'pts needs at least 2 points');
     else {
       if (g.pts.some(p => !Array.isArray(p) || p.length !== 2 || p.some(x => typeof x !== 'number' || Math.round(x * 1e5) / 1e5 !== x))) err(gw, 'pts must be [lat,lon] rounded to 5 decimals');
-      if (g.pts.some(([la, lo]) => la < 41.4 || la > 41.7 || lo < -8.6 || lo > -8.2)) err(gw, 'pts outside the Braga area');
+      const PAD = 0.05, WB = CITY.wide_bbox;
+      if (g.pts.some(([la, lo]) => la < WB.s - PAD || la > WB.n + PAD || lo < WB.w - PAD || lo > WB.e + PAD)) err(gw, 'pts outside the city area');
       const byId = Object.fromEntries(landmarks.map(l => [l.id, l]));
       const near = (p, l) => Math.hypot((p[0] - l.lat) * 111000, (p[1] - l.lon) * 83000);
       if (byId[g.from] && near(g.pts[0], byId[g.from]) > 400) err(gw, 'first point is far from the start landmark');

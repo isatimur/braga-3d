@@ -5,14 +5,23 @@
 // Usage: npm run check:models
 import { readFileSync } from 'node:fs';
 import { createProjection } from '../src/geo.js';
-import { fitLandmark } from '../src/fit.js';
-import { triangleCount } from '../src/models.js';
+import { existsSync } from 'node:fs';
+import { fitLandmark, setDims } from '../src/fit.js';
+import { triangleCount, loadCityModels } from '../src/models.js';
+import { CITY, dataPath } from './city-lib.mjs';
 
 const MAX_MODEL = 35000;
 const MIN_MODEL = 4000;
 const MAX_TOTAL = 400000;
 
-const load = (f) => JSON.parse(readFileSync(new URL(`../data/${f}`, import.meta.url), 'utf8'));
+// --city <id> picks the city (default braga).
+const load = (f) => JSON.parse(readFileSync(f === 'landmarks.json' ? CITY.landmarksPath : dataPath(f), 'utf8'));
+if (!existsSync(CITY.landmarksPath)) {
+  console.log(`no landmarks yet for ${CITY.id} (${CITY.landmarks_file}); nothing to count`);
+  process.exit(0);
+}
+setDims(existsSync(dataPath('dimensions.json')) ? load('dimensions.json') : {});
+await loadCityModels(CITY.id);
 const list = load('landmarks.json');
 const roads = load('roads.json');
 const footprints = load('footprints.json');

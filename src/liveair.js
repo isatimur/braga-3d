@@ -33,12 +33,15 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { t, locale, language } from './i18n.js';
+import { cityT, cityQuery } from './city.js';
 
 const MAX = 60;
 const POLL_MS = 15e3;
 const POLL_SLOW_MS = 60e3; // OpenSky's anonymous limits
 const RETRY_MS = 120e3; // no endpoint (the dev server) or a failure
-const ENDPOINT = '/api/adsb';
+// api/adsb.js reads the city's aircraft point from cities/<id>.json; Braga
+// sends no query (the CDN caches one answer per city)
+const ENDPOINT = () => `/api/adsb${cityQuery() ? `?${cityQuery()}` : ''}`;
 const PLANE_SCALE = 6;
 const R0 = 700;
 const RMAX = 1800;
@@ -574,6 +577,7 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
     const q = new URLSearchParams();
     if (call) q.set('callsign', call);
     if (hex) q.set('hex', hex);
+    if (cityQuery()) q.set('city', cityQuery().slice(5));
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 12e3);
     try {
@@ -607,7 +611,7 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
     const my = ctl;
     const timer = setTimeout(() => my.abort(), 9000);
     try {
-      const r = await fetch(ENDPOINT, { signal: my.signal, cache: 'no-store' });
+      const r = await fetch(ENDPOINT(), { signal: my.signal, cache: 'no-store' });
       const type = r.headers.get('content-type') || '';
       // the Vite dev server answers /api/adsb with index.html and 200
       if (!type.includes('json')) throw Object.assign(new Error('no /api/adsb endpoint here (dev server?)'), { quiet: true });
@@ -1018,7 +1022,7 @@ export function createLiveAir({ scene, camera, renderer, project, heightAt, datu
         }
         const more = total - list.length;
         const flights = list.length ? ` · ${list.join(', ')}${more > 0 ? ` +${more}` : ''}` : '';
-        badgeText = `${t('Над Брагой сейчас:')} ${total} ${plural(total, ['самолёт', 'самолёта', 'самолётов'])}${flights}${src ? ` · ${src === 'opensky' ? 'OpenSky' : src}` : ''}`;
+        badgeText = `${cityT('Над {city_ins} сейчас:')} ${total} ${plural(total, ['самолёт', 'самолёта', 'самолётов'])}${flights}${src ? ` · ${src === 'opensky' ? 'OpenSky' : src}` : ''}`;
       }
       return badgeText;
     }

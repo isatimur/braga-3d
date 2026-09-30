@@ -29,9 +29,11 @@
 // Caching: each part 10 min per key in this instance, a failure 60 s; the
 // reply carries public, max-age=600 (60 when ok: false), so the CDN shares
 // it between visitors too.
-const LAT = 41.55;
-const LON = -8.42;
-const UA = 'braga-3d.com live map (https://braga-3d.com)';
+// The city (its aircraft point, for the plausibility test and the routeset
+// query) comes from cities/<id>.json via ?city=<id>, default braga
+// (41.55 / -8.42). Every helper takes the config as `cfg`.
+import { cityConfig, userAgent } from './_city.js';
+
 const TIMEOUT_MS = 3500;
 const TTL_MS = 10 * 60e3;
 const FAIL_TTL_MS = 60e3;
@@ -44,11 +46,11 @@ const HEX_RE = /^[0-9a-f]{6}$/;
 // A miss: the upstream answered, it just does not know this key.
 class Miss extends Error {}
 
-async function http(url, init = {}) {
+async function http(url, init = {}, cfg = null) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {
-    const r = await fetch(url, { ...init, signal: ctl.signal, headers: { accept: 'application/json', 'user-agent': UA, ...(init.headers || {}) } });
+    const r = await fetch(url, { ...init, signal: ctl.signal, headers: { accept: 'application/json', 'user-agent': userAgent(cfg), ...(init.headers || {}) } });
     if (r.status === 404) throw new Miss('404');
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const text = await r.text();
@@ -66,8 +68,9 @@ export function haversineKm(la1, lo1, la2, lo2) {
   const a = Math.sin(((la2 - la1) * RAD) / 2) ** 2 + Math.cos(la1 * RAD) * Math.cos(la2 * RAD) * Math.sin(((lo2 - lo1) * RAD) / 2) ** 2;
   return 12742 * Math.asin(Math.min(1, Math.sqrt(a)));
 }
-// the least distance from Braga to the great circle segment a -> b (sampled)
-function legDistanceKm(a, b) {
+// the least distance from the city to the great circle segment a -> b (sampled)
+function legDistanceKm(a, b, cfg) {
+  const { lat: LAT, lon: LON } = cfg.aircraft;
   const p1 = [a.lat * RAD, a.lon * RAD];
   const p2 = [b.lat * RAD, b.lon * RAD];
   const v = (p) => [Math.cos(p[0]) * Math.cos(p[1]), Math.cos(p[0]) * Math.sin(p[1]), Math.sin(p[0])];
@@ -85,14 +88,14 @@ function legDistanceKm(a, b) {
   }
   return best;
 }
-// A multi-stop route (A-B-C): the leg that passes nearest Braga. null when
-// no leg passes within PLAUSIBLE_KM (a stale or wrong route).
-function pickLeg(airports) {
+// A multi-stop route (A-B-C): the leg that passes nearest the city. null
+// when no leg passes within PLAUSIBLE_KM (a stale or wrong route).
+function pickLeg(airports, cfg) {
   const ok = airports.filter((a) => Number.isFinite(a.lat) && Number.isFinite(a.lon));
   if (ok.length < 2) return null;
   let best = null;
   for (let i = 0; i + 1 < ok.length; i++) {
-    const d = legDistanceKm(ok[i], ok[i + 1]);
+    const d = legDistanceKm(ok[i], ok[i + 1], cfg);
     if (!best || d < best.d) best = { d, origin: ok[i], destination: ok[i + 1] };
   }
   return best && best.d <= PLAUSIBLE_KM ? { origin: best.origin, destination: best.destination } : null;
@@ -103,7 +106,7 @@ const num = (x) => (Number.isFinite(+x) && x !== null && x !== '' ? +x : null);
 
 // ---------------------------------------------------------------- sources
 // adsb.lol / adsb.im routeset and the standing data share one airport shape
-function fromVrs(j, src) {
+function fromVrs(j, src, cfg) {
   const r = Array.isArray(j) ? j[0] : j;
   if (!r || typeof r !== 'object') throw new Error('bad answer');
   if (!Array.isArray(r._airports) || r._airports.length < 2 || !str(r.airport_codes)) throw new Miss('unknown');
@@ -117,23 +120,28 @@ function fromVrs(j, src) {
     lat: num(a.lat),
     lon: num(a.lon),
   }));
-  const leg = pickLeg(airports);
+  const leg = pickLeg(airports, cfg);
   if (!leg) throw new Miss('implausible');
   return { src, ...leg };
 }
 
-const routeset = (host, src) => async (callsign) =>
+const routeset = (host, src) => async (callsign, cfg) =>
   fromVrs(
-    await http(`https://${host}/api/0/routeset`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ planes: [{ callsign, lat: LAT, lng: LON }] }),
-    }),
+    await http(
+      `https://${host}/api/0/routeset`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ planes: [{ callsign, lat: cfg.aircraft.lat, lng: cfg.aircraft.lon }] }),
+      },
+      cfg,
+    ),
     src,
+    cfg,
   );
 
-async function standing(callsign) {
-  return fromVrs(await http(`https://vrs-standing-data.adsb.lol/routes/${callsign.slice(0, 2)}/${callsign}.json`), 'adsb.lol');
+async function standing(callsign, cfg) {
+  return fromVrs(await http(`https://vrs-standing-data.adsb.lol/routes/${callsign.slice(0, 2)}/${callsign}.json`, {}, cfg), 'adsb.lol', cfg);
 }
 
 function airportDb(a) {
@@ -142,8 +150,8 @@ function airportDb(a) {
 }
 
 // adsbdb callsign: the airline and the IATA number, and a route of its own
-async function adsbdbCallsign(callsign) {
-  const j = await http(`https://api.adsbdb.com/v0/callsign/${callsign}`);
+async function adsbdbCallsign(callsign, cfg) {
+  const j = await http(`https://api.adsbdb.com/v0/callsign/${callsign}`, {}, cfg);
   const f = j?.response?.flightroute;
   if (!f || typeof f !== 'object') throw new Miss('unknown');
   const al = f.airline || null;
@@ -154,12 +162,12 @@ async function adsbdbCallsign(callsign) {
   };
   const o = airportDb(f.origin);
   const d = airportDb(f.destination);
-  const leg = o && d ? pickLeg([o, d]) : null;
+  const leg = o && d ? pickLeg([o, d], cfg) : null;
   return { flight, route: leg ? { src: 'adsbdb', ...leg } : null };
 }
 
-async function adsbdbAircraft(hex) {
-  const j = await http(`https://api.adsbdb.com/v0/aircraft/${hex}`);
+async function adsbdbAircraft(hex, cfg) {
+  const j = await http(`https://api.adsbdb.com/v0/aircraft/${hex}`, {}, cfg);
   const a = j?.response?.aircraft;
   if (!a || typeof a !== 'object') throw new Miss('unknown');
   return {
@@ -200,12 +208,18 @@ function cached(key, fn) {
 // timeouts (7 s), inside the function's 10 s.
 const lolRouteset = routeset('api.adsb.lol', 'adsb.lol');
 const imRouteset = routeset('adsb.im', 'adsb.im');
-async function routeChain(callsign, dbRoute) {
+// (cache keys: Braga's as before; another city gets its own, the leg
+// picked depends on the city)
+const keyOf = (cfg, k) => (cfg.id === 'braga' ? k : `${cfg.id}:${k}`);
+async function routeChain(callsign, dbRoute, cfg) {
   let answered = false;
-  const first = await cached(`adsb.lol-routeset:${callsign}`, () => lolRouteset(callsign));
+  const first = await cached(keyOf(cfg, `adsb.lol-routeset:${callsign}`), () => lolRouteset(callsign, cfg));
   if (first.value) return first;
   if (first.ok) answered = true;
-  const rest = await Promise.all([cached(`adsb.im-routeset:${callsign}`, () => imRouteset(callsign)), cached(`adsb.lol-standing:${callsign}`, () => standing(callsign))]);
+  const rest = await Promise.all([
+    cached(keyOf(cfg, `adsb.im-routeset:${callsign}`), () => imRouteset(callsign, cfg)),
+    cached(keyOf(cfg, `adsb.lol-standing:${callsign}`), () => standing(callsign, cfg)),
+  ]);
   for (const r of rest) {
     if (r.ok) answered = true;
     if (r.value) return r;
@@ -217,12 +231,12 @@ async function routeChain(callsign, dbRoute) {
 }
 
 // The core, without the HTTP wrapper (node tests call it directly).
-export async function lookupRoute(callsign, hex) {
-  const db = callsign ? cached(`adsbdb-callsign:${callsign}`, () => adsbdbCallsign(callsign)) : null;
+export async function lookupRoute(callsign, hex, cfg = cityConfig('braga')) {
+  const db = callsign ? cached(keyOf(cfg, `adsbdb-callsign:${callsign}`), () => adsbdbCallsign(callsign, cfg)) : null;
   const [route, dbr, ac] = await Promise.all([
-    callsign ? routeChain(callsign, db) : null,
+    callsign ? routeChain(callsign, db, cfg) : null,
     db,
-    hex ? cached(`adsbdb-aircraft:${hex}`, () => adsbdbAircraft(hex)) : null,
+    hex ? cached(`adsbdb-aircraft:${hex}`, () => adsbdbAircraft(hex, cfg)) : null,
   ]);
   const parts = [route, dbr, ac].filter(Boolean);
   return {
@@ -258,20 +272,22 @@ export default async function handler(req, res) {
   const keys = q ? [...q.keys()] : [];
   const callsign = q?.get('callsign') ?? null;
   const hex = q?.get('hex') ?? null;
+  const cfg = q?.has('city') ? cityConfig(q.get('city')) : cityConfig('braga');
   const bad =
     !q ||
-    keys.some((k) => k !== 'callsign' && k !== 'hex') ||
+    !cfg ||
+    keys.some((k) => k !== 'callsign' && k !== 'hex' && k !== 'city') ||
     new Set(keys).size !== keys.length ||
     (!callsign && !hex) ||
     (callsign !== null && !CALLSIGN_RE.test(callsign)) ||
     (hex !== null && !HEX_RE.test(hex));
   if (bad) {
-    send(400, 'public, max-age=3600, s-maxage=86400', { error: 'callsign=[A-Z0-9]{2,8} and/or hex=[0-9a-f]{6}' });
+    send(400, 'public, max-age=3600, s-maxage=86400', { error: 'callsign=[A-Z0-9]{2,8} and/or hex=[0-9a-f]{6}, optional city=<known id>' });
     return;
   }
   let out;
   try {
-    out = await lookupRoute(callsign, hex);
+    out = await lookupRoute(callsign, hex, cfg);
   } catch {
     out = { ok: false, callsign, hex, flight: null, route: null, aircraft: null };
   }

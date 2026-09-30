@@ -16,13 +16,17 @@
 // the «sky» group of the header (the tools sheet on phones).
 import { t, locale } from './i18n.js';
 import { mountTool } from './ui.js';
+import { CITY, cityT } from './city.js';
 
-export const BRAGA = { lat: 41.5503, lon: -8.42 };
-const TZ = 'Europe/Lisbon';
-const API = `https://api.open-meteo.com/v1/forecast?latitude=${BRAGA.lat}&longitude=${BRAGA.lon}&current=temperature_2m,weather_code,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,is_day&timezone=Europe%2FLisbon`;
+// The weather point and the zone come from cities/<id>.json (weather,
+// timezone); read lazily, the config loads before start().
+const HERE = () => CITY.weather || CITY.origin;
+const tz = () => CITY.timezone || 'Europe/Lisbon';
+const API = () =>
+  `https://api.open-meteo.com/v1/forecast?latitude=${HERE().lat}&longitude=${HERE().lon}&current=temperature_2m,weather_code,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,is_day&timezone=${encodeURIComponent(tz())}`;
 const SUN_EVERY = 60e3;
 const WEATHER_EVERY = 10 * 60e3;
-const CACHE_KEY = 'braga-live-weather';
+const CACHE_KEY = () => `${CITY.id}-live-weather`;
 
 // ------------------------------------------------------------ solar position
 const rad = (d) => (d * Math.PI) / 180;
@@ -49,7 +53,7 @@ const century = (ms) => (ms / 86400000 + 2440587.5 - 2451545) / 36525;
 
 // Sun azimuth (compass degrees, 0 north) and elevation (degrees, with
 // atmospheric refraction) at an instant.
-export function sunPosition(date = new Date(), lat = BRAGA.lat, lon = BRAGA.lon) {
+export function sunPosition(date = new Date(), lat = HERE().lat, lon = HERE().lon) {
   const ms = date.getTime();
   const { decl, eqTime } = sunParams(century(ms));
   const minutesUtc = (((ms / 60000) % 1440) + 1440) % 1440;
@@ -75,8 +79,8 @@ export function sunPosition(date = new Date(), lat = BRAGA.lat, lon = BRAGA.lon)
 }
 
 // Sunrise and sunset (Date) of the Lisbon calendar day that holds `date`.
-export function sunTimes(date = new Date(), lat = BRAGA.lat, lon = BRAGA.lon) {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date).map((p) => [p.type, p.value]));
+export function sunTimes(date = new Date(), lat = HERE().lat, lon = HERE().lon) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date).map((p) => [p.type, p.value]));
   const day = Date.UTC(+parts.year, +parts.month - 1, +parts.day);
   const phi = rad(lat);
   const at = (sign) => {
@@ -164,8 +168,8 @@ function mountControls({ onWeather, onLive }) {
   if (!bar) return null;
   if (!document.getElementById('braga-life-css')) document.head.append(el('style', { id: 'braga-life-css' }, CSS));
 
-  const live = el('button', { type: 'button', class: 'tool life-live', id: 'live-toggle', 'aria-pressed': 'false', title: t('Реальное солнце и погода в Браге сейчас') });
-  live.append(el('span', { class: 'live-dot', 'aria-hidden': 'true' }), document.createTextNode(t('Сейчас в Браге')));
+  const live = el('button', { type: 'button', class: 'tool life-live', id: 'live-toggle', 'aria-pressed': 'false', title: cityT('Реальное солнце и погода в {city_prep} сейчас') });
+  live.append(el('span', { class: 'live-dot', 'aria-hidden': 'true' }), document.createTextNode(cityT('Сейчас в {city_prep}')));
 
   const wrap = el('div', { class: 'life-weather' });
   const toggle = el('button', { type: 'button', class: 'tool', id: 'weather-toggle', 'aria-expanded': 'false', 'aria-controls': 'weather-menu' });
@@ -174,7 +178,7 @@ function mountControls({ onWeather, onLive }) {
   const menu = el('div', { class: 'weather-menu glass', id: 'weather-menu', role: 'group', 'aria-label': t('Погода') });
   menu.hidden = true;
   const buttons = {};
-  const liveBtn = el('button', { type: 'button', 'data-weather': 'live', 'aria-pressed': 'false' }, t('как сейчас в Браге'));
+  const liveBtn = el('button', { type: 'button', 'data-weather': 'live', 'aria-pressed': 'false' }, cityT('как сейчас в {city_prep}'));
   menu.append(liveBtn, el('div', { class: 'weather-sep', 'aria-hidden': 'true' }));
   buttons.live = liveBtn;
   for (const [k, label] of Object.entries(WEATHER_LABEL)) {
@@ -361,7 +365,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
 
   function cachedReading() {
     try {
-      const c = JSON.parse(read(CACHE_KEY) || 'null');
+      const c = JSON.parse(read(CACHE_KEY()) || 'null');
       if (c && Date.now() - c.at < 3 * 3600e3) return { ...c, stale: true };
     } catch {
       // a broken cache is ignored
@@ -377,7 +381,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
     try {
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 8000);
-      const r = await fetch(API, { signal: ctl.signal });
+      const r = await fetch(API(), { signal: ctl.signal });
       clearTimeout(timer);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
@@ -394,7 +398,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
         at: Date.now(),
         stale: false,
       };
-      write(CACHE_KEY, JSON.stringify(reading));
+      write(CACHE_KEY(), JSON.stringify(reading));
       status = 'ok';
     } catch (e) {
       // offline or blocked: keep the sun, reuse a recent reading if any
@@ -417,7 +421,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
     updateBadge();
   }
 
-  const fmt = () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ });
+  const fmt = () => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz() });
   function updateBadge() {
     if (!ui || !live) return;
     const n = now();
@@ -429,7 +433,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
       const tomorrow = sunTimes(new Date(n.getTime() + 86400e3));
       next = `${t('восход в')} ${fmt().format(tomorrow.sunrise)}`;
     }
-    const parts = [t('Брага сейчас')];
+    const parts = [cityT('{city} сейчас')];
     if (reading && Number.isFinite(reading.temp)) parts.push(`${Math.round(reading.temp)}°`);
     parts.push(next);
     if (reading) parts.push(t(weatherFromCode(reading.code, reading.cloud, reading.precip).label));
@@ -530,7 +534,7 @@ export function createLive({ atmosphere, weather, reducedMotion = false, onPersi
 
 // "+01:00" / "+00:00": the Lisbon UTC offset at an instant
 function lisbonOffset(d) {
-  const p = new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: 'shortOffset' }).formatToParts(isNaN(d) ? new Date() : d).find((x) => x.type === 'timeZoneName')?.value || 'GMT';
+  const p = new Intl.DateTimeFormat('en-US', { timeZone: tz(), timeZoneName: 'shortOffset' }).formatToParts(isNaN(d) ? new Date() : d).find((x) => x.type === 'timeZoneName')?.value || 'GMT';
   const m = /GMT([+-]\d+)?(?::(\d\d))?/.exec(p);
   const h = m?.[1] ? +m[1] : 0;
   return `${h < 0 ? '-' : '+'}${String(Math.abs(h)).padStart(2, '0')}:${m?.[2] || '00'}`;

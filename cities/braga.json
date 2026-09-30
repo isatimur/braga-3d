@@ -1,18 +1,36 @@
 {
   "id": "braga",
   "name": { "pt": "Braga", "en": "Braga", "ru": "Брага" },
+  "name_ru_cases": { "gen": "Браги", "prep": "Браге", "ins": "Брагой" },
   "domain": "https://braga-3d.com",
+  "hostnames": ["braga-3d.com", "www.braga-3d.com", "braga-3d.vercel.app"],
   "origin": { "lat": 41.5503, "lon": -8.42 },
   "core_bbox": { "s": 41.52, "w": -8.49, "n": 41.575, "e": -8.36 },
   "wide_bbox": { "s": 41.47, "w": -8.55, "n": 41.63, "e": -8.30 },
-  "terrain": { "dataset": "eudem25m", "spacing_m": 110, "datum_note": "y=0 at the centre DEM height" },
+  "tiles": { "core_nx": 11, "core_ny": 6, "ext": { "w": 5, "e": 5, "s": 6, "n": 6 } },
+  "terrain": {
+    "dataset": "eudem25m",
+    "spacing_m": 110,
+    "datum_note": "y=0 at the centre DEM height",
+    "lattice": { "cols": 90, "rows": 60, "ext": { "w": 41, "e": 41, "s": 59, "n": 59 } },
+    "probes": { "centre": [41.5503, -8.42], "bom-jesus": [41.55494, -8.37703], "sameiro": [41.54182, -8.36954] }
+  },
   "timezone": "Europe/Lisbon",
   "locale_default": "ru",
   "season_default": "auto",
-  "transit": { "gtfs_url": "https://www.tub.pt/developer/gtfs/feed/tub.zip", "operator": "TUB", "gtfs_rt": null },
+  "transit": { "gtfs_url": "https://www.tub.pt/developer/gtfs/feed/tub.zip", "operator": "TUB", "operator_long": "Transportes Urbanos de Braga", "catalogue": "https://dados.gov.pt/pt/datasets/gtfs-transportes-urbanos-de-braga/", "gtfs_rt": null },
   "aircraft": { "lat": 41.55, "lon": -8.42, "radius_nm": 40 },
   "weather": { "lat": 41.5503, "lon": -8.42 },
+  "traffic": {
+    "car_free": [[41.5499, -8.4272, 230], [41.5513, -8.4232, 60]],
+    "axes_bbox": { "s": 41.50, "w": -8.51, "n": 41.59, "e": -8.35 },
+    "axes_base": [41.5, -8.5]
+  },
+  "nature": { "hills": [{ "lat": 41.5545, "lon": -8.3775, "r": 1500, "name": "Bom Jesus do Monte" }, { "lat": 41.542, "lon": -8.3695, "r": 1500, "name": "Sameiro" }] },
   "start_view": { "landmark": "se-braga", "narrow_landmark": "se-braga" },
+  "ms_centre": [41.5498, -8.427],
+  "data_dir": "data",
   "landmarks_file": "data/landmarks.json",
-  "notes": "Reference city. Every constant here used to be hard-coded; the refactor makes src/ and scripts/ read this file."
+  "og_image": "/og/braga.jpg",
+  "notes": "Reference city. Every constant here used to be hard-coded; src/ and scripts/ read this file. tiles/terrain.lattice are the historical grids: keep them so data/terrain.json and data/tiles stay bit for bit the same."
 }

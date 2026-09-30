@@ -26,7 +26,13 @@ import * as THREE from 'three';
 import { buildModel, specFor, builderRule } from './models.js';
 import { S } from './geo.js';
 import { bbox, edges, clean, inside } from './models/geom.js';
-import DIMS from '../data/dimensions.json' with { type: 'json' };
+
+// <data_dir>/dimensions.json: set by data.js (the app) or the script
+// (check-fit.mjs, count-tris.mjs) before the first fitLandmark().
+let DIMS = {};
+export function setDims(dims) {
+  DIMS = dims && typeof dims === 'object' ? dims : {};
+}
 
 const DEG = Math.PI / 180;
 export const DEVIATION_WARN = 0.1;

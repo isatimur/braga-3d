@@ -15,7 +15,14 @@
 //     replaces the profile's guess. No key ships with the map.
 //
 // DOM-free apart from the opt-in key helper; update() runs once a second.
-import AXES from '../data/traffic-axes.json';
+import { CITY } from './city.js';
+
+// <data_dir>/traffic-axes.json (scripts/fetch-traffic-axes.mjs), set by
+// main.js from loadData() before createTrafficModel() runs.
+let AXES = null;
+export function setTrafficAxes(doc) {
+  AXES = doc && typeof doc === 'object' ? doc : null;
+}
 
 // Preset hours (the four time-of-day presets are looks, not clock times)
 export const PRESET_HOUR = { morning: 8.5, day: 13, sunset: 19, night: 23.5 };
@@ -34,11 +41,11 @@ export function demandAt(hour, weekend) {
 
 // Lisbon wall clock at an instant, into a reused record:
 // { hour (fractional), secs (since midnight), weekday (0 Mon .. 6 Sun), ymd }
-const TZ = 'Europe/Lisbon';
+// (the city's zone, CITY.timezone: Europe/Lisbon for the Portuguese cities)
 let clockFmt = null;
 const WD = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 export function lisbonClock(date, out = { hour: 0, secs: 0, weekday: 0, ymd: 0 }) {
-  clockFmt ||= new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hourCycle: 'h23', weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  clockFmt ||= new Intl.DateTimeFormat('en-GB', { timeZone: CITY.timezone || 'Europe/Lisbon', hourCycle: 'h23', weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   let h = 0;
   let m = 0;
   let s = 0;
@@ -71,10 +78,12 @@ export function decodeAxes(project) {
   AXIS_IDS.forEach((id, k) => {
     const code = AXES?.axes?.[id];
     if (!code) return;
+    // integers in 1e-4 deg from `base` (the old Braga file has none: 41.5 N, -8.5 E)
+    const [bLat, bLon] = Array.isArray(AXES.base) ? AXES.base : [41.5, -8.5];
     for (const line of code.split(';')) {
       const pts = line.split(' ').map((q) => {
         const [a, b] = q.split(',');
-        return [41.5 + +a / 1e4, -8.5 + +b / 1e4];
+        return [bLat + +a / 1e4, bLon + +b / 1e4];
       });
       ll.push({ axis: k + 1, pts });
       for (let i = 1; i < pts.length; i++) {
@@ -170,7 +179,7 @@ export function createTrafficModel({ max, getNow, isLive, getPreset, project, mo
     for (let a = 1; a <= 3; a++) {
       const pts = axes.lines.filter((l) => l.axis === a).flatMap((l) => l.pts);
       const near = pts
-        .map((p) => ({ p, d: Math.hypot(p[0] - 41.5503, (p[1] + 8.42) * 0.75) }))
+        .map((p) => ({ p, d: Math.hypot(p[0] - CITY.origin.lat, (p[1] - CITY.origin.lon) * 0.75) }))
         .filter((q) => q.d < 0.035)
         .sort((x, y) => x.d - y.d);
       const pick = near.length ? near : pts.map((p) => ({ p }));

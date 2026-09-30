@@ -54,14 +54,16 @@ export function initLanguage() {
   }
 }
 
-export async function loadTranslations(lang = language) {
-  if (lang === 'en') {
-    return await import('./locales/en.js');
-  }
-  if (lang === 'pt') {
-    return await import('./locales/pt.js');
-  }
-  return null;
+// Landmark and route texts per city and language: src/locales/<lang>.js
+// for Braga (the original files), src/locales/<lang>.<city>.js for the
+// others. Russian is the source language in the data files. A city without
+// a file gets null: the data's own (Russian / Portuguese) names show.
+const LOCALES = import.meta.glob('./locales/{en,pt}*.js');
+export async function loadTranslations(lang = language, city = 'braga') {
+  if (lang !== 'en' && lang !== 'pt') return null;
+  const file = city === 'braga' ? `./locales/${lang}.js` : `./locales/${lang}.${city}.js`;
+  if (!LOCALES[file]) return null;
+  return await LOCALES[file]();
 }
 
 const CYRILLIC = /[А-Яа-яЁё]/;

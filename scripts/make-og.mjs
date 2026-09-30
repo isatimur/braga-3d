@@ -3,20 +3,28 @@
 //   node scripts/make-og.mjs            # everything
 //   node scripts/make-og.mjs --pages    # public/p/<id>/index.html only (fast, no browser)
 //   node scripts/make-og.mjs --icons    # public/icons/*.png
-//   node scripts/make-og.mjs --og       # public/og/braga.jpg + public/og/<id>.jpg
+//   node scripts/make-og.mjs --og       # public/og/<city>.jpg + public/og/<id>.jpg
 //   node scripts/make-og.mjs --og --only=se-braga,hero
+//   add --city <id> for another city (default braga)
 //
 // The OG renders need the app running (default: the Vite dev server,
-// BRAGA_URL=http://localhost:5173). They use a headless Chromium with
+// CITY_URL or BRAGA_URL=http://localhost:5173). They use a headless Chromium with
 // SwiftShader, like the other screenshot scripts. PLAYWRIGHT_CORE and
 // CHROME_PATH override the paths below.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
+import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { CITY } from './city-lib.mjs';
 
+// --city <id> picks the city (default braga). Braga reads src/locales/{en,pt}.js,
+// other cities src/locales/{en,pt}.<id>.js (an absent file counts as empty).
 const ROOT = resolve(import.meta.dirname, '..');
-const SITE = 'https://braga-3d.com';
-const BASE = process.env.BRAGA_URL || 'http://localhost:5173';
+if (!CITY.domain) console.warn(`warning: cities/${CITY.id}.json has no domain; share pages use http://localhost:5173`);
+const SITE = CITY.domain || 'http://localhost:5173';
+const CITY_NAME = `${CITY.name.en} 3D`;
+const BASE = process.env.CITY_URL || process.env.BRAGA_URL || 'http://localhost:5173';
+const CITY_QUERY = CITY.id === 'braga' ? '' : `&city=${CITY.id}`;
 const PLAYWRIGHT_CORE =
   process.env.PLAYWRIGHT_CORE ||
   '/Users/timur_isachenko/.nvm/versions/node/v22.22.0/lib/node_modules/@playwright/cli/node_modules/playwright-core/index.mjs';
@@ -29,10 +37,18 @@ const flag = (f) => args.includes(`--${f}`);
 const only = (args.find((a) => a.startsWith('--only=')) || '').slice(7).split(',').filter(Boolean);
 const all = !flag('pages') && !flag('icons') && !flag('og');
 
-const landmarks = JSON.parse(readFileSync(resolve(ROOT, 'data/landmarks.json'), 'utf8'));
+if (!existsSync(CITY.landmarksPath)) {
+  console.log(`no landmarks yet for ${CITY.id}`);
+  process.exit(0);
+}
+const landmarks = JSON.parse(readFileSync(CITY.landmarksPath, 'utf8'));
 const list = Array.isArray(landmarks) ? landmarks : landmarks.landmarks;
-const en = (await import(pathToFileURL(resolve(ROOT, 'src/locales/en.js')).href)).landmarks || {};
-const pt = (await import(pathToFileURL(resolve(ROOT, 'src/locales/pt.js')).href)).landmarks || {};
+const localeLandmarks = async (lang) => {
+  const file = resolve(ROOT, CITY.id === 'braga' ? `src/locales/${lang}.js` : `src/locales/${lang}.${CITY.id}.js`);
+  return existsSync(file) ? (await import(pathToFileURL(file).href)).landmarks || {} : {};
+};
+const en = await localeLandmarks('en');
+const pt = await localeLandmarks('pt');
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -54,7 +70,7 @@ function sharePage(l) {
   const n = names(l);
   const short = { en: en[l.id]?.short || '', pt: pt[l.id]?.short || '', ru: l.short_ru || '' };
   const uniq = [...new Set([n.pt, n.en, n.ru])];
-  const title = `${uniq.join(' · ')} — Braga 3D`;
+  const title = `${uniq.join(' · ')} — ${CITY_NAME}`;
   const desc = short.en || short.pt || short.ru;
   const url = `${SITE}/p/${l.id}/`;
   const img = `${SITE}/og/${l.id}.jpg`;
@@ -68,7 +84,7 @@ function sharePage(l) {
     <link rel="canonical" href="${url}" />
     <meta name="theme-color" content="#14110d" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Braga 3D" />
+    <meta property="og:site_name" content="${esc(CITY_NAME)}" />
     <meta property="og:title" content="${esc(title)}" />
     <meta property="og:description" content="${esc(desc)}" />
     <meta property="og:url" content="${url}" />
@@ -195,6 +211,7 @@ export class ErrorOverlay extends HTMLElement {}`;
 // sanctuary and `up` above the ground, `side` to its right; the target is
 // `ahead` of it toward the city (kept close: far targets switch the roads
 // to their thick overview glow).
+const HERO_FROM = process.env.CITY_HERO_FROM || 'bom-jesus'; // Braga-specific default
 const HERO = JSON.parse(process.env.BRAGA_HERO || 'null') || { back: 120, up: 38, side: 35, ahead: 120, lift: 48 };
 
 async function makeOg() {
@@ -209,7 +226,7 @@ async function makeOg() {
     if (m.type() === 'error') errors.push(t.slice(0, 300));
   });
   page.on('pageerror', (e) => errors.push(`[pageerror] ${e.message}`));
-  await page.goto(`${BASE}/?intro=0&fx=1&ui=0&lang=en#time=sunset`, { waitUntil: 'load' });
+  await page.goto(`${BASE}/?intro=0&fx=1&ui=0&lang=en${CITY_QUERY}#time=sunset`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__braga?.ready && window.__braga.postcard, null, { timeout: 240000 });
   await page.waitForTimeout(2500);
   const shoot = async (name) => {
@@ -219,10 +236,12 @@ async function makeOg() {
   };
 
   if (!only.length || only.includes('hero')) {
-    await page.evaluate((hero) => {
+    // The hero looks from `from` (Braga: the Bom Jesus sanctuary) toward the start landmark.
+    const heroOk = await page.evaluate(({ hero, from, to }) => {
       const d = window.__braga;
-      const bj = d.landmarks.find((l) => l.id === 'bom-jesus');
-      const se = d.landmarks.find((l) => l.id === 'se-braga');
+      const bj = d.landmarks.find((l) => l.id === from);
+      const se = d.landmarks.find((l) => l.id === to);
+      if (!bj || !se) return false;
       const V = d.camera.position.constructor;
       const dir = new V(se.x - bj.x, 0, se.z - bj.z).normalize(); // toward the city
       const right = new V(-dir.z, 0, dir.x);
@@ -231,9 +250,12 @@ async function makeOg() {
       const pos = new V(bj.x, 0, bj.z).addScaledVector(dir, -hero.back).addScaledVector(right, hero.side);
       pos.y = d.heightAt(pos.x, pos.z) + hero.up;
       d.rig.flyTo(pos, tgt, 0.3);
-    }, HERO);
-    await page.waitForTimeout(3500);
-    await shoot('braga');
+      return true;
+    }, { hero: HERO, from: HERO_FROM, to: CITY.start_view?.landmark });
+    if (heroOk) {
+      await page.waitForTimeout(3500);
+      await shoot(CITY.id);
+    } else console.warn(`  hero: landmark ${HERO_FROM} or ${CITY.start_view?.landmark} missing, skipped`);
   }
   for (const l of list) {
     if (only.length && !only.includes(l.id)) continue;

@@ -9,9 +9,19 @@
 // Usage: node scripts/check-fit.mjs [--allow-legacy]
 import { readFileSync } from 'node:fs';
 import { createProjection, S } from '../src/geo.js';
-import { fitLandmark, padFor, shrinkCheck, DEVIATION_FAIL, SHRINK_MIN } from '../src/fit.js';
+import { fitLandmark, padFor, shrinkCheck, DEVIATION_FAIL, SHRINK_MIN, setDims } from '../src/fit.js';
+import { loadCityModels } from '../src/models.js';
+import { CITY, dataPath } from './city-lib.mjs';
+import { existsSync } from 'node:fs';
 
-const load = (f) => JSON.parse(readFileSync(new URL(`../data/${f}`, import.meta.url), 'utf8'));
+// --city <id> picks the city (default braga).
+const load = (f) => JSON.parse(readFileSync(f === 'landmarks.json' ? CITY.landmarksPath : dataPath(f), 'utf8'));
+if (!existsSync(CITY.landmarksPath)) {
+  console.log(`no landmarks yet for ${CITY.id} (${CITY.landmarks_file}); nothing to fit`);
+  process.exit(0);
+}
+setDims(existsSync(dataPath('dimensions.json')) ? load('dimensions.json') : {});
+await loadCityModels(CITY.id);
 const landmarks = load('landmarks.json');
 const roads = load('roads.json');
 const footprints = load('footprints.json');

@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import { S } from './geo.js';
 import { assetUrl } from './data.js';
+import { dataPath } from './city.js';
 import { groundAxes } from './scene.js';
 import { BUILDING_UNIFORMS, createBuildingMaterial, extrudeBuilding } from './buildings.js';
 
@@ -389,14 +390,14 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
   async function startCore() {
     let doc;
     try {
-      const res = await fetch(assetUrl('data/buildings-ms.json'));
+      const res = await fetch(assetUrl(dataPath('buildings-ms.json')));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (!(res.headers.get('content-type') || '').includes('json')) throw new Error('not JSON');
       doc = await res.json();
       if (!Array.isArray(doc?.buildings)) throw new Error('no buildings[]');
     } catch (e) {
       stats.errors++;
-      console.warn(`[braga] ms: data/buildings-ms.json unavailable (${e.message}); no MS buildings in the core`);
+      console.warn(`[braga] ms: ${dataPath('buildings-ms.json')} unavailable (${e.message}); no MS buildings in the core`);
       coreDone = true;
       return;
     }
@@ -455,14 +456,14 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
   async function startRing() {
     let doc;
     try {
-      const res = await fetch(assetUrl('data/tiles-ms/index.json'));
+      const res = await fetch(assetUrl(dataPath('tiles-ms/index.json')));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (!(res.headers.get('content-type') || '').includes('json')) throw new Error('not JSON');
       doc = await res.json();
       if (!Array.isArray(doc?.tiles)) throw new Error('no tiles[]');
     } catch (e) {
       stats.errors++;
-      console.warn(`[braga] ms: data/tiles-ms/index.json unavailable (${e.message}); no MS buildings in the ring`);
+      console.warn(`[braga] ms: ${dataPath('tiles-ms/index.json')} unavailable (${e.message}); no MS buildings in the ring`);
       return;
     }
     for (const t of doc.tiles) {
@@ -470,7 +471,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       const sw = proj.project(s, w);
       const ne = proj.project(n, e);
       const key = `${t.x}_${t.y}`;
-      tiles.set(key, { key, x: t.x, y: t.y, n: t.n, rect: { x0: sw.x, x1: ne.x, zN: ne.z, zS: sw.z }, url: assetUrl(`data/tiles-ms/${key}.json`), state: 'idle', lod: null, near: null, far: null, mesh: null, born: 0, reqId: 0, job: null, prio: 0, tries: 0 });
+      tiles.set(key, { key, x: t.x, y: t.y, n: t.n, rect: { x0: sw.x, x1: ne.x, zN: ne.z, zS: sw.z }, url: assetUrl(dataPath(`tiles-ms/${key}.json`)), state: 'idle', lod: null, near: null, far: null, mesh: null, born: 0, reqId: 0, job: null, prio: 0, tries: 0 });
     }
     stats.ringTotal = tiles.size;
   }

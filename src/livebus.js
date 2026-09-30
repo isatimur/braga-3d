@@ -22,6 +22,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { t } from './i18n.js';
 import { assetUrl } from './data.js';
+import { CITY, dataPath } from './city.js';
 import { createHoverLabel, esc } from './liveair.js';
 import { lisbonClock, PRESET_HOUR, optInKey } from './traffic-model.js';
 
@@ -101,7 +102,7 @@ export function createLiveBus({ scene, camera, renderer, project, heightAt, mobi
   async function load() {
     status = 'loading';
     try {
-      const r = await fetch(assetUrl('data/gtfs/schedule.json'));
+      const r = await fetch(assetUrl(dataPath('gtfs/schedule.json')));
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       if (!(r.headers.get('content-type') || '').includes('json')) throw new Error('not JSON');
       prepare(await r.json());
@@ -359,7 +360,7 @@ export function createLiveBus({ scene, camera, renderer, project, heightAt, mobi
 
   function badge() {
     if (!live?.live || !data) return null;
-    return `${t('Автобусы TUB:')} ${running} ${t('на линиях')} (${t(TUB_RT_URL && rtKey ? 'в реальном времени' : 'по расписанию')})`;
+    return `${t('Автобусы {op}:').replace('{op}', CITY.transit?.operator || 'GTFS')} ${running} ${t('на линиях')} (${t(TUB_RT_URL && rtKey ? 'в реальном времени' : 'по расписанию')})`;
   }
 
   return {

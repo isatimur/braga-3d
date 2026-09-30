@@ -25,6 +25,10 @@ import { createSeasons } from './seasons.js';
 import { createFlyKeys } from './fly.js';
 import { createTiles } from './tiles.js';
 import { createMsBuildings } from './buildings-ms.js';
+import { CITY, loadCity, applyCityShell } from './city.js';
+import { loadCityModels } from './models.js';
+import { setLifeData } from './life.js';
+import { setTrafficAxes } from './traffic-model.js';
 
 initLanguage();
 
@@ -45,6 +49,9 @@ async function start() {
   // data.js returns landmarks and routes already localized
   const { landmarks, routes, roads, status, terrain: terrainData, footprints, buildings } = loaded;
   debug.dataStatus = status;
+  setLifeData(loaded.life);
+  setTrafficAxes(loaded.trafficAxes);
+  if (!landmarks.length) loader.set(0.4, `${CITY.name[language] || CITY.name.en}: ${t('пока без достопримечательностей')}`);
   await nextFrame();
 
   const proj = createProjection(roads.origin, roads.bbox, landmarks, terrainData);
@@ -148,8 +155,12 @@ async function start() {
 
   // Overview: fit Tibães (west) to Sameiro (east), seen from the south.
   // The target sits left of the landmark centre so the map clears the list.
-  const xs = marks.items.map((it) => it.x);
-  const zs = marks.items.map((it) => it.z);
+  // (a city without landmarks yet frames its core bbox instead)
+  const coreBox = roads.bbox || CITY.core_bbox;
+  const coreSW = project(coreBox.s, coreBox.w);
+  const coreNE = project(coreBox.n, coreBox.e);
+  const xs = marks.items.length ? marks.items.map((it) => it.x) : [coreSW.x, coreNE.x];
+  const zs = marks.items.length ? marks.items.map((it) => it.z) : [coreSW.z, coreNE.z];
   const midX = (Math.min(...xs) + Math.max(...xs)) / 2;
   const midZ = (Math.min(...zs) + Math.max(...zs)) / 2;
   const span = Math.max(...xs) - Math.min(...xs);
@@ -161,7 +172,8 @@ async function start() {
   // map strip above the bottom sheet and both sanctuaries clear the header
   // (checked at 390 x 844: cathedral at y 305 of the 47..540 strip).
   const narrow = window.innerWidth <= 900 || window.innerHeight > window.innerWidth;
-  const centre = marks.items.find((it) => it.data?.id === 'se-braga');
+  // (cities/<id>.json start_view.narrow_landmark: the Sé for Braga)
+  const centre = marks.items.find((it) => it.data?.id === (CITY.start_view.narrow_landmark || CITY.start_view.landmark));
   const phone = narrow && centre;
   const homeOffset = phone
     ? new THREE.Vector3().setFromSphericalCoords(span * 0.3, 1.3, -1.55) // camera west, a little south
@@ -967,9 +979,18 @@ async function start() {
   installShare({ renderer, scene, camera, fx, setFx, atmosphere, roadLayer, routeLayer, marks, landmarks, routes, ui, getSize: () => size });
 }
 
-start().catch((err) => {
-  console.error('[braga] start failed', err);
-  const text = document.getElementById('loader-text');
-  if (text) text.textContent = t('Не удалось запустить карту. Нужен браузер с поддержкой WebGL.');
-  document.getElementById('loader')?.classList.add('is-error');
-});
+// The city config first (cities/<id>.json), then its model registry, then
+// the scene. The static shell is Braga's; applyCityShell() renames it.
+loadCity()
+  .then(async (city) => {
+    debug.city = city;
+    applyCityShell();
+    await loadCityModels(city.id);
+    return start();
+  })
+  .catch((err) => {
+    console.error('[braga] start failed', err);
+    const text = document.getElementById('loader-text');
+    if (text) text.textContent = t('Не удалось запустить карту. Нужен браузер с поддержкой WebGL.');
+    document.getElementById('loader')?.classList.add('is-error');
+  });

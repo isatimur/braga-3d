@@ -10,18 +10,17 @@
 //  - facade_faces agrees with facade_azimuth_deg (8-point compass), confidence is high|medium|low.
 // Prints a table and exits 1 on any error.
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { CITY, dataPath } from './city-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const readJson = p => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
+// --city <id> picks the city (default braga).
+const readJson = p => JSON.parse(readFileSync(p, 'utf8'));
 const errors = [];
 const err = (where, msg) => errors.push(`${where}: ${msg}`);
 const isStr = v => typeof v === 'string' && v.trim().length > 0;
 const isUrl = v => isStr(v) && /^https?:\/\/\S+$/.test(v);
 
-const dims = readJson('data/dimensions.json');
-const lm = readJson('data/landmarks.json');
+const dims = readJson(dataPath('dimensions.json'));
+const lm = readJson(CITY.landmarksPath);
 const lmList = Array.isArray(lm) ? lm : lm.landmarks || Object.values(lm);
 const wanted = lmList.map(l => l.id);
 const ids = Object.keys(dims).filter(k => !k.startsWith('_'));

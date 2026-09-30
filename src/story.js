@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import { t, language } from './i18n.js';
 import { flightCurve, easeInOut } from './tour.js';
 import { S } from './geo.js';
+import { CITY, cityName } from './city.js';
 
 const HOLD = 0.3; // share of the gap between two texts spent holding each view
 const SHOT_CLEAR = 10 * S;
@@ -82,7 +83,7 @@ export function createStory(ctx) {
     dots.replaceChildren();
     const intro = el('section', 'story-ch story-intro');
     intro.append(
-      el('p', 'story-era', pick(data, 'kicker') || t('Бракара-Аугуста — Брага')),
+      el('p', 'story-era', pick(data, 'kicker') || (CITY.id === 'braga' ? t('Бракара-Аугуста — Брага') : cityName())),
       el('h2', 'story-title story-title-main', pick(data, 'title')),
       el('p', 'story-text', pick(data, 'subtitle')),
       el('p', 'story-hint', mobile() ? t('Листайте карточки вбок') : t('Прокрутите вниз, чтобы начать')),

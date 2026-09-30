@@ -1,9 +1,11 @@
-// Fetch the Braga street network from OpenStreetMap (Overpass API) and write data/roads.json.
+// Fetch a city's street network from OpenStreetMap (Overpass API) and write <data dir>/roads.json.
 // Node 22, no dependencies.
 //   node scripts/fetch-roads.mjs            (use the cached raw reply if there is one)
 //   node scripts/fetch-roads.mjs --fetch    (always ask Overpass again)
+//   --city <id>   the city (default braga; see cities/<id>.json)
+//   --dry-run     print the city, bbox and paths, then exit
 //
-// data/roads.json, v2:
+// data/roads.json (Braga; another city: its data dir), v2:
 //   { v: 2, origin, bbox, nodes: n, features: [{ kind, pts, t?, j? }] }
 //   kind  primary | secondary | minor | foot | rail | water (the draw buckets)
 //   pts   [[lat, lon], ...] simplified to 5 m (roundabouts and links 1.5 m)
@@ -21,13 +23,18 @@
 //         graph joins streets there. Every feature end is listed too.
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { BBOX, ORIGIN, overpass, simplify, r5 } from './geo-lib.mjs';
+import { dirname } from 'node:path';
+import { CITY, BBOX, ORIGIN, overpass, simplify, r5, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'roads.json');
-const RAW = join(ROOT, 'data', '.cache', 'roads-raw.json.gz');
+const OUT = dataPath('roads.json');
+const RAW = cachePath('roads-raw.json.gz');
+
+if (process.argv.includes('--dry-run')) {
+  console.log(`city ${CITY.id}; data dir ${dataRel()}`);
+  console.log('bbox', BBOX, 'origin', ORIGIN);
+  console.log(`out ${dataRel('roads.json')}; cache ${dataRel('.cache', 'roads-raw.json.gz')}, ${dataRel('.cache', 'bridges-raw.json.gz')}`);
+  process.exit(0);
+}
 
 const ROADS = 'motorway|trunk|primary|secondary|tertiary|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|unclassified|residential|living_street|pedestrian';
 const FOOT = 'footway|path|cycleway|steps|service|track|bridleway';
@@ -241,7 +248,7 @@ console.log(`street pieces without both end nodes: ${loose}`);
 if (loose) throw new Error('junction ids lost');
 
 // the named bridges of OSM (man_made=bridge outlines), for the report
-const BR_RAW = join(ROOT, 'data', '.cache', 'bridges-raw.json.gz');
+const BR_RAW = cachePath('bridges-raw.json.gz');
 let named = [];
 try {
   if (!process.argv.includes('--fetch') && existsSync(BR_RAW)) named = JSON.parse(gunzipSync(readFileSync(BR_RAW)).toString('utf8'));

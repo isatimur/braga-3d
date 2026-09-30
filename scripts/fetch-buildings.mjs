@@ -1,20 +1,26 @@
-// Fetch every OSM building footprint in the Braga bbox and write data/buildings.json.
-// Node 22, no dependencies. Run after fetch-footprints.mjs (it reads data/footprints.json
-// to exclude the landmark objects). Run: node scripts/fetch-buildings.mjs
+// Fetch every OSM building footprint in the city's core bbox and write <data dir>/buildings.json.
+// Node 22, no dependencies. Run after fetch-footprints.mjs (it reads <data dir>/footprints.json
+// to exclude the landmark objects). Run: node scripts/fetch-buildings.mjs [--city <id>] [--dry-run]
+// (default city: braga; see cities/<id>.json)
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { BBOX, ORIGIN, overpass, wait, simplifyRing, ringArea, centroid, toXY, r5, tagHeight } from './geo-lib.mjs';
+import { join } from 'node:path';
+import { CITY, BBOX, ORIGIN, overpass, wait, simplifyRing, ringArea, centroid, toXY, r5, tagHeight, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'buildings.json');
-const FOOT = join(ROOT, 'data', 'footprints.json');
-const CACHE_DIR = join(ROOT, 'data', '.cache');
+const OUT = dataPath('buildings.json');
+const FOOT = dataPath('footprints.json');
+const CACHE_DIR = cachePath();
 const GRID = 3;
 const TOL_M = 1;
 const MAX_BYTES = 8 * 1024 * 1024;
 const CENTRAL_R_M = 2000;
 const SMALL_M2 = 25;
+
+if (process.argv.includes('--dry-run')) {
+  console.log(`city ${CITY.id}; data dir ${dataRel()}`);
+  console.log('bbox', BBOX, 'origin', ORIGIN, `grid ${GRID}x${GRID}`);
+  console.log(`out ${dataRel('buildings.json')}; footprints ${dataRel('footprints.json')}; cache ${dataRel('.cache')}/buildings-r<i>c<j>.json`);
+  process.exit(0);
+}
 
 // ---- 1. Download a 3x3 grid of tiles (cached, so a re-run does not hit Overpass) ----
 mkdirSync(CACHE_DIR, { recursive: true });
@@ -51,7 +57,7 @@ if (existsSync(FOOT)) {
     if (v.exclude_outline) excludeOutlines.push(v.outline.map(toXY));
   }
 } else {
-  console.warn('WARNING: data/footprints.json missing; landmarks are NOT excluded. Run fetch-footprints.mjs first.');
+  console.warn(`WARNING: ${dataRel('footprints.json')} missing; landmarks are NOT excluded. Run fetch-footprints.mjs first.`);
 }
 
 function pointInPoly([x, y], poly) {

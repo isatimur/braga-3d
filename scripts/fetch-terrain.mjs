@@ -1,6 +1,8 @@
-// Fetch a real elevation grid for Braga and its surroundings and write data/terrain.json.
+// Fetch a real elevation grid for a city and its surroundings and write <data dir>/terrain.json.
 // Source: OpenTopoData (EU-DEM 25 m, fallback SRTM 30 m), fallback Open-Elevation.
-// Node 22, no dependencies. Run: node scripts/fetch-terrain.mjs
+// Node 22, no dependencies. Run: node scripts/fetch-terrain.mjs [--city <id>] [--dry-run]
+// (default city: braga; see cities/<id>.json). A city without a terrain file
+// or core cache has its core nodes fetched too.
 // Public OpenTopoData limits: 100 locations per request, 1 request per second,
 // 1000 requests per day. The full grid takes about 310 requests (5 to 6 minutes).
 //
@@ -10,16 +12,14 @@
 // their old heights bit for bit (read from the old cache or the old file), so
 // the datum (189.4 m at the centre) and every core height stay the same.
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { CORE_BBOX, TERRAIN_LATTICE } from './geo-lib.mjs';
+import { dirname } from 'node:path';
+import { CITY, CORE_BBOX, TERRAIN_LATTICE, USER_AGENT, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC = join(ROOT, 'data', 'terrain.json');
+const SRC = dataPath('terrain.json');
 // TERRAIN_OUT=<path> writes elsewhere (a trial run that leaves the app alone)
 const OUT = process.env.TERRAIN_OUT || SRC;
-const CORE_CACHE = join(ROOT, 'data', '.cache', 'terrain-raw.json');
-const CACHE = join(ROOT, 'data', '.cache', 'terrain-wide-raw.json');
+const CORE_CACHE = cachePath('terrain-raw.json');
+const CACHE = cachePath('terrain-wide-raw.json');
 
 const { coreCols: CC, coreRows: CR, ext: EXT } = TERRAIN_LATTICE;
 const COLS = CC + EXT.w + EXT.e; // along longitude, west -> east
@@ -54,13 +54,13 @@ function coreHeights() {
     for (let b = 0; b < Math.ceil((CC * CR) / BATCH); b++) h.push(...cache.batches[b].values.map(v => Math.round(v * 10) / 10));
     if (h.length === CC * CR) return { h, src: cache.batches[0].source, sanity: null };
   }
-  throw new Error('no core heights: keep data/terrain.json (90x60) or data/.cache/terrain-raw.json');
+  return null; // a new city: the core is fetched with the ring
 }
 
 async function openTopo(dataset, pts) {
   const loc = pts.map(([la, lo]) => `${la.toFixed(6)},${lo.toFixed(6)}`).join('|');
   const url = `https://api.opentopodata.org/v1/${dataset}?locations=${loc}`;
-  const r = await fetch(url, { headers: { 'User-Agent': 'braga-3d-data/1.0' } });
+  const r = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const j = await r.json();
   if (j.status !== 'OK' || !Array.isArray(j.results) || j.results.length !== pts.length) {
@@ -72,7 +72,7 @@ async function openTopo(dataset, pts) {
 async function openElevation(pts) {
   const r = await fetch('https://api.open-elevation.com/api/v1/lookup', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'User-Agent': 'braga-3d-data/1.0' },
+    headers: { 'Content-Type': 'application/json', 'User-Agent': USER_AGENT },
     body: JSON.stringify({ locations: pts.map(([latitude, longitude]) => ({ latitude, longitude })) }),
   });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -106,11 +106,22 @@ async function fetchBatch(pts) {
   throw new Error(`All elevation sources failed: ${lastErr?.message}`);
 }
 
+if (process.argv.includes('--dry-run')) {
+  console.log(`city ${CITY.id}; data dir ${dataRel()}`);
+  console.log('core bbox', CORE_BBOX, `lattice ${CC}x${CR} core, ${COLS}x${ROWS} total, ext`, EXT);
+  console.log('probes', CITY.probes);
+  console.log(`source ${dataRel('terrain.json')}${process.env.TERRAIN_OUT ? `; out ${OUT}` : ''}`);
+  console.log(`cache ${dataRel('.cache', 'terrain-raw.json')}, ${dataRel('.cache', 'terrain-wide-raw.json')}`);
+  console.log(`core heights: ${coreHeights() ? 'found (only the ring is fetched)' : 'none (the core is fetched too)'}`);
+  process.exit(0);
+}
+
 const core = coreHeights();
 
-// Only the nodes outside the core are fetched, row-major, row 0 = south edge.
+// Only the nodes outside the core are fetched (all nodes for a new city),
+// row-major, row 0 = south edge.
 const todo = [];
-for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!isCore(r, c)) todo.push([r, c]);
+for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!core || !isCore(r, c)) todo.push([r, c]);
 
 // Resumable cache of raw batch results keyed by batch index.
 mkdirSync(dirname(CACHE), { recursive: true });
@@ -130,8 +141,8 @@ for (let b = 0; b < nBatches; b++) {
 }
 
 const heights = new Array(COLS * ROWS);
-const sources = { [core.src]: CC * CR };
-for (let r = 0; r < CR; r++) for (let c = 0; c < CC; c++) heights[(r + EXT.s) * COLS + c + EXT.w] = core.h[r * CC + c];
+const sources = core ? { [core.src]: CC * CR } : {};
+if (core) for (let r = 0; r < CR; r++) for (let c = 0; c < CC; c++) heights[(r + EXT.s) * COLS + c + EXT.w] = core.h[r * CC + c];
 for (let b = 0; b < nBatches; b++) {
   const { values, source } = cache.batches[b];
   sources[source] = (sources[source] || 0) + values.length;
@@ -153,9 +164,9 @@ function sample(lat, lon) {
   const h = (r, c) => heights[Math.min(ROWS - 1, r) * COLS + Math.min(COLS - 1, c)];
   return (h(r0, c0) * (1 - tc) + h(r0, c0 + 1) * tc) * (1 - tr) + (h(r0 + 1, c0) * (1 - tc) + h(r0 + 1, c0 + 1) * tc) * tr;
 }
-const probes = { centre: [41.5503, -8.42], 'bom-jesus': [41.55494, -8.37703], sameiro: [41.54182, -8.36954] };
+const probes = CITY.probes;
 const sanity = {};
-for (const [k, p] of Object.entries(probes)) sanity[k] = { point_m: core.sanity?.[k]?.point_m ?? null, grid_m: Math.round(sample(...p)) };
+for (const [k, p] of Object.entries(probes)) sanity[k] = { point_m: core?.sanity?.[k]?.point_m ?? null, grid_m: Math.round(sample(...p)) };
 
 const out = {
   bbox: BBOX,
@@ -168,7 +179,7 @@ const out = {
   min_m: min,
   max_m: max,
   // the original 90 x 60 grid inside this one: its bbox and first column / row
-  core: { bbox: CORE_BBOX, c0: EXT.w, r0: EXT.s, cols: CC, rows: CR, source: core.src },
+  core: { bbox: CORE_BBOX, c0: EXT.w, r0: EXT.s, cols: CC, rows: CR, source: core ? core.src : null },
   sanity,
   heights,
 };

@@ -3,16 +3,18 @@
 // consistent while their texts and models are still being made.
 // Usage: node scripts/stash-pending.mjs [--restore] id1 id2 ...
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { CITY, cityArg, dataRel } from './city-lib.mjs';
 
 const args = process.argv.slice(2);
+cityArg(args); // strips --city <id> (CITY is already resolved from argv)
 const restore = args.includes('--restore');
 const ids = args.filter((a) => !a.startsWith('--'));
 const FILES = {
-  landmarks: 'data/landmarks.json',
-  footprints: 'data/footprints.json',
-  dimensions: 'data/dimensions.json',
+  landmarks: CITY.landmarks_file,
+  footprints: dataRel('footprints.json'),
+  dimensions: dataRel('dimensions.json'),
 };
-const PENDING = 'data/new/pending.json';
+const PENDING = dataRel('new', 'pending.json');
 const read = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const write = (p, v) => writeFileSync(p, JSON.stringify(v, null, 2) + '\n');
 

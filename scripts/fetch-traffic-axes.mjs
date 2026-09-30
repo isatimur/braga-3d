@@ -1,22 +1,26 @@
-// The main traffic axes of Braga -> data/traffic-axes.json
+// The main traffic axes of a city -> <data dir>/traffic-axes.json
 //
-//   node scripts/fetch-traffic-axes.mjs
+//   node scripts/fetch-traffic-axes.mjs [--city <id>]
 //
 // roads.json carries no street names, so src/traffic-model.js tags its lanes
-// by distance to these OSM corridors: Avenida da Liberdade, the EN 101
+// by distance to these OSM corridors. Braga: Avenida da Liberdade, the EN 101
 // through the city, and the A 11 / Circular Sul (CSB) / EN 14 approaches.
 // Polylines are simplified to 25 m and coded as integers:
-// "lat,lon lat,lon;..." in 1e-4 degrees from (41.5 N, -8.5 E).
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { overpass } from './geo-lib.mjs';
+// "lat,lon lat,lon;..." in 1e-4 degrees from the coding base `base`
+// (cities/<id>.json traffic.axes_base; Braga: 41.5 N, -8.5 E). The base is
+// written into the JSON as `base: [lat, lon]`.
+//
+// The matchers below are road names, so they are content per city
+// (AXES_BY_CITY). A city without an entry gets `axes: {}` and no Overpass call.
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { overpass, CITY, CORE_BBOX, dataPath } from './geo-lib.mjs';
 
-const OUT = resolve(import.meta.dirname, '../data/traffic-axes.json');
-const els = await overpass(
-  '[out:json][timeout:90];(way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"](41.50,-8.51,41.59,-8.35););out tags geom;',
-  { label: 'axes' },
-);
-const K = Math.cos((41.55 * Math.PI) / 180);
+const OUT = dataPath('traffic-axes.json');
+const K = Math.cos((CITY.origin.lat * Math.PI) / 180);
+const BASE = CITY.traffic?.axes_base || [41.5, -8.5];
+const BB = CITY.traffic?.axes_bbox || CORE_BBOX;
+
 function dp(pts, tol) {
   const xy = pts.map((p) => [p[1] * 111320 * K, p[0] * 110574]);
   const keep = new Uint8Array(pts.length);
@@ -44,16 +48,31 @@ function dp(pts, tol) {
   }
   return pts.filter((_, i) => keep[i]);
 }
-const AXES = {
-  liberdade: (t) => t.name === 'Avenida da Liberdade' && /primary|secondary|tertiary/.test(t.highway),
-  n101: (t) => /EN 101/.test(t.ref || ''),
-  a11: (t) => /A 11|CSB|EN 14/.test(t.ref || '') || /Circular Sul de Braga/.test(t.name || ''),
+
+// Road-name matchers per city. Add an entry to give a city its axes.
+const AXES_BY_CITY = {
+  braga: {
+    liberdade: (t) => t.name === 'Avenida da Liberdade' && /primary|secondary|tertiary/.test(t.highway),
+    n101: (t) => /EN 101/.test(t.ref || ''),
+    a11: (t) => /A 11|CSB|EN 14/.test(t.ref || '') || /Circular Sul de Braga/.test(t.name || ''),
+  },
 };
-const out = { source: 'OpenStreetMap (ODbL) via Overpass', built: new Date().toISOString().slice(0, 10), coding: 'lat,lon in 1e-4 deg from 41.5,-8.5', axes: {} };
-for (const [id, test] of Object.entries(AXES)) {
-  const lines = els.filter((w) => w.tags && test(w.tags) && w.geometry?.length > 1).map((w) => dp(w.geometry.map((p) => [p.lat, p.lon]), 25));
-  out.axes[id] = lines.map((l) => l.map((p) => `${Math.round((p[0] - 41.5) * 1e4)},${Math.round((p[1] + 8.5) * 1e4)}`).join(' ')).join(';');
-  console.log(`[axes] ${id}: ${lines.length} ways, ${lines.reduce((s, l) => s + l.length, 0)} points`);
+const AXES = AXES_BY_CITY[CITY.id];
+
+const out = { source: 'OpenStreetMap (ODbL) via Overpass', built: new Date().toISOString().slice(0, 10), coding: `lat,lon in 1e-4 deg from ${BASE[0]},${BASE[1]}`, base: BASE, axes: {} };
+if (!AXES) {
+  console.log(`[axes] no axis matchers for ${CITY.id}; writing empty axes (add them to AXES_BY_CITY in scripts/fetch-traffic-axes.mjs)`);
+} else {
+  const els = await overpass(
+    `[out:json][timeout:90];(way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"](${BB.s},${BB.w},${BB.n},${BB.e}););out tags geom;`,
+    { label: 'axes' },
+  );
+  for (const [id, test] of Object.entries(AXES)) {
+    const lines = els.filter((w) => w.tags && test(w.tags) && w.geometry?.length > 1).map((w) => dp(w.geometry.map((p) => [p.lat, p.lon]), 25));
+    out.axes[id] = lines.map((l) => l.map((p) => `${Math.round((p[0] - BASE[0]) * 1e4)},${Math.round((p[1] - BASE[1]) * 1e4)}`).join(' ')).join(';');
+    console.log(`[axes] ${id}: ${lines.length} ways, ${lines.reduce((s, l) => s + l.length, 0)} points`);
+  }
 }
+mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(out));
 console.log(`[axes] -> ${OUT}`);

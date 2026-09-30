@@ -15,11 +15,12 @@
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { overpass, wait, toXY, toLL, r6, ringArea, centroid, minAreaRect, tagHeight, simplifyRing } from './geo-lib.mjs';
+import { overpass, wait, toXY, toLL, r6, ringArea, centroid, minAreaRect, tagHeight, simplifyRing, CITY, dataPath, cachePath, dataRel, USER_AGENT } from './geo-lib.mjs';
 
+// --city <id> picks the city (default braga). The landmark table below is per city.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const LANDMARKS = join(ROOT, 'data', 'landmarks.json');
-const OUT = join(ROOT, 'data', 'footprints.json');
+const LANDMARKS = CITY.landmarksPath;
+const OUT = dataPath('footprints.json');
 
 // ---------------------------------------------------------------------------
 // Curated configuration.
@@ -45,7 +46,9 @@ const OUT = join(ROOT, 'data', 'footprints.json');
 //            inside the site and whose area is >= minArea m², for blocks OSM does not map.
 //  model     proposed model type, written to data/new/<id>.osm.json by --only runs.
 // ---------------------------------------------------------------------------
-const CFG = {
+// Braga's landmark table (the ids are Braga landmarks). Other cities: add an entry to
+// OVERRIDES_BY_CITY below; with none, this script has no landmark configuration to apply.
+const BRAGA_CFG = {
   'bom-jesus': {
     main: 'w146373021', name: /Bom Jesus/, site: { area: 'w1539525894', buffer: 5 },
     cats: ['building', 'stairs', 'funicular', 'water', 'square'],
@@ -199,6 +202,8 @@ const CFG = {
     include: ['r8340055', 'w146343003', 'r17978905'], model: 'hospital-church',
   },
 };
+const OVERRIDES_BY_CITY = { braga: BRAGA_CFG };
+const CFG = OVERRIDES_BY_CITY[CITY.id] || {};
 
 // Verified or estimated heights, used when OSM has no height / levels tag (or force).
 // Filled from research; each has a source.
@@ -207,8 +212,8 @@ import { HEIGHTS } from './landmark-heights.mjs';
 // ---------------------------------------------------------------------------
 const landmarks = JSON.parse(readFileSync(LANDMARKS, 'utf8'));
 const missingCfg = landmarks.filter(l => !CFG[l.id]).map(l => l.id);
-if (missingCfg.length) throw new Error(`No config for: ${missingCfg.join(', ')}`);
-const onlyArg = process.argv.find(a => a.startsWith('--only='));
+if (missingCfg.length) throw new Error(`No config for: ${missingCfg.join(', ')} (city ${CITY.id}: add the landmarks to OVERRIDES_BY_CITY in scripts/fetch-footprints.mjs)`);
+const onlyArg = process.argv.slice(2).find(a => a.startsWith('--only='));
 const ONLY = onlyArg ? onlyArg.slice(7).split(',').filter(Boolean) : null;
 if (ONLY) {
   const unknown = ONLY.filter(id => !landmarks.some(l => l.id === id));
@@ -216,7 +221,7 @@ if (ONLY) {
 }
 // The landmarks this run builds (all, or the --only subset).
 const todo = ONLY ? landmarks.filter(l => ONLY.includes(l.id)) : landmarks;
-const MS_RAW = join(ROOT, 'data', '.cache', 'ms-raw', 'bbox.json');
+const MS_RAW = cachePath('ms-raw', 'bbox.json');
 let msRaw = null;
 const msPolys = () => {
   if (!msRaw) {
@@ -364,7 +369,7 @@ function rectAroundLine(line, width, depth) {
 // ---- 3. Wikidata verification ----
 async function checkWikidata(qid, key, near) {
   try {
-    const r = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`, { headers: { 'User-Agent': 'braga-3d-data/1.0' } });
+    const r = await fetch(`https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`, { headers: { 'User-Agent': USER_AGENT } });
     if (!r.ok) return `wikidata ${qid}: HTTP ${r.status}`;
     const ents = (await r.json()).entities;
     const e = ents[qid] || Object.values(ents)[0];
@@ -575,13 +580,13 @@ if (ONLY) {
   for (const l of landmarks) if (out[l.id] || prev[l.id]) merged[l.id] = out[l.id] || prev[l.id];
   for (const k of Object.keys(prev)) if (!merged[k]) merged[k] = prev[k];
   writeFileSync(OUT, JSON.stringify(merged));
-  const NEW = join(ROOT, 'data', 'new');
+  const NEW = dataPath('new');
   mkdirSync(NEW, { recursive: true });
   for (const l of todo) {
     const o = { osm: l.osm, lat: l.lat, lon: l.lon, model: CFG[l.id].model || l.model };
     writeFileSync(join(NEW, `${l.id}.osm.json`), JSON.stringify(o, null, 2) + '\n');
   }
-  console.log(`Wrote ${OUT} (${(JSON.stringify(merged).length / 1024).toFixed(0)} KB; replaced ${todo.map(l => l.id).join(', ')}) and data/new/<id>.osm.json; landmarks.json untouched`);
+  console.log(`Wrote ${OUT} (${(JSON.stringify(merged).length / 1024).toFixed(0)} KB; replaced ${todo.map(l => l.id).join(', ')}) and ${dataRel('new')}/<id>.osm.json; landmarks.json untouched`);
 } else {
   writeFileSync(OUT, JSON.stringify(out));
   writeFileSync(LANDMARKS, JSON.stringify(landmarks, null, 2) + '\n');

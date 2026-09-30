@@ -21,6 +21,7 @@ import { S } from './geo.js';
 import { t } from './i18n.js';
 import { assetUrl } from './data.js';
 import { placesWord } from './ui.js';
+import { cityT } from './city.js';
 
 const CELL = 10; // skyline cell, world units (40 m)
 export const FLIGHT_CLEARANCE = 60 * S; // 60 m over terrain and roofs
@@ -301,12 +302,13 @@ export function createCinema(ctx) {
   const byId = new Map(ctx.items.map((it) => [it.data.id, it]));
   const order = CINEMA_ORDER.filter((o) => byId.has(o.id));
   const dropped = CINEMA_ORDER.filter((o) => !byId.has(o.id)).map((o) => o.id);
-  if (dropped.length) console.warn('[braga] cinema: no landmark for', dropped.join(', '));
+  // (another city has none of Braga's ids: its film order is a later step)
+  if (dropped.length && ctx.items.length) console.warn('[braga] cinema: no landmark for', dropped.join(', '));
   const missing = ctx.items.filter((it) => !CINEMA_ORDER.some((o) => o.id === it.data.id)).map((it) => it.data.id);
   if (missing.length) console.warn('[braga] cinema: not in CINEMA_ORDER:', missing.join(', '));
   // the button title counts the places the film really shows
   const toggle = document.getElementById('cinema-toggle');
-  if (toggle) toggle.title = t('Фильм о Браге: {n} с утра до ночи').replace('{n}', `${order.length} ${placesWord(order.length)}`);
+  if (toggle) toggle.title = cityT('Фильм о {city_prep}: {n} с утра до ночи').replace('{n}', `${order.length} ${placesWord(order.length)}`);
 
   function viewBand() {
     const W = window.innerWidth;

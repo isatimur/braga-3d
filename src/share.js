@@ -6,8 +6,11 @@
 // iframes never show the chrome.
 import { language, locale } from './i18n.js';
 import { mountTool } from './ui.js';
+import { CITY, cityName, cityT } from './city.js';
 
-export const SITE = 'https://braga-3d.com';
+// the canonical site of this city (cities/<id>.json domain), else this origin
+const SITE = () => CITY.domain || location.origin;
+const SITE_HOST = () => SITE().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
 const STR = {
   postcard: { ru: 'Открытка', en: 'Postcard', pt: 'Postal' },
@@ -23,11 +26,14 @@ const STR = {
   failed: { ru: 'Не удалось сделать открытку', en: 'Could not make the postcard', pt: 'Não foi possível criar o postal' },
   linkCopied: { ru: 'Ссылка скопирована:', en: 'Link copied:', pt: 'Ligação copiada:' },
   copyManually: { ru: 'Скопируйте ссылку:', en: 'Copy the link:', pt: 'Copie a ligação:' },
-  city: { ru: 'Брага', en: 'Braga', pt: 'Braga' },
-  country: { ru: 'Брага, Португалия', en: 'Braga, Portugal', pt: 'Braga, Portugal' },
-  mapTitle: { ru: '3D-карта Браги', en: 'Braga 3D map', pt: 'Mapa 3D de Braga' },
 };
-const tr = (k) => STR[k][language] ?? STR[k].en;
+// city strings come from the config: 'Брага' / 'Брага, Португалия' / '3D-карта Браги'
+const CITY_STR = {
+  city: () => cityName(),
+  country: () => (CITY.country?.[language] ? `${cityName()}, ${CITY.country[language]}` : cityT('{city}, Португалия')),
+  mapTitle: () => cityT('3D-карта {city_gen}'),
+};
+const tr = (k) => (CITY_STR[k] ? CITY_STR[k]() : (STR[k][language] ?? STR[k].en));
 
 export const PRESETS = {
   '16x9': { w: 16, h: 9, label: '16:9' },
@@ -97,8 +103,11 @@ if (embedded && !uiOff) {
 }
 
 // Runtime translation of the social tags (crawlers read the static English).
-for (const [sel, key] of [['meta[property="og:title"]', 'mapTitle'], ['meta[name="twitter:title"]', 'mapTitle']]) {
-  document.querySelector(sel)?.setAttribute('content', `${tr(key)} · Braga 3D`);
+// Called by installShare(), once the city config is loaded.
+function applySocialTags() {
+  for (const [sel, key] of [['meta[property="og:title"]', 'mapTitle'], ['meta[name="twitter:title"]', 'mapTitle']]) {
+    document.querySelector(sel)?.setAttribute('content', `${tr(key)} · ${CITY.name.en} 3D`);
+  }
 }
 
 // ------------------------------------------------------------ service worker
@@ -136,11 +145,11 @@ export function shareLinks(placeIds) {
   if (place && !route && placeIds.has(place)) {
     h.delete('place');
     const rest = h.toString();
-    link = `${SITE}/p/${place}/${rest ? `#${rest}` : ''}`;
+    link = `${SITE()}/p/${place}/${rest ? `#${rest}` : ''}`;
   }
   const embedHash = route ? `#route=${route}` : place ? `#place=${place}` : '';
   const title = `${tr('mapTitle')}`.replace(/"/g, '&quot;');
-  const embed = `<iframe src="${SITE}/?embed=1${embedHash}" width="800" height="450" style="border:0;border-radius:12px" loading="lazy" allow="fullscreen; web-share" title="${title}"></iframe>`;
+  const embed = `<iframe src="${SITE()}/?embed=1${embedHash}" width="800" height="450" style="border:0;border-radius:12px" loading="lazy" allow="fullscreen; web-share" title="${title}"></iframe>`;
   return { link, hashLink, embed, place, route };
 }
 
@@ -237,7 +246,7 @@ function compose(frame, W, H, { title, subtitle, date, credit }) {
   c.textAlign = 'right';
   c.fillStyle = 'rgba(224, 169, 72, 0.95)';
   c.font = `500 ${credSize}px ${sans}`;
-  c.fillText('braga-3d.com', W - pad, yCredit);
+  c.fillText(SITE_HOST(), W - pad, yCredit);
 
   c.textAlign = 'left';
   const dateSize = Math.round(u * 0.03);
@@ -276,6 +285,7 @@ export function installShare(ctx) {
   const debug = (window.__braga = window.__braga || {});
   const placeIds = new Set(landmarks.map((l) => l.id));
   const toast = (msg, ms) => ui?.toast?.(msg, ms);
+  applySocialTags();
 
   // Render the current view at 2x the CSS frame, effects on, and composite
   // the card. The WebGL canvas has no preserveDrawingBuffer: the frame is

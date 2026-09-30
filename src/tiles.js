@@ -25,6 +25,7 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { S } from './geo.js';
 import { assetUrl } from './data.js';
+import { dataPath } from './city.js';
 import { groundAxes } from './scene.js';
 import { BUILDING_UNIFORMS, createBuildingMaterial, FADE_S, FADE_VERT_PARS, FADE_VERT, FADE_FRAG_PARS, FADE_FRAG } from './buildings.js';
 import { SURFACE, STRUCTURE_COLORS } from './roads.js';
@@ -113,14 +114,14 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     started = true;
     let doc;
     try {
-      const res = await fetch(assetUrl('data/tiles/index.json'));
+      const res = await fetch(assetUrl(dataPath('tiles/index.json')));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       if (!(res.headers.get('content-type') || '').includes('json')) throw new Error('not JSON');
       doc = await res.json();
       if (!Array.isArray(doc?.tiles) || !doc.grid) throw new Error('no tiles[]');
     } catch (e) {
       failed = true;
-      console.info(`[braga] tiles: data/tiles/index.json unavailable (${e.message}); only the core is drawn`);
+      console.info(`[braga] tiles: ${dataPath('tiles/index.json')} unavailable (${e.message}); only the core is drawn`);
       return;
     }
     const g = doc.grid;
@@ -138,7 +139,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
         cx: (rect.x0 + rect.x1) / 2,
         cz: (rect.zN + rect.zS) / 2,
         box: new THREE.Box3(new THREE.Vector3(rect.x0, -60, rect.zN), new THREE.Vector3(rect.x1, 260, rect.zS)),
-        url: new URL(assetUrl(`data/tiles/${key}.json`), location.href).href,
+        url: new URL(assetUrl(dataPath(`tiles/${key}.json`)), location.href).href,
         state: 'idle',
         lod: null,
         want: null,

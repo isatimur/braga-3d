@@ -1,11 +1,12 @@
 // Microsoft Global ML Building Footprints (ODbL) for the gaps in the OSM
 // buildings. https://github.com/microsoft/GlobalMLBuildingFootprints
 //
-// Node 22, no dependencies. Run: node scripts/fetch-ms-buildings.mjs [--fetch | --build]
-//   (default: fetch what is missing, then build)
+// Node 22, no dependencies. Run: node scripts/fetch-ms-buildings.mjs [--city <id>] [--fetch | --build] [--dry-run]
+//   (default city: braga, see cities/<id>.json; default: fetch what is missing, then build)
+// Paths below are for Braga; another city writes under its own data dir.
 //
 //   fetch  the dataset-links CSV, the zoom-9 quadkeys over the wide bbox
-//          (lat 41.47..41.63, lon -8.55..-8.30), their Portugal GeoJSONL
+//          (Braga: lat 41.47..41.63, lon -8.55..-8.30), their Portugal GeoJSONL
 //          files (gzipped, ~125 MB) into data/.cache/ms-raw/; then one pass
 //          keeps the polygons inside the bbox in data/.cache/ms-raw/bbox.json.
 //   build  simplify (1 m), round to 5 decimals, drop slivers < 12 m², drop
@@ -21,28 +22,38 @@
 // Heights: MS `height` when > 0; otherwise the area class (<= 80 m² 4 m,
 // <= 200 m² 7 m, <= 600 m² 10 m, larger 12 m). Above 80 m², when at least 3
 // OSM buildings stand within 150 m, the height is the mean of the area class
-// and their mean height; in the historic centre (600 m around the Sé) +2 m
+// and their mean height; in the historic centre (600 m around the centre
+// point, Braga: the Sé; config "ms_centre", default the city origin) +2 m
 // when that OSM mean is above the area class. Rounded to 0.5 m, 3..40 m.
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync, renameSync } from 'node:fs';
 import { createGunzip, gzipSync } from 'node:zlib';
 import { createInterface } from 'node:readline';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { ORIGIN, CORE_BBOX, TILE_GRID, simplifyRing, toXY } from './geo-lib.mjs';
+import { join } from 'node:path';
+import { cityArg } from './city-lib.mjs';
+import { CITY, ORIGIN, CORE_BBOX, WIDE_BBOX, TILE_GRID, USER_AGENT, simplifyRing, toXY, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const RAW = join(ROOT, 'data', '.cache', 'ms-raw');
+const RAW = cachePath('ms-raw');
 const BBOX_FILE = join(RAW, 'bbox.json');
-const OUT_CORE = join(ROOT, 'data', 'buildings-ms.json');
-const OUT_DIR = join(ROOT, 'data', 'tiles-ms');
+const OUT_CORE = dataPath('buildings-ms.json');
+const OUT_DIR = dataPath('tiles-ms');
 const LINKS = 'https://minedbuildings.z5.web.core.windows.net/global-buildings/dataset-links.csv';
-const WIDE = { s: 41.47, w: -8.55, n: 41.63, e: -8.3 };
+const COUNTRY = CITY.country || 'Portugal'; // the country column of dataset-links.csv
+const WIDE = WIDE_BBOX;
 const G = TILE_GRID;
 const args = process.argv.slice(2);
+cityArg(args); // city-lib already chose the city; this only strips --city <id> from args
 const DO_FETCH = !args.includes('--build');
 const DO_BUILD = !args.includes('--fetch');
+
+if (args.includes('--dry-run')) {
+  console.log(`city ${CITY.id}; data dir ${dataRel()}; country ${COUNTRY}`);
+  console.log('core bbox', CORE_BBOX, 'wide bbox', WIDE, 'origin', ORIGIN, `tile grid ${G.nx}x${G.ny} (core ${G.coreNx}x${G.coreNy})`);
+  console.log(`raw cache ${dataRel('.cache', 'ms-raw')}; out ${dataRel('buildings-ms.json')} + ${dataRel('tiles-ms')}/`);
+  console.log(`reads ${dataRel('buildings.json')}, ${dataRel('tiles')}/, ${dataRel('footprints.json')}, ${dataRel('roads.json')}`);
+  process.exit(0);
+}
 
 // ML outlines sit 1-3 m off the OSM outline of the same house: at 30 % some
 // 280 core houses stood half inside an OSM one; 15 % drops them
@@ -50,9 +61,10 @@ const OVERLAP = 0.15;
 const MIN_M2 = 12;
 const SIMPLIFY_M = 1;
 const NEAR_M = 150;
-const CENTRE = toXY([41.5498, -8.427]); // the Sé
+// the historic centre (Braga: the Sé); it changes heights and blob filtering
+const CENTRE = toXY(CITY.ms_centre || [ORIGIN.lat, ORIGIN.lon]);
 const CENTRE_R = 600;
-const SCHOOL = [41.55751, -8.41708]; // Colégio Leonardo da Vinci, for the report
+const SCHOOL = CITY.id === 'braga' ? [41.55751, -8.41708] : null; // Colégio Leonardo da Vinci, for the report (Braga only)
 
 const q5 = (v) => Math.round(v * 1e5);
 const r5 = (v) => q5(v) / 1e5;
@@ -82,7 +94,7 @@ function quadkeysFor(b, z = 9) {
 // ------------------------------------------------------------ fetch
 async function download(url, file) {
   const tmp = file + '.part';
-  const res = await fetch(url, { headers: { 'User-Agent': 'braga-3d-data/1.0' } });
+  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   await pipeline(Readable.fromWeb(res.body), createWriteStream(tmp));
   renameSync(tmp, file);
@@ -99,9 +111,9 @@ async function fetchAll() {
   const rows = readFileSync(linksFile, 'utf8')
     .split('\n')
     .map((l) => l.split(','))
-    .filter((c) => c[0] === 'Portugal' && want.has(c[1]));
-  console.log(`fetch: quadkeys ${[...want].join(', ')}; Portugal files ${rows.length}`);
-  if (!rows.length) throw new Error('no Portugal files for these quadkeys');
+    .filter((c) => c[0] === COUNTRY && want.has(c[1]));
+  console.log(`fetch: quadkeys ${[...want].join(', ')}; ${COUNTRY} files ${rows.length}`);
+  if (!rows.length) throw new Error(`no ${COUNTRY} files for these quadkeys`);
   const files = [];
   for (const [, qk, url, size] of rows) {
     const file = join(RAW, `${qk}-${url.split('/').pop()}`);
@@ -272,16 +284,16 @@ function decodeTile(t) {
 
 function loadOsm() {
   const osm = [];
-  const core = JSON.parse(readFileSync(join(ROOT, 'data', 'buildings.json'), 'utf8'));
+  const core = JSON.parse(readFileSync(dataPath('buildings.json'), 'utf8'));
   for (const b of core.buildings) if (Array.isArray(b.p) && b.p.length >= 3) osm.push(polyOf(b.p, { h: b.h, src: 'core' }));
   const nCore = osm.length;
-  const dir = join(ROOT, 'data', 'tiles');
+  const dir = dataPath('tiles');
   for (const f of readdirSync(dir)) {
     if (!/^\d+_\d+\.json$/.test(f)) continue;
     for (const b of decodeTile(JSON.parse(readFileSync(join(dir, f), 'utf8')))) osm.push(polyOf(b.p, { h: b.h, src: 'tile' }));
   }
   const marks = [];
-  const fp = JSON.parse(readFileSync(join(ROOT, 'data', 'footprints.json'), 'utf8'));
+  const fp = JSON.parse(readFileSync(dataPath('footprints.json'), 'utf8'));
   for (const [id, v] of Object.entries(fp)) {
     if (!v || typeof v !== 'object') continue;
     if (Array.isArray(v.outline) && v.outline.length >= 3) marks.push(polyOf(v.outline, { id }));
@@ -336,7 +348,7 @@ function loadRoadSegs() {
     for (let i = 1; i < xy.length; i++) segs.push({ a: xy[i - 1], b: xy[i], half, minor, box: { x0: Math.min(xy[i - 1][0], xy[i][0]), x1: Math.max(xy[i - 1][0], xy[i][0]), y0: Math.min(xy[i - 1][1], xy[i][1]), y1: Math.max(xy[i - 1][1], xy[i][1]) } });
   };
   const DEFAULT_W = { primary: 10, secondary: 7, minor: 5 };
-  const core = JSON.parse(readFileSync(join(ROOT, 'data', 'roads.json'), 'utf8'));
+  const core = JSON.parse(readFileSync(dataPath('roads.json'), 'utf8'));
   for (const f of core.features || []) {
     const t = f.t || {};
     const bridge = !!t.br;
@@ -347,12 +359,12 @@ function loadRoadSegs() {
     // minor streets count only for elongated polygons (see inCorridor)
     push(f.pts, widthM / 2 + (bridge ? 3 : 2), f.kind === 'minor' && !bridge);
   }
-  const idxFile = join(ROOT, 'data', 'tiles', 'index.json');
+  const idxFile = dataPath('tiles', 'index.json');
   if (existsSync(idxFile)) {
     const idx = JSON.parse(readFileSync(idxFile, 'utf8'));
     const kinds = idx.kinds?.r || [];
     for (const t of idx.tiles || []) {
-      const file = join(ROOT, 'data', 'tiles', `${t.x}_${t.y}.json`);
+      const file = dataPath('tiles', `${t.x}_${t.y}.json`);
       if (!existsSync(file)) continue;
       const tile = JSON.parse(readFileSync(file, 'utf8'));
       for (const rec of tile.r || []) {
@@ -374,7 +386,7 @@ function loadRoadSegs() {
 }
 
 function build() {
-  if (!existsSync(BBOX_FILE)) throw new Error('no data/.cache/ms-raw/bbox.json: run with --fetch first');
+  if (!existsSync(BBOX_FILE)) throw new Error(`no ${dataRel('.cache', 'ms-raw', 'bbox.json')}: run with --fetch first`);
   const raw = JSON.parse(readFileSync(BBOX_FILE, 'utf8'));
   const { osm, marks } = loadOsm();
   const osmIdx = makeIndex(50);
@@ -603,17 +615,17 @@ function build() {
   writeFileSync(join(OUT_DIR, 'index.json'), JSON.stringify(doc));
 
   // ---- report
-  const school = toXY(SCHOOL);
+  const school = SCHOOL ? toXY(SCHOOL) : null;
   const within = (list) => list.filter((P) => Math.hypot(P.c[0] - school[0], P.c[1] - school[1]) <= 150).length;
   for (const P of osm) P.c = centroidXY(P.xy);
-  const osmNear = within(osm);
-  const msNear = within(kept);
+  const osmNear = school ? within(osm) : 0;
+  const msNear = school ? within(kept) : 0;
   const coreBytes = Buffer.byteLength(coreJson);
   console.log('counts', c);
   console.log('heights (m: count)', hist);
   console.log(`core: ${c.core} buildings, ${(coreBytes / 1048576).toFixed(2)} MB (${(gzipSync(coreJson).length / 1048576).toFixed(2)} MB gzip)`);
   console.log(`ring: ${c.ring} buildings in ${index.length} tiles, ${(total / 1048576).toFixed(2)} MB (${(doc.gz / 1048576).toFixed(2)} MB gzip), largest ${Math.max(...index.map((t) => t.bytes)) / 1024 | 0} KB`);
-  console.log(`school (150 m): OSM ${osmNear}, MS added ${msNear}, total ${osmNear + msNear}`);
+  if (school) console.log(`school (150 m): OSM ${osmNear}, MS added ${msNear}, total ${osmNear + msNear}`);
 }
 
 if (DO_FETCH) await fetchAll();

@@ -19,7 +19,14 @@
 // counts halve on phones. Under reduced motion everything stands still.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import LIFE from '../data/life.json';
+import { CITY } from './city.js';
+
+// <data_dir>/life.json (funicular tracks, fountains; Braga: scripts/
+// fetch-funicular.mjs), set by main.js from loadData() before createLife().
+let LIFE = null;
+export function setLifeData(doc) {
+  LIFE = doc && typeof doc === 'object' ? doc : null;
+}
 import { S } from './geo.js';
 import { t } from './i18n.js';
 import { createWeather, addScaled } from './weather.js';
@@ -307,11 +314,9 @@ function buildFunicular({ project, heightAt, items }) {
 
 // ------------------------------------------------------------ traffic
 // pedestrian centre (lat, lon, radius m): no traffic on its streets (the
-// tunnels under it still carry theirs)
-const CAR_FREE = [
-  [41.5499, -8.4272, 230], // Sé, Rua do Souto, Largo do Paço
-  [41.5513, -8.4232, 60], // Praça da República (the square itself)
-];
+// tunnels under it still carry theirs). cities/<id>.json traffic.car_free
+// (Braga: the Sé / Rua do Souto / Largo do Paço, and Praça da República).
+const CAR_FREE = () => CITY.traffic?.car_free || [];
 const PAINT = [0xf1f1ee, 0xa9afb4, 0x1d1f22, 0x2b3f63, 0x9e2a24, 0x8a7a66].map((h) => new THREE.Color(h));
 const LORRY_PAINT = [0xf1f1ee, 0xe8e4da, 0x2c4a7a, 0x9e2a24, 0x3d5c3a].map((h) => new THREE.Color(h));
 // the main axes by their OSM name and ref (traffic-model.js AXIS_IDS order)
@@ -344,7 +349,7 @@ const lampChunk = (y0, y1) => `
 }`;
 
 function buildTraffic({ roads, project, heightAt, mobile, model }) {
-  const zones = CAR_FREE.map(([la, lo, r]) => ({ ...project(la, lo), r: r * S }));
+  const zones = CAR_FREE().map(([la, lo, r]) => ({ ...project(la, lo), r: r * S }));
   const blocked = (x, z) => zones.some((q) => (x - q.x) ** 2 + (z - q.z) ** 2 < q.r * q.r);
 
   // ---- the junction graph of the real streets (road-network.js): shared

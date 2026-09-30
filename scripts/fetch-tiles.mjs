@@ -1,13 +1,13 @@
 // Streamed tiles around the core: every OSM building, street and land-cover
-// area of the wide area (about 20.7 x 18.4 km, all of Braga municipality and
-// the edges of Vila Verde, Amares, Póvoa de Lanhoso and Guimarães), cut into
-// the 1 km tile grid of geo-lib.mjs (TILE_GRID), written as data/tiles/<x>_<y>.json
-// plus data/tiles/index.json. The core (roads.json, buildings.json,
-// nature.json) is exactly 11 x 6 tiles of this grid and is never written, so
-// nothing doubles.
+// area of the city's wide bbox (Braga: about 20.7 x 18.4 km), cut into
+// the 1 km tile grid of geo-lib.mjs (TILE_GRID), written as <data dir>/tiles/<x>_<y>.json
+// plus <data dir>/tiles/index.json. The core (roads.json, buildings.json,
+// nature.json) is exactly TILE_GRID.coreNx x coreNy tiles of this grid (Braga:
+// 11 x 6) and is never written, so nothing doubles.
 //
-// Node 22, no dependencies. Run: node scripts/fetch-tiles.mjs [--fetch | --build] [--only x_y,...]
-//   (default: fetch what is missing, then build)
+// Node 22, no dependencies. Run: node scripts/fetch-tiles.mjs [--city <id>] [--fetch | --build] [--only x_y,...] [--dry-run]
+//   (default city: braga, see cities/<id>.json; default: fetch what is missing, then build)
+// Paths below are for Braga; another city writes under its own data dir.
 // Two phases:
 //   fetch  per-tile Overpass queries (buildings, streets, rails, waterways;
 //          bbox padded by ~300 m so long segments are not missed) and 8
@@ -20,15 +20,15 @@
 //          the tiles and the index.
 import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { ORIGIN, CORE_BBOX, TILE_GRID, wait, simplify, simplifyRing, ringArea, tagHeight, toXY } from './geo-lib.mjs';
+import { join } from 'node:path';
+import { cityArg } from './city-lib.mjs';
+import { CITY, ORIGIN, CORE_BBOX, WIDE_BBOX, TILE_GRID, USER_AGENT, wait, simplify, simplifyRing, ringArea, tagHeight, toXY, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT_DIR = join(ROOT, 'data', 'tiles');
-const RAW_DIR = join(ROOT, 'data', '.cache', 'tiles-raw');
+const OUT_DIR = dataPath('tiles');
+const RAW_DIR = cachePath('tiles-raw');
 const MANIFEST = join(RAW_DIR, 'manifest.json');
 const args = process.argv.slice(2);
+cityArg(args); // city-lib already chose the city; this only strips --city <id> from args
 const DO_FETCH = !args.includes('--build');
 const DO_BUILD = !args.includes('--fetch');
 const ONLY = (() => {
@@ -51,17 +51,26 @@ const tileBox = (x, y) => ({ s: G.bbox.s + y * G.dLat, w: G.bbox.w + x * G.dLon,
 const isCoreTile = (x, y) => x >= G.core.x0 && x < G.core.x1 && y >= G.core.y0 && y < G.core.y1;
 const TILES = [];
 for (let y = 0; y < G.ny; y++) for (let x = 0; x < G.nx; x++) if (!isCoreTile(x, y)) TILES.push({ x, y, key: `${x}_${y}` });
-// area chunks: 3 x 3 blocks of 7 x 6 tiles; the middle one is all core
+// area chunks: blocks of 7 x 6 tiles (Braga: 3 x 3 blocks, the middle one is
+// all core); the last block in a row or column may be smaller
+const CHUNK_W = 7, CHUNK_H = 6;
 const CHUNKS = [];
-for (let cy = 0; cy < 3; cy++) {
-  for (let cx = 0; cx < 3; cx++) {
-    const x0 = cx * 7, y0 = cy * 6, x1 = x0 + 7, y1 = y0 + 6;
+for (let cy = 0; cy < Math.ceil(G.ny / CHUNK_H); cy++) {
+  for (let cx = 0; cx < Math.ceil(G.nx / CHUNK_W); cx++) {
+    const x0 = cx * CHUNK_W, y0 = cy * CHUNK_H, x1 = Math.min(x0 + CHUNK_W, G.nx), y1 = Math.min(y0 + CHUNK_H, G.ny);
     let any = false;
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) if (!isCoreTile(x, y)) any = true;
     if (!any) continue;
     const a = tileBox(x0, y0), b = tileBox(x1 - 1, y1 - 1);
     CHUNKS.push({ key: `areas-${cx}_${cy}`, box: { s: a.s, w: a.w, n: b.n, e: b.e } });
   }
+}
+if (args.includes('--dry-run')) {
+  console.log(`city ${CITY.id}; data dir ${dataRel()}`);
+  console.log('core bbox', CORE_BBOX, 'wide bbox', WIDE_BBOX, 'origin', ORIGIN);
+  console.log(`tile grid ${G.nx}x${G.ny} (core ${G.coreNx}x${G.coreNy}, ext`, G.ext, `), ${TILES.length} tiles, ${CHUNKS.length} area chunks`);
+  console.log(`out ${dataRel('tiles')}/; raw cache ${dataRel('.cache', 'tiles-raw')}/`);
+  process.exit(0);
 }
 const f5 = (v) => v.toFixed(5);
 const bstr = (b, pad = 0) => [b.s - pad, b.w - pad, b.n + pad, b.e + pad].map(f5).join(',');
@@ -100,7 +109,7 @@ async function overpass(query, label) {
     try {
       const r = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'braga-3d-data/1.0' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
         body: 'data=' + encodeURIComponent(query),
         signal: AbortSignal.timeout(330000),
       });

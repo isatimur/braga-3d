@@ -18,22 +18,29 @@
 //           gs (m/s), track (deg), vr (m/s), ground, type, seen (s) }] }
 // flight: the callsign, else the registration (the label); call: the
 // callsign only (api/route.js looks it up); reg: the registration or ''.
-const LAT = 41.55;
-const LON = -8.42;
-const NM = 40;
+// The point and radius come from cities/<id>.json (aircraft: lat, lon,
+// radius_nm; Braga 41.55 / -8.42 / 40 nm), chosen by ?city=<id>.
+import { cityConfig, userAgent } from './_city.js';
+
 const FT = 0.3048;
 const KT = 0.514444;
 
-const SOURCES = [
-  { id: 'adsb.lol', url: `https://api.adsb.lol/v2/point/${LAT}/${LON}/${NM}`, parse: readsb, maxAge: 10 },
-  { id: 'adsb.fi', url: `https://opendata.adsb.fi/api/v3/lat/${LAT}/lon/${LON}/dist/${NM}`, parse: readsb, maxAge: 10 },
-  {
-    id: 'opensky',
-    url: `https://opensky-network.org/api/states/all?lamin=${(LAT - 0.67).toFixed(2)}&lomin=${(LON - 0.9).toFixed(2)}&lamax=${(LAT + 0.67).toFixed(2)}&lomax=${(LON + 0.9).toFixed(2)}`,
-    parse: opensky,
-    maxAge: 60,
-  },
-];
+function sourcesFor(cfg) {
+  const { lat: LAT, lon: LON, radius_nm: NM } = cfg.aircraft;
+  // OpenSky takes a box: the radius in degrees (1 nm = 1/60 deg of latitude)
+  const dLat = +((NM / 60) + 0.003).toFixed(2);
+  const dLon = +(dLat / Math.cos((LAT * Math.PI) / 180)).toFixed(2);
+  return [
+    { id: 'adsb.lol', url: `https://api.adsb.lol/v2/point/${LAT}/${LON}/${NM}`, parse: readsb, maxAge: 10 },
+    { id: 'adsb.fi', url: `https://opendata.adsb.fi/api/v3/lat/${LAT}/lon/${LON}/dist/${NM}`, parse: readsb, maxAge: 10 },
+    {
+      id: 'opensky',
+      url: `https://opensky-network.org/api/states/all?lamin=${(LAT - dLat).toFixed(2)}&lomin=${(LON - dLon).toFixed(2)}&lamax=${(LAT + dLat).toFixed(2)}&lomax=${(LON + dLon).toFixed(2)}`,
+      parse: opensky,
+      maxAge: 60,
+    },
+  ];
+}
 
 // readsb / tar1090 JSON (adsb.lol, adsb.fi): feet, knots, ft/min
 function readsb(j) {
@@ -92,11 +99,11 @@ function opensky(j) {
   return { now, ac };
 }
 
-async function getJson(url, ms = 5000) {
+async function getJson(url, ua, ms = 5000) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), ms);
   try {
-    const r = await fetch(url, { signal: ctl.signal, headers: { accept: 'application/json', 'user-agent': 'braga-3d.com live map (https://braga-3d.com)' } });
+    const r = await fetch(url, { signal: ctl.signal, headers: { accept: 'application/json', 'user-agent': ua } });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return await r.json();
   } finally {
@@ -105,11 +112,12 @@ async function getJson(url, ms = 5000) {
 }
 
 // The core, without the HTTP wrapper (node tests call it directly).
-export async function fetchAircraft() {
+export async function fetchAircraft(cfg = cityConfig('braga')) {
   const errors = [];
-  for (const s of SOURCES) {
+  const ua = userAgent(cfg);
+  for (const s of sourcesFor(cfg)) {
     try {
-      const out = s.parse(await getJson(s.url));
+      const out = s.parse(await getJson(s.url, ua));
       return { src: s.id, maxAge: s.maxAge, errors, ...out };
     } catch (e) {
       errors.push(`${s.id}: ${e.name === 'AbortError' ? 'timeout' : e.message}`);
@@ -120,16 +128,17 @@ export async function fetchAircraft() {
 
 // Rate limit, three layers:
 //   - the CDN: s-maxage shares one answer between all visitors;
-//   - a query string would make a new CDN cache key per request, so any
-//     request with one is refused (400, cached);
-//   - a warm function instance reuses its last answer for 8 s and runs one
-//     upstream round at a time.
+//   - a query string would make a new CDN cache key per request, so the
+//     only parameter allowed is city=<id> (one known config file, so one
+//     cache key per city); anything else is refused (400, cached);
+//   - a warm function instance reuses its last answer per city for 8 s and
+//     runs one upstream round per city at a time.
 // When no source answers, the reply is still a cacheable 200 with
 // src: null (the CDN does not cache a 5xx, so every visitor would reach the
 // upstreams again); the page treats src: null as "no data".
 const MEMO_MS = 8000;
-let memo = null; // { at, out }
-let inflight = null;
+const memo = new Map(); // city -> { at, out }
+const inflight = new Map(); // city -> promise
 
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -139,18 +148,31 @@ export default async function handler(req, res) {
     res.end('{"error":"GET only"}');
     return;
   }
-  if (String(req.url || '').includes('?')) {
-    res.statusCode = 400;
-    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
-    res.end('{"error":"no parameters"}');
-    return;
+  const url = String(req.url || '');
+  let cfg = cityConfig('braga');
+  if (url.includes('?')) {
+    let q = null;
+    try {
+      q = new URL(url, 'http://x').searchParams;
+    } catch {
+      q = null;
+    }
+    const keys = q ? [...q.keys()] : [];
+    cfg = keys.length === 1 && keys[0] === 'city' ? cityConfig(q.get('city')) : null;
+    if (!cfg) {
+      res.statusCode = 400;
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+      res.end('{"error":"only city=<known id> is accepted"}');
+      return;
+    }
   }
   let out;
-  if (memo && Date.now() - memo.at < MEMO_MS) out = memo.out;
+  const m = memo.get(cfg.id);
+  if (m && Date.now() - m.at < MEMO_MS) out = m.out;
   else {
-    inflight ||= fetchAircraft().finally(() => (inflight = null));
-    out = await inflight;
-    memo = { at: Date.now(), out };
+    if (!inflight.has(cfg.id)) inflight.set(cfg.id, fetchAircraft(cfg).finally(() => inflight.delete(cfg.id)));
+    out = await inflight.get(cfg.id);
+    memo.set(cfg.id, { at: Date.now(), out });
   }
   res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${out.maxAge}, stale-while-revalidate=${out.maxAge * 2}`);
   res.setHeader('X-Braga-Adsb', out.src || 'none');

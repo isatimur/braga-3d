@@ -153,7 +153,8 @@ export function createUI(landmarks, routes, h) {
       r.li.hidden = off;
       if (!off) n++;
     }
-    countEl.textContent = `${n} ${placesWord(n)}`;
+    // a city with no landmark list yet says so instead of "0 мест"
+    countEl.textContent = rows.length ? `${n} ${placesWord(n)}` : t('пока без достопримечательностей');
   }
   refreshFilter();
 

@@ -1,5 +1,7 @@
 import { PLACEHOLDER_LANDMARKS, PLACEHOLDER_ROADS, PLACEHOLDER_ENRICH, PLACEHOLDER_ROUTES } from './placeholder-data.js';
 import { language, loadTranslations, localizeLandmark, localizeRoute } from './i18n.js';
+import { CITY, dataPath } from './city.js';
+import { setDims } from './fit.js';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -165,26 +167,46 @@ function cleanRoutes(raw, landmarks) {
   return out;
 }
 
-// Story mode text (data/story.json), fetched when the story first opens.
+// Story mode text (<data_dir>/story.json), fetched when the story first opens.
 export async function loadStory() {
-  return fetchJSON('data/story.json');
+  return fetchJSON(dataPath('story.json'));
+}
+
+// Small per-city tables the modules used to import statically. Optional:
+// a city without them gets an empty object.
+async function fetchTable(file, key, status) {
+  try {
+    const v = await fetchJSON(dataPath(file));
+    status[key] = 'real';
+    return v;
+  } catch (e) {
+    status[key] = 'missing';
+    console.info(`[braga] ${dataPath(file)} unavailable (${e.message}); ${key} empty.`);
+    return {};
+  }
 }
 
 export async function loadData(onStep = () => {}) {
   const status = { landmarks: 'real', roads: 'real', routes: 'real', enriched: [] };
   const force = new URLSearchParams(location.search).has('demo');
+  const D = CITY.data_dir;
+  const braga = CITY.id === 'braga';
 
-  const [lmRes, rdRes, rtRes, trRes, fpRes, bdRes, locRes, ntRes] = await Promise.allSettled([
-    fetchJSON('data/landmarks.json').then(cleanLandmarks),
-    fetchJSON('data/roads.json').then(cleanRoads),
-    fetchJSON('data/routes.json'),
-    fetchJSON('data/terrain.json'),
-    fetchJSON('data/footprints.json'),
-    fetchJSON('data/buildings.json'),
-    loadTranslations(language),
-    fetchJSON('data/nature.json'),
+  const [lmRes, rdRes, rtRes, trRes, fpRes, bdRes, locRes, ntRes, dims, life, axes] = await Promise.allSettled([
+    fetchJSON(CITY.landmarks_file).then(cleanLandmarks),
+    fetchJSON(dataPath('roads.json')).then(cleanRoads),
+    fetchJSON(dataPath('routes.json')),
+    fetchJSON(dataPath('terrain.json')),
+    fetchJSON(dataPath('footprints.json')),
+    fetchJSON(dataPath('buildings.json')),
+    loadTranslations(language, CITY.id),
+    fetchJSON(dataPath('nature.json')),
+    fetchTable('dimensions.json', 'dimensions', status),
+    fetchTable('life.json', 'life', status),
+    fetchTable('traffic-axes.json', 'trafficAxes', status),
   ]);
   onStep();
+  setDims(dims.value || {});
 
   // Geodata for the real-scale scene. Each one is optional: without it the
   // scene degrades (flat ground, no city mass, model-sized landmarks) and
@@ -195,7 +217,7 @@ export async function loadData(onStep = () => {}) {
       geo[key] = res.value;
       status[key] = 'real';
     } else {
-      console.warn(`[braga] data/${file} unavailable (${res.reason?.message}). ${key} layer disabled.`);
+      console.warn(`[braga] ${D}/${file} unavailable (${res.reason?.message}). ${key} layer disabled.`);
       geo[key] = null;
       status[key] = 'missing';
     }
@@ -204,18 +226,25 @@ export async function loadData(onStep = () => {}) {
   let landmarks;
   if (lmRes.status === 'fulfilled') {
     landmarks = lmRes.value;
-  } else {
-    console.warn(`[braga] data/landmarks.json unavailable (${lmRes.reason?.message}). Using placeholder landmarks.`);
+  } else if (braga) {
+    console.warn(`[braga] ${CITY.landmarks_file} unavailable (${lmRes.reason?.message}). Using placeholder landmarks.`);
     landmarks = cleanLandmarks(PLACEHOLDER_LANDMARKS);
     status.landmarks = 'placeholder';
+  } else {
+    // a new city: the map draws the terrain and the city fabric it has;
+    // the landmark list comes from the landmark agents later
+    console.info(`[braga] ${CITY.name.en}: no landmarks yet (${CITY.landmarks_file}: ${lmRes.reason?.message}). Empty list.`);
+    landmarks = [];
+    status.landmarks = 'none';
   }
 
   let roads;
   if (rdRes.status === 'fulfilled') {
     roads = rdRes.value;
   } else {
-    console.warn(`[braga] data/roads.json unavailable (${rdRes.reason?.message}). Using placeholder roads.`);
-    roads = PLACEHOLDER_ROADS;
+    console.warn(`[braga] ${D}/roads.json unavailable (${rdRes.reason?.message}). Using placeholder roads.`);
+    // the placeholder streets are Braga's; another city gets its own frame and no streets
+    roads = braga ? PLACEHOLDER_ROADS : { origin: CITY.origin, bbox: CITY.core_bbox, features: [] };
     status.roads = 'placeholder';
   }
 
@@ -236,10 +265,13 @@ export async function loadData(onStep = () => {}) {
     }
   }
   if (routeErr || force) {
-    if (routeErr) console.warn(`[braga] data/routes.json unavailable (${routeErr.message}). Using placeholder routes.`);
-    if (routeErr || !routes.length) {
+    if (routeErr) console.warn(`[braga] ${D}/routes.json unavailable (${routeErr.message}). ${braga ? 'Using placeholder routes.' : 'No routes.'}`);
+    if ((routeErr || !routes.length) && braga) {
       routes = cleanRoutes(PLACEHOLDER_ROUTES, landmarks);
       status.routes = 'placeholder';
+    } else if (routeErr) {
+      routes = [];
+      status.routes = 'none';
     }
   }
 
@@ -247,6 +279,6 @@ export async function loadData(onStep = () => {}) {
   landmarks = landmarks.map((l) => localizeLandmark(l, tr?.landmarks?.[l.id]));
   routes = routes.map((r) => localizeRoute(r, tr?.routes?.[r.id]));
 
-  return { landmarks, roads, routes, status, ...geo };
+  return { landmarks, roads, routes, status, life: life.value || {}, trafficAxes: axes.value || {}, ...geo };
 }
 

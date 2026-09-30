@@ -2,38 +2,32 @@
 // local metric projection, Douglas-Peucker, polygon area and minimum-area rectangle.
 // Node 22, no dependencies.
 
-export const BBOX = { s: 41.52, w: -8.49, n: 41.575, e: -8.36 };
-export const ORIGIN = { lat: 41.5503, lon: -8.42 };
+// Every place-specific value comes from cities/<id>.json (--city <id>,
+// default braga; see city-lib.mjs). Braga's config carries the historical
+// grids, so its constants are exactly the old hard-coded ones.
+import { CITY, DATA_DIR, dataPath, cachePath, dataRel, landmarksPath } from './city-lib.mjs';
+
+export { CITY, DATA_DIR, dataPath, cachePath, dataRel, landmarksPath };
+export const BBOX = CITY.core_bbox;
+export const ORIGIN = CITY.origin;
+export const WIDE_BBOX = CITY.wide_bbox;
+export const USER_AGENT = CITY.userAgent;
 
 // The core: the area the first load draws (roads.json, buildings.json,
 // nature.json). The streamed tiles (scripts/fetch-tiles.mjs) cover the ring
 // around it.
 export const CORE_BBOX = BBOX;
 
-// Tile grid of the streamed area. The core is exactly 11 x 6 tiles, so a
-// tile is either all core (never written) or all outside it. A tile is
-// 0.13/11 deg lon x 0.055/6 deg lat: about 985 m x 1013 m.
-// Tile (x, y): x counts east from the wide west edge, y north from the wide
-// south edge.
-export const TILE_GRID = (() => {
-  const dLon = (BBOX.e - BBOX.w) / 11;
-  const dLat = (BBOX.n - BBOX.s) / 6;
-  const ext = { w: 5, e: 5, s: 6, n: 6 }; // tiles beyond the core on each side
-  const bbox = { s: BBOX.s - ext.s * dLat, w: BBOX.w - ext.w * dLon, n: BBOX.n + ext.n * dLat, e: BBOX.e + ext.e * dLon };
-  return {
-    dLon,
-    dLat,
-    ext,
-    nx: 11 + ext.w + ext.e,
-    ny: 6 + ext.s + ext.n,
-    bbox,
-    core: { x0: ext.w, y0: ext.s, x1: ext.w + 11, y1: ext.s + 6 }, // [x0, x1) x [y0, y1)
-  };
-})();
+// Tile grid of the streamed area. The core is an exact number of tiles
+// (Braga: 11 x 6), so a tile is either all core (never written) or all
+// outside it. A Braga tile is 0.13/11 deg lon x 0.055/6 deg lat: about
+// 985 m x 1013 m. Tile (x, y): x counts east from the wide west edge, y
+// north from the wide south edge. { dLon, dLat, ext, nx, ny, bbox, core }.
+export const TILE_GRID = CITY.tileGrid;
 
-// The terrain lattice (data/terrain.json): the original 90 x 60 core grid
+// The terrain lattice (data/terrain.json): the core grid (Braga: 90 x 60)
 // extended by whole steps (~121 m lon, ~103 m lat) past the tile grid.
-export const TERRAIN_LATTICE = { coreCols: 90, coreRows: 60, ext: { w: 41, e: 41, s: 59, n: 59 } };
+export const TERRAIN_LATTICE = CITY.terrainLattice;
 
 // maps.mail.ru answered last time; the others often return 504. Try it first.
 export const MIRRORS = [
@@ -55,7 +49,7 @@ export async function overpass(query, { rounds = 4, allowEmpty = false, label = 
         console.log(`Overpass${label ? ' ' + label : ''}: ${url} (round ${round + 1})`);
         const r = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'braga-3d-data/1.0' },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
           body: 'data=' + encodeURIComponent(query),
           signal: AbortSignal.timeout(240000),
         });

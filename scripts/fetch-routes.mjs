@@ -1,4 +1,4 @@
-// Build data/routes.json: three walking itineraries with real street geometry.
+// Build <data dir>/routes.json: three walking itineraries with real street geometry.
 // Node 22, no dependencies. Run: node scripts/fetch-routes.mjs
 //
 // Routing:
@@ -10,15 +10,14 @@
 // - funicular leg part: straight track of the Elevador do Bom Jesus (OSM way 26307689 + 772942621).
 // Stop times, distance_km and duration_ru come from the legs plus stay_min. Nothing is typed by hand.
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { CITY, dataPath, dataRel } from './city-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'routes.json');
-const LANDMARKS = JSON.parse(readFileSync(join(ROOT, 'data', 'landmarks.json'), 'utf8'));
-const byId = Object.fromEntries(LANDMARKS.map(l => [l.id, l]));
+// --city <id> picks the city (default braga). The itineraries are content:
+// see ROUTES_BY_CITY below.
+const OUT = dataPath('routes.json');
+let byId = {}; // landmark id -> landmark; loaded after the route table is picked
 
-const UA = 'braga-3d-content/1.0 (timur@swiirl.ai)';
+const UA = `${CITY.id}-3d-content/1.0 (timur@swiirl.ai)`;
 const FOOT_URLS = [
   'https://routing.openstreetmap.de/routed-foot/route/v1/foot',
   'https://router.project-osrm.org/route/v1/foot',
@@ -30,7 +29,8 @@ const CAR_URLS = [
 const DELAY_MS = 1200;
 
 // Elevador do Bom Jesus: lower station -> upper station (OSM geometry).
-const FUNICULAR = [[41.55471, -8.38073], [41.55486, -8.37888], [41.55492, -8.3779]];
+const FUNICULAR_BY_CITY = { braga: [[41.55471, -8.38073], [41.55486, -8.37888], [41.55492, -8.3779]] };
+const FUNICULAR = FUNICULAR_BY_CITY[CITY.id] || [];
 // Modelling allowances (not from a timetable). bomjesus.pt gives the track (267 m, 116 m climb)
 // but no ride time, so we allow 3 min for the ride and 10 min for waiting at a city bus stop.
 const FUNICULAR_MIN = 3;
@@ -110,7 +110,7 @@ const hoursRu = min => {
 };
 
 // Route definitions. stops[i].day starts a new day (time resets to dayStart).
-const ROUTES = [
+const BRAGA_ROUTES = [
   {
     id: 'classic-day',
     name_ru: 'Классическая Брага за день',
@@ -211,6 +211,15 @@ const ROUTES = [
     ],
   },
 ];
+
+// One entry per city. A city without an entry gets no routes.json from this script.
+const ROUTES_BY_CITY = { braga: BRAGA_ROUTES };
+const ROUTES = ROUTES_BY_CITY[CITY.id];
+if (!ROUTES) {
+  console.log(`no routes defined for ${CITY.id}; add them to scripts/fetch-routes.mjs`);
+  process.exit(0);
+}
+byId = Object.fromEntries(JSON.parse(readFileSync(CITY.landmarksPath, 'utf8')).map(l => [l.id, l]));
 
 async function buildRoute(def) {
   if (def.legs.length !== def.stops.length - 1) throw new Error(`${def.id}: legs must be stops-1`);

@@ -1,19 +1,24 @@
-// Fetch Braga nature areas (woods, water, parks, gardens, grass, farmland...) and waterway lines
-// from OpenStreetMap (Overpass API) and write data/nature.json.
-// Node 22, no dependencies. Run: node scripts/fetch-nature.mjs [--refresh]
-// The raw Overpass response is cached in data/.cache/nature-raw.json; --refresh refetches it.
+// Fetch a city's nature areas (woods, water, parks, gardens, grass, farmland...) and waterway lines
+// from OpenStreetMap (Overpass API) and write <data dir>/nature.json.
+// Node 22, no dependencies. Run: node scripts/fetch-nature.mjs [--city <id>] [--refresh] [--dry-run]
+// (default city: braga; see cities/<id>.json)
+// The raw Overpass response is cached in <data dir>/.cache/nature-raw.json; --refresh refetches it.
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+import { CITY, BBOX, ORIGIN, USER_AGENT, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'data', 'nature.json');
-const CACHE = join(ROOT, 'data', '.cache', 'nature-raw.json');
+const OUT = dataPath('nature.json');
+const CACHE = cachePath('nature-raw.json');
 const REFRESH = process.argv.includes('--refresh');
 const MAX_BYTES = 3 * 1024 * 1024;
 
-const BBOX = { s: 41.52, w: -8.49, n: 41.575, e: -8.36 };
-const ORIGIN = { lat: 41.5503, lon: -8.42 };
+if (process.argv.includes('--dry-run')) {
+  console.log(`city ${CITY.id}; data dir ${dataRel()}`);
+  console.log('bbox', BBOX, 'origin', ORIGIN);
+  console.log('hills', CITY.nature?.hills || []);
+  console.log(`out ${dataRel('nature.json')}; cache ${dataRel('.cache', 'nature-raw.json')}`);
+  process.exit(0);
+}
 
 const MIRRORS = [
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
@@ -52,7 +57,7 @@ async function fetchOverpass() {
         console.log(`Overpass: ${url} (round ${round + 1})`);
         const r = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'braga-3d-data/1.0' },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
           body: 'data=' + encodeURIComponent(QUERY),
           signal: AbortSignal.timeout(300000),
         });
@@ -467,7 +472,7 @@ function coverage(lat, lon, radius = 1200, step = 20) {
   return { circle: total * cell, byKind: Object.fromEntries(Object.entries(byKind).map(([k, n]) => [k, n * cell])) };
 }
 console.log('\nCoverage within 1.2 km (20 m grid):');
-for (const [name, lat, lon] of [['Bom Jesus do Monte', 41.5545, -8.3775], ['Sameiro', 41.542, -8.3695]]) {
+for (const { name, lat, lon } of CITY.nature?.hills || []) {
   const { circle, byKind } = coverage(lat, lon);
   const forest = byKind.forest || 0;
   console.log(`  ${name}: forest ${forest.toFixed(3)} km² of ${circle.toFixed(3)} km² in bbox circle (${((forest / circle) * 100).toFixed(1)}%)`);

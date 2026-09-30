@@ -1,9 +1,11 @@
-// TUB (Transportes Urbanos de Braga) static GTFS -> data/gtfs/schedule.json
+// Static GTFS of the city's operator -> <data dir>/gtfs/schedule.json
+// (Braga: TUB, Transportes Urbanos de Braga -> data/gtfs/schedule.json)
 //
-//   node scripts/fetch-gtfs.mjs            download the feed, then build
-//   node scripts/fetch-gtfs.mjs --offline  build from the cached zip
+//   node scripts/fetch-gtfs.mjs [--city <id>]            download the feed, then build
+//   node scripts/fetch-gtfs.mjs [--city <id>] --offline  build from the cached zip
+//   A city with no transit.gtfs_url in cities/<id>.json: prints "no GTFS feed" and exits 0.
 //
-// Source: https://www.tub.pt/developer/gtfs/feed/tub.zip, listed on
+// Braga source: https://www.tub.pt/developer/gtfs/feed/tub.zip, listed on
 // dados.gov.pt («GTFS | Transportes Urbanos de Braga», licence "not
 // specified"). The raw feed stays in data/.cache/gtfs/ (never shipped).
 //
@@ -18,23 +20,29 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { CITY, dataPath, cachePath } from './city-lib.mjs';
 
-const ROOT = resolve(import.meta.dirname, '..');
-const CACHE = resolve(ROOT, 'data/.cache/gtfs');
-const OUT = resolve(ROOT, 'data/gtfs/schedule.json');
-const URL = 'https://www.tub.pt/developer/gtfs/feed/tub.zip';
+// --city <id> picks the city (default braga); the feed comes from cities/<id>.json transit.gtfs_url.
+const URL = CITY.transit?.gtfs_url;
+if (!URL) {
+  console.log(`no GTFS feed for ${CITY.id}`);
+  process.exit(0);
+}
+const CACHE = cachePath('gtfs');
+const OUT = dataPath('gtfs', 'schedule.json');
 const offline = process.argv.includes('--offline');
+const feedName = (CITY.transit.operator || 'feed').toLowerCase();
 
 mkdirSync(CACHE, { recursive: true });
-mkdirSync(resolve(ROOT, 'data/gtfs'), { recursive: true });
-const zip = resolve(CACHE, 'tub.zip');
+mkdirSync(dataPath('gtfs'), { recursive: true });
+const zip = resolve(CACHE, `${feedName}.zip`);
 if (!offline || !existsSync(zip)) {
   console.log(`[gtfs] downloading ${URL}`);
   const r = await fetch(URL);
   if (!r.ok) throw new Error(`HTTP ${r.status} for ${URL}`);
   writeFileSync(zip, Buffer.from(await r.arrayBuffer()));
 }
-const dir = resolve(CACHE, 'tub');
+const dir = resolve(CACHE, feedName);
 rmSync(dir, { recursive: true, force: true });
 execFileSync('unzip', ['-o', '-q', zip, '-d', dir]);
 
@@ -83,7 +91,7 @@ const calRaw = csv('calendar.txt');
 // ---- geometry
 // the map's own projection (src/geo.js, origin 41.5503 N): distances along a
 // shape here equal the app's world lengths x 4 m
-const K = Math.cos((41.5503 * Math.PI) / 180) * 111320;
+const K = Math.cos((CITY.origin.lat * Math.PI) / 180) * 111320;
 const toXY = (lat, lon) => [lon * K, lat * 110574];
 
 function simplify(pts, tol) {
@@ -273,10 +281,10 @@ for (const p of patterns) p.sh = remap.get(p.sh);
 
 const out = {
   source: URL,
-  catalogue: 'https://dados.gov.pt/pt/datasets/gtfs-transportes-urbanos-de-braga/',
+  catalogue: CITY.transit.catalogue,
   licence: 'not specified by the publisher (dados.gov.pt: "License Not Specified")',
-  agency: 'Transportes Urbanos de Braga (TUB)',
-  timezone: 'Europe/Lisbon',
+  agency: `${CITY.transit.operator_long} (${CITY.transit.operator})`,
+  timezone: CITY.timezone,
   built: new Date().toISOString().slice(0, 10),
   valid: services.length ? { from: services[0].from, to: services[0].to } : null,
   routes,

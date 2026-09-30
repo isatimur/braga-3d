@@ -2,17 +2,27 @@
 // `osm` field of data/landmarks.json. Prints a summary; exits 1 on any error.
 // Node 22, no dependencies. Run: node scripts/check-geo.mjs
 import { readFileSync, statSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
+import { CITY, CORE_BBOX, dataPath } from './geo-lib.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const P = f => join(ROOT, 'data', f);
+// --city <id> picks the city (default braga).
+const P = f => dataPath(f);
 const errors = [], warnings = [];
 const err = m => errors.push(m), warn = m => warnings.push(m);
-const load = f => { try { return JSON.parse(readFileSync(P(f), 'utf8')); } catch (e) { err(`${f}: ${e.message}`); return null; } };
+const load = f => { try { return JSON.parse(readFileSync(f === 'landmarks.json' ? CITY.landmarksPath : P(f), 'utf8')); } catch (e) { err(`${f}: ${e.message}`); return null; } };
 const isLL = p => Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180;
-const M_LAT = 111320, M_LON = 111320 * Math.cos((41.55 * Math.PI) / 180);
+const M_LAT = 111320, M_LON = 111320 * Math.cos((CITY.origin.lat * Math.PI) / 180);
 const distM = (a, b) => Math.hypot((a[0] - b[0]) * M_LAT, (a[1] - b[1]) * M_LON);
+
+// A city whose pipeline has not run yet: say so and stop, no errors.
+if (CITY.id !== 'braga') {
+  const need = ['buildings.json', 'terrain.json', 'footprints.json'].map(P).concat(CITY.landmarksPath);
+  const missing = need.filter(f => !existsSync(f));
+  if (missing.length) {
+    console.log(`no data yet for ${CITY.id}; missing: ${missing.map(f => f.replace(`${dataPath()}/`, '')).join(', ')}`);
+    process.exit(0);
+  }
+}
 
 const landmarks = load('landmarks.json') || [];
 const fp = load('footprints.json') || {};
@@ -57,7 +67,7 @@ if (bld) {
   const KINDS = new Set(['residential', 'commercial', 'industrial', 'church', 'public', 'other']);
   let bad = 0, outside = 0;
   const kinds = {};
-  const box = { s: 41.52 - 0.005, w: -8.49 - 0.005, n: 41.575 + 0.005, e: -8.36 + 0.005 };
+  const box = { s: CORE_BBOX.s - 0.005, w: CORE_BBOX.w - 0.005, n: CORE_BBOX.n + 0.005, e: CORE_BBOX.e + 0.005 };
   for (const b of B) {
     if (!Array.isArray(b.p) || b.p.length < 3 || !b.p.every(isLL) || !(b.h > 0) || !KINDS.has(b.k)) { bad++; continue; }
     const [la, lo] = b.p[0];
@@ -98,12 +108,16 @@ if (ter) {
   // Bom Jesus: the basilica terrace is ~410 m, not the ~560 m of the Monte Espinho summit.
   // EU-DEM gives 410 m and SRTM 414 m at the basilica; both give ~300 m at the stair
   // foot, a ~112 m rise that matches the published 116 m of the staircase.
-  const probes = { centre: [41.5503, -8.42, 150, 250], 'bom-jesus': [41.55494, -8.37703, 350, 450], sameiro: [41.54182, -8.36954, 520, 600] };
+  // Expected ranges exist for Braga only; other cities: probe heights must be finite.
+  const RANGES_BY_CITY = { braga: { centre: [150, 250], 'bom-jesus': [350, 450], sameiro: [520, 600] } };
+  const ranges = RANGES_BY_CITY[CITY.id] || {};
   const got = {};
-  for (const [k, [la, lo, lo_m, hi_m]] of Object.entries(probes)) {
+  for (const [k, [la, lo]] of Object.entries(CITY.probes)) {
     const v = Math.round(sample(la, lo));
     got[k] = v;
-    if (v < lo_m || v > hi_m) err(`terrain: ${k} = ${v} m, expected ${lo_m}-${hi_m} m`);
+    const r = ranges[k];
+    if (r) { if (v < r[0] || v > r[1]) err(`terrain: ${k} = ${v} m, expected ${r[0]}-${r[1]} m`); }
+    else if (!Number.isFinite(v)) err(`terrain: ${k} = ${v} m, not finite`);
   }
   console.log(`Terrain: ${cols}x${rows} (${ter.row_order}), ${mn}-${mx} m, source ${ter.source}, samples`, got);
 }

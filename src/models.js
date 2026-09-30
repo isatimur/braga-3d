@@ -88,12 +88,43 @@ export const LANDMARK_SPECS = {
   'diogo-sousa': { type: 'museum-roman', h: 12.8, yaw: 0 },
 };
 
-const BUILDERS = METRIC;
+const BUILDERS = { ...METRIC };
 
 // Model type -> the landmark whose builder stands in for that type.
 const TYPE_DEFAULT = Object.fromEntries(Object.entries(LANDMARK_SPECS).map(([id, s]) => [s.type, id]));
 
 export const MODEL_TYPES = Object.keys(TYPE_DEFAULT);
+
+// ------------------------------------------------------------ other cities
+// Braga's builders above are the base set. Another city adds its own from
+// src/models/index.<city>.js, which exports { builders, specs } in the
+// same shapes as METRIC and LANDMARK_SPECS (its files live in
+// src/models/<city>/). main.js and the check scripts call
+// loadCityModels(CITY.id) before the first buildModel(). A landmark whose
+// id has no builder falls back by model type, then to 'santa-cruz'.
+export function registerModels({ builders = {}, specs = {} } = {}) {
+  Object.assign(BUILDERS, builders);
+  Object.assign(LANDMARK_SPECS, specs);
+  for (const [id, s] of Object.entries(specs)) {
+    if (s?.type && !TYPE_DEFAULT[s.type] && builders[id]) {
+      TYPE_DEFAULT[s.type] = id;
+      MODEL_TYPES.push(s.type);
+    }
+  }
+}
+
+export async function loadCityModels(id) {
+  if (!id || id === 'braga') return null;
+  let mod;
+  try {
+    mod = await import(`./models/index.${id}.js`);
+  } catch (e) {
+    console.info(`[braga] no model registry for ${id} (src/models/index.${id}.js): landmarks use the type fallbacks`);
+    return null;
+  }
+  registerModels(mod);
+  return mod;
+}
 
 function resolve(type, landmarkId) {
   if (landmarkId && BUILDERS[landmarkId]) return landmarkId;

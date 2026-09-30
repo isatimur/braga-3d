@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { S } from './geo.js';
 import { FOG_UNIFORMS, WEATHER_UNIFORMS, CLOUD_GLSL, SEASON_GLSL } from './scene.js';
 import { createWater } from './water.js';
+import { CITY } from './city.js';
 
 // ------------------------------------------------------------ tuning
 const LAND_PX = 0.5; // land-cover mask: pixels per world unit (8 m per pixel)
@@ -23,10 +24,8 @@ const REPART_MOVE = 18; // re-split after the camera moved this far
 // relative tree density per square metre, by land-cover kind
 const DENSITY = { forest: 1, scrub: 0.45, park: 0.8, garden: 0.4, orchard: 0.8, grass: 0.03, farmland: 0.008 };
 // the wooded sanctuary hills get more of the budget: they are the views
-const HILLS = [
-  { lat: 41.5545, lon: -8.3775, r: 1500 }, // Bom Jesus do Monte
-  { lat: 41.542, lon: -8.3695, r: 1500 }, // Sameiro
-];
+// (cities/<id>.json nature.hills: Braga's Bom Jesus do Monte and Sameiro)
+const HILLS = () => CITY.nature?.hills || [];
 const HILL_BOOST = 6;
 
 // species: 0 maritime pine, 1 eucalyptus, 2 broadleaf (oak, plane),
@@ -489,7 +488,7 @@ export function buildNature(opts) {
   };
 
   // ---- scatter
-  const hills = HILLS.map((h) => ({ ...project(h.lat, h.lon), r: h.r * S }));
+  const hills = HILLS().map((h) => ({ ...project(h.lat, h.lon), r: h.r * S }));
   const boostAt = (x, z) => {
     let k = 1;
     for (const h of hills) {
