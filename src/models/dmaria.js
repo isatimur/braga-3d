@@ -20,7 +20,7 @@
 import * as THREE from 'three';
 import { MAT, archPath } from './kit.js';
 import { ribbonWindows } from './parts.js';
-import { offset, bbox, edges, inside } from './geom.js';
+import { offset, bbox, edges, inside, centroid as centroidOf } from './geom.js';
 import { polyBand } from './metric.js';
 import { lowTree, ribbon } from './drape.js';
 
@@ -116,7 +116,11 @@ function dmaria(k, { footprint }) {
   const O = footprint.outline;
   const P = footprint.parts;
   const w = P.find((p) => p.osm === 'w473728998');
-  const blocks = P.filter((p) => /Microsoft/.test(p.name || ''));
+  // the other blocks were traced from aerial imagery (scripts/dmaria-parts.mjs)
+  const blocks = P.filter((p) => p.tag === 'building' && p.name);
+  const pitch = P.find((p) => p.tag === 'pitch');
+  const gardens = P.filter((p) => p.tag === 'garden');
+  const squares = P.filter((p) => p.tag === 'square');
   const path = P.find((p) => p.tag === 'path');
   const rnd = k.rnd;
   // --- the yard: paved site, a strip of lawn on the south-east side
@@ -126,18 +130,32 @@ function dmaria(k, { footprint }) {
 
   k.begin('mask');
   if (w) wing(k, w);
-  for (const b of blocks) block(k, b, 12);
+  for (const b of blocks) block(k, b, b.height_m || 9);
   k.end('mask');
 
-  // --- courts in the central court, benches and lamps
-  court(k, -26, -22, 28, 15, COURT_GREEN);
-  court(k, 12, -22, 28, 15, COURT_BLUE);
-  for (const cx of [-26, 12]) {
-    for (const s of [-1, 1]) {
-      k.cyl(0.07, 0.07, 3.1, 5, 'iron', cx + s * 14.1, 0.02, -22 + 9.4);
+  // --- the red sports court, the garden patio with its round beds, the
+  // paved playground (all on the traced parts)
+  if (pitch) {
+    k.prism(pitch.pts, 0.0, 0.07, 'brick', { mat: MAT.smooth });
+    k.prism(offset(pitch.pts, -1.2), 0.07, 0.02, 'white', { holes: [offset(pitch.pts, -1.4)], mat: MAT.flat });
+  }
+  for (const g of gardens) {
+    k.prism(g.pts, 0.02, 0.25, 'grass', { mat: MAT.leaf });
+    const gc = centroidOf(g.pts);
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * Math.PI * 2;
+      const x = gc[0] + Math.cos(a) * 9;
+      const z = gc[1] + Math.sin(a) * 6;
+      k.cyl(2.2, 2.2, 0.35, 12, 'graniteLight', x, 0.27, z);
+      lowTree(k, x, 0.3, z, 5 + (i % 3), { spread: 0.3, bole: 0.4, color: i % 2 ? 'foliage' : 'foliageDark' });
     }
   }
-  for (let i = 0; i < 5; i++) k.box(1.8, 0.45, 0.5, 'seat', -50 + i * 26, 0, -2.5);
+  for (const s of squares) {
+    k.prism(s.pts, 0.02, 0.06, 'graniteLight', { mat: MAT.smooth });
+    const sc = centroidOf(s.pts);
+    for (let i = 0; i < 4; i++) k.box(1.8, 0.45, 0.5, 'seat', sc[0] - 9 + i * 6, 0.08, sc[1] + 8);
+    for (let i = 0; i < 6; i++) lowTree(k, sc[0] - 10 + (i % 3) * 8, 0.08, sc[1] - 6 + Math.floor(i / 3) * 9, 6, { spread: 0.3, bole: 0.5 });
+  }
   for (let i = 0; i < 6; i++) k.lamp(5.5, -60 + i * 22, 0, -38);
 
   // --- front: granite retaining wall and birches (photo)
