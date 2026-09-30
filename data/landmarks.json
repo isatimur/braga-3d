@@ -2248,5 +2248,979 @@
       "height_m": 14.5,
       "height_source": "wikipedia"
     }
+  },
+  {
+    "id": "uminho-gualtar",
+    "name_pt": "Universidade do Minho – Campus de Gualtar",
+    "name_ru": "Университет Минью, кампус Гуалтар",
+    "category": "education",
+    "lat": 41.5612,
+    "lon": -8.3972,
+    "year": "1986–1993",
+    "short_ru": "Главный кампус Университета Минью: учебные корпуса, библиотека и парк на востоке Браги",
+    "long_ru": "Университет Минью основали в 1973 году, первые занятия прошли в 1975 году. Кампус Гуалтар начали строить в 1986 году, первую очередь открыли в 1993-м. Сегодня это самый большой кампус университета: здесь учатся юристы, медики, психологи, экономисты и естественники. Между корпусами — газоны, деревья и статуя Прометея.",
+    "model": "university",
+    "image": "assets/img/uminho-gualtar.jpg",
+    "image_credit": {
+      "author": "Tiagoramalho1974",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:EM_2021_a%C3%A9rea.jpg"
+    },
+    "history_ru": "Университет Минью создали 11 августа 1973 года декретом-законом 402/73, вместе с университетами Авейру и Новым университетом Лиссабона. Эти «новые университеты» заметно изменили высшее образование Португалии. Первые занятия прошли в 1975/76 учебном году. Будущие учителя, филологи и инженеры тогда учились в разных зданиях Браги, например в учебном комплексе на улице Дон-Педру V.\n\nВ 1976 году правительство решило разместить университет в двух городах: в Браге и Гимарайнше. Первый камень кампуса Гуалтар заложили в 1986 году, первую очередь открыли в 1993-м. Кампус лежит на восточной окраине Браги, в приходе Гуалтар, на правом берегу реки Эште. По местной истории, на этой земле когда-то стоял средневековый монастырь Святого Михаила.\n\nСегодня Гуалтар — самый большой кампус университета. Здесь работают школы права, естественных наук, психологии, медицины, сестринского дела, экономики и управления, институты социальных наук, образования и гуманитарных наук, а также часть инженерной школы. На кампусе три учебных комплекса. Рядом стоят Центральная библиотека, столовая, медпункт и спортивный комплекс. Ректорат остаётся в центре города, на площади Ларгу-ду-Пасу.\n\nВ 2025 году в университете, в Браге и Гимарайнше, училась 21 тысяча студентов. С 2016 года он работает как публичный фонд с правом частного управления. В 2023 году университет стал почётным членом ордена Народного просвещения.",
+    "facts_ru": [
+      "Университет основан 11 августа 1973 года, первые занятия прошли в 1975/76 учебном году.",
+      "Первый камень кампуса Гуалтар заложили в 1986 году, первую очередь открыли в 1993-м.",
+      "Гуалтар — самый большой кампус университета; второй его город — Гимарайнш.",
+      "В 2025 году в университете училась 21 тысяча студентов.",
+      "В 2023 году университет стал почётным членом ордена Народного просвещения."
+    ],
+    "sources": [
+      {
+        "title": "História — Universidade do Minho",
+        "url": "https://www.uminho.pt/PT/uminho/Informacao-Institucional/Paginas/Historia.aspx"
+      },
+      {
+        "title": "Os campi: Descrição — Universidade do Minho",
+        "url": "https://www.uminho.pt/PT/viver/os-campi/Paginas/Descricao.aspx"
+      },
+      {
+        "title": "Universidade do Minho — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Universidade_do_Minho"
+      },
+      {
+        "title": "Texto para o número 33 da revista Monumentos — RepositóriUM",
+        "url": "https://repositorium.uminho.pt/server/api/core/bitstreams/d41c9f44-c9ca-4ed8-ba2a-30b7108925b4/content"
+      }
+    ],
+    "tip_ru": "Кампус лежит на востоке Браги, в приходе Гуалтар, и открыт для прогулок. Пройдите от статуи Прометея к Центральной библиотеке и учебным комплексам. Схема корпусов есть на сайте campi.uminho.pt.",
+    "gallery": [
+      {
+        "src": "assets/img/uminho-gualtar-1.jpg",
+        "kind": "exterior",
+        "caption_ru": "Корпус № 4 со стеклянным фасадом и бетонными башнями",
+        "credit": {
+          "author": "Aren Noronha",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Building_4_of_the_University_of_Minho,_Gualtar_campus_in_Braga,_Portugal.jpg"
+        }
+      },
+      {
+        "src": "assets/img/uminho-gualtar-2.jpg",
+        "kind": "exterior",
+        "caption_ru": "Фасад Центральной библиотеки университета",
+        "credit": {
+          "author": "Mind Booster Noori",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:University_of_Minho_General_Library.jpg"
+        }
+      },
+      {
+        "src": "assets/img/uminho-gualtar-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Стеклянный вход в Центральную библиотеку, в нём отражается двор кампуса",
+        "credit": {
+          "author": "Mind Booster Noori",
+          "license": "CC0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Biblioteca_Geral_da_UM.jpg"
+        }
+      },
+      {
+        "src": "assets/img/uminho-gualtar-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Статуя Прометея на площади кампуса",
+        "credit": {
+          "author": "Waldir",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Prometeu_Uminho_2.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "pYOfRVfmaw4",
+        "title": "Tour Pela Universidade Do Minho | Estudar em Portugal",
+        "channel": "Os Bratugas",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "d6pNruepTZM",
+        "title": "TOUR PELA UNIVERSIDADE DO MINHO - BRAGA/PORTUGAL",
+        "channel": "Adrielle Dona",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "smx1pUtfAjM",
+        "title": "Encontro Caixa Alumni UMinho 2022 chega ao campus de Gualtar",
+        "channel": "Alumni UMinho",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 165563981,
+      "height_m": 19.2,
+      "height_source": "osm building:levels×3.2"
+    }
+  },
+  {
+    "id": "dmaria-ii",
+    "name_pt": "Escola Secundária D. Maria II",
+    "name_ru": "Средняя школа имени Марии II",
+    "category": "education",
+    "lat": 41.54866,
+    "lon": -8.41778,
+    "year": "1964",
+    "short_ru": "Женский лицей 1964 года; с 1973 года здесь учатся и юноши, с 1974-го это средняя школа",
+    "long_ru": "Лицей имени королевы Марии II создали в Браге весной 1964 года как женский лицей на 24 класса. В первый год сюда пришли 1014 учениц. В 1973 году лицей открыли для юношей, а после революции 1974 года он стал средней школой. За полвека здесь учились более 80 тысяч человек.",
+    "model": "school",
+    "image": "assets/img/dmaria-ii.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Escola_Dona_Maria_II.jpg"
+    },
+    "history_ru": "Декрет-закон № 45636 от 31 марта 1964 года создал в Браге Национальный лицей имени доньи Марии II. В документе он назван «женским лицеем на 24 класса». Школа носит имя королевы Марии II (1819–1853). Сегодня её адрес — улица 25 Апреля, 198, в нескольких минутах ходьбы от исторического центра.\n\nВ первый учебный год в дневных классах учились 1014 девушек. Раздельное обучение длилось до 1973 года: реформа министра Вейги Симана открыла лицей и для юношей. В 1974 году в смешанных классах было уже 1911 учеников. После революции 25 апреля 1974 года лицей переименовали в Среднюю школу имени доньи Марии II. Это имя она носит и сейчас.\n\nСамые многолюдные годы пришли после революции. В 1975/76 учебном году дневные классы посещали 2703 ученика, а в 1981/82 году вместе с вечерними — 2885. За первые 50 лет здесь учились более 80 тысяч человек. Главным делом школы всегда были общие курсы, которые готовят к университету. С 2005 года она даёт и профессиональное среднее образование, позже открыла вечерние курсы для взрослых.\n\nПозже школа стала головной в объединении школ D. Maria II, куда вошла и базовая школа в Ламасайнше. В 2014 году в объединении учились около 3200 человек. Государственная компания Parque Escolar глубоко перестроила школу. Подрядчик построил новые корпуса для лабораторий, мастерских, библиотеки, спортзала и аудитории и обновил старые здания. Работы шли по этапам, и школа не закрывалась.",
+    "facts_ru": [
+      "Лицей создан декретом-законом № 45636 от 31 марта 1964 года.",
+      "По декрету это был женский лицей на 24 класса.",
+      "Юноши пришли сюда в 1973 году, после реформы министра Вейги Симана.",
+      "Нынешнее имя, Средняя школа имени доньи Марии II, школа носит с 1974 года.",
+      "За первые 50 лет здесь учились более 80 тысяч человек."
+    ],
+    "sources": [
+      {
+        "title": "Escola Secundária D. Maria II (Sede) — Agrupamento de Escolas D. Maria II",
+        "url": "https://www.aedonamaria.pt/content/escola-secundaria-d-maria-ii-sede"
+      },
+      {
+        "title": "Escola Secundária D. Maria II marcou a história da educação nacional e local — Correio do Minho",
+        "url": "https://correiodominho.pt/noticias/braga-escola-secundaria-d-maria-ii-marcou-a-historia-da-educacao-nacional-e-local/77270"
+      },
+      {
+        "title": "Escola Secundária D. Maria II, Braga — CARI construtores",
+        "url": "http://www.cari.pt/projects/display?id=303"
+      }
+    ],
+    "tip_ru": "Это действующая школа, и посторонних внутрь не пускают. Корпуса хорошо видны с улицы 25 Апреля, примерно в 10 минутах ходьбы от площади Републики.",
+    "gallery": [
+      {
+        "src": "assets/img/dmaria-ii-1.jpg",
+        "kind": "exterior",
+        "caption_ru": "Длинный четырёхэтажный корпус школы с рядами окон",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Escola_Dona_Maria_II_2.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "J-S2210s_hQ",
+        "title": "João Dantas, Diretor do Agrupamento Escolar D  Maria II",
+        "channel": "Rádio Antena Minho",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "NayO_bWTlHg",
+        "title": "Helder Carvalho, Agrupamento de Escolas D. Maria II, Braga (Prof.ª Lurdes Martins)",
+        "channel": "MILAGE LEARN+",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 21372352,
+      "height_m": 13,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "sao-frutuoso",
+    "name_pt": "Capela de São Frutuoso de Montélios",
+    "name_ru": "Капелла Святого Фруктуоза в Монтелиосе",
+    "category": "religious",
+    "lat": 41.56034,
+    "lon": -8.43884,
+    "year": "VII–X века",
+    "short_ru": "Раннесредневековая капелла-мавзолей в форме креста рядом с францисканским монастырём",
+    "long_ru": "По преданию, святой Фруктуоз, епископ Браги, в VII веке построил здесь капеллу как свою гробницу. Многие историки сегодня относят нынешнее здание к началу X века. Внутри — подковообразные арки на колоннах и купол над центром креста. Рядом стоит францисканский монастырь 1523 года; капелла — национальный памятник с 1944 года.",
+    "model": "visigothic",
+    "image": "assets/img/sao-frutuoso.jpg",
+    "image_credit": {
+      "author": "Joseolgon, edited by MenkinAlRire",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Capela_de_S%C3%A3o_Frutuoso_2018_(2)-638.jpg"
+    },
+    "history_ru": "Фруктуоз был вестготским монахом и основал много монастырей. С 654 года он епископ Думе, с 656-го — епископ Браги. По преданию, на холме Монтелиос он основал монастырь Святого Спасителя и велел построить капеллу как свою гробницу. Его ученик Валерий писал, что святого похоронили здесь; Фруктуоз умер в 665 году. Слово «Монтелиос» значит «маленькая гора».\n\nДата постройки спорна. Капеллу перестроили и заново украсили в IX–X веках. Государственная служба культуры Португалии считает, что нынешнее здание скорее относится к началу X века. Тогда при заселении края королём Альфонсо III культ епископа возродился. План — греческий крест: снаружи прямоугольные объёмы, внутри три рукава заканчиваются полукруглыми апсидами. Их отделяют тройные аркады с подковообразными арками, над средокрестием стоит купол. Историки сравнивают план с мавзолеем Галлы Плацидии в Равенне.\n\nВ 1102 году архиепископ Компостелы Диего Хельмирес увёз мощи святого в Сантьяго. В 1523 году архиепископ Диогу де Соуза основал рядом францисканский монастырь и не дал снести капеллу. В XVIII веке её встроили в новую церковь монастыря Святого Франциска и сильно переделали. Архитектор Эрнесту Корроди описал памятник в 1897 году, а в 1931 году началась реставрация по исходному плану. С 1944 года капелла — национальный памятник.\n\nВ 1966 году Компостела вернула мощи Браге, и их хранили в соборе. 18 октября 2025 года их перенесли в капеллу, спустя более 900 лет. В 2024 году закончилась реставрация монастыря за 2,5 миллиона евро. Теперь маршрут проходит через два этажа монастыря, мавзолей, церковь и ризницу.",
+    "facts_ru": [
+      "План капеллы — греческий крест с куполом над средокрестием.",
+      "Государственная служба культуры датирует здание скорее началом X века.",
+      "В 1102 году мощи святого увезли в Сантьяго-де-Компостелу.",
+      "Мощи святого Фруктуоза вернулись в капеллу 18 октября 2025 года.",
+      "Капелла — национальный памятник Португалии с 1944 года."
+    ],
+    "sources": [
+      {
+        "title": "Capela de São Frutuoso de Montélios — Cultura Portugal",
+        "url": "https://culturaportugal.gov.pt/pt/conhecer/local/pc-locais/capela-de-sao-frutuoso-de-montelios/"
+      },
+      {
+        "title": "Chapel of São Frutuoso — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Chapel_of_S%C3%A3o_Frutuoso"
+      },
+      {
+        "title": "Frutuoso de Braga — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Frutuoso_de_Braga"
+      },
+      {
+        "title": "Histórico Convento de São Francisco em Real reabriu depois de obras de 2,5 milhões — O Vilaverdense",
+        "url": "https://ovilaverdense.pt/historico-convento-de-sao-francisco-em-real-braga-reabriu-depois-de-obras-de-25-milhoes/"
+      }
+    ],
+    "tip_ru": "Капелла стоит в приходе Реал, примерно в 2 км к северо-западу от центра. Вход — через церковь Святого Франциска, капелла лежит ниже её пола. Часы работы уточняйте заранее: после реставрации 2024 года монастырь принимает посетителей по маршруту с гидом.",
+    "gallery": [
+      {
+        "src": "assets/img/sao-frutuoso-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Вид сквозь тройные подковообразные аркады к выходу",
+        "credit": {
+          "author": "Alvesgaspar",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:S%C3%A3o_Frutuoso_March_2016-2.jpg"
+        }
+      },
+      {
+        "src": "assets/img/sao-frutuoso-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Купол над средокрестием",
+        "credit": {
+          "author": "GFreihalter",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_523.jpg"
+        }
+      },
+      {
+        "src": "assets/img/sao-frutuoso-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Тройная аркада на колоннах перед одной из апсид",
+        "credit": {
+          "author": "GFreihalter",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_513.jpg"
+        }
+      },
+      {
+        "src": "assets/img/sao-frutuoso-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Резной фриз с листьями над колоннами",
+        "credit": {
+          "author": "GFreihalter",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_524.jpg"
+        }
+      },
+      {
+        "src": "assets/img/sao-frutuoso-5.jpg",
+        "kind": "exterior",
+        "caption_ru": "Фасад церкви Святого Франциска, рядом с которой стоит капелла",
+        "credit": {
+          "author": "François Philipp from Darmstadt, Germany",
+          "license": "CC BY 2.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Church_of_S%C3%A3o_Francisco_and_Capela_de_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios,_Braga_(10248447556).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "BK4eXon22Ak",
+        "title": "Ep9 - São Frutuoso I Caminhos de Fé",
+        "channel": "Arquidiocese de Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "fid4SakT0mc",
+        "title": "São Frutuoso de Braga",
+        "channel": "Guilherme Na Europa",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "tYld7M5GBsk",
+        "title": "Igreja de S. Francisco e Capela de S. Frutuoso - Braga",
+        "channel": "Baptista de Barros",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 159104082,
+      "height_m": 9,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "diogo-sousa",
+    "name_pt": "Museu de Arqueologia D. Diogo de Sousa",
+    "name_ru": "Археологический музей имени Диогу де Соузы",
+    "category": "museum",
+    "lat": 41.5462,
+    "lon": -8.4273,
+    "year": "1918, 2007",
+    "short_ru": "Археологический музей римской Бракары-Августы: от палеолита до Средних веков",
+    "long_ru": "Музей основали в 1918 году, но собственное здание он получил только в 2007-м. Его построили архитекторы Карлуш Гимарайнш и Луиш Соареш Карнейру в самой ценной археологической зоне римской Бракары-Августы. Коллекция рассказывает о севере Португалии от палеолита до Средних веков. Здесь хранится одно из лучших в Европе собраний римских мильных камней.",
+    "model": "museum-roman",
+    "image": "assets/img/diogo-sousa.jpg",
+    "image_credit": {
+      "author": "Joseolgon",
+      "license": "CC0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Museu_Regional_de_Arqueologia_Dom_Diogo_de_Sousa.jpg"
+    },
+    "history_ru": "Музей носит имя Диогу де Соузы (1461–1532), архиепископа Браги с 1505 года. Он перестроил город и одним из первых стал беречь наследие римской Бракары-Августы. Архиепископ собрал римские мильные камни и поставил их на поле Сант-Ана, нынешней Авениде-Сентрал. Получился первый в городе «музей под открытым небом». В 1769 году архиепископ Гашпар де Браганса перенёс камни на аллею Карвальейраш.\n\nГородской совет решил создать музей ещё в 1892 году, но решение осталось на бумаге. Музей официально основали декретом от 28 марта 1918 года как музей археологии и искусства. Он занял залы Архиепископского дворца, но до 1980 года работал нерегулярно. В 1980 году его возродили как Региональный археологический музей.\n\nСтроительство нового здания началось около 1990 года. Вскоре его заморозили: новое руководство музейной службы назвало проект «белым слоном». Работы возобновили в 2001 году, и 29 июня 2007 года музей открылся. Проект сделали архитекторы школы Порту Карлуш Гимарайнш и Луиш Соареш Карнейру. Здание состоит из трёх корпусов: технического с реставрационной лабораторией, кафе и публичного с залами, аудиторией, библиотекой и магазином. Сады вокруг открыты для всех.\n\nВ фондах более 30 тысяч предметов. Римские мильные камни из описи Капелы — национальный памятник с 1910 года. Один римский мозаичный пол показан на том месте, где его нашли. В 2018–2019 годах немецкие меценаты Бюлер-Брокгауз подарили музею почти 300 античных предметов. Среди них — прижизненный бюст императора Августа, единственный в Португалии.",
+    "facts_ru": [
+      "Музей основан декретом от 28 марта 1918 года.",
+      "Новое здание открылось 29 июня 2007 года.",
+      "В фондах более 30 тысяч предметов — от палеолита до Средних веков.",
+      "Прижизненный бюст императора Августа из дара Бюлер-Брокгауз — единственный в Португалии.",
+      "Мильные камни из описи Капелы — национальный памятник с 1910 года."
+    ],
+    "sources": [
+      {
+        "title": "Museu de Arqueologia Dom Diogo de Sousa — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Museu_de_Arqueologia_Dom_Diogo_de_Sousa"
+      },
+      {
+        "title": "História e Edifício — Museu D. Diogo de Sousa",
+        "url": "https://www.maddiogosousa.gov.pt/historia/"
+      },
+      {
+        "title": "D. Diogo de Sousa Archaeology Museum — Museus e Monumentos de Portugal",
+        "url": "https://www.museusemonumentos.pt/en/museus-e-monumentos/museu-de-arqueologia-d-diogo-de-sousa"
+      },
+      {
+        "title": "Museu D. Diogo de Sousa: 100 anos a guardar o passado do Noroeste — Público",
+        "url": "https://www.publico.pt/2018/03/28/local/noticia/museu-d-diogo-de-sousa-100-anos-a-guardar-o-passado-do-noroeste-1808353"
+      }
+    ],
+    "tip_ru": "Музей открыт со вторника по воскресенье с 10:00 до 17:30, полный билет стоит 5 евро. Сады вокруг здания открыты бесплатно. Рядом, на холме Сивидаде, можно осмотреть римские термы.",
+    "gallery": [
+      {
+        "src": "assets/img/diogo-sousa-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Зал античных ваз и скульптур в стеклянных витринах",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Collections_of_the_D._Diogo_de_Sousa_Museum_04.jpg"
+        }
+      },
+      {
+        "src": "assets/img/diogo-sousa-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Статуя императора Августа в светлом вестибюле музея",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Museu_D._Diogo_de_Sousa_in_2016_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/diogo-sousa-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Золотые шейные гривны железного века",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Museu_Dom_Diogo_de_Sousa_12.jpg"
+        }
+      },
+      {
+        "src": "assets/img/diogo-sousa-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Мозаика «Свадьба Пелопса и Гипподамии»",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Casamento_de_Pelops_e_Hipodamia.jpg"
+        }
+      },
+      {
+        "src": "assets/img/diogo-sousa-5.jpg",
+        "kind": "exterior",
+        "caption_ru": "Белые корпуса музея и мощёный двор",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Museu_D._Diogo_de_Sousa_in_2016_(2).JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "slPPPCKLFEI",
+        "title": "Flash Tours 2ªed: Museu D. Diogo de Sousa",
+        "channel": "Visit Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "V1iJyzcK3k8",
+        "title": "Museu Dom Diogo de Sousa - Braga, Portugal",
+        "channel": "Olhar Brasileiro em Portugal",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 104691209,
+      "height_m": 12.8,
+      "height_source": "osm building:levels×3.2"
+    }
+  },
+  {
+    "id": "coimbras",
+    "name_pt": "Capela e Casa dos Coimbras",
+    "name_ru": "Капелла и дом Коимбраш",
+    "category": "religious",
+    "lat": 41.54992,
+    "lon": -8.42474,
+    "year": "1525–1528",
+    "short_ru": "Капелла-башня XVI века с каменным алтарём и изразцами о Сотворении мира",
+    "long_ru": "Жуан де Коимбра, провизор архиепархии Браги, построил эту капеллу-башню в 1525–1528 годах. Снаружи её украшают зубцы, статуи и галерея с кованой решёткой. Внутри — нервюрный свод, расписной каменный алтарь и сине-белые изразцы. Рядом стоит дом Коимбраш с мануэлинскими окнами: его разобрали в начале XX века и собрали заново у капеллы в 1924 году.",
+    "model": "chapel-manueline",
+    "image": "assets/img/coimbras.jpg",
+    "image_credit": {
+      "author": "Gerd Eichmann",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Braga-Sao_Joao_do_Souto-04-2011-gje.jpg"
+    },
+    "history_ru": "Капеллу построил доктор Жуан де Коимбра, провизор архиепархии Браги при архиепископе Диогу де Соузе. В 1505 году он купил дом у церкви Сан-Жуан-ду-Соуту. В 1525 году он начал рядом частную капеллу во имя Непорочного зачатия Девы Марии. Латинская надпись на стене сообщает, что он посвятил её Богородице в 1528 году. В 1530 году Жуан де Коимбра учредил майорат: земли и дома переходили к старшим сыновьям рода, а капелла стала семейной усыпальницей.\n\nКапелла похожа на квадратную башню с зубцами. Строили её мастера из Бискайи. Статуи снаружи вырезал скульптор Одарт. Перед входом стоит галерея на колоннах с кованой решёткой и гербом Коимбра, над порталом — герб архиепископа Диогу де Соузы.\n\nЧто искать внутри. Нервюрный свод усыпан золочёными розетками, в центре — герб основателя. Каменный ренессансный ретабль приписывают молодому Жуану де Руану. В его нишах стоят расписные фигуры Девы Марии с Младенцем, святой Анны и святого Иоакима. Рядом — скульптурная группа Положения во гроб; отсюда второе имя капеллы, Сеньор-Морту («Умерший Господь»). Стены покрыты сине-белыми изразцами XVIII века со сценами Сотворения мира.\n\nКапелла примыкала к романской церкви Сан-Жуан-ду-Соуту. Церковь позже перестроили, а капелла осталась прежней. В 1910 году она стала национальным памятником. Дом Коимбраш стоял примерно в ста метрах отсюда. В начале XX века город расчищал площадь, и дом разобрали. В 1924 году его собрали заново рядом с капеллой и сохранили мануэлинские окна и двери. Потомки основателя до сих пор собираются здесь на мессу 8 декабря, как завещал Жуан де Коимбра.",
+    "facts_ru": [
+      "Латинская надпись на стене датирует посвящение капеллы 1528 годом.",
+      "Каменный ретабль приписывают молодому Жуану де Руану.",
+      "Капелла — национальный памятник с 16 июня 1910 года.",
+      "Дом Коимбраш разобрали в начале XX века и собрали заново в 1924 году.",
+      "Потомки основателя каждый год собираются здесь на мессу 8 декабря."
+    ],
+    "sources": [
+      {
+        "title": "Casa e Capela dos Coimbras — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Casa_e_Capela_dos_Coimbras"
+      },
+      {
+        "title": "Capela dos Coimbras — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Capela_dos_Coimbras"
+      },
+      {
+        "title": "Capela de Nossa Senhora da Conceição (Casa dos Coimbras) — e-cultura",
+        "url": "https://www.e-cultura.pt/patrimonio_item/3733"
+      },
+      {
+        "title": "Capela dos Coimbras. João de Coimbra, Braga, 1530 — Vínculo do Mês, NOVA FCSH",
+        "url": "https://www.vinculum.fcsh.unl.pt/wp-content/uploads/2022/06/VdM-Junho-22-Capela-dos-Coimbra_PT.pdf"
+      }
+    ],
+    "tip_ru": "Капелла стоит на площади Сан-Жуан-ду-Соуту, в трёх минутах ходьбы от собора. Вход платный; часы работы уточните на сайте Visit Braga. Рассмотрите решётку галереи: в ней прячутся путти с гербом Коимбра. До церкви Сан-Маркуш — пара минут пешком.",
+    "gallery": [
+      {
+        "src": "assets/img/coimbras-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Каменный ретабль: Дева Мария с Младенцем между святым Иоакимом и святой Анной",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(1).JPG"
+        }
+      },
+      {
+        "src": "assets/img/coimbras-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Скульптурная группа Положения во гроб",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(6).JPG"
+        }
+      },
+      {
+        "src": "assets/img/coimbras-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Нервюрный свод с золочёными розетками и гербом основателя",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(17).JPG"
+        }
+      },
+      {
+        "src": "assets/img/coimbras-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Латинская надпись: Жуан де Коимбра посвятил капеллу Богородице в 1528 году",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(21).JPG"
+        }
+      },
+      {
+        "src": "assets/img/coimbras-5.jpg",
+        "kind": "detail",
+        "caption_ru": "Мануэлинское окно дома Коимбраш",
+        "credit": {
+          "author": "Alvesgaspar",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Braga_March_2016-38.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "nE_ClNJsVbo",
+        "title": "Capela dos Coimbras 500 anos",
+        "channel": "Capela dos Coimbras",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "BgAFfoVmerk",
+        "title": "CAPELA DOS COIMBRAS EM BRAGA",
+        "channel": "portugallook",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 223138080,
+      "height_m": 16,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "congregados",
+    "name_pt": "Basílica dos Congregados",
+    "name_ru": "Базилика Конгрегадуш",
+    "category": "religious",
+    "lat": 41.55111,
+    "lon": -8.42135,
+    "year": "XVIII век",
+    "short_ru": "Барочная церковь ораторианцев с фасадом Андре Соареша; вторую башню достроили в 1964 году",
+    "long_ru": "Монахи-ораторианцы заложили церковь в 1703 году и освятили её в 1717-м. Фасад по проекту Андре Соареша сложили в 1761–1766 годах, но башни и статуи тогда не закончили. Западную башню достроили только в 1964 году на деньги мецената Ногейры да Силвы. С 1975 года церковь носит титул малой базилики.",
+    "model": "basilica-twin",
+    "image": "assets/img/congregados.jpg",
+    "image_credit": {
+      "author": "Tournasol7",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Basilica_dos_Congregados_(2).jpg"
+    },
+    "history_ru": "Конгрегация Оратория святого Филиппа Нери пришла в Брагу в 1686 году по приглашению каноника Жуана де Мейры Карилью. Братья построили дом и коллегию, а в 1703 году заложили церковь; работами руководил мастер Мануэл Фернандеш да Силва. По разрешению архиепископа Родригу де Моуры Телеша церковь благословили 27 октября 1717 года.\n\nФасад придумал Андре Соареш, главный архитектор барочной Браги. Галисийский каменщик Паулу Видал сложил его в 1761–1766 годах. Соареш нарисовал и арку хоров, и корпус органа, и алтарь Скорбящей Богоматери. Но фасад остался недостроенным: одна башня стояла без купола, другая поднялась лишь до половины. В 1769 году по приказу маркиза Помбала церковь закрыли и открыли снова только в 1777 году.\n\nВ 1834 году монашеские ордена в Португалии упразднили, и дом ораторианцев перешёл к государству. Здесь работали публичная библиотека, лицей, позже школа учителей; сегодня в здании — музыкальный факультет Университета Минью. Церковь с 1845 года служит братству Скорбящей Богоматери. 14 июля 1944 года маленький самолёт задел крылом восточную башню и разбился; пилот погиб.\n\nФасад закончили только в XX веке. Меценат Антониу Аугушту Ногейра да Силва оплатил западную башню по проекту архитектора Алберту да Силвы Бессы; её завершили в 1964 году. В том же году в ниши фасада подняли статуи святого Филиппа Нери и святого Мартина Думийского работы Мануэла да Силвы Ногейры. 15 марта 1975 года Святой Престол дал церкви титул малой базилики.",
+    "facts_ru": [
+      "Церковь заложили в 1703 году и благословили 27 октября 1717 года.",
+      "Фасад по проекту Андре Соареша сложили в 1761–1766 годах.",
+      "Западную башню достроили только в 1964 году.",
+      "В 1944 году самолёт задел крылом восточную башню и разбился.",
+      "Малая базилика с 1975 года; памятник общественного значения с 1993 года."
+    ],
+    "sources": [
+      {
+        "title": "Basílica dos Congregados — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Bas%C3%ADlica_dos_Congregados"
+      },
+      {
+        "title": "Convento dos Congregados — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Convento_dos_Congregados"
+      },
+      {
+        "title": "História dos Congregados — Arquidiocese de Braga",
+        "url": "https://www.arquidiocese-braga.pt/noticia/2016-11-24-historia-dos-congregados-13420"
+      },
+      {
+        "title": "André Soares — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Andr%C3%A9_Soares"
+      }
+    ],
+    "tip_ru": "Базилика стоит на Авенида-Сентрал, в пяти минутах ходьбы от площади Республики. Вход свободный. Через дорогу, в ста метрах, — музей Ногейры да Силвы: его основатель оплатил западную башню. Вечером фасад красиво подсвечен.",
+    "gallery": [
+      {
+        "src": "assets/img/congregados-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Неф и главный алтарь под расписным сводом",
+        "credit": {
+          "author": "Tournasol7",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Basilica_dos_Congregados_(4).jpg"
+        }
+      },
+      {
+        "src": "assets/img/congregados-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Вид на неф и алтарь с хоров",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Congregados_2019_(1).jpg"
+        }
+      },
+      {
+        "src": "assets/img/congregados-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Орган в позолоченном корпусе на хорах",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Congregados_Pipe_Organ.jpg"
+        }
+      },
+      {
+        "src": "assets/img/congregados-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Святой Филипп Нери в нише фасада, статуя 1964 года",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Filipe_de_Nery.JPG"
+        }
+      },
+      {
+        "src": "assets/img/congregados-5.jpg",
+        "kind": "exterior",
+        "caption_ru": "Две башни базилики в вечернем свете",
+        "credit": {
+          "author": "Pedro Teles",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Torres_da_Bas%C3%ADlica_dos_Congregados.jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "UeQdJpchHLI",
+        "title": "Ep12 - Basílica dos Congregados",
+        "channel": "Arquidiocese de Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "jodkXBZniDc",
+        "title": "Inside Braga’s Baroque Masterpiece: Basilica dos Congregados - Hidden Catholic Treasures Revealed!",
+        "channel": "Catholic Churches around the World ",
+        "lang": "en"
+      },
+      {
+        "youtube_id": "esgdKLFnVKo",
+        "title": "CONVENTO E BASÍLICA DOS CONGREGADOS, BRAGA",
+        "channel": "Rui Sousa",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 121590117,
+      "height_m": 32,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "nogueira-silva",
+    "name_pt": "Museu Nogueira da Silva",
+    "name_ru": "Музей Ногейры да Силвы",
+    "category": "museum",
+    "lat": 41.55191,
+    "lon": -8.42179,
+    "year": "1975",
+    "short_ru": "Дом-музей мецената на Авенида-Сентрал: искусство XV–XX веков и сад во французском духе",
+    "long_ru": "Предприниматель и коллекционер Антониу Ногейра да Силва завещал свой дом, сад и коллекцию Университету Минью в 1975 году. Дом построили в 1950–1960-х годах по проекту Раула Родригеша Лимы. Внутри — живопись, мебель, серебро, китайский фарфор, слоновая кость и гобелены. За домом лежит сад с самшитовыми партерами, статуями и изразцами.",
+    "model": "house-museum",
+    "image": "assets/img/nogueira-silva.jpg",
+    "image_credit": {
+      "author": "Jose Goncalves (Joseolgon)",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Museunogueirasilvabraga.jpg"
+    },
+    "history_ru": "Антониу Аугушту Ногейра да Силва (1901–1976) родился в Порту, в семье бражской буржуазии; его родные торговали шерстью и работали в банках. Состояние ему принесла «Каза-да-Сорте» — лотерейная контора, которую он открыл в Браге в 1933 году. Потом её отделения появились по всей Португалии и в колониях. Ещё до революции 1974 года он передал фирму её работникам.\n\nНогейра да Силва много жертвовал городу. Он построил квартал со школой, достроил базилику Конгрегадуш и помог основать Католический университет. В 1964 году Брага сделала его почётным гражданином. Дом на Авенида-Сентрал спроектировал Раул Родригеш Лима, автор кинотеатров и дворцов правосудия. Дом строили в два этапа, в 1950-х и 1960-х годах, и рассчитывали на большие приёмы.\n\nВ сентябре 1975 года Ногейра да Силва завещал дом, сад и коллекцию Университету Минью, а в 1976 году умер. Вещи он покупал в 1960-е годы на аукционах и у антикваров. Что искать в залах: итальянский сундук-кассоне XV века с росписью, китайский фарфор для экспорта в Европу, луза-могольскую пластину из слоновой кости XVII века. Главная картина португальской школы — «Тайная вечеря» Андре Гонсалвеша. В доме также работают галерея современного искусства, фототека и библиотека по истории искусства.\n\nСад разбит во французском духе: партеры в рамке из самшита, магнолии и барочный фонтан из старой усадьбы в Гуалтаре. Среди зелени стоят керамика Жорже Баррадаша, два голландских изразцовых панно XVIII века и копия XIX века с «Аполлона и Дафны» Бернини.",
+    "facts_ru": [
+      "Дом, сад и коллекцию завещали Университету Минью в сентябре 1975 года.",
+      "Дом построен в 1950–1960-х годах по проекту Раула Родригеша Лимы.",
+      "Самая редкая вещь — расписной итальянский сундук-кассоне XV века.",
+      "Ногейра да Силва оплатил западную башню базилики Конгрегадуш.",
+      "Барочный фонтан в саду привезли из старой усадьбы в Гуалтаре."
+    ],
+    "sources": [
+      {
+        "title": "Museu Nogueira da Silva — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Museu_Nogueira_da_Silva"
+      },
+      {
+        "title": "Nogueira da Silva Museum — Wikipedia (en)",
+        "url": "https://en.wikipedia.org/wiki/Nogueira_da_Silva_Museum"
+      },
+      {
+        "title": "O Museu: história e edifício — Museu Nogueira da Silva, Universidade do Minho",
+        "url": "http://www.mns.uminho.pt/files/midle_museu.html"
+      },
+      {
+        "title": "Coleção e jardim — Museu Nogueira da Silva, Universidade do Minho",
+        "url": "http://www.mns.uminho.pt/files/midle_cj.html"
+      }
+    ],
+    "tip_ru": "Музей стоит на Авенида-Сентрал, 61, почти напротив базилики Конгрегадуш. Часы работы и цены уточните на сайте музея: по воскресеньям, понедельникам и праздникам он обычно закрыт. После залов обязательно выйдите в сад.",
+    "gallery": [
+      {
+        "src": "assets/img/nogueira-silva-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Мраморная лестница с латунными перилами",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Museu_Nogueira_da_Silva_(1).jpg"
+        }
+      },
+      {
+        "src": "assets/img/nogueira-silva-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Холл с хрустальными люстрами и гобеленом",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Interior_of_Museu_Nogueira_da_Silva_(6).jpg"
+        }
+      },
+      {
+        "src": "assets/img/nogueira-silva-3.jpg",
+        "kind": "interior",
+        "caption_ru": "Кабинет-библиотека хозяина дома",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Biblioteca_Museu_Nogueira_da_Silva.jpg"
+        }
+      },
+      {
+        "src": "assets/img/nogueira-silva-4.jpg",
+        "kind": "exterior",
+        "caption_ru": "Мраморные статуи вдоль дорожки в саду",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Nogueira_da_Silva_Garden_(3).jpg"
+        }
+      },
+      {
+        "src": "assets/img/nogueira-silva-5.jpg",
+        "kind": "detail",
+        "caption_ru": "«Аполлон и Дафна» в саду — копия XIX века со скульптуры Бернини",
+        "credit": {
+          "author": "Jose Goncalves",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Museu_Nogueira_da_Silva_-_Apolo_e_Dafne.JPG"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "rSsOvoceREw",
+        "title": "Museu Nogueira da Silva - Espaços com Alma",
+        "channel": "Câmara Municipal de Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "KSSDAxwJpek",
+        "title": "Museu Nogueira da Silva - Obras italianas",
+        "channel": "Museu Nogueira da Silva Universidade do Minho",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "5zz0HJFj8h8",
+        "title": "Museu Nogueira da Silva, Braga - PORTUGAL",
+        "channel": "Olhar Brasileiro em Portugal",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 219034582,
+      "height_m": 13,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "sao-marcos",
+    "name_pt": "Igreja e Hospital de São Marcos",
+    "name_ru": "Церковь и госпиталь Сан-Маркуш",
+    "category": "religious",
+    "lat": 41.54889,
+    "lon": -8.42329,
+    "year": "XVIII век",
+    "short_ru": "Барочный фасад госпиталя со статуями апостолов; в бывших палатах теперь отель",
+    "long_ru": "Архиепископ Диогу де Соуза основал госпиталь Сан-Маркуш в 1508 году. В XVIII веке Карлуш Амаранте дал ему церковь с двумя башнями и длинный фасад со статуями апостолов на балюстраде. Госпиталь лечил горожан до 2011 года. С 2018 года в его северном корпусе работает отель, а церковь по-прежнему принадлежит братству Мизерикордия.",
+    "model": "hospital-church",
+    "image": "assets/img/sao-marcos.jpg",
+    "image_credit": {
+      "author": "John Samuel",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_de_S%C3%A3o_Marcos_(Braga)_01.jpg"
+    },
+    "history_ru": "У этого места долгая история. Архиепископ Родригу да Кунья записал предание: магистр тамплиеров Гуалдин Паиш привёз из Святой земли мощи святого Жуана Маркуша. Мощи положили в часовню, они прославились исцелениями, и рядом появился приют для больных. В 1508 году архиепископ Диогу де Соуза заменил три маленьких приюта одним госпиталем Сан-Маркуш. В 1559 году архиепископ Бартоломеу душ Мартириш передал его братству Санта-Каза-да-Мизерикордия; братство управляло им до 1975 года.\n\nВ XVIII веке северный корпус и церковь построили по проекту Карлуша Амаранте. Боковые крылья спроектировал и построил каменотёс Жозе Фернандеш да Граса по прозвищу Ландин. Стройка церкви надолго вставала. С 1794 года её продолжили на деньги архиепископа Каэтану Брандана. В 1798 году он же открыл при госпитале хирургическую школу.\n\nЧто искать на фасаде. Две башни церкви поднимаются над длинным симметричным корпусом. По балюстраде стоят фигуры в полный рост: апостолы Пётр, Андрей, Иоанн, Иаков и другие святые. В нише над входом — святой Марк в епископском облачении. Внутри — позолоченный главный алтарь, расписной купол и каменный ковчег с латинской надписью «Святые кости божественного Иоанна Марка».\n\nФасады госпиталя и церкви — памятник общественного значения с 1956 года. Госпиталь работал до 2011 года, пока не открылась новая больница Браги. Мизерикордия сдала часть зданий гостиничной сети «Вила Гале». Отель на 123 номера открылся в 2018 году; его корпуса названы именами трёх архиепископов. Церковь, капелла Сан-Бенту и аптека Мизерикордии в отель не вошли.",
+    "facts_ru": [
+      "Госпиталь основал архиепископ Диогу де Соуза в 1508 году.",
+      "Церковь и северный корпус построены по проекту Карлуша Амаранте.",
+      "Госпиталь принимал больных больше 500 лет, до 2011 года.",
+      "Отель на 123 номера открылся в бывшем госпитале в 2018 году.",
+      "Фасады госпиталя и церкви — памятник общественного значения с 1956 года."
+    ],
+    "sources": [
+      {
+        "title": "Hospital de São Marcos — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Hospital_de_S%C3%A3o_Marcos"
+      },
+      {
+        "title": "Igreja de São Marcos (Braga) — Wikipédia (pt)",
+        "url": "https://pt.wikipedia.org/wiki/Igreja_de_S%C3%A3o_Marcos_(Braga)"
+      },
+      {
+        "title": "Igreja e Antigo Hospital de São Marcos — Visit Braga",
+        "url": "https://visitbraga.travel/en/highlights/monumentos/igreja-de-sao-marcos/"
+      },
+      {
+        "title": "O Vila Galé Collection Braga é um hotel que nasceu velho — Público",
+        "url": "https://www.publico.pt/2018/06/12/fugas/noticia/o-vila-gale-collection-braga-e-um-hotel-que-nasceu-velho-1834115"
+      }
+    ],
+    "tip_ru": "Церковь стоит на площади Карлуша Амаранте, рядом с дворцом Райу. Вход свободный, но открыта она недолго: по будням и в воскресенье — около часа утром, в субботу закрыта. Часы уточните на сайте Visit Braga. Фасад со статуями лучше всего видно из сквера перед ним.",
+    "gallery": [
+      {
+        "src": "assets/img/sao-marcos-1.jpg",
+        "kind": "interior",
+        "caption_ru": "Позолоченный главный алтарь церкви",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Marcos-Braga_(10).JPG"
+        }
+      },
+      {
+        "src": "assets/img/sao-marcos-2.jpg",
+        "kind": "interior",
+        "caption_ru": "Ковчег с надписью «Святые кости божественного Иоанна Марка»",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Marcos-Braga_(16).JPG"
+        }
+      },
+      {
+        "src": "assets/img/sao-marcos-3.jpg",
+        "kind": "detail",
+        "caption_ru": "Статуи апостолов на балюстраде госпиталя",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_Sao_Marcos_(15).jpg"
+        }
+      },
+      {
+        "src": "assets/img/sao-marcos-4.jpg",
+        "kind": "detail",
+        "caption_ru": "Святой Марк в нише над входом в церковь",
+        "credit": {
+          "author": "Sara silva",
+          "license": "CC BY-SA 3.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_Sao_Marcos_(13).jpg"
+        }
+      },
+      {
+        "src": "assets/img/sao-marcos-5.jpg",
+        "kind": "exterior",
+        "caption_ru": "Двор бывшего госпиталя, сегодня — отель",
+        "credit": {
+          "author": "Joseolgon",
+          "license": "CC BY-SA 4.0",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Hospital_of_S%C3%A3o_Marcos_(10).jpg"
+        }
+      }
+    ],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "RrKosC2W7co",
+        "title": "Igreja de S. Marcos",
+        "channel": "Visit Braga",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "TdwGGq6XEQY",
+        "title": "Igreja de S. Marcos. Braga - Apresentação do órgão de tubos",
+        "channel": "António Simões",
+        "lang": "pt"
+      },
+      {
+        "youtube_id": "MTEUvygZ0jw",
+        "title": "Espaços&Casas 534, Vila Galé Collection Braga",
+        "channel": "gotofilms",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "way",
+      "id": 363528976,
+      "height_m": 20,
+      "height_source": "estimate"
+    }
+  },
+  {
+    "id": "leonardo-da-vinci",
+    "name_pt": "Colégio Leonardo da Vinci",
+    "name_ru": "Колледж Леонардо да Винчи",
+    "category": "education",
+    "lat": 41.55751,
+    "lon": -8.41708,
+    "year": "1988",
+    "short_ru": "Частная школа в центре Браги: дошкольная ступень, начальная школа и 5–6 классы",
+    "long_ru": "Колледж Леонардо да Винчи основан в 1988 году. Это частная школа с дошкольной и начальной ступенями, а также 5–6 классами. Главный корпус стоит на улице Консельейру Бенту Мигел, 10. Второе здание с большим участком на улице Санта-Маргарида, 75, открыли для 5–6 классов. Рядом находится средняя школа Са де Миранда.",
+    "model": "school-ldv",
+    "image": null,
+    "image_credit": null,
+    "no_free_photos": true,
+    "history_ru": "Колледж Леонардо да Винчи основан в 1988 году в центре Браги, рядом со средней школой Са де Миранда. Постоянное разрешение на работу № 259 выдали 11 июня 1990 года. Владелец школы — компания Pro-Educação, Educação Sociedade Lda. Школа принимает детей независимо от вероисповедания, взглядов и социального положения, если хватает места.\n\nШкола выросла из двух адресов. Главный корпус стоит на улице Консельейру Бенту Мигел, 10. Второе здание, «polo», находится на улице Санта-Маргарида, 75. На фото школы это трёхэтажный дом с пятью окнами по фасаду; за ним лежит участок с садом.\n\nСегодня в школе есть дошкольная ступень, начальная школа (1–4 классы) и 5–6 классы. Для дошкольной ступени она заключает с министерством образования договоры о развитии, для начальной школы и 5–6 классов — простые договоры. На сайте школа называет 5–6 классы новой ступенью и пишет о новых помещениях: примерно 5000 м² огороженной земли с зелёными уголками и зал на 250 мест.\n\nСвоей задачей школа считает не только знания. Она хочет растить самостоятельных детей, которые умеют учиться, общаться и выбирать по совести. Часы работы — с 7:45 до 19:00.",
+    "facts_ru": [
+      "Школа основана в 1988 году; постоянное разрешение № 259 выдано 11 июня 1990 года.",
+      "Главный корпус стоит на улице Консельейру Бенту Мигел, 10; второе здание — на Санта-Маргарида, 75.",
+      "Ступени: дошкольная, начальная школа (1–4 классы) и 5–6 классы.",
+      "У второго здания около 5000 м² огороженной земли; в нём зал на 250 мест.",
+      "Школа открыта с 7:45 до 19:00 и стоит рядом со средней школой Са де Миранда."
+    ],
+    "sources": [
+      {
+        "title": "Sobre nós — Colégio Leonardo da Vinci",
+        "url": "https://colegioldvinci.com/index.php/sobre-nos"
+      },
+      {
+        "title": "Contactos — Colégio Leonardo da Vinci",
+        "url": "https://colegioldvinci.com/index.php/contactos"
+      },
+      {
+        "title": "Colégio aposta no 2º Ciclo com novas instalações — Colégio Leonardo da Vinci",
+        "url": "https://colegioldvinci.com/index.php/noticias/1-ciclo-2/item/299-colegio-aposta-no-2-ciclo-com-novas-instalacoes"
+      }
+    ],
+    "tip_ru": "Это действующая частная школа, внутрь без приглашения не входят. Главный корпус виден с улицы Консельейру Бенту Мигел, в нескольких минутах ходьбы от площади Републики. Рядом — средняя школа Са де Миранда и колледж Дом Диогу де Соуза.",
+    "gallery": [],
+    "panorama": null,
+    "videos": [
+      {
+        "youtube_id": "hHA1xwD-Km8",
+        "title": "VISITA COLÉGIO LEONARDO DA VINCI | BAIANO & GOIANO",
+        "channel": "SC Braga",
+        "lang": "pt"
+      }
+    ],
+    "osm": {
+      "type": "node",
+      "id": 2806164031,
+      "height_m": 10.5,
+      "height_source": "estimate"
+    }
   }
 ]

@@ -38,8 +38,9 @@ import ucp from './models/ucp.js';
 import maio from './models/maio.js';
 import parque from './models/parque.js';
 import forum from './models/forum.js';
+import leonardo from './models/leonardo.js';
 
-const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo, ...populo, ...ucp, ...maio, ...parque, ...forum };
+const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo, ...populo, ...ucp, ...maio, ...parque, ...forum, ...leonardo };
 
 export { PALETTE, MAT, triangleCount };
 
@@ -68,6 +69,7 @@ export const LANDMARK_SPECS = {
   'estadio-1-maio': { type: 'stadium-old', h: 30, yaw: 0 },
   'parque-ponte': { type: 'park', h: 10, yaw: 0 },
   'forum-braga': { type: 'forum', h: 14.5, yaw: 0 },
+  'leonardo-da-vinci': { type: 'school-ldv', h: 14.5, yaw: 0 },
 };
 
 const BUILDERS = METRIC;

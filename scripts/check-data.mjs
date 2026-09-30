@@ -81,8 +81,15 @@ for (const l of landmarks) {
   if (ids.has(l.id)) err(w, 'duplicate id');
   ids.add(l.id);
   if (typeof l.lat !== 'number' || typeof l.lon !== 'number') err(w, 'lat/lon must be numbers');
-  checkImage(`${w}.image`, l.image);
-  checkCredit(`${w}.image_credit`, l.image_credit);
+  // no_free_photos: true = no free photo of the place exists; image and image_credit are null, gallery is empty
+  const noPhotos = l.no_free_photos === true;
+  if (noPhotos) {
+    if (l.image !== null && l.image !== '') err(w, 'no_free_photos requires image: null');
+    if (l.image_credit !== null && l.image_credit !== undefined) err(w, 'no_free_photos requires image_credit: null');
+  } else {
+    checkImage(`${w}.image`, l.image);
+    checkCredit(`${w}.image_credit`, l.image_credit);
+  }
 
   // history_ru: 900-1800 chars, 3-5 paragraphs
   if (!isStr(l.history_ru)) err(w, 'history_ru missing');
@@ -107,8 +114,11 @@ for (const l of landmarks) {
   if (!isStr(l.tip_ru)) err(w, 'tip_ru missing');
 
   // gallery: 2-5
-  if (!Array.isArray(l.gallery) || l.gallery.length < 2 || l.gallery.length > 5) err(w, 'gallery must have 2..5 items');
+  if (noPhotos) {
+    if (!Array.isArray(l.gallery) || l.gallery.length !== 0) err(w, 'no_free_photos requires an empty gallery');
+  } else if (!Array.isArray(l.gallery) || l.gallery.length < 1 || l.gallery.length > 5) err(w, 'gallery must have 1..5 items');
   else {
+    if (l.gallery.length < 2) warn(w, 'gallery has 1 photo (only two free photos exist)');
     const seen = new Set();
     l.gallery.forEach((g, i) => {
       const gw = `${w}.gallery[${i}]`;

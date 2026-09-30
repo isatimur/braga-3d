@@ -27,8 +27,18 @@ All photos come from Wikimedia Commons. Files in `assets/img/` are the Commons t
 | estadio-1-maio | Estádio 3.º de Maio - Braga.JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Est%C3%A1dio_3.%C2%BA_de_Maio_-_Braga.JPG |
 | parque-ponte | Lago do Parque da Ponte (1).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Lago_do_Parque_da_Ponte_(1).jpg |
 | forum-braga | Forum Braga (11).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(11).jpg |
+| uminho-gualtar | EM 2021 aérea.jpg | Tiagoramalho1974 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:EM_2021_a%C3%A9rea.jpg |
+| dmaria-ii | Escola Dona Maria II.jpg | Joseolgon | CC0 | https://commons.wikimedia.org/wiki/File:Escola_Dona_Maria_II.jpg |
+| sao-frutuoso | Capela de São Frutuoso 2018 (2)-638.jpg | Joseolgon, edited by MenkinAlRire | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Capela_de_S%C3%A3o_Frutuoso_2018_(2)-638.jpg |
+| diogo-sousa | Museu Regional de Arqueologia Dom Diogo de Sousa.jpg | Joseolgon | CC0 | https://commons.wikimedia.org/wiki/File:Museu_Regional_de_Arqueologia_Dom_Diogo_de_Sousa.jpg |
+| coimbras | Braga-Sao Joao do Souto-04-2011-gje.jpg | Gerd Eichmann | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Braga-Sao_Joao_do_Souto-04-2011-gje.jpg |
+| congregados | Basilica dos Congregados (2).jpg | Tournasol7 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Basilica_dos_Congregados_(2).jpg |
+| nogueira-silva | Museunogueirasilvabraga.jpg | Jose Goncalves (Joseolgon) | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Museunogueirasilvabraga.jpg |
+| sao-marcos | Hospital de São Marcos (Braga) 01.jpg | John Samuel | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Hospital_de_S%C3%A3o_Marcos_(Braga)_01.jpg |
 
 The five main photos added on 2026-09-29 (populo to forum-braga) are 1600 px Commons thumbnails, re-encoded with ImageMagick to under 600 KB, like the gallery photos below. We did not crop or edit them.
+
+`leonardo-da-vinci` has no photo (`no_free_photos: true`, `image: null`, empty `gallery`). On 2026-09-30 we searched Wikimedia Commons by name and by geosearch around the school and found no free photo of the building. The only nearby files are the "Fórum Socialismo 2021 em Braga" set; their descriptions do not say the event took place in the school, so we did not use them. `dmaria-ii` has one gallery photo: Commons holds only two free photos of that school.
 
 ## Gallery photos
 
@@ -116,6 +126,41 @@ The `gallery` photos in `data/landmarks.json` also come from Wikimedia Commons. 
 | forum-braga-2.jpg | interior | Forum Braga (9).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(9).jpg |
 | forum-braga-3.jpg | interior | Forum Braga (8).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(8).jpg |
 | forum-braga-4.jpg | exterior | Forum Braga (14).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Forum_Braga_(14).jpg |
+| uminho-gualtar-1.jpg | exterior | Building 4 of the University of Minho, Gualtar campus in Braga, Portugal.jpg | Aren Noronha | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Building_4_of_the_University_of_Minho,_Gualtar_campus_in_Braga,_Portugal.jpg |
+| uminho-gualtar-2.jpg | exterior | University of Minho General Library.jpg | Mind Booster Noori | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:University_of_Minho_General_Library.jpg |
+| uminho-gualtar-3.jpg | detail | Biblioteca Geral da UM.jpg | Mind Booster Noori | CC0 | https://commons.wikimedia.org/wiki/File:Biblioteca_Geral_da_UM.jpg |
+| uminho-gualtar-4.jpg | exterior | Prometeu Uminho 2.jpg | Waldir | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Prometeu_Uminho_2.jpg |
+| dmaria-ii-1.jpg | exterior | Escola Dona Maria II 2.jpg | Joseolgon | CC0 | https://commons.wikimedia.org/wiki/File:Escola_Dona_Maria_II_2.jpg |
+| sao-frutuoso-1.jpg | interior | São Frutuoso March 2016-2.jpg | Alvesgaspar | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:S%C3%A3o_Frutuoso_March_2016-2.jpg |
+| sao-frutuoso-2.jpg | interior | Braga São Frutuoso de Montélios 523.jpg | GFreihalter | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_523.jpg |
+| sao-frutuoso-3.jpg | interior | Braga São Frutuoso de Montélios 513.jpg | GFreihalter | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_513.jpg |
+| sao-frutuoso-4.jpg | detail | Braga São Frutuoso de Montélios 524.jpg | GFreihalter | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Braga_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios_524.jpg |
+| sao-frutuoso-5.jpg | exterior | Church of São Francisco and Capela de São Frutuoso de Montélios, Braga (10248447556).jpg | François Philipp from Darmstadt, Germany | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Church_of_S%C3%A3o_Francisco_and_Capela_de_S%C3%A3o_Frutuoso_de_Mont%C3%A9lios,_Braga_(10248447556).jpg |
+| diogo-sousa-1.jpg | interior | Collections of the D. Diogo de Sousa Museum 04.jpg | Joseolgon | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Collections_of_the_D._Diogo_de_Sousa_Museum_04.jpg |
+| diogo-sousa-2.jpg | interior | Museu D. Diogo de Sousa in 2016 (1).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Museu_D._Diogo_de_Sousa_in_2016_(1).JPG |
+| diogo-sousa-3.jpg | detail | Museu Dom Diogo de Sousa 12.jpg | Joseolgon | CC0 | https://commons.wikimedia.org/wiki/File:Museu_Dom_Diogo_de_Sousa_12.jpg |
+| diogo-sousa-4.jpg | detail | Casamento de Pelops e Hipodamia.jpg | Joseolgon | CC BY 4.0 | https://commons.wikimedia.org/wiki/File:Casamento_de_Pelops_e_Hipodamia.jpg |
+| diogo-sousa-5.jpg | exterior | Museu D. Diogo de Sousa in 2016 (2).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Museu_D._Diogo_de_Sousa_in_2016_(2).JPG |
+| coimbras-1.jpg | interior | Capela dos Coimbras (1).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(1).JPG |
+| coimbras-2.jpg | interior | Capela dos Coimbras (6).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(6).JPG |
+| coimbras-3.jpg | interior | Capela dos Coimbras (17).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(17).JPG |
+| coimbras-4.jpg | detail | Capela dos Coimbras (21).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Capela_dos_Coimbras_(21).JPG |
+| coimbras-5.jpg | detail | Braga March 2016-38.jpg | Alvesgaspar | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Braga_March_2016-38.jpg |
+| congregados-1.jpg | interior | Basilica dos Congregados (4).jpg | Tournasol7 | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Basilica_dos_Congregados_(4).jpg |
+| congregados-2.jpg | interior | Congregados 2019 (1).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Congregados_2019_(1).jpg |
+| congregados-3.jpg | interior | Congregados Pipe Organ.jpg | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Congregados_Pipe_Organ.jpg |
+| congregados-4.jpg | detail | Filipe de Nery.JPG | Joseolgon | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Filipe_de_Nery.JPG |
+| congregados-5.jpg | exterior | Torres da Basílica dos Congregados.jpg | Pedro Teles | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Torres_da_Bas%C3%ADlica_dos_Congregados.jpg |
+| nogueira-silva-1.jpg | interior | Interior of Museu Nogueira da Silva (1).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Interior_of_Museu_Nogueira_da_Silva_(1).jpg |
+| nogueira-silva-2.jpg | interior | Interior of Museu Nogueira da Silva (6).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Interior_of_Museu_Nogueira_da_Silva_(6).jpg |
+| nogueira-silva-3.jpg | interior | Biblioteca Museu Nogueira da Silva.jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Biblioteca_Museu_Nogueira_da_Silva.jpg |
+| nogueira-silva-4.jpg | exterior | Nogueira da Silva Garden (3).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Nogueira_da_Silva_Garden_(3).jpg |
+| nogueira-silva-5.jpg | detail | Museu Nogueira da Silva - Apolo e Dafne.JPG | Jose Goncalves | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Museu_Nogueira_da_Silva_-_Apolo_e_Dafne.JPG |
+| sao-marcos-1.jpg | interior | Igreja de São Marcos-Braga (10).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Marcos-Braga_(10).JPG |
+| sao-marcos-2.jpg | interior | Igreja de São Marcos-Braga (16).JPG | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Igreja_de_S%C3%A3o_Marcos-Braga_(16).JPG |
+| sao-marcos-3.jpg | detail | Hospital Sao Marcos (15).jpg | Sara silva | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Hospital_Sao_Marcos_(15).jpg |
+| sao-marcos-4.jpg | detail | Hospital Sao Marcos (13).jpg | Sara silva | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Hospital_Sao_Marcos_(13).jpg |
+| sao-marcos-5.jpg | exterior | Hospital of São Marcos (10).jpg | Joseolgon | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Hospital_of_S%C3%A3o_Marcos_(10).jpg |
 
 ## Panoramas
 
@@ -184,8 +229,9 @@ Published figures come from these pages (facts only; no text or images copied):
 | congregados | https://pt.wikipedia.org/wiki/Bas%C3%ADlica_dos_Congregados |
 | nogueira-silva | No published dimensions found; all numbers are estimates. |
 | sao-marcos | https://pt.wikipedia.org/wiki/Igreja_de_S%C3%A3o_Marcos_(Braga), https://pt.wikipedia.org/wiki/Hospital_de_S%C3%A3o_Marcos, https://www.vilagale.com/en/hotels-portugal/hotels-porto-and-north/vila-gale-collection-braga/ |
+| leonardo-da-vinci | https://colegioldvinci.com/index.php/noticias/1-ciclo-2/item/299-colegio-aposta-no-2-ciclo-com-novas-instalacoes |
 
-The school blocks of `dmaria-ii` that OSM does not map come from the Microsoft Global ML Building Footprints (ODbL 1.0, https://github.com/microsoft/GlobalMLBuildingFootprints); in `data/footprints.json` they are parts with `osm: null` and a `synth` id `ms:<n>`.
+The school blocks of `dmaria-ii` and `leonardo-da-vinci` that OSM does not map come from the Microsoft Global ML Building Footprints (ODbL 1.0, https://github.com/microsoft/GlobalMLBuildingFootprints); in `data/footprints.json` they are parts with `osm: null` and a `synth` id `ms:<n>`.
 
 We take only facts (numbers and counts) from these pages and cite each one; we reproduce no article text.
 
