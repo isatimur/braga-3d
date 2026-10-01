@@ -29877,7 +29877,7 @@
     ],
     "area_m2": 23074,
     "height_m": 13,
-    "height_source": "main block OSM levels; other blocks traced from aerial imagery, heights estimated",
+    "height_source": "estimate",
     "height_note": "North-west wing of the 1964 Liceu (the only block OSM maps), three storeys. The original school had 2960 m² covered and 7060 m² of floors (asap-ehc.tecnico.ulisboa.pt escola id 28): about 2.4 floors on average, so three storeys at most; 3 x 3.8 m school storeys + parapet ≈ 13 m.",
     "osm_ids": [
       "w21372352",

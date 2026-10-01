@@ -4,10 +4,11 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import './style.css';
 import { loadData, loadStory } from './data.js';
 import { createProjection, METRES_PER_UNIT } from './geo.js';
-import { installAtmosphereFog, createRenderer, createAtmosphere, createGround, FOG_UNIFORMS, TIMES, DEFAULT_TIME } from './scene.js';
+import { installAtmosphereFog, createRenderer, createAtmosphere, createGround, FOG_UNIFORMS, TIMES, DEFAULT_TIME, DPR, deviceDpr } from './scene.js';
+import { setWaterLite } from './water.js';
 import { buildRoads } from './roads.js';
 import { buildLandmarks } from './landmarks.js';
-import { buildBuildings, BUILDING_UNIFORMS } from './buildings.js';
+import { buildBuildings, BUILDING_UNIFORMS, setBuildingsLite } from './buildings.js';
 import { buildNature } from './nature.js';
 import { createEffects } from './effects.js';
 import { createIntro } from './intro.js';
@@ -20,6 +21,7 @@ import { createUI, createLoader } from './ui.js';
 import { createRouteLayer, createFlyAlong } from './routes.js';
 import { createPanorama } from './panorama.js';
 import { installShare } from './share.js';
+import { createGuide } from './guide.js';
 import { createLife } from './life.js';
 import { createSeasons } from './seasons.js';
 import { createFlyKeys } from './fly.js';
@@ -35,17 +37,82 @@ initLanguage();
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   || new URLSearchParams(location.search).has('reduced');
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
-// phones and small tablets: half the trees, no post-processing by default
+// phones and small tablets
 const MOBILE = window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 820;
+
+// ------------------------------------------------------------ quality tier
+// 'low' (light mode) or 'high'. Light mode: DPR cap 1.5 (1.25 on a low-end
+// device), no post-processing, a 1024 shadow map cast by the landmarks
+// only, the phone budgets of every module (`mobile` below: trees, traffic,
+// birds, leaves, tiles and MS radius) tightened further, no MS far ring,
+// a simpler water shader. ?quality=low|high forces a tier and saves it;
+// ?quality=auto forgets the saved choice. Auto: phones and small tablets,
+// devices with <= 2 GB or <= 2 cores, and a device whose frame probe
+// (below) was slow on an earlier visit.
+const TIER = (() => {
+  const q = new URLSearchParams(location.search).get('quality');
+  const store = (k, v) => {
+    try {
+      if (v == null) localStorage.removeItem(k);
+      else localStorage.setItem(k, v);
+    } catch {
+      // storage may be blocked: the choice lasts for this page
+    }
+  };
+  const read = (k) => {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return null;
+    }
+  };
+  const mem = navigator.deviceMemory || 8;
+  const cores = navigator.hardwareConcurrency || 8;
+  const weak = mem <= 2 || cores <= 2;
+  if (q === 'low' || q === 'high') {
+    store('braga-tier', q);
+    return { tier: q, reason: 'url', weak };
+  }
+  if (q === 'auto') {
+    store('braga-tier', null);
+    store('braga-tier-probe', null);
+  }
+  const saved = read('braga-tier');
+  if (saved === 'low' || saved === 'high') return { tier: saved, reason: 'saved', weak };
+  if (MOBILE) return { tier: 'low', reason: 'phone', weak: weak || mem <= 4 };
+  if (weak) return { tier: 'low', reason: 'low-end', weak };
+  if (read('braga-tier-probe') === 'low') return { tier: 'low', reason: 'probe', weak: true };
+  return { tier: 'high', reason: 'default', weak };
+})();
+// light mode: every module gets its phone budget through `mobile`
+const LITE = TIER.tier === 'low';
+DPR.cap = LITE ? (TIER.weak ? 1.25 : 1.5) : 2;
+if (LITE) {
+  setWaterLite(true);
+  setBuildingsLite(true);
+}
 
 // Exposed for tests and debugging: renderer.info, ready flags, flight count.
 const debug = (window.__braga = { ready: false, flights: 0, dataStatus: null });
+debug.tier = { ...TIER, dprCap: DPR.cap };
+// Load phases in ms since navigation (docs/perf, /tmp/perf/measure.mjs)
+debug.timing = {};
+let stopBoot = null; // set while the boot view runs (start)
+const mark = (name) => {
+  debug.timing[name] = Math.round(performance.now());
+};
 
 async function start() {
+  // the opening flight (makeIntro) starts with the boot view; the rig
+  // takes the camera when it ends (introDoneHook, set once the rig exists)
+  let intro = null;
+  let introDoneHook = null;
   const loader = createLoader();
   loader.set(0.08, t('Загружаем данные'));
 
+  mark('start');
   const loaded = await loadData(() => loader.set(0.35, t('Данные получены')));
+  mark('data');
   // data.js returns landmarks and routes already localized
   const { landmarks, routes, roads, status, terrain: terrainData, footprints, buildings } = loaded;
   debug.dataStatus = status;
@@ -71,25 +138,76 @@ async function start() {
   debug.scene = scene;
   debug.camera = camera;
 
-  const atmosphere = createAtmosphere(renderer, scene, { reducedMotion, shadowSize: 4096 });
+  const atmosphere = createAtmosphere(renderer, scene, { reducedMotion, shadowSize: LITE ? 1024 : 4096 });
   debug.atmosphere = atmosphere;
 
-  // Fit every landmark to its footprint first: the fits level the ground
-  // under them (terrain pads), and everything after reads that ground.
+  mark('atmosphere');
+
+  // ------------------------------------------------------------ boot view
+  // Progressive start: the sky, the terrain and one gold pin per landmark
+  // are drawn (and the intro flies) before the heavy layers exist. The
+  // ground is built on the raw DEM first; the landmark pads are patched in
+  // once the fits are done (ground.userData.applyPads, scene.js).
+  // __braga.ready still means "fully built and interactive".
   loader.set(0.45, t('Строим рельеф'));
-  await nextFrame();
-  const fits = landmarks.map((l) => fitLandmark(l, { project, rawAt: terrain.rawAt, footprints }));
-  for (const f of fits) if (!f.fallback) terrain.addPad(padFor(f));
+  const tb = terrain.bounds;
   const ground = createGround(terrain);
   scene.add(ground);
+  // light mode: only the landmarks cast shadows; the hill-shadow proxy goes
+  const groundShadow = ground.getObjectByName('ground-shadow');
+  if (LITE && groundShadow) groundShadow.visible = false;
+  mark('ground');
   // beyond the DEM rectangle the land fades into the haze
   Object.assign(FOG_UNIFORMS.fogRect.value, { x: terrain.bounds.x0, y: terrain.bounds.zN, z: terrain.bounds.x1, w: terrain.bounds.zS });
 
+  // the landmark positions before the fits: the centre of the OSM outline's
+  // box (the fit's pivot), else the point itself
+  const bootPts = landmarks.map((l) => {
+    const o = footprints?.[l.id]?.outline;
+    if (o?.length) {
+      const p = o.map((q) => project(q[0], q[1]));
+      const x = (Math.min(...p.map((v) => v.x)) + Math.max(...p.map((v) => v.x))) / 2;
+      const z = (Math.min(...p.map((v) => v.z)) + Math.max(...p.map((v) => v.z))) / 2;
+      return { id: l.id, x, z };
+    }
+    const c = project(l.lat, l.lon);
+    return { id: l.id, x: c.x, z: c.z };
+  });
+  const home = homeFrom(bootPts);
+  camera.position.copy(home.position);
+  camera.lookAt(home.target);
+  const boot = createBootView(bootPts);
+  intro = makeIntro();
+  boot.start();
+  // a build step that throws later stops the boot view (see the .catch below)
+  stopBoot = () => {
+    boot.stop();
+    intro?.skip();
+  };
+
+  // Fit every landmark to its footprint: the fits level the ground under
+  // them (terrain pads), and everything after reads that ground. Yield
+  // every ~60 ms, so the boot view keeps drawing.
+  const fits = [];
+  let tYield = performance.now();
+  for (const l of landmarks) {
+    fits.push(fitLandmark(l, { project, rawAt: terrain.rawAt, footprints }));
+    if (performance.now() - tYield > 60) {
+      await nextFrame();
+      tYield = performance.now();
+    }
+  }
+  mark('fits');
+  for (const f of fits) if (!f.fallback) terrain.addPad(padFor(f));
+  ground.userData.applyPads();
+  mark('pads');
+
   loader.set(0.6, t('Прокладываем улицы'));
   await nextFrame();
-  const roadLayer = buildRoads(roads, project, heightAt, { waterRibbon: !loaded.nature });
+  const roadLayer = buildRoads(roads, project, heightAt, { waterRibbon: !loaded.nature, lite: LITE });
   scene.add(roadLayer.group);
   debug.roadSegments = roadLayer.counts;
+  mark('roads');
 
   loader.set(0.72, t('Возводим здания'));
   await nextFrame();
@@ -100,6 +218,7 @@ async function start() {
   });
   scene.add(city.group);
   debug.buildings = city.stats;
+  mark('buildings');
 
   const marks = buildLandmarks(landmarks, fits, heightAt, outlines, (i) => select(i));
   scene.add(marks.group);
@@ -117,34 +236,45 @@ async function start() {
     top: +it.top.toFixed(2),
   }));
 
-  // Woods, parks and water from OSM. Trees keep off streets, buildings,
-  // water and every landmark (outline, fitted plan and model box).
-  loader.set(0.84, t('Сажаем леса'));
-  await nextFrame();
-  const tb = terrain.bounds;
-  const nature = buildNature({
-    data: loaded.nature,
-    project,
-    heightAt,
-    rect: { x0: tb.x0, zN: tb.zN, x1: tb.x1, zS: tb.zS },
-    roads,
-    buildings: city.footprints,
-    avoid: {
-      outlines: outlines.filter(Boolean),
-      plans: fits.filter((f) => !f.fallback).map((f) => f.plan),
-      boxes: marks.items.map((it) => it.realBox || it.box).filter(Boolean),
-    },
-    budget: MOBILE ? 2500 : 5000,
-    mobile: MOBILE,
-  });
-  scene.add(nature.group);
-  if (nature.landcover) ground.userData.setLandcover(nature.landcover, nature.landRect);
-  debug.nature = nature.stats;
-  // the city around the core, streamed in once the core is on screen (tiles.js)
-  const tiles = createTiles({ renderer, scene, camera, terrain, heightAt, proj, roadLayer, nature, ground, mobile: MOBILE, debug });
+  mark('landmarks');
+  // Woods, parks and water from OSM, the streamed tiles around the core, and
+  // life and the seasons on top: built after the first full frame, when the
+  // browser is idle (deferLayers below). Until then they are null.
+  let nature = null;
+  let tiles = null;
+  let life = null;
+  let seasons = null;
+  function buildNatureLayer() {
+    // Trees keep off streets, buildings, water and every landmark
+    // (outline, fitted plan and model box).
+    nature = buildNature({
+      data: loaded.nature,
+      project,
+      heightAt,
+      rect: { x0: tb.x0, zN: tb.zN, x1: tb.x1, zS: tb.zS },
+      roads,
+      buildings: city.footprints,
+      avoid: {
+        outlines: outlines.filter(Boolean),
+        plans: fits.filter((f) => !f.fallback).map((f) => f.plan),
+        boxes: marks.items.map((it) => it.realBox || it.box).filter(Boolean),
+      },
+      // light mode: at most 2500 tree clumps in all, core and streamed tiles
+      budget: LITE ? 1200 : 5000,
+      streamCap: LITE ? 1300 : undefined,
+      mobile: LITE,
+    });
+    scene.add(nature.group);
+    if (nature.landcover) ground.userData.setLandcover(nature.landcover, nature.landRect);
+    debug.nature = nature.stats;
+    if (probeLow) nature.setNearRadius(LITE ? 160 : 220);
+    mark('nature');
+    // the city around the core, streamed in once the core is on screen (tiles.js)
+    tiles = createTiles({ renderer, scene, camera, terrain, heightAt, proj, roadLayer, nature, ground, mobile: LITE, debug });
+  }
   // Microsoft footprints in the OSM gaps, core and ring (buildings-ms.js; ?ms=0 off)
   const msPlans = fits.filter((f) => !f.fallback).map((f) => f.plan);
-  const ms = createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints, plans: msPlans, osm: city.footprints, mobile: MOBILE, debug });
+  const ms = createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints, plans: msPlans, osm: city.footprints, mobile: LITE, lite: LITE, debug });
   const lightInfo = { dir: atmosphere.sunDir, color: new THREE.Color(), ambient: new THREE.Color() };
   const _amb = new THREE.Color();
 
@@ -153,40 +283,184 @@ async function start() {
 
   const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
 
+  // The exact home view from the fitted landmarks. The boot view framed the
+  // outline centres (a few units off at most): the same `home` object is
+  // updated in place, so a running intro lands on the exact view, and a
+  // camera still resting at the boot home moves with it.
+  {
+    const exact = homeFrom(marks.items);
+    debug.homeShift = +home.position.distanceTo(exact.position).toFixed(2);
+    const atHome = !intro?.active && camera.position.distanceTo(home.position) < 0.01;
+    home.target.copy(exact.target);
+    home.position.copy(exact.position);
+    if (atHome) {
+      camera.position.copy(home.position);
+      camera.lookAt(home.target);
+    }
+  }
+
   // Overview: fit Tibães (west) to Sameiro (east), seen from the south.
   // The target sits left of the landmark centre so the map clears the list.
   // (a city without landmarks yet frames its core bbox instead)
-  const coreBox = roads.bbox || CITY.core_bbox;
-  const coreSW = project(coreBox.s, coreBox.w);
-  const coreNE = project(coreBox.n, coreBox.e);
-  const xs = marks.items.length ? marks.items.map((it) => it.x) : [coreSW.x, coreNE.x];
-  const zs = marks.items.length ? marks.items.map((it) => it.z) : [coreSW.z, coreNE.z];
-  const midX = (Math.min(...xs) + Math.max(...xs)) / 2;
-  const midZ = (Math.min(...zs) + Math.max(...zs)) / 2;
-  const span = Math.max(...xs) - Math.min(...xs);
-  // Phones and other narrow portrait screens start much closer: on the
-  // historic centre (cathedral), seen from the west with the eastern hills
-  // (Bom Jesus, Sameiro) behind it. The full west-to-east span is
-  // unreadable on a 390 px wide screen. The target sits 350 units (1.4 km)
-  // in front of the cathedral, so the cathedral lands in the middle of the
-  // map strip above the bottom sheet and both sanctuaries clear the header
-  // (checked at 390 x 844: cathedral at y 305 of the 47..540 strip).
-  const narrow = window.innerWidth <= 900 || window.innerHeight > window.innerWidth;
-  // (cities/<id>.json start_view.narrow_landmark: the Sé for Braga)
-  const centre = marks.items.find((it) => it.data?.id === (CITY.start_view.narrow_landmark || CITY.start_view.landmark));
-  const phone = narrow && centre;
-  const homeOffset = phone
-    ? new THREE.Vector3().setFromSphericalCoords(span * 0.3, 1.3, -1.55) // camera west, a little south
-    : new THREE.Vector3().setFromSphericalCoords(span * 1.3, 1.0, 0.1);
-  const homeTarget = phone
-    ? new THREE.Vector3(centre.x, 0, centre.z).addScaledVector(new THREE.Vector3(homeOffset.x, 0, homeOffset.z).normalize(), 350)
-    : new THREE.Vector3(midX - span * 0.1, 0, midZ - 60);
-  const home = {
-    target: homeTarget,
-    position: homeTarget.clone().add(homeOffset),
-  };
-  camera.position.copy(home.position);
-  camera.lookAt(home.target);
+  // pts: [{ x, z, id | data.id }] (boot positions or marks.items)
+  function homeFrom(pts) {
+    const coreBox = roads.bbox || CITY.core_bbox;
+    const coreSW = project(coreBox.s, coreBox.w);
+    const coreNE = project(coreBox.n, coreBox.e);
+    const xs = pts.length ? pts.map((it) => it.x) : [coreSW.x, coreNE.x];
+    const zs = pts.length ? pts.map((it) => it.z) : [coreSW.z, coreNE.z];
+    const midX = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const midZ = (Math.min(...zs) + Math.max(...zs)) / 2;
+    const span = Math.max(...xs) - Math.min(...xs);
+    // Phones and other narrow portrait screens start much closer: on the
+    // historic centre (cathedral), seen from the west with the eastern hills
+    // (Bom Jesus, Sameiro) behind it. The full west-to-east span is
+    // unreadable on a 390 px wide screen. The target sits 350 units (1.4 km)
+    // in front of the cathedral, so the cathedral lands in the middle of the
+    // map strip above the bottom sheet and both sanctuaries clear the header
+    // (checked at 390 x 844: cathedral at y 305 of the 47..540 strip).
+    const narrow = window.innerWidth <= 900 || window.innerHeight > window.innerWidth;
+    // (cities/<id>.json start_view.narrow_landmark: the Sé for Braga)
+    const centreId = CITY.start_view.narrow_landmark || CITY.start_view.landmark;
+    const centre = pts.find((it) => (it.id ?? it.data?.id) === centreId);
+    const phone = narrow && centre;
+    const homeOffset = phone
+      ? new THREE.Vector3().setFromSphericalCoords(span * 0.3, 1.3, -1.55) // camera west, a little south
+      : new THREE.Vector3().setFromSphericalCoords(span * 1.3, 1.0, 0.1);
+    const homeTarget = phone
+      ? new THREE.Vector3(centre.x, 0, centre.z).addScaledVector(new THREE.Vector3(homeOffset.x, 0, homeOffset.z).normalize(), 350)
+      : new THREE.Vector3(midX - span * 0.1, 0, midZ - 60);
+    return { target: homeTarget, position: homeTarget.clone().add(homeOffset) };
+  }
+
+  // The boot view: its own small render loop (sky, terrain, whatever layer
+  // is already built, a gold pin per landmark) until the full loop starts.
+  // dt is clamped to 1/30 s, so a long build step slows the intro down
+  // instead of making it jump.
+  function createBootView(pts) {
+    const pinGeo = new THREE.OctahedronGeometry(1, 0);
+    pinGeo.scale(0.3, 0.5, 0.3); // unit height, as the landmark pins
+    const pinMat = new THREE.MeshBasicMaterial({ color: 0xffc862, transparent: true, opacity: 0.92 });
+    pinMat.toneMapped = false;
+    const pins = new THREE.InstancedMesh(pinGeo, pinMat, Math.max(1, pts.length));
+    pins.count = pts.length;
+    pins.frustumCulled = false;
+    pins.name = 'boot-pins';
+    scene.add(pins);
+    const base = pts.map((p) => heightAt(p.x, p.z) + 12); // about a roof above the ground
+    const app = document.getElementById('app');
+    const _m = new THREE.Matrix4();
+    const _p = new THREE.Vector3();
+    const _q = new THREE.Quaternion();
+    const _s = new THREE.Vector3();
+    const _up = new THREE.Vector3(0, 1, 0);
+    let raf = 0;
+    let last = performance.now();
+    let clockB = 0;
+    let firstB = true;
+    let bw = 0;
+    let bh = 0;
+    function tick() {
+      raf = requestAnimationFrame(tick);
+      const now = performance.now();
+      const dt = Math.min(Math.max(0, (now - last) / 1000), 1 / 30);
+      last = now;
+      clockB += dt;
+      const w = app.clientWidth;
+      const h = app.clientHeight;
+      if (w && h && (w !== bw || h !== bh)) {
+        bw = w;
+        bh = h;
+        renderer.setPixelRatio(deviceDpr());
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      renderer.info.reset();
+      intro?.update(dt);
+      const camDist = camera.position.distanceTo(home.target);
+      const near = THREE.MathUtils.clamp(camDist * 0.004, 0.5, 6);
+      if (Math.abs(near - camera.near) > camera.near * 0.1) {
+        camera.near = near;
+        camera.updateProjectionMatrix();
+      }
+      camera.userData.focus = home.target;
+      atmosphere.update(dt, camera);
+      for (let i = 0; i < pts.length; i++) {
+        _p.set(pts[i].x, base[i], pts[i].z);
+        const H = Math.max(0.05, camera.position.distanceTo(_p) * 0.018);
+        _p.y += H * 0.9 + (reducedMotion ? 0 : Math.sin(clockB * 1.6 + i * 1.3) * H * 0.12);
+        _q.setFromAxisAngle(_up, reducedMotion ? i : clockB * 0.6 + i);
+        _m.compose(_p, _q, _s.set(H, H, H));
+        pins.setMatrixAt(i, _m);
+      }
+      pins.instanceMatrix.needsUpdate = true;
+      renderer.render(scene, camera);
+      debug.calls = renderer.info.render.calls;
+      debug.triangles = renderer.info.render.triangles;
+      if (firstB) {
+        firstB = false;
+        mark('firstFrame');
+        loader.set(1, t('Готово'));
+        loader.done();
+      }
+    }
+    return {
+      start() {
+        if (!raf) raf = requestAnimationFrame(tick);
+      },
+      stop() {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        scene.remove(pins);
+        pinGeo.dispose();
+        pinMat.dispose();
+      },
+    };
+  }
+
+  // The opening flight: once per browser session, never over a deep link
+  // or under reduced motion. ?intro=1 forces it, ?intro=0 skips it. It
+  // starts with the boot view, before the city is built.
+  function makeIntro() {
+    const param = new URLSearchParams(location.search).get('intro');
+    const deep = /(^|[#&])((place|route)=|(cinema|story)(&|$))/.test(location.hash);
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem('braga-intro') === '1';
+    } catch {
+      seen = false;
+    }
+    if (!(param === '1' || param === 'hold' || (param !== '0' && !reducedMotion && !deep && !seen))) return null;
+    debug.introDone = false;
+    // high over the Cávado side, north of the data edge, looking steeply
+    // down across the city: the frame's lower edge still lands on real
+    // ground. The swing to the southern overview passes the west.
+    const D = tb.zS - tb.zN;
+    const startTarget = new THREE.Vector3(home.target.x + 150, 0, tb.zN + 0.35 * D);
+    const it = createIntro({
+      camera,
+      home,
+      heightAt,
+      start: {
+        position: new THREE.Vector3(home.target.x - 420, 2600, tb.zN - 650),
+        target: startTarget,
+      },
+      onDone: () => {
+        debug.introDone = true;
+        introDoneHook?.();
+      },
+    });
+    debug.intro = it;
+    // ?intro=hold: frozen at the start, for tests (debug.intro.seek(k))
+    if (param === 'hold') it.seek(0);
+    try {
+      sessionStorage.setItem('braga-intro', '1');
+    } catch {
+      // without storage the intro may play again on reload
+    }
+    return it;
+  }
 
   // ------------------------------------------------------------ effects
   // On by default on desktop; off on phones and under reduced motion.
@@ -201,7 +475,8 @@ async function start() {
     fxSaved = null;
   }
   const fxForced = fxParam === '1' || fxParam === '0';
-  const fxWanted = fxForced ? fxParam === '1' : fxSaved ? fxSaved === 'on' : !MOBILE && !reducedMotion;
+  // light mode: no post-processing unless ?fx=1 (a saved "on" waits for high)
+  const fxWanted = fxForced ? fxParam === '1' : LITE ? false : fxSaved ? fxSaved === 'on' : !MOBILE && !reducedMotion;
   const fxButton = document.getElementById('fx-toggle');
   // Emissive things need linear HDR values above the bloom threshold; with
   // effects off they are drawn untone-mapped and keep their plain colours.
@@ -239,7 +514,8 @@ async function start() {
   // Low-end probe: average frame time over 3 s after the first frames
   // (shader compiles and the environment map would skew it). Above 33 ms:
   // no post-processing and half the shadow map.
-  let probe = fxForced || fxSaved === 'on' ? null : { skip: 20, n: 0, sum: 0, t0: 0 };
+  let probe = fxForced || (fxSaved === 'on' && !LITE) ? null : { skip: 20, n: 0, sum: 0, t0: 0 };
+  let probeLow = false; // the probe found a slow device
 
   const indexById = new Map(landmarks.map((l, i) => [l.id, i]));
   const routeById = new Map(routes.map((r) => [r.id, r]));
@@ -303,8 +579,14 @@ async function start() {
     if (route) parts.push(`route=${route.route.id}`);
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
     if (atmosphere.time !== DEFAULT_TIME) parts.push(`time=${atmosphere.time}`);
-    if (debug.life?.live.hash) parts.push(debug.life.live.hash);
-    if (debug.season && debug.season !== debug.seasons?.today) parts.push('season=' + (debug.season === 'fall' ? 'autumn' : debug.season));
+    // until life and the seasons exist (deferLayers), keep what the link said
+    const was = life && seasons ? null : new URLSearchParams(location.hash.replace(/^#/, ''));
+    if (life) {
+      if (debug.life?.live.hash) parts.push(debug.life.live.hash);
+    } else for (const k of ['weather', 'live']) if (was.has(k)) parts.push(`${k}=${was.get(k)}`);
+    if (seasons) {
+      if (debug.season && debug.season !== debug.seasons?.today) parts.push('season=' + (debug.season === 'fall' ? 'autumn' : debug.season));
+    } else if (was.has('season')) parts.push(`season=${was.get('season')}`);
     return parts.join('&');
   }
   function applyHash() {
@@ -699,7 +981,7 @@ async function start() {
   function resize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = deviceDpr(); // capped by the tier (scene.js DPR)
     if (!w || !h || (w === size.w && h === size.h && dpr === size.dpr)) return;
     size = { w, h, dpr };
     renderer.setPixelRatio(dpr);
@@ -707,8 +989,9 @@ async function start() {
     labelRenderer.setSize(w, h);
     roadLayer.setResolution(w, h, dpr);
     routeLayer.setResolution(w, h);
-    marks.setResolution(w, h);
     fx.setSize(w, h, dpr);
+    // after fx: the 2x quality mode may have raised the buffer ratio (far LOD)
+    marks.setResolution(w, h, renderer.getPixelRatio());
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
@@ -787,13 +1070,26 @@ async function start() {
     lightInfo.color.copy(atmosphere.sun.color).multiplyScalar(atmosphere.sun.intensity);
     lightInfo.ambient.copy(atmosphere.state.mid).multiplyScalar(0.35 * atmosphere.state.env);
     lightInfo.ambient.add(_amb.copy(atmosphere.hemi.color).multiplyScalar(atmosphere.hemi.intensity * 0.5));
-    nature.update(reducedMotion ? 0 : dt, camera, lightInfo); // no sway or ripples under reduced motion
-    tiles.update(rawDt);
+    // nature, tiles, life and seasons are null until deferLayers built them
+    nature?.update(reducedMotion ? 0 : dt, camera, lightInfo); // no sway or ripples under reduced motion
+    tiles?.update(rawDt);
     ms.update(rawDt);
-    life.update(dt, camDist); // traffic, birds, funicular, fountains, weather (life.js)
-    seasons.update(rawDt); // season blend, leaves, snow, quality (seasons.js)
+    life?.update(dt, camDist); // traffic, birds, funicular, fountains, weather (life.js)
+    seasons?.update(rawDt); // season blend, leaves, snow, quality (seasons.js)
     marks.updatePins(clock, !reducedMotion, camera.position);
     pulseHoverPin(rawDt);
+    // light mode: the landmarks are the only shadow casters. Several modules
+    // turn casting back on by view distance, so this runs every frame.
+    if (LITE) {
+      if (debug.frames % 60 === 1) liteNoCast = scene.children.filter((c) => LITE_NO_CAST.has(c.name));
+      for (const g of liteNoCast) g.traverse(noCast);
+      // ... and only those within 1200 units (4.8 km) of the camera
+      for (const m of marks.group.children) {
+        if (!m.isMesh) continue;
+        m.userData.liteCast ??= m.castShadow;
+        m.castShadow = m.userData.liteCast && camDist < 4000 && m.position.distanceToSquared(camera.position) < 1200 * 1200;
+      }
+    }
     if (fx.enabled) {
       fx.update(rawDt, atmosphere.sunDir, night);
       fx.render();
@@ -807,18 +1103,28 @@ async function start() {
     debug.calls = renderer.info.render.calls;
     debug.triangles = renderer.info.render.triangles;
     if (first) {
+      // the boot view drew the first frame and hid the loader; this is the
+      // first full frame (controls live). __braga.ready follows the deferred
+      // layers (deferLayers).
       first = false;
-      loader.set(1, t('Готово'));
-      loader.done();
-      debug.ready = true;
+      mark('interactive');
+      debug.interactive = true;
     }
     if (probe) probeFrame(rawDt);
     if (debug.frames === 3) logStats();
   }
 
+  // light mode: the scene groups that never cast (all but the landmarks)
+  const LITE_NO_CAST = new Set(['buildings', 'buildings-ms', 'tiles', 'nature', 'life', 'roads']);
+  let liteNoCast = [];
+  const noCast = (o) => {
+    o.castShadow = false;
+  };
+
   // Low-end probe (see setFx): measured over 3 s of real frames.
   function probeFrame(rawDt) {
-    if (document.hidden) return;
+    // only once everything is built: the deferred builds are long tasks
+    if (document.hidden || !debug.ready) return;
     if (probe.skip > 0) {
       probe.skip--;
       return;
@@ -830,9 +1136,18 @@ async function start() {
     debug.perf = { probeMs: +avgMs.toFixed(1), frames: probe.n };
     if (avgMs > 33) {
       if (fx.enabled) setFx(false, { reason: 'low-end' });
-      atmosphere.setShadowSize(2048);
-      nature.setNearRadius(220);
-      console.info(`[braga] ${avgMs.toFixed(1)} ms per frame: effects off, shadow map 2048`);
+      atmosphere.setShadowSize(LITE ? 1024 : 2048);
+      probeLow = true; // a nature layer built later gets the smaller radius too
+      nature?.setNearRadius(LITE ? 160 : 220);
+      // the next visit starts in light mode (an automatic choice only)
+      if (!LITE && TIER.reason === 'default') {
+        try {
+          localStorage.setItem('braga-tier-probe', 'low');
+        } catch {
+          // storage may be blocked
+        }
+      }
+      console.info(`[braga] ${avgMs.toFixed(1)} ms per frame: effects off, smaller shadow map${LITE ? '' : '; light mode from the next visit'}`);
     }
     probe = null;
   }
@@ -870,7 +1185,7 @@ async function start() {
       meshes,
       buildings: city.stats,
       landmarks: marks.report,
-      nature: nature.stats,
+      nature: nature?.stats ?? null,
       lamps: roadLayer.counts.lamps,
       fx: fx.enabled,
       time: atmosphere.time,
@@ -917,59 +1232,51 @@ async function start() {
     },
   });
 
+  mark('ui');
   setFx(fxWanted);
-  const life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: MOBILE, debug, setHash: () => setHash(currentHash()) });
-  const seasons = createSeasons({ renderer, scene, camera, atmosphere, nature, fx, weather: life.weather, terrain, ui, reducedMotion, mobile: MOBILE, debug });
+  // the intro (made with the boot view) hands the camera to the rig
+  introDoneHook = () => {
+    rig.controls.target.copy(home.target);
+    rig.controls.update();
+    // the first stats were taken at the intro's first pose: log the overview
+    requestAnimationFrame(() => requestAnimationFrame(() => logStats()));
+  };
 
-  // The opening flight: once per browser session, never over a deep link
-  // or under reduced motion. ?intro=1 forces it, ?intro=0 skips it.
-  let intro = null;
-  {
-    const param = new URLSearchParams(location.search).get('intro');
-    const deep = /(^|[#&])((place|route)=|(cinema|story)(&|$))/.test(location.hash);
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem('braga-intro') === '1';
-    } catch {
-      seen = false;
-    }
-    if (param === '1' || param === 'hold' || (param !== '0' && !reducedMotion && !deep && !seen)) {
-      debug.introDone = false;
-      // high over the Cávado side, north of the data edge, looking steeply
-      // down across the city: the frame's lower edge still lands on real
-      // ground. The swing to the southern overview passes the west.
-      const D = tb.zS - tb.zN;
-      const startTarget = new THREE.Vector3(home.target.x + 150, 0, tb.zN + 0.35 * D);
-      intro = createIntro({
-        camera,
-        home,
-        heightAt,
-        start: {
-          position: new THREE.Vector3(home.target.x - 420, 2600, tb.zN - 650),
-          target: startTarget,
-        },
-        onDone: () => {
-          debug.introDone = true;
-          rig.controls.target.copy(home.target);
-          rig.controls.update();
-          // the first stats were taken at the intro's first pose: log the overview
-          requestAnimationFrame(() => requestAnimationFrame(() => logStats()));
-        },
-      });
-      debug.intro = intro;
-      // ?intro=hold: frozen at the start, for tests (debug.intro.seek(k))
-      if (param === 'hold') intro.seek(0);
+  // Nature, the streamed tiles, life and the seasons: after the full loop
+  // runs, when the browser is idle (each one is a long task on a phone, so
+  // they wait for the intro to land, 6 s at most). __braga.ready after them.
+  async function deferLayers() {
+    const idle = () => new Promise((r) => (window.requestIdleCallback ? requestIdleCallback(() => r(), { timeout: 300 }) : setTimeout(r, 60)));
+    const t0 = performance.now();
+    while (intro?.active && performance.now() - t0 < 6000) await nextFrame();
+    const step = async (name, fn) => {
+      await idle();
       try {
-        sessionStorage.setItem('braga-intro', '1');
-      } catch {
-        // without storage the intro may play again on reload
+        fn();
+      } catch (e) {
+        console.error(`[braga] ${name} failed`, e);
       }
-    }
+    };
+    await step('nature', buildNatureLayer);
+    await step('life', () => {
+      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()) });
+    });
+    await step('seasons', () => {
+      seasons = createSeasons({ renderer, scene, camera, atmosphere, nature, fx, weather: life?.weather, terrain, ui, reducedMotion, mobile: LITE, lite: LITE, debug });
+    });
+    mark('life');
+    await nextFrame();
+    mark('ready');
+    debug.ready = true;
   }
 
   loader.set(0.95, t('Первый кадр'));
   await nextFrame();
+  mark('preFrame');
+  boot.stop();
+  stopBoot = null;
   frame();
+  deferLayers();
 
   applyHash();
   window.addEventListener('hashchange', applyHash);
@@ -977,6 +1284,7 @@ async function start() {
   Object.assign(debug, { select, close, openRoute, exitRoute, startTour, stopTour, ui, panorama, routes, rig, landmarksRealScale: marks.realScale, shrink: marks.shrink });
   Object.defineProperty(debug, 'touring', { get: () => !!tour });
   installShare({ renderer, scene, camera, fx, setFx, atmosphere, roadLayer, routeLayer, marks, landmarks, routes, ui, getSize: () => size });
+  createGuide({ landmarks, select, getActive: () => active, project, rig, reducedMotion, debug }); // the talking guide (guide.js, api/guide.js)
 }
 
 // The city config first (cities/<id>.json), then its model registry, then
@@ -984,13 +1292,27 @@ async function start() {
 loadCity()
   .then(async (city) => {
     debug.city = city;
+    mark('city');
     applyCityShell();
     await loadCityModels(city.id);
+    mark('models');
     return start();
   })
   .catch((err) => {
     console.error('[braga] start failed', err);
+    stopBoot?.();
+    const msg = t('Не удалось запустить карту. Нужен браузер с поддержкой WebGL.');
     const text = document.getElementById('loader-text');
-    if (text) text.textContent = t('Не удалось запустить карту. Нужен браузер с поддержкой WebGL.');
-    document.getElementById('loader')?.classList.add('is-error');
+    const loaderEl = document.getElementById('loader');
+    if (text && loaderEl && !loaderEl.classList.contains('is-done')) {
+      text.textContent = msg;
+      loaderEl.classList.add('is-error');
+    } else if (!debug.interactive) {
+      // the boot view already removed the loader: say it over the map
+      const box = document.createElement('p');
+      box.setAttribute('role', 'alert');
+      box.textContent = msg;
+      box.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:99;max-width:min(90vw,420px);margin:0;padding:14px 18px;border-radius:10px;background:rgba(20,16,12,0.88);color:#e8a35a;font:14px/1.4 system-ui,sans-serif;text-align:center';
+      document.body.append(box);
+    }
   });

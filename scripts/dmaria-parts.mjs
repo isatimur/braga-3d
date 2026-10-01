@@ -53,6 +53,7 @@ const blocks = [
 site.parts = site.parts.filter((p) => !/Microsoft ML footprint/.test(p.name || '') && !blocks.some((b) => b.name === p.name));
 site.parts.push(...blocks);
 site.height_m = 13;
-site.height_source = 'main block OSM levels; other blocks traced from aerial imagery, heights estimated';
+// blocks traced from aerial imagery; heights are estimates (check-geo vocabulary)
+site.height_source = 'estimate';
 writeFileSync(FP, JSON.stringify(fp, null, 2) + '\n');
 console.log(`dmaria-ii parts now: ${site.parts.map((p) => p.tag + ':' + (p.name || 'main')).join(' | ')}`);

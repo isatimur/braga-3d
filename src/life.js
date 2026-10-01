@@ -348,7 +348,7 @@ const lampChunk = (y0, y1) => `
   totalEmissiveRadiance += lamp * band * uLifeNight * uLifeGlow * 1.6;
 }`;
 
-function buildTraffic({ roads, project, heightAt, mobile, model }) {
+function buildTraffic({ roads, project, heightAt, mobile, model, N: nCars }) {
   const zones = CAR_FREE().map(([la, lo, r]) => ({ ...project(la, lo), r: r * S }));
   const blocked = (x, z) => zones.some((q) => (x - q.x) ** 2 + (z - q.z) ** 2 < q.r * q.r);
 
@@ -357,8 +357,8 @@ function buildTraffic({ roads, project, heightAt, mobile, model }) {
   const net = buildNetwork(roads, project, heightAt);
   const g = net.graph;
   if (!g.n) return null;
-  // buffers for the peak (traffic-model.js): 600, or 300 on phones
-  const N = mobile ? 300 : 600;
+  // buffers for the peak (traffic-model.js): 600, 300 on phones, 150 in light mode
+  const N = nCars ?? (mobile ? 300 : 600);
   const rnd = lcg(20260928);
   const flow = createFlow(net, { N, rnd, blocked });
   if (!flow) return null;
@@ -731,7 +731,7 @@ function birdMaterial(uHeight) {
   return mat;
 }
 
-function buildBirds({ items, heightAt, project, nature, mobile }) {
+function buildBirds({ items, heightAt, project, nature, mobile, lite = false }) {
   const byId = (id) => items.find((i) => i.data.id === id);
   const anchors = [];
   for (const [id, lift, r] of [['bom-jesus', 13, 26], ['sameiro', 16, 26], ['se-braga', 9, 15]]) {
@@ -745,7 +745,7 @@ function buildBirds({ items, heightAt, project, nature, mobile }) {
     const c = project(q[0], q[1]);
     anchors.push({ id: 'rio-este', x: c.x, z: c.z, y: heightAt(c.x, c.z) + 14, r: 40 });
   }
-  const M = mobile ? 20 : 40;
+  const M = lite ? 10 : mobile ? 20 : 40;
   const uHeight = { value: 900 };
   const geo = birdGeometry();
   const mat = birdMaterial(uHeight);
@@ -1110,7 +1110,9 @@ const NIGHT_WATER = new THREE.Color(0.5, 0.42, 0.3);
 
 // ------------------------------------------------------------ public
 export function createLife(ctx) {
-  const { renderer, scene, camera, atmosphere, project, heightAt, roads, items, nature, fx, reducedMotion = false, mobile = false, debug = {}, setHash = () => {} } = ctx;
+  const { renderer, scene, camera, atmosphere, project, heightAt, roads, items, nature, fx, reducedMotion = false, mobile = false, lite = false, debug = {}, setHash = () => {} } = ctx;
+  // light mode (main.js): 150 cars at the peak, 10 birds
+  const carMax = lite ? 150 : mobile ? 300 : 600;
   const group = new THREE.Group();
   group.name = 'life';
   scene.add(group);
@@ -1130,12 +1132,12 @@ export function createLife(ctx) {
   // one clock for traffic and buses: the real Lisbon time in live mode (or
   // ?now=), the preset's hour otherwise (traffic-model.js PRESET_HOUR)
   const model = safe('traffic model', () =>
-    createTrafficModel({ max: mobile ? 300 : 600, getNow: live.now, isLive: () => live.live, getPreset: () => atmosphere.time, project, mobile }),
+    createTrafficModel({ max: carMax, getNow: live.now, isLive: () => live.live, getPreset: () => atmosphere.time, project, mobile }),
   );
 
   const funicular = safe('funicular', () => buildFunicular({ project, heightAt, items }));
-  const traffic = safe('traffic', () => buildTraffic({ roads, project, heightAt, mobile, model }));
-  const birds = safe('birds', () => buildBirds({ items, heightAt, project, nature, mobile }));
+  const traffic = safe('traffic', () => buildTraffic({ roads, project, heightAt, mobile, model, N: carMax }));
+  const birds = safe('birds', () => buildBirds({ items, heightAt, project, nature, mobile, lite }));
   const fountains = safe('fountains', () => buildFountains({ project, heightAt, items, mobile }));
   for (const p of [funicular, traffic, birds, fountains]) if (p) group.add(p.object);
 

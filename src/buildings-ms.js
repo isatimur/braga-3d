@@ -252,7 +252,12 @@ const bytesOf = (g) => {
 // ------------------------------------------------------------ the layer
 // footprints: data/footprints.json as loaded ({ id: { outline, parts } });
 // plans: the fitted landmark plans; osm: the core OSM footprints (world).
-export function createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints = {}, plans = [], osm = [], mobile = false, debug = {} }) {
+// lite (light mode, main.js): no far LOD at all. Ring tiles load, as near
+// meshes, only within 1.5 km of the camera; a 2 km core block shows only
+// while it is within 1.5 km (horizontally) of the camera or the focus.
+const LITE_U = 1500 * S;
+
+export function createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints = {}, plans = [], osm = [], mobile = false, lite = false, debug = {} }) {
   const mode = new URLSearchParams(location.search).get('ms');
   const off = mode === '0';
   const tint = mode === 'debug';
@@ -271,7 +276,9 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
   }
   scene.add(group);
 
-  const NEAR_M = mobile ? 2000 : 4000;
+  const NEAR_M = lite ? LITE_U / S : mobile ? 2000 : 4000;
+  // light mode: 1 km core blocks, so the 1.5 km limit cuts finely
+  const coreTileM = lite ? 1000 : CORE_TILE_M;
   const material = createBuildingMaterial({ fade: true });
   material.name = 'buildings-ms';
   let ground = null;
@@ -415,13 +422,13 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       decode: (b) => (Array.isArray(b.p) && b.p.length >= 3 && b.h > 0 ? b.p.map((q) => proj.project(q[0], q[1])) : null),
       h: (b) => b.h,
       tileOf(f) {
-        const key = `${Math.floor(f.cx / S / CORE_TILE_M)},${Math.floor(f.cz / S / CORE_TILE_M)}`;
+        const key = `${Math.floor(f.cx / S / coreTileM)},${Math.floor(f.cz / S / coreTileM)}`;
         let T = cells.get(key);
         if (!T) cells.set(key, (T = newT()));
         return T;
       },
       tileOfVf(f) {
-        const key = `${Math.floor(f.cx / S / CORE_TILE_M)},${Math.floor(f.cz / S / CORE_TILE_M)}`;
+        const key = `${Math.floor(f.cx / S / coreTileM)},${Math.floor(f.cz / S / coreTileM)}`;
         let T = cellsVf.get(key);
         if (!T) cellsVf.set(key, (T = newT()));
         return T;
@@ -436,6 +443,9 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
           const mesh = new THREE.Mesh(g, material);
           mesh.name = `buildings-ms-${key}`;
           mesh.userData.full = g;
+          const [kx, kz] = key.split(',').map(Number);
+          const cu = coreTileM * S;
+          mesh.userData.rect = { x0: kx * cu, x1: (kx + 1) * cu, zN: kz * cu, zS: (kz + 1) * cu };
           if (pv) mesh.userData.roofs = geometryOf([{ p: pv, born: clock }]);
           mesh.matrixAutoUpdate = false;
           mesh.castShadow = castNow;
@@ -632,7 +642,7 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
       const d3 = Math.hypot(dCam, altU);
       T.prio = 1 / Math.max(d3, 25);
       if (T.job) T.job.prio = T.prio;
-      if (T.state !== 'idle' && T.state !== 'failed' && d > 2 * R) {
+      if (T.state !== 'idle' && T.state !== 'failed' && (d > 2 * R || (lite && d3 > nearU * 1.2))) {
         unload(T);
         changed = true;
         continue;
@@ -648,14 +658,22 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
             changed = true;
           }
         }
-        const want = d3 < nearU ? 'near' : d3 > nearU * 1.2 ? 'far' : T.lod || 'far';
+        // light mode: near only (the unload above takes the far ones)
+        const want = lite ? 'near' : d3 < nearU ? 'near' : d3 > nearU * 1.2 ? 'far' : T.lod || 'far';
         if (want !== T.lod) {
           setLod(T, want);
           changed = true;
         }
         continue;
       }
-      if (T.state === 'idle' && d < R && !(clock < T.retryAt)) cands.push(T);
+      if (T.state === 'idle' && d < R && !(clock < T.retryAt) && !(lite && d3 > nearU)) cands.push(T);
+    }
+    // light mode: a core block shows only within 1.5 km of the camera or the focus
+    if (lite) {
+      for (const m of coreMeshes) {
+        const r = m.userData.rect;
+        m.visible = Math.min(rectDist(r, cam.x, cam.z), rectDist(r, focus.x, focus.z)) < (m.visible ? LITE_U * 1.1 : LITE_U);
+      }
     }
     // the core's outer 2 km tiles: roof-only when wholly beyond 6 km (camera) and 3 km (focus)
     for (const m of coreMeshes) {
@@ -707,7 +725,8 @@ export function createMsBuildings({ scene, camera, terrain, heightAt, proj, foot
     frames++;
     clock = BUILDING_UNIFORMS.uClock.value; // src/tiles.js advances it
     if (!started) {
-      if (!(debug.ready && frames > 20)) return;
+      // after the first full frames (main.js sets interactive before ready)
+      if (!((debug.interactive || debug.ready) && frames > 20)) return;
       started = true;
       const ax = groundAxes(terrain);
       ground = makeGround(heightAt, ax.xs, ax.zs);

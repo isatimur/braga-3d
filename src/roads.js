@@ -162,7 +162,11 @@ function dashes(T, net, w, off, halfM, dashM, gapM, lift, col) {
   }
 }
 
-export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}) {
+// lite (light mode, main.js): the markings, sidewalks and islands only
+// within 450 units instead of 900. (The main-street glow stays: one draw,
+// and the golden streets are the look.)
+export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite = false } = {}) {
+  const DETAIL_U = lite ? 450 : 900;
   const group = new THREE.Group();
   group.name = 'roads';
   const materials = [];
@@ -670,7 +674,7 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true } = {}
         lastFar = far;
         applyBloom();
       }
-      const on = d < 900;
+      const on = d < DETAIL_U;
       if (on !== detailOn) {
         detailOn = on;
         detail.visible = on;

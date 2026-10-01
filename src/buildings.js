@@ -57,13 +57,21 @@ if (vWall.y >= 0.0) {
   float aa = 1.0 - smoothstep(0.12, 0.35, px);
   if (vWall.w >= 0.0) {
     diffuseColor.rgb *= 1.0 - 0.3 * win * aa;
-    float lit = step(bHash(id + vec2(vWall.w * 311.0, vWall.w * 173.0)), 0.3);
-    float tone = bHash(id.yx + vWall.w * 57.0);
-    vec3 warm = mix(vec3(1.0, 0.56, 0.22), vec3(1.0, 0.78, 0.5), tone);
-    float exact = win * lit;
-    float average = 0.26 * 0.3 * inside;
-    // 2.6: a lit window (~1.6 in linear HDR) passes the 1.5 bloom threshold
-    totalEmissiveRadiance += warm * mix(average, exact, aa) * uNight * 2.6;
+    // the lights only after dusk (a uniform branch: by day no hashes run)
+    if (uNight > 0.0) {
+      float lit = step(bHash(id + vec2(vWall.w * 311.0, vWall.w * 173.0)), 0.3);
+      #ifdef BRG_WIN_LITE
+      // light mode: one warm tone instead of a hashed one per window
+      vec3 warm = vec3(1.0, 0.67, 0.36);
+      #else
+      float tone = bHash(id.yx + vWall.w * 57.0);
+      vec3 warm = mix(vec3(1.0, 0.56, 0.22), vec3(1.0, 0.78, 0.5), tone);
+      #endif
+      float exact = win * lit;
+      float average = 0.26 * 0.3 * inside;
+      // 2.6: a lit window (~1.6 in linear HDR) passes the 1.5 bloom threshold
+      totalEmissiveRadiance += warm * mix(average, exact, aa) * uNight * 2.6;
+    }
   } else {
     // churches: floodlit stone at night
     totalEmissiveRadiance += diffuseColor.rgb * uNight * 0.22;
@@ -219,10 +227,19 @@ export const FADE_FRAG = /* glsl */ `
 // The building material: vertex colours, the window grid, night lights.
 // fade: the streamed-tile variant (BRG_FADE, aBorn, uClock); a separate
 // program, so the core's shader stays exactly as it was.
+// Light mode (main.js): the night windows in one tone (BRG_WIN_LITE). Set
+// before the first building material is made.
+let WIN_LITE = false;
+export function setBuildingsLite(on) {
+  WIN_LITE = !!on;
+}
+
 export function createBuildingMaterial({ fade = false } = {}) {
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
   material.name = fade ? 'buildings-tiles' : 'buildings';
-  if (fade) material.defines = { BRG_FADE: '' };
+  material.defines = {};
+  if (fade) material.defines.BRG_FADE = '';
+  if (WIN_LITE) material.defines.BRG_WIN_LITE = '';
   material.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, BUILDING_UNIFORMS);
     sh.vertexShader = sh.vertexShader
