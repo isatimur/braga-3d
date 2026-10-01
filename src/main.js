@@ -1284,7 +1284,10 @@ async function start() {
   Object.assign(debug, { select, close, openRoute, exitRoute, startTour, stopTour, ui, panorama, routes, rig, landmarksRealScale: marks.realScale, shrink: marks.shrink });
   Object.defineProperty(debug, 'touring', { get: () => !!tour });
   installShare({ renderer, scene, camera, fx, setFx, atmosphere, roadLayer, routeLayer, marks, landmarks, routes, ui, getSize: () => size });
-  createGuide({ landmarks, select, getActive: () => active, project, rig, reducedMotion, debug }); // the talking guide (guide.js, api/guide.js)
+  // the talking guide (guide.js, api/guide.js) is parked until later; ?guide=1 turns it on for testing
+  if (new URLSearchParams(location.search).get('guide') === '1') {
+    createGuide({ landmarks, select, getActive: () => active, project, rig, reducedMotion, debug });
+  }
 }
 
 // The city config first (cities/<id>.json), then its model registry, then
