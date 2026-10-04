@@ -11,8 +11,8 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current highest-priority unfinished work: merge the shipped discover-release branch and deploy it so braga-3d.com serves the new interface; review the uncommitted engine/geodata changes before publishing.
-- Current release limitation: braga-3d.com still serves the older interface; the new interface is committed and pushed on codex/braga-discover-release, not yet merged or deployed.
+- Current highest-priority unfinished work: none — the discover release is merged, deployed and live-verified; next is whatever the user picks next.
+- Current release limitation: none known. braga-3d.com serves the new interface as of 2026-10-04 (build 22:53 UTC).
 
 ## Session Log
 
@@ -63,6 +63,19 @@ updates it automatically.
   - Mobile has no free-flight input (keyboard only); the «К осколку» button is the mobile path. On-screen thumbstick is a possible follow-up.
   - The game adds no committed tests beyond `docs/game/game-verify.mjs` (Playwright, manual run).
 - Next best step: optional — on-screen flight stick for touch, and a persisted achievements/collection screen.
+
+### Session 005
+
+- Date: 2026-10-04
+- Goal: Continue to a live release (user: "continue your work").
+- Completed:
+  - Found PR #1 already merged (`bd15fdc`, merged 22:43 UTC); `gh pr create` correctly refused a duplicate.
+  - Synced local `main` to `origin/main`, deployed via `vercel --prod --yes`; aliased to https://braga-3d.com in ~31 s.
+  - Live verification: fresh HTML (Last-Modified 2026-10-04 22:53 UTC, bundle `index-qWs7iU95.js`, search-input/atmo/callout present); `/api/adsb` 200 with live aircraft; `/api/news?city=braga` 200 with fresh items.
+- Evidence captured: deployment output (Production URL + `Aliased: https://braga-3d.com`); curl header/body checks above.
+- Files or artifacts updated: claude-progress.md (this entry).
+- Known risk or unresolved issue: none for the release; mobile game touch flight remains keyboard-only by design.
+- Next best step: whatever the user picks next; `./init.sh` remains the baseline.
 
 ### Session 003
 
