@@ -23,6 +23,7 @@ import { gzipSync, gunzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { cityArg } from './city-lib.mjs';
 import { CITY, ORIGIN, CORE_BBOX, WIDE_BBOX, TILE_GRID, USER_AGENT, wait, simplify, simplifyRing, ringArea, tagHeight, toXY, dataPath, cachePath, dataRel } from './geo-lib.mjs';
+import { osmExtras } from '../src/facades.js';
 
 const OUT_DIR = dataPath('tiles');
 const RAW_DIR = cachePath('tiles-raw');
@@ -579,6 +580,10 @@ function buildTile(t, elements, areaPolys, level, junctions) {
         const k = bkindMap.get(bval) || (tags.amenity === 'place_of_worship' ? 'church' : 'other');
         out.b.push([Math.round(Math.min(h, 250) * 10), BK.indexOf(k), ...e]);
         counts.buildings++;
+        // OSM roof and facade tags (src/facades.js osmExtras):
+        // bx = [[index into b, roof shape, roof colour, wall colour, material, roof orientation], ...]
+        const ex = osmExtras(tags);
+        if (ex) (out.bx ||= []).push([out.b.length - 1, ex.r || 0, ex.rc || 0, ex.wc || 0, ex.m || 0, ex.ro || 0]);
       }
       continue;
     }

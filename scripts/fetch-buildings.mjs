@@ -5,6 +5,7 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { CITY, BBOX, ORIGIN, overpass, wait, simplifyRing, ringArea, centroid, toXY, r5, tagHeight, dataPath, cachePath, dataRel } from './geo-lib.mjs';
+import { osmExtras, HIST_M } from '../src/facades.js';
 
 const OUT = dataPath('buildings.json');
 const FOOT = dataPath('footprints.json');
@@ -126,12 +127,89 @@ for (const [key, el] of byKey) {
     if (pts.length > 1 && pts[0][0] === pts.at(-1)[0] && pts[0][1] === pts.at(-1)[1]) pts.pop();
     if (pts.length < 3) { badGeom++; continue; }
     const area = Math.abs(ringArea(ring));
-    all.push({ b: { p: pts, h, k }, area, dist: Math.hypot(cxy[0], cxy[1]) });
+    // roof:shape, roof:colour, building:colour, building:material,
+    // roof:orientation, normalised (src/facades.js osmExtras)
+    const ex = osmExtras(tags);
+    all.push({ b: ex ? { p: pts, h, k, ...ex } : { p: pts, h, k }, area, dist: Math.hypot(cxy[0], cxy[1]) });
   }
 }
 
+// ---- 3b. Shop fronts: the walls that face a main street (and any street in
+// the historic centre) get ground-floor shop openings (src/facades.js).
+// b.s lists them as edge indices into b.p (edge i: p[i] -> p[i + 1]).
+// The historic centre is cities/<id>.json ms_centre, else the origin.
+const HIST = CITY.ms_centre || [ORIGIN.lat, ORIGIN.lon];
+const histXY = toXY(HIST);
+const ROADS = dataPath('roads.json');
+const SHOP_MAIN = new Set(['primary', 'primary_link', 'secondary', 'secondary_link', 'tertiary', 'tertiary_link', 'pedestrian', 'living_street']);
+const SHOP_CENTRE = new Set(['residential', 'unclassified', 'service']);
+let shopWalls = 0;
+if (existsSync(ROADS)) {
+  const roads = JSON.parse(readFileSync(ROADS, 'utf8'));
+  const CELL = 50;
+  const grid = new Map();
+  for (const f of roads.features || []) {
+    const hw = f.t?.hw;
+    const main = SHOP_MAIN.has(hw);
+    if (!main && !SHOP_CENTRE.has(hw)) continue;
+    const xy = (f.pts || []).map(toXY);
+    for (let i = 0; i + 1 < xy.length; i++) {
+      const a = xy[i], c = xy[i + 1];
+      const centre = Math.hypot((a[0] + c[0]) / 2 - histXY[0], (a[1] + c[1]) / 2 - histXY[1]) <= HIST_M;
+      if (!main && !centre) continue;
+      const seg = { a, c, reach: main ? 14 : 9 };
+      const x0 = Math.floor(Math.min(a[0], c[0]) / CELL), x1 = Math.floor(Math.max(a[0], c[0]) / CELL);
+      const y0 = Math.floor(Math.min(a[1], c[1]) / CELL), y1 = Math.floor(Math.max(a[1], c[1]) / CELL);
+      for (let gx = x0; gx <= x1; gx++) for (let gy = y0; gy <= y1; gy++) {
+        const key = gx * 100003 + gy;
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key).push(seg);
+      }
+    }
+  }
+  const near = (x, y) => grid.get(Math.floor(x / CELL) * 100003 + Math.floor(y / CELL)) || [];
+  for (const { b } of all) {
+    if (b.k === 'industrial' || b.k === 'church') continue;
+    const xy = b.p.map(toXY);
+    const n = xy.length;
+    let a2 = 0;
+    for (let i = 0; i < n; i++) a2 += xy[i][0] * xy[(i + 1) % n][1] - xy[(i + 1) % n][0] * xy[i][1];
+    const sgn = a2 >= 0 ? 1 : -1; // counter-clockwise (x east, y north): outward = (dy, -dx)
+    const s = [];
+    for (let i = 0; i < n; i++) {
+      const p = xy[i], q = xy[(i + 1) % n];
+      const dx = q[0] - p[0], dy = q[1] - p[1];
+      const L = Math.hypot(dx, dy);
+      if (L < 2.5) continue;
+      const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+      const ox = (sgn * dy) / L, oy = (-sgn * dx) / L;
+      let hit = false;
+      for (const g of near(mx, my)) {
+        const ex = g.c[0] - g.a[0], ey = g.c[1] - g.a[1];
+        const EL = Math.hypot(ex, ey);
+        if (EL < 1e-6) continue;
+        if (Math.abs((dx * ex + dy * ey) / (L * EL)) < 0.8) continue; // not along the street
+        const t = Math.max(0, Math.min(1, ((mx - g.a[0]) * ex + (my - g.a[1]) * ey) / (EL * EL)));
+        const cx = g.a[0] + ex * t - mx, cy = g.a[1] + ey * t - my;
+        const d = Math.hypot(cx, cy);
+        if (d > g.reach || cx * ox + cy * oy <= 0) continue; // too far, or behind the wall
+        hit = true;
+        break;
+      }
+      if (hit) s.push(i);
+    }
+    if (s.length) {
+      b.s = s;
+      shopWalls += s.length;
+    }
+  }
+} else {
+  console.warn(`${dataRel('roads.json')} missing: no shop fronts (run fetch-roads.mjs first)`);
+}
+
 // ---- 4. Size budget: drop < 25 m² outside the central 2 km only if needed ----
-const build = list => JSON.stringify({ origin: ORIGIN, bbox: BBOX, buildings: list.map(x => x.b) });
+// hist: the historic centre the facade zones count from (src/facades.js)
+const build = list => JSON.stringify({ origin: ORIGIN, bbox: BBOX, hist: HIST, buildings: list.map(x => x.b) });
 let kept = all, json = build(kept), dropped = 0;
 if (json.length > MAX_BYTES) {
   kept = all.filter(x => !(x.area < SMALL_M2 && x.dist > R_CENTRE));
@@ -145,4 +223,7 @@ for (const x of kept) kinds[x.b.k] = (kinds[x.b.k] || 0) + 1;
 console.log(`Wrote ${OUT}: ${kept.length} buildings, ${(json.length / 1024 / 1024).toFixed(2)} MB`);
 console.log(`excluded landmark ids ${excludedById}, excluded inside landmark outlines ${excludedByOutline}, bad geometry ${badGeom}, dropped small ${dropped}`);
 console.log('kinds', kinds);
+const tagged = { r: 0, rc: 0, wc: 0, m: 0, ro: 0 };
+for (const x of kept) for (const key of Object.keys(tagged)) if (x.b[key]) tagged[key]++;
+console.log('OSM extras', tagged, `shop-front walls ${shopWalls} on ${kept.filter(x => x.b.s).length} buildings; hist centre ${HIST}`);
 if (json.length > MAX_BYTES) console.warn('WARNING: file still larger than 8 MB');

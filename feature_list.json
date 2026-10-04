@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-10-03",
+  "last_updated": "2026-10-04",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -20,8 +20,14 @@
       "title": "Multi-city engine: cities/<id>.json drives src, api and scripts",
       "user_visible_behavior": "One engine serves several cities; --city / npm run city selects the data.",
       "status": "passing",
-      "verification": ["npm run verify -- --city braga", "npm run verify -- --city guimaraes (data hosted here)"],
-      "evidence": ["commit db0d201 (multi-city: cities/<id>.json drives src, api and scripts)", "commit fa26211 (city configs braga, guimaraes, porto)"],
+      "verification": [
+        "npm run verify -- --city braga",
+        "npm run verify -- --city guimaraes (data hosted here)"
+      ],
+      "evidence": [
+        "commit db0d201 (multi-city: cities/<id>.json drives src, api and scripts)",
+        "commit fa26211 (city configs braga, guimaraes, porto)"
+      ],
       "notes": "The single-city forks (guimaraes-3d, porto-3d) copy this engine."
     },
     {
@@ -31,7 +37,12 @@
       "title": "Braga city: 30 landmarks, RU/EN/PT content, credited photos, 1:1 models",
       "user_visible_behavior": "Braga renders with all 30 landmarks as recognisable 1:1 models and full cards.",
       "status": "passing",
-      "verification": ["npm run check:data", "npm run check:dimensions", "npm run check:fit", "npm run check:models"],
+      "verification": [
+        "npm run check:data",
+        "npm run check:dimensions",
+        "npm run check:fit",
+        "npm run check:models"
+      ],
       "evidence": [
         "check-data OK: 30 landmarks, 115 gallery photos, 6 panoramas, 72 videos, 3 routes",
         "check-dimensions OK: 30 landmarks, all numbers finite, positive and sourced",
@@ -47,8 +58,13 @@
       "title": "Guimarães geodata pipeline hosted in this repo",
       "user_visible_behavior": "data/guimaraes/ holds the full Guimarães geodata produced by this engine.",
       "status": "passing",
-      "verification": ["node scripts/check-geo.mjs --city guimaraes"],
-      "evidence": ["commit 11ae711 (Guimarães: ring tiles 362, Microsoft buildings core+ring, traffic axes)", "data/guimaraes/{terrain,roads,nature,buildings,footprints,dimensions,tiles,tiles-ms}"],
+      "verification": [
+        "node scripts/check-geo.mjs --city guimaraes"
+      ],
+      "evidence": [
+        "commit 11ae711 (Guimarães: ring tiles 362, Microsoft buildings core+ring, traffic axes)",
+        "data/guimaraes/{terrain,roads,nature,buildings,footprints,dimensions,tiles,tiles-ms}"
+      ],
       "notes": "Guimarães ships from ~/Dev/guimaraes-3d; this repo keeps the upstream copy."
     },
     {
@@ -58,7 +74,11 @@
       "title": "Realism and living-city engine: roads/bridges/tunnels, traffic, seasons, water, sky, guide, game",
       "user_visible_behavior": "Roads with bridges/tunnels, right-hand traffic, Microsoft buildings, seasons/water/sky, a talking guide and a game mode.",
       "status": "passing",
-      "verification": ["npm run check:traffic (100% compliance)", "npm run build", "Visual: seasons, water, sky, guide, game"],
+      "verification": [
+        "npm run check:traffic (100% compliance)",
+        "npm run build",
+        "Visual: seasons, water, sky, guide, game"
+      ],
       "evidence": [
         "commit 1df3d9f (verified bridges, tunnels and right-hand traffic; MS layer)",
         "commit 6ee6a09 (fast first frame, light mode for phones, talking AI guide)",
@@ -73,8 +93,14 @@
       "title": "Live layers: aircraft (ADS-B), transit (GTFS), weather",
       "user_visible_behavior": "Live aircraft, transit and weather are shown when available.",
       "status": "passing",
-      "verification": ["npm run build", "Check /api/adsb on the deployed site"],
-      "evidence": ["api/ Vercel functions (live aircraft, route lookup, AI guide)", "data/gtfs/"],
+      "verification": [
+        "npm run build",
+        "Check /api/adsb on the deployed site"
+      ],
+      "evidence": [
+        "api/ Vercel functions (live aircraft, route lookup, AI guide)",
+        "data/gtfs/"
+      ],
       "notes": ""
     },
     {
@@ -84,8 +110,13 @@
       "title": "Engine source of truth: forks port changes from here",
       "user_visible_behavior": "Engine fixes land here first and are ported to guimaraes-3d and porto-3d in one step.",
       "status": "passing",
-      "verification": ["Forks run scripts/sync-engine.sh against braga HEAD"],
-      "evidence": ["guimaraes-3d scripts/engine-base.txt + sync-engine.sh", "porto-3d scripts/engine-base.txt + sync-engine.sh"],
+      "verification": [
+        "Forks run scripts/sync-engine.sh against braga HEAD"
+      ],
+      "evidence": [
+        "guimaraes-3d scripts/engine-base.txt + sync-engine.sh",
+        "porto-3d scripts/engine-base.txt + sync-engine.sh"
+      ],
       "notes": "Keep engine-only changes here; a fork-specific fix stays in the fork unless the engine is wrong."
     },
     {
@@ -95,8 +126,14 @@
       "title": "Verification harness installed",
       "user_visible_behavior": "npm run verify is the single gate; CI runs it on push/PR.",
       "status": "passing",
-      "verification": ["npm run verify → OK", ".github/workflows/verify.yml present"],
-      "evidence": ["scripts/verify.mjs, package.json verify/check:* scripts, init.sh, .nvmrc, .github/workflows/verify.yml", "verify: OK — 7 passed on 2026-10-03"],
+      "verification": [
+        "npm run verify → OK",
+        ".github/workflows/verify.yml present"
+      ],
+      "evidence": [
+        "scripts/verify.mjs, package.json verify/check:* scripts, init.sh, .nvmrc, .github/workflows/verify.yml",
+        "verify: OK — 7 passed on 2026-10-03"
+      ],
       "notes": "Default city braga; other hosted cities via --city."
     },
     {
@@ -106,9 +143,54 @@
       "title": "Deploy to Vercel and braga-3d.com",
       "user_visible_behavior": "The production Braga site is live on braga-3d.com with working API routes.",
       "status": "passing",
-      "verification": ["Live site reachable", "Check /p/<id>/, /og/ and /api/adsb on the live domain"],
-      "evidence": ["braga-3d.com referenced live by the porto-3d/guimaraes-3d READMEs"],
+      "verification": [
+        "Live site reachable",
+        "Check /p/<id>/, /og/ and /api/adsb on the live domain"
+      ],
+      "evidence": [
+        "braga-3d.com referenced live by the porto-3d/guimaraes-3d READMEs"
+      ],
       "notes": "Guimarães data is excluded from the Braga deploy (commit 9e9c024)."
+    },
+    {
+      "id": "braga-009",
+      "priority": 9,
+      "area": "engine",
+      "title": "Azulejo discovery game mode (#game): fog of war, shards, rings, abilities, sparks",
+      "user_visible_behavior": "A playable hunt over the live city: fog of war reveals as you fly, six azulejo shards to find, a sky-ring chain, echo/orbit/overview abilities, exploration sparks along the streets, combo/medals/levels, and a generated mural finale.",
+      "status": "passing",
+      "verification": [
+        "npm run verify → OK (build + all checks)",
+        "node docs/game/game-verify.mjs 1440x900 and 390x844 (BRAGA_URL) — turn, orbit, overview, echo, rings, sparks, exit",
+        "Visual: docs/game/*.jpg and docs/game/mobile/*.jpg"
+      ],
+      "evidence": [
+        "src/game.js, src/game-hud.js, src/game-audio.js, src/game-vfx.js, src/game-progress.js, data/game.json",
+        "fog of war via shared fog shader: src/scene.js SHROUD_UNIFORMS + createShroud (one texture shared by all materials)",
+        "flight fix: plain left-drag turns the view in game mode (src/camera.js setGameMode); the full-screen .game-bursts overlay no longer eats drags",
+        "generated azulejo art: assets/game/shard-*.jpg + mural.jpg (Higgsfield GPT Image 2, resized to JPEG)"
+      ],
+      "notes": "Additive to the engine; game mode is off unless #game or the «Игра» button is used. Labels hide under the fog and fade in as areas are revealed."
+    },
+    {
+      "id": "braga-010",
+      "priority": 10,
+      "area": "interface",
+      "title": "Complete header interaction ownership across search, menu and atmosphere",
+      "user_visible_behavior": "Search and header controls work on desktop and mobile without moving the map or changing the selected landmark while editing controls.",
+      "status": "passing",
+      "verification": [
+        "npm run verify",
+        "Browser regression at 1440x900 and 390x844"
+      ],
+      "evidence": [
+        "2026-10-04: ./init.sh and npm run verify passed all seven gates (build, data, geo, dimensions, fit, traffic, models).",
+        "scripts/check-interface.browser.js passed at 1440x900 and 390x844, quality=low; zero page errors.",
+        "Browser verified search -> cathedral -> detail, language selector arrows, Escape/focus return, Atmosphere presets, flight reset on focus, route selection, game entry/exit and blocked search shortcut in game.",
+        "output/playwright/search-1440.png, search-390.png, map-1440.png, map-390.png.",
+        "PT and RU -> EN language switching preserved #place=se-braga and localized the card title."
+      ],
+      "notes": "Local interface verification only. Production HTML checked 2026-10-04: HTTP 200, but lacks search-input, atmo and callout. Existing redesign and geodata changes remain uncommitted; production deployment is outstanding."
     }
   ]
 }

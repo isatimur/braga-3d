@@ -33,6 +33,7 @@ import { createWeather, addScaled } from './weather.js';
 import { createLive } from './live.js';
 import { createTrafficModel } from './traffic-model.js';
 import { buildNetwork, createFlow } from './road-network.js';
+import { createStreetscape } from './streetscape.js';
 
 // shared by the materials here: night 0..1 and the emissive boost (above
 // the bloom threshold when post-processing is on)
@@ -53,8 +54,9 @@ function lcg(seed) {
 // Heights of a landmark mesh's up-facing surfaces at world points: for
 // each point the highest surface between lo[i] and hi[i] (world y), or
 // NaN. One pass over the triangles. The geometry is world-oriented around
-// the mesh position (fit.js), at real scale.
-function surfaceHeights(mesh, xs, zs, lo, hi) {
+// the mesh position (fit.js), at real scale. (streetscape.js: the paving of
+// the landmark squares.)
+export function surfaceHeights(mesh, xs, zs, lo, hi) {
   const out = new Float32Array(xs.length).fill(NaN);
   if (!mesh?.geometry?.attributes?.position) return out;
   const P = mesh.geometry.attributes.position.array;
@@ -1139,7 +1141,12 @@ export function createLife(ctx) {
   const traffic = safe('traffic', () => buildTraffic({ roads, project, heightAt, mobile, model, N: carMax }));
   const birds = safe('birds', () => buildBirds({ items, heightAt, project, nature, mobile, lite }));
   const fountains = safe('fountains', () => buildFountains({ project, heightAt, items, mobile }));
-  for (const p of [funicular, traffic, birds, fountains]) if (p) group.add(p.object);
+  // the street level: calçada squares, furniture, people, POI signs
+  // (streetscape.js; it builds once its data has arrived)
+  const street = safe('streetscape', () =>
+    createStreetscape({ camera, roads, project, heightAt, items, outlines: ctx.outlines, footprints: ctx.footprints, lite, mobile, debug, model, fx, surfaceHeights }),
+  );
+  for (const p of [funicular, traffic, birds, fountains, street]) if (p) group.add(p.object);
 
   const ctxLive = { scene, camera, renderer, project, heightAt, datumM, mobile, reducedMotion, live, model, atmosphere, group };
   // aircraft and buses: a separate chunk, loaded after the first frame
@@ -1164,6 +1171,7 @@ export function createLife(ctx) {
     traffic: traffic?.stats ?? null,
     birds: birds?.stats ?? null,
     fountains: fountains?.stats ?? null,
+    streetscape: street?.stats ?? null,
     rainDrops: 0,
     visibleVehicles: 0,
   };
@@ -1209,6 +1217,7 @@ export function createLife(ctx) {
     traffic?.update(adt, camera, frustum, view);
     birds?.update(adt, camera, view);
     fountains?.update(camera, view);
+    street?.update(adt, frustum, view);
     air?.update(adt, dt, view);
     buses?.update(adt, dt, view);
     badgeLines();
@@ -1228,6 +1237,7 @@ export function createLife(ctx) {
     traffic,
     birds,
     fountains,
+    street,
     stats,
     group,
     model,
@@ -1239,5 +1249,6 @@ export function createLife(ctx) {
     },
   };
   debug.life = api;
+  if (street) debug.streetscape = street;
   return api;
 }

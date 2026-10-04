@@ -9,6 +9,24 @@ import { resolve } from 'node:path';
 // VITE_CITY=<id> at build time pins the city (one Vercel project per city).
 const ROOT = import.meta.dirname;
 
+// Exercise the same server handler locally; Vercel owns it in production.
+function localNews() {
+  return {
+    name: 'local-news',
+    configureServer(server) {
+      server.middlewares.use('/api/news', async (req, res) => {
+        const { default: handler } = await import('./api/news.js');
+        const url = new URL(req.url, 'http://localhost');
+        await handler({ method: req.method, query: Object.fromEntries(url.searchParams) }, {
+          setHeader: (name, value) => res.setHeader(name, value),
+          status(code) { res.statusCode = code; return this; },
+          json(value) { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); },
+        });
+      });
+    },
+  };
+}
+
 function copyRuntimeData() {
   let outDir = 'dist';
   return {
@@ -42,5 +60,5 @@ export default defineConfig({
     assetsDir: 'static',
     chunkSizeWarningLimit: 1200,
   },
-  plugins: [copyRuntimeData()],
+  plugins: [copyRuntimeData(), localNews()],
 });

@@ -32,7 +32,7 @@ const MOVE = {
 };
 const isArrow = (code) => code.startsWith('Arrow');
 // focus in these places keeps its keys
-const OWN_KEYS = 'input, select, textarea, [contenteditable=""], [contenteditable="true"], dialog, .tools-sheet.is-open, .share-pop, [popover], .legend';
+const OWN_KEYS = 'input, select, textarea, [contenteditable=""], [contenteditable="true"], dialog, [role="dialog"], .tools-sheet.is-open, .search, .share-pop, [popover], .legend';
 const HIDE_MS = 4000;
 
 export function createFlyKeys({ rig, isBlocked = () => false, placeOpen = () => false, debug = null }) {
@@ -146,6 +146,11 @@ export function createFlyKeys({ rig, isBlocked = () => false, placeOpen = () => 
   }
 
   if (enabled) {
+    // Opening a control while a movement key is held must stop the old
+    // input too, not merely reject subsequent keydown events.
+    document.addEventListener('focusin', (e) => {
+      if (e.target instanceof Element && e.target.closest(OWN_KEYS)) reset();
+    });
     window.addEventListener('keyup', up);
     window.addEventListener('blur', reset);
     document.addEventListener('visibilitychange', () => document.hidden && reset());
