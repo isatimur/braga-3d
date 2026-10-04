@@ -11,8 +11,8 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current highest-priority unfinished work: release the locally verified interface to production; review the existing uncommitted engine/geodata changes before publishing.
-- Current release limitation: braga-3d.com still serves the older interface; no deployment was performed in Session 003.
+- Current highest-priority unfinished work: merge the shipped discover-release branch and deploy it so braga-3d.com serves the new interface; review the uncommitted engine/geodata changes before publishing.
+- Current release limitation: braga-3d.com still serves the older interface; the new interface is committed and pushed on codex/braga-discover-release, not yet merged or deployed.
 
 ## Session Log
 
@@ -91,3 +91,18 @@ updates it automatically.
   - Previously documented mobile game free-flight controls are still absent; the existing Go to shard button remains its touch navigation.
   - Existing uncommitted engine, game, generated Braga/Guimaraes data and README changes were preserved. No commit was created because this narrow fix is interleaved with that broader unfinished release; no user changes were stashed or discarded.
 - Restart: ./init.sh remains the baseline. Local Vite preview available at http://127.0.0.1:5173/ while its process runs.
+
+### Session 004
+
+- Date: 2026-10-04
+- Goal: Finish and ship the discover release (user: "finish and ship").
+- Completed:
+  - Reviewed the full changeset on `codex/braga-discover-release` (was 0 commits ahead, all work uncommitted): 66 modified + 26 new files; benign config diffs (gitignore, vercelignore, engines metadata, local /api/news shim, discovery check in the gate); tile JSON churn is pipeline output; secret scan clean; `dist/`, `docs/`, `output/`, `.playwright-cli/` stay ignored.
+  - `npm run verify` → OK (build, data contract, geo, dimensions, 1:1 fit, traffic, models).
+  - Committed as `53b6c20` ("braga-3d: discover release — ...", 92 files, +10275/−352) and pushed to `origin/codex/braga-discover-release` via explicit refspec (no upstream config change, no PR created — not requested).
+- Evidence captured: verify OK output; `git log` shows 53b6c20 on top of 71115b0; push confirmed `new branch HEAD -> codex/braga-discover-release`.
+- Files or artifacts updated: claude-progress.md (this entry).
+- Known risk or unresolved issue:
+  - Not merged to main and not deployed; braga-3d.com still serves the old interface.
+  - PR creation left to the user: https://github.com/isatimur/braga-3d/pull/new/codex/braga-discover-release
+- Next best step: open the PR, merge, deploy to Vercel, then remotely verify the live interface and APIs.
