@@ -28,6 +28,7 @@ const has = (...parts) => existsSync(join(ROOT, ...parts));
 
 const checks = [
   { name: 'build', cmd: ['npm', 'run', 'build'], needs: [] },
+  ...(CITY === 'braga' ? [{ name: 'discovery', cmd: ['npm', 'run', 'check:discovery'], needs: ['data/pois.json', 'data/landmarks.json'] }] : []),
   {
     name: 'data contract',
     cmd: ['node', 'scripts/check-data.mjs', '--city', CITY],

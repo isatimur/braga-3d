@@ -17,7 +17,11 @@ import { fitLandmark, padFor } from './fit.js';
 import { createCameraRig } from './camera.js';
 import { createSkyline, createCinema } from './tour.js';
 import { createStory } from './story.js';
-import { createUI, createLoader } from './ui.js';
+import { createGame } from './game.js';
+import { createUI, createLoader, placesWord, mountTool } from './ui.js';
+import { createSearch, IMPORTANCE } from './search.js';
+import { createDiscovery } from './discovery.js';
+import { assetUrl } from './data.js';
 import { createRouteLayer, createFlyAlong } from './routes.js';
 import { createPanorama } from './panorama.js';
 import { installShare } from './share.js';
@@ -31,6 +35,7 @@ import { CITY, loadCity, applyCityShell } from './city.js';
 import { loadCityModels } from './models.js';
 import { setLifeData } from './life.js';
 import { setTrafficAxes } from './traffic-model.js';
+import { installPois } from './pois.js';
 
 initLanguage();
 
@@ -111,6 +116,8 @@ async function start() {
   loader.set(0.08, t('Загружаем данные'));
 
   mark('start');
+  // __braga.pois (pois.js): the POI list with opening hours, for the search
+  installPois(debug);
   const loaded = await loadData(() => loader.set(0.35, t('Данные получены')));
   mark('data');
   // data.js returns landmarks and routes already localized
@@ -524,6 +531,7 @@ async function start() {
   let tour = null; // fly-along driver while it plays
   let cinema = null; // cinema and story modes, created further down
   let story = null;
+  let game = null; // the Azulejo discovery game (game.js)
 
   const rig = createCameraRig(camera, canvas, heightAt, {
     reducedMotion,
@@ -557,7 +565,46 @@ async function start() {
     onPlayToggle: () => (tour ? stopTour() : startTour()),
     onPanorama: (p, from) => panorama.open(p, from),
     onShare: () => share(),
+    // callout card: «Подробнее» opens the full panel; «360°» the viewer
+    // (an image) or the panel's 360° tab (a video)
+    onMore: () => showPanel(),
+    onPanoCallout: (p, from) => {
+      if (p.type === 'image') panorama.open(p, from);
+      else {
+        showPanel();
+        ui.selectTab('pano');
+      }
+    },
   });
+
+  // ------------------------------------------------------------ search
+  const search = createSearch({
+    landmarks,
+    routes,
+    roads,
+    project,
+    heightAt,
+    scene,
+    camera,
+    rig,
+    renderer,
+    reducedMotion,
+    onPlace: (i) => {
+      if (route) exitRoute();
+      select(i);
+    },
+    onRoute: (id) => openRoute(id),
+    toast: (msg, ms) => ui.toast(msg, ms),
+    isBlocked: () => !!(cinema?.active || story?.active || intro?.active || game?.active),
+  });
+  debug.search = search;
+  const discovery = createDiscovery({
+    landmarks, pois: debug.pois,
+    onPlace: i => { if (route) exitRoute(); select(i); },
+    onPoi: poi => { if (route) exitRoute(); if (active >= 0) close(); search.showPoi(poi); },
+    toast: msg => ui.toast(msg),
+  });
+  if (CITY.id === 'braga' && !location.hash) ui.setView('discover');
 
   // ------------------------------------------------------------ render loop control
   let paused = false;
@@ -593,9 +640,10 @@ async function start() {
     const q = new URLSearchParams(location.hash.replace(/^#/, ''));
     const tm = q.get('time');
     if (tm && TIMES.includes(tm) && tm !== atmosphere.time) setTime(tm, { writeHash: false });
-    // #cinema and #story open the two guided modes
+    // #cinema, #story and #game open the guided modes
     if (q.has('cinema')) return void (cinema.active || startMode('cinema'));
     if (q.has('story')) return void (story.active || startMode('story'));
+    if (q.has('game')) return void (game.active || startMode('game'));
     const r = q.get('route');
     const p = q.get('place');
     if (r) {
@@ -677,30 +725,64 @@ async function start() {
     return k >= 0 ? `${k + 1} / ${route.stopIdx.length}` : null;
   }
 
+  // A place opens as the callout card next to its building (C1). The full
+  // panel comes with «Подробнее», and stays while it is open (arrows step
+  // through it). Inside a route the panel opens at once, as before: the
+  // route panel holds the right-hand side.
   function select(i) {
     if (i == null || i < 0) return;
     if (tour) stopTour();
     active = i;
-    const vis = ui.visibleIndices();
-    ui.show(i, {
-      pos: stopPos(i) || `${vis.indexOf(i) + 1} / ${vis.length}`,
-      back: route ? t('к маршруту') : null,
-    });
+    discovery.select(i);
     marks.setActive(i);
+    if (route || ui.isOpen()) showPanel();
+    else {
+      ui.callout.show(landmarks[i]);
+      ui.markActive(i);
+    }
     frameActive();
     setHash(currentHash()); // a shown route keeps #route=, else #place=
+  }
+
+  function showPanel() {
+    if (active < 0) return;
+    const vis = ui.visibleIndices();
+    ui.callout.hide();
+    ui.show(active, {
+      pos: stopPos(active) || `${vis.indexOf(active) + 1} / ${vis.length}`,
+      back: route ? t('к маршруту') : null,
+    });
+  }
+
+  // Where the subject should land on screen. Callout, desktop: in the free
+  // map between the list and the card's side; phones: in the strip above
+  // the docked card. With the full panel: the old framing.
+  function calloutFocus() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    if (!ui.callout.open) return null;
+    if (W <= 900) {
+      const cardTop = H - (ui.callout.size.h || 170) - 24;
+      return { x: W / 2, y: 70 + (cardTop - 70) * 0.5, fill: Math.max(0.3, (cardTop - 90) / H) };
+    }
+    const side = document.querySelector('.side')?.getBoundingClientRect();
+    const left = (side?.right ?? 0) + 16;
+    const cardW = (ui.callout.size.w || 360) + 64;
+    return { x: left + (W - 24 - cardW - left) * 0.55, y: H * 0.54, fill: 0.62 };
   }
 
   function frameActive() {
     const it = marks.items[active];
     if (!it) return;
-    rig.frame(it.box, { panelOpen: true, bearing: it.viewBearing, base: it.draped ? null : it.base });
+    rig.frame(it.box, { panelOpen: true, bearing: it.viewBearing, base: it.draped ? null : it.base, focus: calloutFocus(), orbit: (15 * Math.PI) / 180 });
   }
 
   function close() {
     if (active < 0) return;
     active = -1;
+    discovery.select(-1);
     ui.hide();
+    ui.callout.hide();
     marks.setActive(-1);
     if (route) ui.reopenRoute();
     setHash(currentHash());
@@ -736,6 +818,7 @@ async function start() {
     const r = routeById.get(id);
     if (!r) return;
     if (tour) stopTour();
+    ui.callout.hide();
     if (active >= 0) {
       active = -1;
       ui.hide();
@@ -757,6 +840,7 @@ async function start() {
     route = null;
     routeLayer.clear();
     setDim(null);
+    ui.callout.hide();
     if (active >= 0) {
       active = -1;
       ui.hide();
@@ -849,6 +933,38 @@ async function start() {
       setHash(currentHash());
     },
   });
+  game = createGame({
+    scene,
+    camera,
+    rig,
+    heightAt,
+    items: marks.items,
+    terrain,
+    sky,
+    roads,
+    project,
+    atmosphere,
+    ui,
+    home,
+    reducedMotion,
+    debug,
+    city: CITY.id || 'braga',
+    setTime: (name) => modeTime(name),
+    onEnter: () => document.body.classList.add('is-game'),
+    onExit: () => {
+      document.body.classList.remove('is-game');
+      modeCtx.onExit();
+    },
+  });
+  const gameBtn = document.createElement('button');
+  gameBtn.type = 'button';
+  gameBtn.className = 'tool mode-btn';
+  gameBtn.id = 'game-toggle';
+  gameBtn.setAttribute('aria-controls', 'game');
+  gameBtn.title = t('Азулежу: охота за осколками по городу');
+  gameBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z" /><path d="M5.2 6.3h1.4M5.2 9.4h3.6M11.6 5.4v3.4" /></svg><span class="mode-label">${t('Игра')}</span>`;
+  mountTool(gameBtn, 'modes', { closes: true });
+  gameBtn.addEventListener('click', () => (game.active ? game.stop() : startMode('game')));
   function startMode(name) {
     if (intro?.active) intro.skip();
     if (tour) stopTour();
@@ -856,12 +972,20 @@ async function start() {
     if (route) exitRoute();
     ui.setLegend(false);
     ui.tools.set(false, { focus: false });
+    ui.atmo.close();
+    search.close();
     flyKeys.reset();
-    if (name === 'cinema') {
+    if (name === 'game') {
+      cinema.stop();
       story.stop();
+      game.start();
+    } else if (name === 'cinema') {
+      story.stop();
+      game.stop();
       cinema.start();
     } else {
       cinema.stop();
+      game.stop();
       story.start();
     }
     setHash(name);
@@ -885,10 +1009,14 @@ async function start() {
     placeOpen: () => active >= 0,
   });
   window.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented) return;
     if (document.querySelector('dialog[open]')) return;
     const t = e.target;
-    if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t?.isContentEditable) return;
+    if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || (t instanceof HTMLSelectElement && e.key !== 'Escape') || t?.isContentEditable) return;
+    // Header panels own their keys; Escape still dismisses the top panel.
+    if (e.key !== 'Escape' && (ui.tools.open || ui.atmo.isOpen || t.closest?.('.search, .share-pop'))) return;
     // cinema and story own every key while they play
+    if (game?.active && game.onKey(e)) return;
     if (cinema?.active) return void cinema.onKey(e);
     if (story?.active) return void story.onKey(e);
     if (e.key === 'Escape') {
@@ -920,6 +1048,7 @@ async function start() {
   });
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
+    if (game?.active) return; // the game owns the map
     toNdc(e);
     raycaster.setFromCamera(ndc, camera);
     const hit = marks.pick(raycaster);
@@ -927,7 +1056,7 @@ async function start() {
   });
   let hoverQueued = false;
   canvas.addEventListener('pointermove', (e) => {
-    if (hoverQueued || e.buttons) return;
+    if (hoverQueued || e.buttons || game?.active) return;
     hoverQueued = true;
     requestAnimationFrame(() => {
       hoverQueued = false;
@@ -998,10 +1127,70 @@ async function start() {
   new ResizeObserver(resize).observe(container);
   resize();
 
-  // Hide labels that collide with a higher-priority label on screen.
+  // ------------------------------------------------------------ labels
+  // Labels without clutter (every 120 ms):
+  //  - priority: the active place, then route stops, then importance
+  //    (search.js IMPORTANCE, 3 for a place not in it) over distance;
+  //  - collision: a label that overlaps a higher-priority one hides;
+  //  - far zoom (orbit distance over CLUSTER_FROM): labels closer than
+  //    CLUSTER_PX on screen merge into one bubble «Центр · 18 мест»; a click
+  //    flies in, and the bubble splits as the zoom spreads its places;
+  //    never with a route shown or in story mode (their labels must stay);
+  //  - close up: a label shows a small photo of the place (THUMB_MAX at once).
   const _v = new THREE.Vector3();
+  const CLUSTER_FROM = 1100; // world units (4.4 km)
+  const CLUSTER_PX = 70;
+  const THUMB_UNDER = 380; // camera to label, world units (1.5 km)
+  const THUMB_MAX = 6;
+  const clusterLayer = document.getElementById('clusters');
+  const centreItem = marks.items.find((it) => it.data.id === (CITY.start_view?.narrow_landmark || CITY.start_view?.landmark));
+  for (const it of marks.items) {
+    it.rank = IMPORTANCE[it.data.id] ?? 3;
+    const el = it.labelEl;
+    const name = el.textContent;
+    const thumb = document.createElement('span');
+    thumb.className = 'map-label-thumb';
+    thumb.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span');
+    text.className = 'map-label-text';
+    text.textContent = name;
+    el.replaceChildren(thumb, text);
+    el.dataset.rank = String(it.rank);
+  }
+  let clusters = []; // [{ members: [it], el }]
+  const clusterPool = [];
+  function clusterEl(k) {
+    let b = clusterPool[k];
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cluster';
+      b.tabIndex = -1;
+      b.addEventListener('click', () => {
+        const c = clusters.find((cl) => cl.el === b);
+        if (!c) return;
+        const box = new THREE.Box3();
+        for (const it of c.members) box.union(it.box);
+        rig.fitBox(box, freeView());
+      });
+      clusterLayer?.append(b);
+      clusterPool[k] = b;
+    }
+    return b;
+  }
+  // «Центр» for the first (largest) bubble around the centre landmark; any
+  // other bubble takes the name of its most important place
+  function clusterName(members, centreFree) {
+    const top = members.reduce((a, b) => (b.rank > a.rank ? b : a));
+    if (centreItem && centreFree) {
+      const cx = members.reduce((s, it) => s + it.center.x, 0) / members.length;
+      const cz = members.reduce((s, it) => s + it.center.z, 0) / members.length;
+      if (Math.hypot(cx - centreItem.center.x, cz - centreItem.center.z) < 320) return t('Центр');
+    }
+    return top.data.name;
+  }
   let lastDeclutter = 0;
-  function declutter(now) {
+  function declutter(now, camDist) {
     if (now - lastDeclutter < 120) return;
     lastDeclutter = now;
     const placed = [];
@@ -1011,17 +1200,179 @@ async function start() {
       .filter((it) => it.label.visible)
       .map((it) => {
         _v.copy(it.label.position).project(camera);
-        return { it, sx: (_v.x * 0.5 + 0.5) * size.w, sy: (-_v.y * 0.5 + 0.5) * size.h, d: camera.position.distanceTo(it.label.position), behind: _v.z > 1 };
+        const d = camera.position.distanceTo(it.label.position);
+        return { it, sx: (_v.x * 0.5 + 0.5) * size.w, sy: (-_v.y * 0.5 + 0.5) * size.h, d, behind: _v.z > 1, score: it.rank / Math.max(1, d / 400) };
       })
-      .sort((a, b) => rank(b.it) - rank(a.it) || a.d - b.d);
+      .sort((a, b) => rank(b.it) - rank(a.it) || b.score - a.score || a.d - b.d);
+
+    // far zoom: greedy clusters around the highest-priority labels
+    const clustering = camDist > CLUSTER_FROM && !route && !story?.active && !cinema?.active;
+    const seeds = [];
+    if (clustering) {
+      for (const o of order) {
+        if (o.behind || o.it.index === active) continue;
+        const s = seeds.find((c) => Math.hypot(c.sx - o.sx, c.sy - o.sy) < CLUSTER_PX);
+        if (s) s.members.push(o);
+        else seeds.push({ sx: o.sx, sy: o.sy, members: [o] });
+      }
+      // two bubbles never sit on each other: groups whose centres are
+      // closer than two radii merge (bubbles are wider than a label)
+      const mid = (s) => [s.members.reduce((a, o) => a + o.sx, 0) / s.members.length, s.members.reduce((a, o) => a + o.sy, 0) / s.members.length];
+      for (let merged = true; merged; ) {
+        merged = false;
+        for (let a = 0; a < seeds.length && !merged; a++) {
+          for (let b = a + 1; b < seeds.length; b++) {
+            if (seeds[a].members.length < 3 || seeds[b].members.length < 3) continue;
+            const [ax, ay] = mid(seeds[a]);
+            const [bx, by] = mid(seeds[b]);
+            if (Math.abs(ax - bx) < CLUSTER_PX * 2.4 && Math.abs(ay - by) < CLUSTER_PX * 0.8) {
+              seeds[a].members.push(...seeds[b].members);
+              seeds.splice(b, 1);
+              merged = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+    const inCluster = new Set();
+    const next = [];
+    for (const s of seeds) {
+      if (s.members.length < 3) continue;
+      for (const o of s.members) inCluster.add(o.it);
+      next.push({ members: s.members.map((o) => o.it) });
+    }
+    next.sort((a, b) => b.members.length - a.members.length);
+    let centreFree = true;
+    next.forEach((c, k) => {
+      c.el = clusterEl(k);
+      const n = c.members.length;
+      c.el.textContent = '';
+      const name = document.createElement('span');
+      name.className = 'cluster-name';
+      name.textContent = clusterName(c.members, centreFree);
+      if (name.textContent === t('Центр')) centreFree = false;
+      const count = document.createElement('span');
+      count.className = 'cluster-count';
+      count.textContent = `${n} ${placesWord(n)}`;
+      c.el.append(name, count);
+      c.el.title = c.members.map((it) => it.data.name).join(', ');
+      c.el.hidden = false;
+    });
+    for (let k = next.length; k < clusterPool.length; k++) clusterPool[k].hidden = true;
+    clusters = next;
+    placeClusters();
+
+    // thumbnails: the nearest shown labels, when close
+    let thumbs = 0;
     for (const o of order) {
-      const w = o.it.labelEl.offsetWidth || 120;
-      const box = { l: o.sx - w / 2 - 4, r: o.sx + w / 2 + 4, t: o.sy - 26, b: o.sy + 2 };
+      const el = o.it.labelEl;
+      const want = !o.behind && !inCluster.has(o.it) && o.d < THUMB_UNDER && thumbs < THUMB_MAX && !!o.it.data.image && !route;
+      if (want) {
+        thumbs++;
+        const th = el.firstChild;
+        if (th && !th.firstChild) {
+          const img = document.createElement('img');
+          img.alt = '';
+          img.decoding = 'async';
+          img.loading = 'lazy';
+          img.src = assetUrl(o.it.data.image);
+          th.append(img);
+        }
+      }
+      el.classList.toggle('has-thumb', want);
+    }
+
+    // the UI is in the way too: a label under the header, the list or a
+    // card hides (the callout names the active place itself)
+    blocks = obstacles();
+    const hits = (box) => blocks.some((p) => box.l < p.r && box.r > p.l && box.t < p.b && box.b > p.t);
+    for (const o of order) {
+      const el = o.it.labelEl;
+      if (inCluster.has(o.it) || (o.it.index === active && ui.callout.open)) {
+        el.classList.add('is-muted');
+        continue;
+      }
+      const w = el.offsetWidth || 120;
+      const h = (el.offsetHeight || 22) + 10;
+      const box = { l: o.sx - w / 2 - 4, r: o.sx + w / 2 + 4, t: o.sy - h - 2, b: o.sy + 2 };
       const clash = placed.some((p) => box.l < p.r && box.r > p.l && box.t < p.b && box.b > p.t);
-      const show = !o.behind && !clash;
-      o.it.labelEl.classList.toggle('is-muted', !show);
+      const offEdge = box.l < 0 || box.r > size.w || box.t < 0; // a clipped name reads as a typo
+      const show = !o.behind && (!clash || o.it.index === active) && !hits(box) && !offEdge;
+      el.classList.toggle('is-muted', !show);
       if (show) placed.push(box);
     }
+    // a bubble hides the labels it overlaps too
+    for (const c of clusters) {
+      const r = c.el.getBoundingClientRect();
+      for (const o of order) {
+        if (inCluster.has(o.it) || o.it.index === active || o.it.labelEl.classList.contains('is-muted')) continue;
+        if (o.sx > r.left - 50 && o.sx < r.right + 50 && o.sy > r.top - 4 && o.sy < r.bottom + 30) o.it.labelEl.classList.add('is-muted');
+      }
+    }
+  }
+  let blocks = [];
+  function obstacles() {
+    const out = [];
+    const add = (el) => {
+      if (!el || el.hidden) return;
+      const r = el.getBoundingClientRect();
+      if (r.width && r.height && r.bottom > 0 && r.top < size.h) out.push({ l: r.left, r: r.right, t: r.top, b: r.bottom });
+    };
+    for (const el of document.querySelectorAll('.topbar > .brand, .topbar > .search, .topbar > .modes, .topbar > .tools-toggle, .topbar > .life-badge')) add(el);
+    const side = document.querySelector('.side');
+    if (side && getComputedStyle(side).opacity !== '0') add(side);
+    if (ui.isOpen()) add(document.getElementById('detail'));
+    if (ui.routeOpen()) add(document.getElementById('route-panel'));
+    if (ui.callout.open) add(document.querySelector('#callout .callout-inner'));
+    return out;
+  }
+  // bubbles sit on the members' mean screen point, every frame
+  function placeClusters() {
+    for (const c of clusters) {
+      let x = 0;
+      let y = 0;
+      let n = 0;
+      for (const it of c.members) {
+        _v.copy(it.label.position).project(camera);
+        if (_v.z > 1) continue;
+        x += (_v.x * 0.5 + 0.5) * size.w;
+        y += (-_v.y * 0.5 + 0.5) * size.h;
+        n++;
+      }
+      const cx = x / Math.max(1, n);
+      const cy = y / Math.max(1, n) - 16;
+      const blocked = blocks.some((p) => cx > p.l - 40 && cx < p.r + 40 && cy > p.t - 10 && cy < p.b + 10);
+      c.el.classList.toggle('is-off', !n || blocked);
+      if (n) c.el.style.transform = `translate(${(x / n).toFixed(1)}px, ${(y / n).toFixed(1)}px) translate(-50%, -100%)`;
+    }
+  }
+
+  // The callout follows its pin: projected each frame, kept in the free
+  // part of the screen (below the header, right of the list).
+  const _pin = new THREE.Vector3();
+  function placeCallout() {
+    if (!ui.callout.open) return;
+    const it = marks.items[active];
+    if (!it) return;
+    _pin.set(it.center.x, it.pinY ?? it.top, it.center.z).project(camera);
+    const x = (_pin.x * 0.5 + 0.5) * size.w;
+    const y = (-_pin.y * 0.5 + 0.5) * size.h;
+    const on = _pin.z < 1 && x > -20 && x < size.w + 20 && y > -20 && y < size.h + 20;
+    const side = sideRect();
+    ui.callout.place({ x, y, on }, { left: (side ? side.right : 0) + 16, top: 84, right: size.w - 16, bottom: size.h - 16 });
+  }
+  let sideBox = null;
+  let sideBoxAt = 0;
+  function sideRect() {
+    const now = performance.now();
+    if (!sideBox || now - sideBoxAt > 500) {
+      const s = document.querySelector('.side');
+      const r = s?.getBoundingClientRect();
+      sideBox = r && r.width && getComputedStyle(s).opacity !== '0' ? r : { right: 0 };
+      sideBoxAt = now;
+    }
+    return sideBox;
   }
 
   // Render loop; paused while the tab is hidden or the panorama is open,
@@ -1078,6 +1429,7 @@ async function start() {
     seasons?.update(rawDt); // season blend, leaves, snow, quality (seasons.js)
     marks.updatePins(clock, !reducedMotion, camera.position);
     pulseHoverPin(rawDt);
+    game?.update(dt); // Azulejo: fog reveal, beacons, scanning, combo (game.js)
     // light mode: the landmarks are the only shadow casters. Several modules
     // turn casting back on by view distance, so this runs every frame.
     if (LITE) {
@@ -1097,7 +1449,9 @@ async function start() {
       renderer.render(scene, camera);
     }
     labelRenderer.render(scene, camera);
-    declutter(now);
+    declutter(now, camDist);
+    placeClusters();
+    placeCallout();
     fadeLabels(camDist);
     instruments.update(camera, rig.controls.target, size.h);
     debug.calls = renderer.info.render.calls;
@@ -1259,7 +1613,8 @@ async function start() {
     };
     await step('nature', buildNatureLayer);
     await step('life', () => {
-      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()) });
+      // footprints, outlines: where the people of streetscape.js may not walk
+      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines });
     });
     await step('seasons', () => {
       seasons = createSeasons({ renderer, scene, camera, atmosphere, nature, fx, weather: life?.weather, terrain, ui, reducedMotion, mobile: LITE, lite: LITE, debug });

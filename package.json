@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "verify": "node scripts/verify.mjs",
     "check:data": "node scripts/check-data.mjs",
+    "check:discovery": "node scripts/check-discovery.mjs",
     "check:geo": "node scripts/check-geo.mjs",
     "check:dimensions": "node scripts/check-dimensions.mjs",
     "check:fit": "node scripts/check-fit.mjs",
