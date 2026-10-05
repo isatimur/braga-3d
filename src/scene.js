@@ -364,8 +364,11 @@ const PRESETS = {
     light: 0xffd4a3, lightI: 3.9,
     zenith: 0x46699c, mid: 0xb3c0d4, haze: 0xdcd2c9, scatter: 0xffd3a0, scatterK: 0.75, scatterP: 5,
     disk: 0xfff1d8, diskI: 5,
-    hemiSky: 0xc9d4e6, hemiGround: 0x5a4c3c, hemiI: 0.18,
-    env: 0.65, exposure: 1.25, density: 0.00026, falloff: 0.0035, night: 0,
+    // sky fill lifted (guimaraes wave 8b, scaled to Braga's brighter base): the
+    // low sun leaves the street canyons in shadow, so the hemisphere fill, the
+    // environment and the exposure carry them; thinner haze keeps it clear
+    hemiSky: 0xc8d8ee, hemiGround: 0x7a6650, hemiI: 0.4,
+    env: 0.9, exposure: 1.28, density: 0.0002, falloff: 0.0035, night: 0,
   },
   day: {
     az: 165, el: 50,
@@ -380,8 +383,9 @@ const PRESETS = {
     light: 0xffbb78, lightI: 4.4,
     zenith: 0x33507f, mid: 0xa6adc4, haze: 0xd9c0ae, scatter: 0xf7bd78, scatterK: 0.85, scatterP: 5,
     disk: 0xffe6bf, diskI: 6,
-    hemiSky: 0xc3c4d6, hemiGround: 0x5c4634, hemiI: 0.16,
-    env: 0.7, exposure: 1.3, density: 0.0002, falloff: 0.003, night: 0,
+    // lifted like the morning preset (guimaraes wave 8b, scaled to Braga)
+    hemiSky: 0xd0d4ec, hemiGround: 0x8a6a50, hemiI: 0.55,
+    env: 1.05, exposure: 1.36, density: 0.00015, falloff: 0.003, night: 0,
   },
   night: {
     az: 140, el: 36,
