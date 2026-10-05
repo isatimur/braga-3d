@@ -1165,6 +1165,10 @@ export function createLife(ctx) {
   const _size = new THREE.Vector2();
   const view = { night: 0, camDist: 0, width: 1, height: 1, rain: 0, atmosphere };
   let time = 0;
+  // market days of the centre (0 Mo .. 6 Su), opening band in scene hours
+  const MARKET_DAYS = new Set([2, 5, 6]);
+  const marketStalls = Array.isArray(LIFE?.market?.stalls) ? LIFE.market.stalls : [];
+  let marketApplied = false;
   const stats = {
     buildMs,
     funicular: funicular?.stats ?? null,
@@ -1217,6 +1221,18 @@ export function createLife(ctx) {
     traffic?.update(adt, camera, frustum, view);
     birds?.update(adt, camera, view);
     fountains?.update(camera, view);
+    // market crowd: only when data/life.json lists market stalls (Braga has
+    // none yet, so this is a no-op until the stalls are authored)
+    const built = street?.built;
+    if (built?.people && marketStalls.length) {
+      if (!marketApplied) {
+        built.people.addMarket(marketStalls.map((s) => project(s.lat, s.lon)));
+        marketApplied = true;
+      }
+      const clk = model?.clock;
+      const st = model?.state;
+      built.people.setMarketOpen(!!(st && clk && MARKET_DAYS.has(clk.weekday) && st.hour >= 8 && st.hour < 20));
+    }
     street?.update(adt, frustum, view);
     air?.update(adt, dt, view);
     buses?.update(adt, dt, view);
