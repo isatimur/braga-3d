@@ -273,6 +273,7 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false }
   composer.addPass(finish);
 
   let enabled = false;
+  let postLevel = 0; // the perf governor's post cost step (setPostLevel)
   const _p = new THREE.Vector3();
   const _v = new THREE.Vector3();
   let sunSource = null; // the visible sun (scene.js skySunDir), when set
@@ -301,7 +302,7 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false }
     rays.sun.set(_p.x * 0.5 + 0.5, _p.y * 0.5 + 0.5);
     rays.strength = s * rays.gain;
     rays.haze = haze;
-    rays.enabled = s > 0.01 || haze > 0.001;
+    rays.enabled = (s > 0.01 || haze > 0.001) && postLevel < 1;
   }
 
   // ---- quality: auto (the device pixel ratio, capped at 2 by main.js) or
@@ -345,6 +346,17 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false }
     },
     setEnabled(on) {
       enabled = !!on;
+    },
+    // adaptive post cost: 0 all passes, 1 no sun rays, 2 no bloom, 3 no SMAA.
+    // It only lowers the cost of a stack that is on; the user's fx toggle
+    // (setEnabled) stays the master switch.
+    setPostLevel(n) {
+      postLevel = THREE.MathUtils.clamp(n | 0, 0, 3);
+      bloom.enabled = postLevel < 2;
+      smaa.enabled = postLevel < 3;
+    },
+    get postLevel() {
+      return postLevel;
     },
     setSize(w, h, dpr) {
       last = { w, h, dpr };

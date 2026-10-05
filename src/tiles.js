@@ -76,6 +76,10 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
   const NEAR_M = mobile ? 2000 : 4000;
   const MEM_CAP = (mobile ? 120 : 350) * 1048576;
   const TREE_CAP = nature?.streamCap ?? 0;
+  // adaptive governor (main.js): < 1 shrinks the streamed radius and the
+  // per-frame integration budget together.
+  let budgetScale = 1;
+  const sliceMs = () => SLICE_MS * Math.max(0.4, budgetScale);
 
   const matB = createBuildingMaterial({ fade: true });
   const matS = fadeMaterial({ roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
@@ -540,7 +544,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
   function radiusFor(altM) {
     if (altM > (mobile ? 6000 : 4500)) return Infinity;
     const r = 3000 * Math.pow(Math.max(altM, 300) / 300, 0.517);
-    return (mobile ? r / 2 : r) * S;
+    return (mobile ? r / 2 : r) * S * budgetScale;
   }
 
   function schedule() {
@@ -637,13 +641,14 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     }
     // new geometry within the frame budget
     const t0 = performance.now();
-    while (ready.length && performance.now() - t0 < SLICE_MS) integrate(ready.shift());
+    const budget = sliceMs();
+    while (ready.length && performance.now() - t0 < budget) integrate(ready.shift());
     for (const G of groups.values()) {
-      if (performance.now() - t0 >= SLICE_MS) break;
+      if (performance.now() - t0 >= budget) break;
       if (G.dirty) rebuildGroup(G);
     }
     sinceLines += dt;
-    if (linesDirty && sinceLines > 1 && performance.now() - t0 < SLICE_MS) {
+    if (linesDirty && sinceLines > 1 && performance.now() - t0 < budget) {
       sinceLines = 0;
       rebuildLines();
     }
@@ -727,6 +732,13 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     group,
     stats,
     update,
+    // adaptive governor: < 1 shrinks the streamed radius and the slice budget
+    setBudgetScale(k) {
+      budgetScale = Math.min(1, Math.max(0.25, k || 1));
+    },
+    get budgetScale() {
+      return budgetScale;
+    },
     get index() {
       return index;
     },
