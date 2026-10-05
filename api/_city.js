@@ -10,10 +10,16 @@ const CITIES = join(dirname(fileURLToPath(import.meta.url)), '..', 'cities');
 const ID_RE = /^[a-z][a-z0-9-]*$/;
 const cache = new Map();
 
+// The cities this deploy serves: CITIES or VITE_CITIES (comma list), else
+// VITE_CITY, else braga. A config file on disk is not enough: the deploy must
+// also carry the city's data. Same rule as __KNOWN_CITIES__ in src/city.js.
+const ALLOWED = (process.env.CITIES || process.env.VITE_CITIES || process.env.VITE_CITY || 'braga')
+  .split(',').map((s) => s.trim()).filter(Boolean);
+
 // { id, name, origin, aircraft: { lat, lon, radius_nm }, domain } or null
 // when the id is not a known city.
 export function cityConfig(id = 'braga') {
-  if (!ID_RE.test(id)) return null;
+  if (!ID_RE.test(id) || !ALLOWED.includes(id)) return null;
   if (cache.has(id)) return cache.get(id);
   const file = join(CITIES, `${id}.json`);
   let cfg = null;

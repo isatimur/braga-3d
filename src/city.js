@@ -13,13 +13,20 @@ import { language, t } from './i18n.js';
 const HOSTS = { 'braga-3d.com': 'braga', 'www.braga-3d.com': 'braga', 'braga-3d.vercel.app': 'braga' };
 const ID_RE = /^[a-z][a-z0-9-]*$/;
 
-export function resolveCityId(envId, search = '', hostname = '') {
+// City ids that have a config and data in THIS deploy. vite.config.js fills
+// __KNOWN_CITIES__ (build: VITE_CITIES, else VITE_CITY, else braga; dev: every
+// cities/*.json). An id outside the list falls back to Braga, so a stray
+// ?city=guimaraes never loads a city without data.
+const KNOWN = typeof __KNOWN_CITIES__ !== 'undefined' ? __KNOWN_CITIES__ : ['braga'];
+
+export function resolveCityId(envId, search = '', hostname = '', known = KNOWN) {
+  const ok = (id) => id && ID_RE.test(id) && known.includes(id);
   const q = new URLSearchParams(search).get('city');
-  if (q && ID_RE.test(q)) return q;
-  if (envId && ID_RE.test(envId)) return envId;
+  if (ok(q)) return q;
+  if (ok(envId)) return envId;
   if (HOSTS[hostname]) return HOSTS[hostname];
   const m = /^(?:www\.)?([a-z][a-z0-9-]*)-3d\.(?:com|pt|app)$/.exec(hostname || '');
-  if (m) return m[1];
+  if (m && ok(m[1])) return m[1];
   return 'braga';
 }
 

@@ -7,5 +7,10 @@ docs/
 videos/
 .playwright-cli/
 output/
+# Guimarães lives in ~/Dev/guimaraes-3d; never track its data here.
+data/guimaraes/
+assets/img/guimaraes/
+cities/guimaraes.json
+src/models/index.guimaraes.js
 .DS_Store
 *.log

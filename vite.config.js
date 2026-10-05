@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { cpSync, existsSync } from 'node:fs';
+import { cpSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 // In dev, Vite serves /data, /assets and /cities straight from the project
@@ -27,7 +27,19 @@ function localNews() {
   };
 }
 
-function copyRuntimeData() {
+// City ids this deploy serves. Build: VITE_CITIES (comma list), else
+// VITE_CITY, else braga. Dev: every cities/*.json, so forks can be tried
+// locally. src/city.js and api/_city.js apply the same list.
+function knownCities(mode) {
+  const env = process.env.VITE_CITIES || process.env.VITE_CITY;
+  if (env) return env.split(',').map((s) => s.trim()).filter(Boolean);
+  if (mode === 'development' && existsSync(resolve(ROOT, 'cities'))) {
+    return readdirSync(resolve(ROOT, 'cities')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5));
+  }
+  return ['braga'];
+}
+
+function copyRuntimeData(known) {
   let outDir = 'dist';
   return {
     name: 'copy-runtime-data',
@@ -45,7 +57,12 @@ function copyRuntimeData() {
         cpSync(src, resolve(ROOT, outDir, dir), {
           recursive: true,
           dereference: true,
-          filter: (p) => !p.includes('/.cache'),
+          // cities/ ships only the configs of the cities in this deploy.
+          filter: (p) => {
+            if (p.includes('/.cache')) return false;
+            if (dir !== 'cities' || p === src) return true;
+            return known.some((id) => p === resolve(src, `${id}.json`));
+          },
         });
         console.log(`[copy-runtime-data] copied ${dir}/ -> ${outDir}/${dir}/`);
       }
@@ -53,12 +70,16 @@ function copyRuntimeData() {
   };
 }
 
-export default defineConfig({
-  base: './',
-  publicDir: 'public',
-  build: {
-    assetsDir: 'static',
-    chunkSizeWarningLimit: 1200,
-  },
-  plugins: [copyRuntimeData(), localNews()],
+export default defineConfig(({ mode }) => {
+  const known = knownCities(mode);
+  return {
+    base: './',
+    publicDir: 'public',
+    define: { __KNOWN_CITIES__: JSON.stringify(known) },
+    build: {
+      assetsDir: 'static',
+      chunkSizeWarningLimit: 1200,
+    },
+    plugins: [copyRuntimeData(known), localNews()],
+  };
 });
