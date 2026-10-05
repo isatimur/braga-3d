@@ -166,20 +166,51 @@ const phases = new Float32Array(RIPPLES.length);
 const waveList = RIPPLES.map(([L, A, deg, Q], i) => {
   const k = TAU / L;
   const h = WIND_HEADING + (deg * Math.PI) / 180;
-  return { L, A, Q, k, omega: Math.sqrt(G * k), dx: Math.sin(h), dz: -Math.cos(h), seed: (i * 2.39) % TAU };
+  const dx = Math.sin(h);
+  const dz = -Math.cos(h);
+  return { L, A, Q, k, omega: Math.sqrt(G * k), dx, dz, ang: Math.atan2(dz, dx), seed: (i * 2.39) % TAU };
 });
 export const waterUniforms = {
   uWaveDir: { value: waveList.map((w) => new THREE.Vector4(w.dx, w.dz, w.k, w.A)) },
-  uWaveQ: { value: waveList.map((w) => new THREE.Vector4(w.Q / w.k, w.L, 0, 0)) },
+  uWaveQ: { value: waveList.map((w) => new THREE.Vector4(w.Q / w.k, w.L, w.ang, 0)) },
   uWavePhase: { value: phases },
   uWDetail: { value: null },
   uWTime: { value: 0 },
   uWSunDir: { value: new THREE.Vector3(0, 1, 0) },
   uWSunCol: { value: new THREE.Color(1, 1, 1) },
+  uWSky: { value: new THREE.Color(0x8fa6bb) },
+  // Braga's river palette (Cávado/Este: darker green water), not Guimarães'
   uWDeep: { value: new THREE.Color(0x14302e) },
   uWShallow: { value: new THREE.Color(0x4a5a3a) },
   uWFoam: { value: new THREE.Color(0xd9d6cc) },
 };
+
+// One seek-safe clock for every water body (river, weirs, fountain basins).
+// update() advances it; seekWater() pins it for cinema / story scrubbing and
+// for deterministic screenshots, resumeWater() hands it back to the frame loop.
+let waterTime = 0;
+let waterFrozen = false;
+function syncWaterTime() {
+  waterUniforms.uWTime.value = waterTime;
+  // phases wrapped on the CPU (skill rule): no large sin() arguments
+  for (let i = 0; i < waveList.length; i++) {
+    const w = waveList[i];
+    let ph = (w.seed - w.omega * waterTime) % TAU;
+    if (ph < 0) ph += TAU;
+    phases[i] = ph;
+  }
+}
+export function seekWater(t) {
+  waterTime = t;
+  waterFrozen = true;
+  syncWaterTime();
+}
+export function resumeWater() {
+  waterFrozen = false;
+}
+export function getWaterTime() {
+  return waterTime;
+}
 
 const WATER_VERT_PARS = /* glsl */ `
 attribute vec2 aFlow;
@@ -190,19 +221,24 @@ varying float vShore;
 const WATER_FRAG_PARS = /* glsl */ `
 #define NW ${RIPPLES.length}
 uniform vec4 uWaveDir[NW];   // dx, dz, k, A
-uniform vec4 uWaveQ[NW];     // Q/k, L
+uniform vec4 uWaveQ[NW];     // Q/k, L, heading (rad)
 uniform float uWavePhase[NW];
 uniform sampler2D uWDetail;
 uniform float uWTime;
-uniform vec3 uWSunDir, uWSunCol, uWDeep, uWShallow, uWFoam;
+uniform vec3 uWSunDir, uWSunCol, uWSky, uWDeep, uWShallow, uWFoam;
 varying vec2 vFlow;
 varying float vShore;
 // Gerstner sum with analytic partial derivatives; every wave fades out
-// once it is shorter than ~2-5 pixel footprints (skill rule 1)
+// once it is shorter than ~2-5 pixel footprints (skill rule 1). Where the
+// waterway has a flow the wave headings turn toward the channel tangent,
+// so the ripples travel downstream instead of across the current.
 vec3 wGerstner(vec2 p, float footprint, out vec3 dPdx, out vec3 dPdz) {
   vec3 d = vec3(0.0);
   dPdx = vec3(1.0, 0.0, 0.0);
   dPdz = vec3(0.0, 0.0, 1.0);
+  float fl = length(vFlow);
+  float flowAmt = clamp(fl * 4.5, 0.0, 1.0);
+  float flowAng = fl > 1e-4 ? atan(vFlow.y, vFlow.x) : 0.0;
   for (int i = 0; i < NW; i++) {
     vec4 w = uWaveDir[i];
     float L = uWaveQ[i].y;
@@ -210,18 +246,35 @@ vec3 wGerstner(vec2 p, float footprint, out vec3 dPdx, out vec3 dPdz) {
     if (fade <= 0.0) continue;
     float A = w.w * fade;
     float QA = uWaveQ[i].x * fade;
-    float th = w.z * dot(w.xy, p) + uWavePhase[i];
+    float da = (flowAng - uWaveQ[i].z) * flowAmt;
+    float cd = cos(da), sd = sin(da);
+    vec2 dir = vec2(w.x * cd - w.y * sd, w.x * sd + w.y * cd);
+    float th = w.z * dot(dir, p) + uWavePhase[i];
     float s = sin(th), c = cos(th);
     d.y += A * s;
     float kA = w.z * A, kQA = w.z * QA;
-    dPdx.x -= kQA * w.x * w.x * s;
-    dPdx.y += kA * w.x * c;
-    dPdx.z -= kQA * w.x * w.y * s;
-    dPdz.x -= kQA * w.x * w.y * s;
-    dPdz.y += kA * w.y * c;
-    dPdz.z -= kQA * w.y * w.y * s;
+    dPdx.x -= kQA * dir.x * dir.x * s;
+    dPdx.y += kA * dir.x * c;
+    dPdx.z -= kQA * dir.x * dir.y * s;
+    dPdz.x -= kQA * dir.x * dir.y * s;
+    dPdz.y += kA * dir.y * c;
+    dPdz.z -= kQA * dir.y * dir.y * s;
   }
   return d;
+}
+// Small wavelets riding the channel: their crests are normal to the flow and
+// travel downstream, with a slower cross-wave so the train never locks.
+vec2 wFlowRipples(vec2 p, float foot, float far) {
+  float fl = length(vFlow);
+  if (fl < 0.02) return vec2(0.0);
+  vec2 fd = vFlow / fl;
+  vec2 nrm = vec2(-fd.y, fd.x);
+  float sp = 2.2 + fl * 5.0;
+  float ph = dot(fd, p) * 6.5 - uWTime * sp;
+  float ph2 = dot(nrm, p) * 3.4 + uWTime * 1.3;
+  float rip = sin(ph) * 0.62 + sin(ph * 1.9 + ph2) * 0.38;
+  float fade = (1.0 - smoothstep(0.05, 0.12, foot)) * exp(-far / 130.0);
+  return fd * rip * 0.075 * clamp(fl * 3.0, 0.0, 1.0) * fade;
 }
 float wHash(vec2 p) {
   vec3 q = fract(vec3(p.xyx) * 0.1031);
@@ -264,6 +317,7 @@ vec3 wN = vec3(0.0, 1.0, 0.0);
 {
   vec2 dA = texture2D(uWDetail, wP.xz / 4.8 - vFlow * uWTime * 0.08 + uWTime * vec2(0.011, 0.007)).xy * 2.0 - 1.0;
   vec2 dn = dA * (0.4 * exp(-wDist / 160.0) + 0.08);
+  dn += wFlowRipples(wP.xz, wFoot, wDist) * 1.6;
   wN = normalize(wN + vec3(dn.x, 0.0, dn.y));
 }
 #else
@@ -281,9 +335,10 @@ vec3 wN = normalize(cross(wDz, wDx));
   vec2 s1 = uWTime * vec2(0.011, 0.007);
   vec2 s2 = uWTime * vec2(-0.008, 0.012);
   vec2 dA = mix(texture2D(uWDetail, (wP.xz - fA) / 4.8 + s1).xy, texture2D(uWDetail, (wP.xz - fB) / 4.8 + s1 + 0.5).xy, wf) * 2.0 - 1.0;
-  vec2 dB = mix(texture2D(uWDetail, (wP.zx - fA.yx) / 1.8 + s2).xy, texture2D(uWDetail, (wP.zx - fB.yx) / 1.8 + s2 + 0.5).xy, wf) * 2.0 - 1.0;
-  float dStr = 0.3 * exp(-wDist / 160.0) + 0.06;
-  vec2 dn = (dA * 0.65 + dB.yx * 0.4) * dStr;
+  vec2 dB = mix(texture2D(uWDetail, (wP.zx - fA.yx) / 3.2 + s2).xy, texture2D(uWDetail, (wP.zx - fB.yx) / 3.2 + s2 + 0.5).xy, wf) * 2.0 - 1.0;
+  float dStr = 0.22 * exp(-wDist / 160.0) + 0.045;
+  vec2 dn = (dA * 0.5 + dB.yx * 0.18) * dStr;
+  dn += wFlowRipples(wP.xz, wFoot, wDist);
   #ifdef USE_FOG
   if (cloudShape.w > 0.01) dn += (wRings(wP.xz, 0.4, uWTime, wFoot) + wRings(wP.xz + 0.13, 0.27, uWTime * 1.3 + 0.5, wFoot)) * cloudShape.w;
   #endif
@@ -310,13 +365,17 @@ reflectedLight.directSpecular *= 0.0;
   #endif
   float fres = 0.02 + 0.98 * pow(1.0 - max(dot(wN, wV), 0.0), 5.0);
   vec3 glit = uWSunCol * (sheen + sparkle) * shade * (0.35 + 0.65 * fres) * (1.0 - wFoamK) * step(0.0, L.y);
+  // cheap sky reflection: a Fresnel mix toward the sky colour, so the water
+  // takes the colour of the hour (blue at noon, warm at dusk, near-black at
+  // night) and brightens at grazing angles. Shifts with the sun and time.
+  vec3 skyRefl = uWSky * fres * (1.0 - wFoamK) * 0.5;
   #ifdef BRG_WATER_LITE
-  reflectedLight.indirectSpecular += glit;
+  reflectedLight.indirectSpecular += glit + skyRefl;
   #else
   // subsurface: the ripple faces toward a low sun let a little light through
   float toward = pow(max(dot(-normalize(vec2(wV.x, wV.z) + 1e-4), normalize(L.xz + 1e-4)), 0.0), 2.0);
   vec3 sss = uWShallow * uWSunCol * toward * clamp(1.0 - wN.y, 0.0, 1.0) * 0.35 * shade;
-  reflectedLight.indirectSpecular += glit + sss;
+  reflectedLight.indirectSpecular += glit + sss + skyRefl;
   #endif
 }
 `;
@@ -328,13 +387,15 @@ float wFoamK = 0.0;
 {
   vec3 P = vFogWorld;
   #ifdef BRG_WATER_OPEN
+  // a fountain basin: shallow, so it reads green-blue rather than ink-black
   float shore = 99.0;
+  diffuseColor.rgb = mix(uWDeep, uWShallow, 0.55);
   #else
   float shore = vShore;
-  #endif
   // shallow within ~2 world units (8 m) of the bank: the bottom shows through
   float shallow = 1.0 - smoothstep(0.0, 2.2, shore);
   diffuseColor.rgb = mix(uWDeep, uWShallow, shallow * 0.75);
+  #endif
   // lace foam hugging the bank: the lattice thresholded by the mask
   vec4 ft = texture2D(uWDetail, P.xz / 2.2 - vFlow * uWTime * 0.35);
   vec4 ft2 = texture2D(uWDetail, P.zx / 0.85 + uWTime * vec2(0.006, -0.004));
@@ -544,7 +605,6 @@ export function createWater({ data, areas, project, heightAt }) {
   mesh.renderOrder = 1;
 
   let sunSource = null; // the visible sun (scene.js skySunDir), when set
-  let time = 0;
   return {
     mesh,
     triangles: idx.length / 3,
@@ -554,18 +614,13 @@ export function createWater({ data, areas, project, heightAt }) {
     },
     // dt: 0 under reduced motion (a still surface); light: { dir, color }
     update(dt, light) {
-      time += Math.min(dt, 1 / 20);
-      waterUniforms.uWTime.value = time;
-      // phases wrapped on the CPU (skill rule): no large sin() arguments
-      for (let i = 0; i < waveList.length; i++) {
-        const w = waveList[i];
-        let ph = (w.seed - w.omega * time) % TAU;
-        if (ph < 0) ph += TAU;
-        phases[i] = ph;
-      }
+      if (!waterFrozen) waterTime += Math.min(dt, 1 / 20);
+      syncWaterTime();
       if (light) {
         waterUniforms.uWSunDir.value.copy(sunSource || light.dir);
         waterUniforms.uWSunCol.value.copy(light.color);
+        // the sky reflection: the ambient sky of the hour, lifted a little
+        if (light.ambient) waterUniforms.uWSky.value.copy(light.ambient).multiplyScalar(2.4);
       }
     },
   };
