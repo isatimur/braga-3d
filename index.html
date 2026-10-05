@@ -6,7 +6,12 @@
     <title>Брага — 3D-карта достопримечательностей</title>
     <meta name="description" content="Интерактивная 3D-карта Браги: соборы, сады, площади и святилища на холмах." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l7 13-7 13-7-13z' fill='%23e0a948'/%3E%3C/svg%3E" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="canonical" href="https://braga-3d.com/" />
+    <link rel="alternate" hreflang="pt-PT" href="https://braga-3d.com/?lang=pt" />
+    <link rel="alternate" hreflang="en" href="https://braga-3d.com/?lang=en" />
+    <link rel="alternate" hreflang="ru" href="https://braga-3d.com/?lang=ru" />
+    <link rel="alternate" hreflang="x-default" href="https://braga-3d.com/" />
     <meta name="theme-color" content="#0f2a57" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -28,6 +33,35 @@
     <meta name="twitter:title" content="Braga 3D · Sé, Bom Jesus, Sameiro and 27 more landmarks" />
     <meta name="twitter:description" content="An interactive 3D map of Braga: cathedrals, gardens, squares and hilltop sanctuaries." />
     <meta name="twitter:image" content="https://braga-3d.com/og/braga.jpg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://braga-3d.com/#website",
+            "url": "https://braga-3d.com/",
+            "name": "Braga 3D",
+            "alternateName": "Брага 3D",
+            "description": "An interactive 3D map of Braga: cathedrals, gardens, squares and hilltop sanctuaries. In Portuguese, English and Russian.",
+            "inLanguage": ["pt-PT", "en", "ru"],
+            "image": "https://braga-3d.com/og/braga.jpg"
+          },
+          {
+            "@type": "TouristAttraction",
+            "@id": "https://braga-3d.com/#braga",
+            "name": "Braga",
+            "alternateName": "Брага",
+            "url": "https://braga-3d.com/",
+            "description": "An interactive 3D map of Braga: cathedrals, gardens, squares and hilltop sanctuaries.",
+            "image": "https://braga-3d.com/og/braga.jpg",
+            "geo": { "@type": "GeoCoordinates", "latitude": 41.5503, "longitude": -8.4200 },
+            "address": { "@type": "PostalAddress", "addressLocality": "Braga", "addressCountry": "PT" },
+            "isPartOf": { "@id": "https://braga-3d.com/#website" }
+          }
+        ]
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

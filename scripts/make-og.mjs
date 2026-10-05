@@ -58,6 +58,11 @@ function write(path, data) {
   console.log('wrote', path.replace(ROOT + '/', ''), typeof data === 'string' ? '' : `${(data.length / 1024).toFixed(0)} KB`);
 }
 
+// Structured data is emitted as raw JSON, never HTML-escaped: turning quotes
+// into &quot; would make the <script type="application/ld+json"> body invalid
+// JSON. Only "<" is neutralised so a value can never close the tag early.
+const jsonLd = (obj) => JSON.stringify(obj).replace(/</g, '\\u003c');
+
 // ------------------------------------------------------------ share pages
 function names(l) {
   return {
@@ -74,6 +79,22 @@ function sharePage(l) {
   const desc = short.en || short.pt || short.ru;
   const url = `${SITE}/p/${l.id}/`;
   const img = `${SITE}/og/${l.id}.jpg`;
+  // A real photo when the landmark has one, plus the 3D OG render; both absolute.
+  const photo = l.image ? `${SITE}/${String(l.image).replace(/^\/+/, '')}` : null;
+  const ld = jsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    '@id': `${url}#attraction`,
+    name: n.pt,
+    alternateName: [...new Set([n.en, n.ru])].filter(Boolean),
+    description: desc,
+    url,
+    image: [...new Set([photo, img].filter(Boolean))],
+    geo: { '@type': 'GeoCoordinates', latitude: l.lat, longitude: l.lon },
+    address: { '@type': 'PostalAddress', addressLocality: CITY.name.en, addressCountry: 'PT' },
+    touristType: l.category || undefined,
+    isPartOf: { '@type': 'WebSite', '@id': `${SITE}/#website` },
+  });
   return `<!doctype html>
 <html lang="pt-PT">
   <head>
@@ -82,6 +103,10 @@ function sharePage(l) {
     <title>${esc(title)}</title>
     <meta name="description" content="${esc(desc)}" />
     <link rel="canonical" href="${url}" />
+    <link rel="alternate" hreflang="pt-PT" href="${url}?lang=pt" />
+    <link rel="alternate" hreflang="en" href="${url}?lang=en" />
+    <link rel="alternate" hreflang="ru" href="${url}?lang=ru" />
+    <link rel="alternate" hreflang="x-default" href="${url}" />
     <meta name="theme-color" content="#14110d" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="${esc(CITY_NAME)}" />
@@ -100,6 +125,8 @@ function sharePage(l) {
     <meta name="twitter:title" content="${esc(title)}" />
     <meta name="twitter:description" content="${esc(desc)}" />
     <meta name="twitter:image" content="${img}" />
+    <meta name="twitter:image:alt" content="${esc(`${n.en}: 3D view`)}" />
+    <script type="application/ld+json">${ld}</script>
     <link rel="icon" href="/icons/icon-192.png" />
     <script>
       // people go straight to the map; crawlers read the tags above
@@ -133,6 +160,19 @@ function sharePage(l) {
 }
 if (all || flag('pages')) {
   for (const l of list) write(resolve(ROOT, `public/p/${l.id}/index.html`), sharePage(l));
+
+  // robots.txt + sitemap.xml come from the same SITE constant and landmark
+  // list as the share pages, so the domain never drifts between them.
+  const today = new Date().toISOString().slice(0, 10);
+  const entries = [
+    `  <url><loc>${SITE}/</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>`,
+    ...list.map((l) => `  <url><loc>${SITE}/p/${l.id}/</loc><lastmod>${today}</lastmod><priority>0.8</priority></url>`),
+  ];
+  write(
+    resolve(ROOT, 'public/sitemap.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join('\n')}\n</urlset>\n`,
+  );
+  write(resolve(ROOT, 'public/robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 }
 
 // ------------------------------------------------------------ browser
