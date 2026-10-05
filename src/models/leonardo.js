@@ -260,8 +260,10 @@ function poloHouse(k, P, ground) {
   const G = 'graniteLight';
   k.push({ x: F.cx, y: y0, z: F.cz, ry: F.ry });
   // body: azulejo faces, granite plinth, corner pilasters, string courses
-  k.box(W, EAVE + 1.5, D, AZUL, 0, -1.5, 0, { mat: MAT.azulejo });
-  k.box(W + 0.2, 2.4, D + 0.2, G, 0, -1.5, 0);
+  // sunk 0.6 m below the floor (the site is padded flat): a deeper skirt would
+  // add to the measured height of the house group (ridge 14.5 m above the floor)
+  k.box(W, EAVE + 0.6, D, AZUL, 0, -0.6, 0, { mat: MAT.azulejo });
+  k.box(W + 0.2, 1.5, D + 0.2, G, 0, -0.6, 0);
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) k.box(0.85, EAVE - 0.9, 0.85, G, sx * (W / 2 - 0.35), 0.9, sz * (D / 2 - 0.35));
   k.corniceRing(W, D, corniceProfile('band', 0.4), G, 0, 4.3, 0);
   k.corniceRing(W, D, corniceProfile('band', 0.4), G, 0, 8.3, 0);
@@ -445,6 +447,7 @@ buildLeonardo.metric = true;
 buildLeonardo.rule = {
   extent: ['building', 'other', 'garden'],
   view: 0.6,
+  heightRel: true, // the polo house stands on a slope: measure its ridge above its own floor
   note: 'sede (main, Microsoft footprint) on Rua Conselheiro Bento Miguel; the polo house 50 m behind it is the height group (ridge 14.5 m); yard and polo garden sketched; the whole campus padded',
 };
 

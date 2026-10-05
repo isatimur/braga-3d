@@ -38,7 +38,7 @@ All photos come from Wikimedia Commons. Files in `assets/img/` are the Commons t
 
 The five main photos added on 2026-09-29 (populo to forum-braga) are 1600 px Commons thumbnails, re-encoded with ImageMagick to under 600 KB, like the gallery photos below. We did not crop or edit them.
 
-`leonardo-da-vinci` has no photo (`no_free_photos: true`, `image: null`, empty `gallery`). On 2026-09-30 we searched Wikimedia Commons by name and by geosearch around the school and found no free photo of the building. The only nearby files are the "Fórum Socialismo 2021 em Braga" set; their descriptions do not say the event took place in the school, so we did not use them. `dmaria-ii` has one gallery photo: Commons holds only two free photos of that school.
+`leonardo-da-vinci` has no photo (`no_free_photos: true`, `image: null`, empty `gallery`). On 2026-09-30 we searched Wikimedia Commons by name and by geosearch around the school and found no free photo of the building. The only nearby files are the "Fórum Socialismo 2021 em Braga" set; their descriptions do not say the event took place in the school, so we did not use them. `dmaria-ii` has one gallery photo: Commons holds only two free photos of that school. Re-checked on 2026-10-05 through the Commons API (name searches, the school categories, and geosearch within 300 m of both sets of coordinates): no new free photo of either building. The 22 "Fórum Socialismo 2021 em Braga" files (CC BY-SA 2.0, Tiago Teixeira) lie 40-100 m from D. Maria II, but their descriptions do not name the school, so we still do not use them.
 
 ## Gallery photos
 

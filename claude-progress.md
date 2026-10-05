@@ -11,8 +11,8 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current highest-priority unfinished work: none — the discover release is merged, deployed and live-verified; next is whatever the user picks next.
-- Current release limitation: none known. braga-3d.com serves the new interface as of 2026-10-04 (build 22:53 UTC).
+- Current highest-priority unfinished work: adopt branch `repair/sync-origin` (history repair plus deploy hygiene, braga-011), then deploy it.
+- Current release limitation: braga-3d.com serves the new interface as of 2026-10-04 (build 22:53 UTC), but it still ships `cities/guimaraes.json` and answers `?city=guimaraes` with 200 and a broken city. The branch fixes that; it is not deployed yet.
 
 ## Session Log
 
@@ -119,3 +119,19 @@ updates it automatically.
   - Not merged to main and not deployed; braga-3d.com still serves the old interface.
   - PR creation left to the user: https://github.com/isatimur/braga-3d/pull/new/codex/braga-discover-release
 - Next best step: open the PR, merge, deploy to Vercel, then remotely verify the live interface and APIs.
+
+### Session 006
+
+- Date: 2026-10-05
+- Goal: Repair the history in a separate worktree and fix deploy hygiene.
+- Repository evidence: local `main` (ff52a90) was 2 ahead and 3 behind `origin/main` (bd15fdc). The working tree had 70 uncommitted paths; every one is byte-identical to `origin/main` (the discover release was committed from that tree), so none is new work.
+- Completed (branch `repair/sync-origin`, worktree `~/Dev/braga-3d-sync`, built on `origin/main`):
+  - Cherry-picked "stop tracking Guimarães" (modify/delete conflicts on `data/guimaraes/*` resolved as deletion) and the session 005 log (progress-log conflict resolved to the newer text).
+  - `.gitignore` keeps `data/guimaraes/`, `assets/img/guimaraes/`, `cities/guimaraes.json`, `src/models/index.guimaraes.js` out.
+  - Known-city allow-list: `vite.config.js` defines `__KNOWN_CITIES__` (build: `VITE_CITIES`, else `VITE_CITY`, else braga; dev: every `cities/*.json`) and copies only those configs into `dist/cities/`; `src/city.js` and `api/_city.js` apply the same list. `?city=guimaraes` now falls back to Braga.
+  - `make-og.mjs --pages` now writes `robots.txt`, `sitemap.xml` (home + 30 `/p/` pages), JSON-LD and hreflang on every share page; `index.html` has JSON-LD and hreflang; added `public/favicon.ico` and a branded `public/404.html`.
+  - Fit drift: leonardo-da-vinci height 13.3 % -> 5.5 % (house skirt 0.6 m, `heightRel`); torre-menagem 13.7 % documented in its rule note (external stair and crown stand outside the OSM outline).
+  - Photos: Commons re-checked (API, categories, geosearch 300 m); no free photo found for leonardo-da-vinci, none new for dmaria-ii (see `data/CREDITS.md`).
+- Verification run: `npm run build`, `npm run verify` -> `verify: OK`; `dist/cities/` holds `braga.json` only.
+- Known risk or unresolved issue: not deployed; the Vercel project must not set `VITE_CITIES` to include other cities. Engine port plan is in `/tmp/review/engine-port-plan.md`.
+- Next best step: adopt the branch (see `/tmp/review/braga-history-fix.md`), push, deploy, then curl the checks listed under braga-011.

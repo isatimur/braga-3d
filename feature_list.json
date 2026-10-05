@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-10-04",
+  "last_updated": "2026-10-05",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -10,7 +10,8 @@
     "not_started": "Work has not begun.",
     "in_progress": "The feature is the current active task.",
     "blocked": "Work cannot continue until a documented blocker is resolved.",
-    "passing": "Required verification has passed and evidence is recorded."
+    "passing": "Required verification has passed and evidence is recorded.",
+    "retired": "The work moved to another repository; nothing is verified here any more."
   },
   "features": [
     {
@@ -21,14 +22,13 @@
       "user_visible_behavior": "One engine serves several cities; --city / npm run city selects the data.",
       "status": "passing",
       "verification": [
-        "npm run verify -- --city braga",
-        "npm run verify -- --city guimaraes (data hosted here)"
+        "npm run verify -- --city braga"
       ],
       "evidence": [
         "commit db0d201 (multi-city: cities/<id>.json drives src, api and scripts)",
         "commit fa26211 (city configs braga, guimaraes, porto)"
       ],
-      "notes": "The single-city forks (guimaraes-3d, porto-3d) copy this engine."
+      "notes": "The single-city forks (guimaraes-3d, porto-3d) copy this engine. A deploy serves only the cities in VITE_CITIES / VITE_CITY (default braga); see braga-011."
     },
     {
       "id": "braga-002",
@@ -55,17 +55,16 @@
       "id": "braga-003",
       "priority": 3,
       "area": "data",
-      "title": "Guimarães geodata pipeline hosted in this repo",
-      "user_visible_behavior": "data/guimaraes/ holds the full Guimarães geodata produced by this engine.",
-      "status": "passing",
+      "title": "Guimarães geodata pipeline hosted in this repo (moved out)",
+      "user_visible_behavior": "None here. Guimarães data lives in ~/Dev/guimaraes-3d.",
+      "status": "retired",
       "verification": [
-        "node scripts/check-geo.mjs --city guimaraes"
+        "git ls-files | grep -i guimaraes returns nothing"
       ],
       "evidence": [
-        "commit 11ae711 (Guimarães: ring tiles 362, Microsoft buildings core+ring, traffic axes)",
-        "data/guimaraes/{terrain,roads,nature,buildings,footprints,dimensions,tiles,tiles-ms}"
+        "commit 11ae711 built the pipeline here; the commit 'stop tracking Guimarães (lives in guimaraes-3d)' removed the tracked data and .gitignore now keeps data/guimaraes/, assets/img/guimaraes/ and cities/guimaraes.json out"
       ],
-      "notes": "Guimarães ships from ~/Dev/guimaraes-3d; this repo keeps the upstream copy."
+      "notes": "Guimarães ships from ~/Dev/guimaraes-3d. The engine still accepts --city guimaraes for a checkout that has the data."
     },
     {
       "id": "braga-004",
@@ -148,9 +147,9 @@
         "Check /p/<id>/, /og/ and /api/adsb on the live domain"
       ],
       "evidence": [
-        "braga-3d.com referenced live by the porto-3d/guimaraes-3d READMEs"
+        "2026-10-04: vercel --prod aliased to https://braga-3d.com; HTML carries search-input, atmo and callout; /api/adsb 200 with live aircraft; /api/news?city=braga 200 (claude-progress.md session 005)"
       ],
-      "notes": "Guimarães data is excluded from the Braga deploy (commit 9e9c024)."
+      "notes": "Before braga-011 the deploy still served cities/guimaraes.json and ?city=guimaraes returned 200 with a broken city. braga-011 closes that."
     },
     {
       "id": "braga-009",
@@ -190,7 +189,25 @@
         "output/playwright/search-1440.png, search-390.png, map-1440.png, map-390.png.",
         "PT and RU -> EN language switching preserved #place=se-braga and localized the card title."
       ],
-      "notes": "Local interface verification only. Production HTML checked 2026-10-04: HTTP 200, but lacks search-input, atmo and callout. Existing redesign and geodata changes remain uncommitted; production deployment is outstanding."
+      "notes": "Shipped: the discover release is merged (PR #1, bd15fdc) and live on braga-3d.com since 2026-10-04 (session 005). Browser regression ran locally only; no physical-phone test."
+    },
+    {
+      "id": "braga-011",
+      "priority": 11,
+      "area": "deploy",
+      "title": "Deploy hygiene: known-city allow-list, SEO files, branded 404, fit drift",
+      "user_visible_behavior": "?city=guimaraes falls back to Braga; robots.txt, sitemap.xml (home + 30 /p/ pages), JSON-LD, hreflang, favicon.ico and a branded 404 are served.",
+      "status": "in_progress",
+      "verification": [
+        "npm run build (dist/cities holds braga.json only)",
+        "npm run verify",
+        "After deploy: curl -I https://braga-3d.com/cities/guimaraes.json is 404; /?city=guimaraes shows Braga; /robots.txt, /sitemap.xml, /favicon.ico 200; a bad path shows the branded 404"
+      ],
+      "evidence": [
+        "branch repair/sync-origin: build + verify OK on 2026-10-05; dist/cities/braga.json only; sitemap has 31 URLs",
+        "check:fit: leonardo-da-vinci height drift 13.3 % -> 5.5 % (house skirt 0.6 m, heightRel); torre-menagem 13.7 % documented (external stair and crown stand outside the OSM outline); never-shrink 97 % guard green"
+      ],
+      "notes": "Not deployed yet: the user adopts the branch first. Photos: Commons re-checked 2026-10-05, no free photo of leonardo-da-vinci, none new for dmaria-ii."
     }
   ]
 }

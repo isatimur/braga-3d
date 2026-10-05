@@ -171,6 +171,8 @@ function torre(k, { footprint, dims }) {
   void corniceProfile;
 }
 torre.metric = true;
-torre.rule = { note: 'free-standing keep; the external stair side is not confirmed by the sources (kept on the Terreiro front, turning onto the +x face)' };
+torre.rule = {
+  note: 'free-standing keep; the external stair side is not confirmed by the sources (kept on the Terreiro front, turning onto the +x face). Accepted fit drift: the model box is about 14 % over the OSM keep (10.8 x 10.6 m against 9.5 x 9.3 m) because the box includes the external stair, its landing and the corbelled crown, which stand outside the keep outline; the shaft itself is 9.5 x 9.3 m. Under the 15 % fail line; never below the 97 % floor.',
+};
 
 export default { 'torre-menagem': torre };
