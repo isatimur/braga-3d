@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-10-05",
+  "last_updated": "2026-10-06",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -208,6 +208,27 @@
         "check:fit: leonardo-da-vinci height drift 13.3 % -> 5.5 % (house skirt 0.6 m, heightRel); torre-menagem 13.7 % documented (external stair and crown stand outside the OSM outline); never-shrink 97 % guard green"
       ],
       "notes": "Not deployed yet: the user adopts the branch first. Photos: Commons re-checked 2026-10-05, no free photo of leonardo-da-vinci, none new for dmaria-ii."
+    },
+    {
+      "id": "braga-012",
+      "priority": 12,
+      "area": "engine",
+      "title": "Engine port: guimaraes waves 6-8 (relief, crowd, water, vegetation, sky) and the porto perf governor",
+      "user_visible_behavior": "Finer ground relief, a varied crowd with dogs and a walk cycle, moving water and fountain mist, chestnut/plane/poplar/willow trees with reeds, hedgerows and meadows, a lifted morning and sunset sky fill, and an adaptive frame governor that lowers DPR, shadow map, post stack, tree radius and tile budget on slow devices.",
+      "status": "in_progress",
+      "verification": [
+        "npm run build",
+        "npm run verify",
+        "npm run check:fit",
+        "npm run check:traffic",
+        "browser pass: overview and close-ups at 1280x800, console clean, __braga.setGovernorLevel(0..3)"
+      ],
+      "evidence": [
+        "branch repair/sync-origin: build, verify, check:fit, check:traffic green after each of 6 steps (2026-10-06); traffic 100 %",
+        "frame stats (1280x800, 60 fps, before -> after steps 1-5): overview 248 -> 245 calls, 1.736M -> 1.734M tris; Praca da Republica 235 -> 255 calls (+8.5 %), 2.70M -> 2.75M tris; Bom Jesus 157 -> 171 calls (+8.9 %), 1.89M -> 1.87M tris; all under the 15 % bar",
+        "governor forced through levels 0..3: DPR 2 -> 1.64 -> 1.32 -> 1, shadow 4096 -> 2048 -> 1024, post stack 0..3, back to level 0 restores DPR 2 and 4096"
+      ],
+      "notes": "Done: terrain (scarp opt-in, off for Braga), people (market crowd data-gated: data/life.json has no market.stalls), moving water (weirs left out: no data), vegetation (Penha terraces, boulders, altitude pine and rocks not ported: Braga's nature.js predates them), governor (no landmark near-LOD, LAND_PX unchanged), sky lift (scaled to Braga's brighter base). PENDING: building typology (facades.js, buildings.js, buildings-ms.js) - braga's copies predate guimaraes wave 5, so a three-way merge needs the wave-5 street detail and roof detail too; a wholesale copy was blocked by the auto-mode classifier and left to the user (see claude-progress.md session 007). Also pending by request: road surfaces, forecourts and gardens (need authored grounds), city buses. #game was opened once after all steps: it boots, the fog shroud still darkens the unexplored city and the console is clean; the new trees, people and water were not inspected inside the fog."
     }
   ]
 }

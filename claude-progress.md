@@ -135,3 +135,20 @@ updates it automatically.
 - Verification run: `npm run build`, `npm run verify` -> `verify: OK`; `dist/cities/` holds `braga.json` only.
 - Known risk or unresolved issue: not deployed; the Vercel project must not set `VITE_CITIES` to include other cities. Engine port plan is in `/tmp/review/engine-port-plan.md`.
 - Next best step: adopt the branch (see `/tmp/review/braga-history-fix.md`), push, deploy, then curl the checks listed under braga-011.
+
+### Session 007
+
+- Date: 2026-10-06
+- Goal: Port the guimaraes-3d engine waves 6-8 and the porto-3d perf governor into `repair/sync-origin` (plan: `/tmp/review/engine-port-plan.md`). Nothing is deployed.
+- Finding that changes the plan: Braga's `facades.js`, `buildings.js`, `buildings-ms.js`, `nature.js`, `water.js` and `life.js` predate guimaraes wave 5 (the plan's "conflict hunks" are mostly missing wave-5 code, not Braga edits). A three-way merge against wave 5 therefore pulls in wave-5 features Braga never had. Each step ported only what its wave added.
+- Completed, one commit each (all green: build, verify, check:fit, check:traffic 100 %):
+  - Relief (`terrain.js`, `tile-worker.js`, `scene.js` createGround uses `groundMeshAt`). The Penha scarp is opt-in (`createTerrain(..., { scarp })`), off for Braga.
+  - Crowd (`people.js`; `life.js` market hook gated on `LIFE.market.stalls`, which Braga lacks, so no market crowd yet).
+  - Moving water (`water.js`, fountain splash rings, mist and side arcs in `life.js`, `debug.water.seek/resume` in `main.js`). Weirs left out (no data, and they need wave-5 `sampleLines`).
+  - Vegetation (`nature.js`, `leaves.js`, `seasons.js`): chestnut, plane, poplar, willow, reeds along `river|stream` lines, hedgerows, meadows, per-species timing. Penha terraces, boulders and altitude pines not ported. `VALLEY_Y` is 10 for Braga.
+  - Governor (`main.js`, `effects.js` `setPostLevel`, `tiles.js` `setBudgetScale`). Pauses during intro, tour, cinema, story and the game; the fx toggle stays the master switch. `__braga.setGovernorLevel(0..3)` forces a level.
+  - Sky lift (`scene.js` morning and sunset presets), scaled to Braga's brighter base values.
+- Blocked: building typology (`facades.js`, `buildings.js`, `buildings-ms.js`). Replacing the three files with guimaraes `eb39ba1` was denied by the auto-mode classifier, so I did not retry. To do it, review and run from the worktree: `for f in facades buildings buildings-ms; do git -C ~/Dev/guimaraes-3d show eb39ba1:src/$f.js > src/$f.js; done`, then change the `[guimaraes]` log tags back to `[braga]` (two files) and run the gate. Expect the wave-5 street detail (balconies, shutters, awnings, arcades, cornices, chimneys, dormers) to arrive with it.
+- Pending by request: road surfaces, forecourts and gardens (need authored grounds), city buses.
+- Frame stats (1280x800, 60 fps): overview 248 -> 245 calls; Praca da Republica 235 -> 255 calls (+8.5 %), Bom Jesus 157 -> 171 calls (+8.9 %); triangles within +-2 %. The machine was heavily loaded at the end (load average over 60), so later fps readings of 30 were the governor reacting, not a regression.
+- Known risks: the unmerged `~/Dev/braga-3d` working tree was not touched; `tile-worker.js` still scatters only species 0..8 by the new mixes without the river rule; `LAND_PX` stays at 64.
