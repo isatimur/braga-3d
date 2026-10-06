@@ -90,7 +90,7 @@
       "priority": 5,
       "area": "live",
       "title": "Live layers: aircraft (ADS-B), transit (GTFS), weather",
-      "user_visible_behavior": "Live aircraft, transit and weather are shown when available.",
+      "user_visible_behavior": "Live aircraft, transit and weather are shown when available. First visits open in live mode; rain is drawn by intensity (drizzle, rain, downpour).",
       "status": "passing",
       "verification": [
         "npm run build",

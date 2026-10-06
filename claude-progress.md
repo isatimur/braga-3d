@@ -152,3 +152,11 @@ updates it automatically.
 - Pending by request: road surfaces, forecourts and gardens (need authored grounds), city buses.
 - Frame stats (1280x800, 60 fps): overview 248 -> 245 calls; Praca da Republica 235 -> 255 calls (+8.5 %), Bom Jesus 157 -> 171 calls (+8.9 %); triangles within +-2 %. The machine was heavily loaded at the end (load average over 60), so later fps readings of 30 were the governor reacting, not a regression.
 - Known risks: the unmerged `~/Dev/braga-3d` working tree was not touched; `tile-worker.js` still scatters only species 0..8 by the new mixes without the river rule; `LAND_PX` stays at 64.
+
+### Session 008
+
+- Date: 2026-10-06
+- Goal: port the porto-3d real-time weather fix (`ed0db10`) to Braga.
+- Done: weather states `drizzle` and `downpour` (the old full `rain` dials) added, `rain` is now moderate; `weatherFromCode` picks the state by WMO code and precipitation; menu, preset popover (`index.html`) and guide labels list the new states; `"default_live": true` in `cities/braga.json` turns live mode on for first visits (`braga-live`, `#live=0`, `#weather=` and `#time=` still win).
+- Verification: `npm run build`, `npm run verify` green; headless fresh visit shows live badge (18 deg, thunderstorm) that matches Open-Meteo; one screenshot per state (clear, partly, overcast, drizzle, rain, downpour, fog) is distinct and ordered by intensity.
+- Known gap: thunderstorm (WMO 95+) still maps to the moderate `rain` state, as in Porto.

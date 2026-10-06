@@ -16,6 +16,7 @@
     "probes": { "centre": [41.5503, -8.42], "bom-jesus": [41.55494, -8.37703], "sameiro": [41.54182, -8.36954] }
   },
   "timezone": "Europe/Lisbon",
+  "default_live": true,
   "locale_default": "ru",
   "season_default": "auto",
   "transit": { "gtfs_url": "https://www.tub.pt/developer/gtfs/feed/tub.zip", "operator": "TUB", "operator_long": "Transportes Urbanos de Braga", "catalogue": "https://dados.gov.pt/pt/datasets/gtfs-transportes-urbanos-de-braga/", "gtfs_rt": null },
