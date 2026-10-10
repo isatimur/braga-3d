@@ -2,6 +2,7 @@ import { PLACEHOLDER_LANDMARKS, PLACEHOLDER_ROADS, PLACEHOLDER_ENRICH, PLACEHOLD
 import { language, loadTranslations, localizeLandmark, localizeRoute } from './i18n.js';
 import { CITY, dataPath } from './city.js';
 import { setDims } from './fit.js';
+import { unpackBuildings } from './buildings-pack.js';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -186,6 +187,32 @@ async function fetchTable(file, key, status) {
   }
 }
 
+// The core buildings: data/buildings.bin.gz (buildings-pack.js, a fifteenth of
+// the JSON's size, no JSON parse), unpacked with the browser's own
+// DecompressionStream. The JSON file stays the fallback for a browser without
+// it, and for a city that has no packed file. A dev server (or a host) that
+// sends the .gz with Content-Encoding: gzip has unpacked it already: the first
+// bytes tell (1f 8b = still gzip). Ported from porto-3d.
+async function fetchBuildings() {
+  if (typeof DecompressionStream !== 'undefined' && new URLSearchParams(location.search).get('packed') !== '0') {
+    try {
+      const res = await fetch(assetUrl(dataPath('buildings.bin.gz')));
+      const type = res.headers.get('content-type') || '';
+      if (res.ok && !/html|json/.test(type)) {
+        const raw = await res.arrayBuffer();
+        const b = new Uint8Array(raw, 0, 2);
+        const buf = b[0] === 0x1f && b[1] === 0x8b
+          ? await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()
+          : raw;
+        return unpackBuildings(buf);
+      }
+    } catch (e) {
+      console.warn(`[braga] ${dataPath('buildings.bin.gz')} unavailable (${e.message}); falling back to buildings.json`);
+    }
+  }
+  return fetchJSON(dataPath('buildings.json'));
+}
+
 export async function loadData(onStep = () => {}) {
   const status = { landmarks: 'real', roads: 'real', routes: 'real', enriched: [] };
   const force = new URLSearchParams(location.search).has('demo');
@@ -198,7 +225,7 @@ export async function loadData(onStep = () => {}) {
     fetchJSON(dataPath('routes.json')),
     fetchJSON(dataPath('terrain.json')),
     fetchJSON(dataPath('footprints.json')),
-    fetchJSON(dataPath('buildings.json')),
+    fetchBuildings(),
     loadTranslations(language, CITY.id),
     fetchJSON(dataPath('nature.json')),
     fetchTable('dimensions.json', 'dimensions', status),

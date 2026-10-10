@@ -245,8 +245,10 @@ export function buildBuildings(data, project, heightAt, masks = { outlines: [], 
   const group = new THREE.Group();
   group.name = 'buildings';
   const stats = { input: 0, built: 0, skippedOutline: 0, skippedPlan: 0, droppedSmall: 0, degenerate: 0, tiles: 0, triangles: 0, vertices: 0 };
+  // `list` is the JSON array, or the packed list of buildings-pack.js (length
+  // and at(i), both work on an array too)
   const list = data?.buildings;
-  if (!Array.isArray(list) || !list.length) return { group, stats, material: null };
+  if (!list || !(list.length > 0) || typeof list.at !== 'function') return { group, stats, material: null };
   stats.input = list.length;
   // the historic centre the facade zones count from (scripts/fetch-buildings.mjs
   // writes it; older files: the map origin)
@@ -263,7 +265,7 @@ export function buildBuildings(data, project, heightAt, masks = { outlines: [], 
   const items = [];
   let tris = 0;
   for (let bi = 0; bi < list.length; bi++) {
-    const b = list[bi];
+    const b = list.at(bi);
     if (!Array.isArray(b.p) || b.p.length < 3 || !(b.h > 0)) {
       stats.degenerate++;
       continue;
