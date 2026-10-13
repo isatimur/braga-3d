@@ -49,7 +49,9 @@ export function createSkyline({ buildings, project, heightAt, boxes = [] }) {
       }
     }
   };
-  const list = Array.isArray(buildings) ? buildings : buildings?.buildings || [];
+  // `buildings.buildings` may be the packed list (buildings-pack.js): plain list on first use
+  const raw = Array.isArray(buildings) ? buildings : buildings?.buildings || [];
+  const list = Array.isArray(raw) ? raw : raw.toArray?.() || [];
   for (const b of list) {
     if (!Array.isArray(b?.p) || b.p.length < 3 || !(b.h > 0)) continue;
     let x0 = Infinity;

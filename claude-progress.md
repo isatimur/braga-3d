@@ -160,3 +160,14 @@ updates it automatically.
 - Done: weather states `drizzle` and `downpour` (the old full `rain` dials) added, `rain` is now moderate; `weatherFromCode` picks the state by WMO code and precipitation; menu, preset popover (`index.html`) and guide labels list the new states; `"default_live": true` in `cities/braga.json` turns live mode on for first visits (`braga-live`, `#live=0`, `#weather=` and `#time=` still win).
 - Verification: `npm run build`, `npm run verify` green; headless fresh visit shows live badge (18 deg, thunderstorm) that matches Open-Meteo; one screenshot per state (clear, partly, overcast, drizzle, rain, downpour, fog) is distinct and ordered by intensity.
 - Known gap: thunderstorm (WMO 95+) still maps to the moderate `rain` state, as in Porto.
+
+### Session 009
+
+- Date: 2026-10-13
+- Branch: `engine-port-perf` (on top of the perf port 9b9bbb8). Nothing is pushed or deployed.
+- Goal: streets in the streamed ring (braga-013), ported from porto-3d `6cd058b`.
+- Cause: `tile-worker.js` read every tile v2 street record `[kind, hw, flags, ly, pts, j]` as v1, so every point was NaN. The ring had no ribbons, no lines and no tree occupancy (all 13,357 records in `data/tiles` are v2).
+- Done: v2 decode with a v1 fallback; tunnels dropped; bridges on a straight deck never below the ground; near-LOD ribbons in the building mesh, no service roads or tracks, none in the far LOD; ribbon quads and line segments merged within tolerance. In `tiles.js`, ring rivers and primary lines join the core's line geometry (no glow out there), and the secondary lines get one body-only line mesh in place of the old ring river line.
+- Frame stats (1440x900, class XL, headless): overview 220 -> 220 calls, +1.9 % triangles; two ring poses +8 and +9 calls (tile meshes with streets pass culling more often), +1.6 % and +1.0 % triangles.
+- Verification: `npm run verify` OK.
+- Loader (porto-3d `4ba38a6`): after 12 s on the loader, a slow-connection hint and a Lite mode button. Braga has no lite scene (`src/lite/` is not ported), so the button reloads with `?quality=potato`: the full scene at class P. In Braga today that is the Low build (phone module budgets, no post-processing) plus: no sun shadows, DPR capped at 1, a smaller tile and tree radius near the ground, half the label and simulation rates. The `trees`, `cars` and `people` fields of the class table are not read yet, so Potato and Low draw the same overview (215 calls, 1.41M triangles, class P vs S, headless). `perf.js` saves that choice in `braga-quality`, so later visits stay on Potato until the quality menu or `?quality=auto` changes it. Checked on the build with the bundle held 16 s: hint and button at 13 s, the click reloads at class P (`reason: url`).

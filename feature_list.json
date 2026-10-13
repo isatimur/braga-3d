@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-10-06",
+  "last_updated": "2026-10-13",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -230,6 +230,24 @@
         "governor forced through levels 0..3: DPR 2 -> 1.64 -> 1.32 -> 1, shadow 4096 -> 2048 -> 1024, post stack 0..3, back to level 0 restores DPR 2 and 4096"
       ],
       "notes": "Done: terrain (scarp opt-in, off for Braga), people (market crowd data-gated: data/life.json has no market.stalls), moving water (weirs left out: no data), vegetation (Penha terraces, boulders, altitude pine and rocks not ported: Braga's nature.js predates them), governor (no landmark near-LOD, LAND_PX unchanged), sky lift (scaled to Braga's brighter base). PENDING: building typology (facades.js, buildings.js, buildings-ms.js) - braga's copies predate guimaraes wave 5, so a three-way merge needs the wave-5 street detail and roof detail too; a wholesale copy was blocked by the auto-mode classifier and left to the user (see claude-progress.md session 007). Also pending by request: road surfaces, forecourts and gardens (need authored grounds), city buses. #game was opened once after all steps: it boots, the fog shroud still darkens the unexplored city and the console is clean; the new trees, people and water were not inspected inside the fog."
+    },
+    {
+      "id": "braga-013",
+      "priority": 13,
+      "area": "engine",
+      "title": "Streets in the streamed ring (tile format v2 decode), ported from porto-3d 6cd058b",
+      "user_visible_behavior": "The 1 km tiles around the core show their streets: ribbons at real widths in near tiles, the main streets and rivers as thin lines from afar. Tunnels are not drawn, bridges run on a straight deck that never dips below the ground, and ring trees no longer stand on streets.",
+      "status": "in_progress",
+      "verification": [
+        "npm run verify",
+        "headless ring and overview poses before/after at 1440x900 (class XL): streets visible, calls and triangles within budget (+3 % triangles, no extra calls at the overview)"
+      ],
+      "evidence": [
+        "data/tiles: 13,357 street records in 313 files, all v2; 32 tunnels, 234 bridges",
+        "overview: 220 -> 220 calls, 1.777M -> 1.810M triangles (+1.9 %); ring (41.598, -8.413): 158 -> 166 calls, 1.358M -> 1.380M (+1.6 %); ring (41.580, -8.366): 175 -> 184 calls, 1.455M -> 1.470M (+1.0 %)",
+        "npm run verify: OK"
+      ],
+      "notes": "Ribbons live in the near building mesh (no draw call of their own), no service roads or tracks, none in the far LOD. Ring rivers and primary lines join the core's line geometry (the glow keeps the core-only geometry); secondary lines get one body-only line mesh, which replaces the old ring river line, so the overview keeps its call count. The ring poses gain about 8 calls: near tiles whose bounding sphere now spans their streets pass frustum culling more often, and tiles with streets but no buildings now have a mesh. Not deployed."
     }
   ]
 }

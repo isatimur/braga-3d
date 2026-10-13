@@ -36,6 +36,18 @@ let LITE = false;
 export function setWaterLite(on) {
   LITE = !!on;
 }
+// The governor's water step: the same switch on the materials that exist
+// (one shader recompile), not only on the ones made later.
+const WATER_MATS = new Set();
+export function setWaterLiteLive(on) {
+  LITE = !!on;
+  for (const m of WATER_MATS) {
+    if (on === ('BRG_WATER_LITE' in m.defines)) continue;
+    if (on) m.defines.BRG_WATER_LITE = '';
+    else delete m.defines.BRG_WATER_LITE;
+    m.needsUpdate = true;
+  }
+}
 // [wavelength (world units), amplitude, heading offset from the wind (deg), steepness Q]
 // Wavelengths step by ~0.6 but not in simple ratios, headings spread, so
 // the crossings never lock into a lattice; slopes kA of 0.04 .. 0.05 keep
@@ -430,6 +442,7 @@ export function createWaterMaterial({ open = false } = {}) {
   mat.defines = { BRG_WATER: '' };
   if (open) mat.defines.BRG_WATER_OPEN = '';
   if (LITE) mat.defines.BRG_WATER_LITE = '';
+  WATER_MATS.add(mat);
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, waterUniforms);
     sh.vertexShader = sh.vertexShader

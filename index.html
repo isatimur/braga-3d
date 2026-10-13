@@ -169,6 +169,16 @@
           <div class="tools-group" data-group="display">
             <p class="tools-group-title">Изображение</p>
             <button type="button" class="tool fx-toggle" id="fx-toggle" aria-pressed="true" title="Свечение, лучи солнца, сглаживание"><span class="fx-name">Эффекты:</span> <span class="fx-state">вкл</span></button>
+            <label class="tool quality-row" for="quality" title="Скорость и детализация. Авто подбирает по устройству"><span class="scale-name">Качество:</span>
+              <select id="quality" class="language" aria-label="Качество">
+                <option value="auto">Авто</option>
+                <option value="ultra">Ультра</option>
+                <option value="high">Высокое</option>
+                <option value="medium">Среднее</option>
+                <option value="low">Низкое</option>
+                <option value="potato">Картошка — лёгкая сцена</option>
+              </select>
+            </label>
           </div>
         </div>
       </div>
@@ -389,6 +399,8 @@
           <p class="loader-title">Брага</p>
           <div class="loader-track"><div class="loader-bar" id="loader-bar"></div></div>
           <p class="loader-text" id="loader-text">Загрузка</p>
+          <p class="loader-hint" id="loader-hint" hidden>Медленное соединение, всё ещё загружается</p>
+          <button type="button" class="loader-lite" id="loader-lite" hidden>Лёгкий режим</button>
         </div>
       </div>
     </div>
@@ -423,6 +435,31 @@
       <button type="button" class="lb-close pano-close" aria-label="Закрыть панораму">×</button>
     </dialog>
 
+    <script>
+      // Slow-load help. It runs before the bundle, so it works when the bundle is the slow part.
+      // After 12 s it shows a hint and a Lite mode button. Braga has no lite scene: the button
+      // reloads with ?quality=potato, the full scene at class P (src/perf-classes.js), and
+      // perf.js saves that choice for later visits. Same 3 languages as src/locales/ui.js.
+      (function () {
+        var q = new URLSearchParams(location.search), saved = '', mode = '';
+        try { saved = localStorage.getItem('braga-language') || ''; mode = localStorage.getItem('braga-quality') || ''; } catch (e) {}
+        var langs = [q.get('lang'), saved].concat(navigator.languages || []).map(function (l) { return (l || '').toLowerCase().split('-')[0]; });
+        var lang = langs.filter(function (l) { return l === 'pt' || l === 'en' || l === 'ru'; })[0] || 'pt';
+        var tx = { pt: ['Ligação lenta, ainda a carregar', 'Modo leve'], en: ['Slow connection, still loading', 'Lite mode'], ru: ['Медленное соединение, всё ещё загружается', 'Лёгкий режим'] }[lang];
+        var qv = (q.get('quality') || '').toLowerCase();
+        var lite = qv === 'potato' || qv === 'p' || (!qv && mode === 'potato');
+        setTimeout(function () {
+          var root = document.getElementById('loader'), hint = document.getElementById('loader-hint'), btn = document.getElementById('loader-lite');
+          if (!root || !hint || !btn || root.classList.contains('is-done') || root.classList.contains('is-error')) return;
+          hint.textContent = tx[0]; hint.hidden = false;
+          if (lite) return;
+          btn.textContent = tx[1]; btn.hidden = false;
+          btn.addEventListener('click', function () {
+            var u = new URL(location.href); u.searchParams.set('quality', 'potato'); location.assign(u.href);
+          });
+        }, 12000);
+      })();
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

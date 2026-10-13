@@ -46,6 +46,8 @@ const checks = [
     needs: [`${dataDir}/footprints.json`, `${dataDir}/landmarks.json`],
   },
   { name: 'traffic', cmd: ['node', 'scripts/check-traffic.mjs', '--city', CITY], needs: [`${dataDir}/roads.json`] },
+  // the packed core buildings decode to exactly buildings.json (skipped for a city without a packed file)
+  { name: 'packed buildings', cmd: ['node', 'scripts/pack-buildings.mjs', '--city', CITY, '--check'], needs: [`${dataDir}/buildings.json`, `${dataDir}/buildings.bin.gz`] },
   {
     name: 'models',
     cmd: ['node', 'scripts/count-tris.mjs', '--city', CITY],
