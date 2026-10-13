@@ -5,9 +5,9 @@
 //   - the wanted radius grows with the camera's height above the ground:
 //     3 km at 300 m, 8 km at 2 km, everything from about 4.5 km up;
 //   - a tile within 4 km of the camera gets the near LOD (every footprint
-//     extruded with windows, all streets, water, shadows); farther tiles
-//     the far LOD (one box per building, the main streets), merged 3 x 3
-//     tiles per draw call;
+//     extruded with windows, the street ribbons in the same mesh, water,
+//     shadows); farther tiles the far LOD (one box per building), merged
+//     3 x 3 tiles per draw call;
 //   - fetching, decoding and triangulating run in a Web Worker
 //     (src/tile-worker.js); the main thread only wraps the typed arrays in
 //     BufferGeometries, within about 2 ms per frame;
@@ -82,8 +82,6 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
   const sliceMs = () => SLICE_MS * Math.max(0.4, budgetScale);
 
   const matB = createBuildingMaterial({ fade: true });
-  const matS = fadeMaterial({ roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-  matS.name = 'streets-tiles';
   const matW = fadeMaterial({ roughness: 0.16 }, { BRG_WATER: '' });
   matW.name = 'water-tiles';
 
@@ -384,7 +382,6 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     }
     if (m.lod === 'near') {
       if (m.mesh.b) addMesh(T, geometryOf(m.mesh.b, born, true), matB, `tile-buildings-${T.key}`, true);
-      if (m.mesh.s) addMesh(T, geometryOf(m.mesh.s, born, false), matS, `tile-streets-${T.key}`, false);
       if (m.mesh.w) addMesh(T, geometryOf(m.mesh.w, born, false), matW, `tile-water-${T.key}`, false);
     } else {
       T.far = { b: m.mesh.b, bv: m.mesh.bv, w: m.mesh.w, born };
@@ -481,40 +478,72 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
   }
 
   // ------------------------------------------------------------ street lines
-  const lineMeshes = [];
+  // The ring's street and river lines cost no more draw calls than the one
+  // river line the ring had before tile format v2 decoded:
+  //   - rivers and main streets join the core's own line of their kind
+  //     (roads.js lines): one geometry with the core's segments, then the
+  //     shown tiles'. The primary glow keeps the core-only geometry: no glow
+  //     out here, where the ring's main roads under the additive glow make a
+  //     bright web over the whole overview (porto-3d 6cd058b);
+  //   - the secondary streets, the most segments, get one line of their own
+  //     with the core's material, body only: LineSegmentsGeometry's 8-vertex
+  //     strip is the body quad plus a round cap at each end, 6 triangles. Out
+  //     here a line is a pixel or two wide and its segments run on
+  //     (tile-worker.js segments), so the caps add nothing visible: 2
+  //     triangles per segment. A joined segment keeps the core's caps.
+  // Both follow the core's materials (night, bloom, resolution) and its
+  // visibility (the lines hide in a close-up).
+  const bodyOnly = (geo) => {
+    geo.setIndex([0, 2, 1, 2, 3, 1]);
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([-1, 1, 0, 1, 1, 0, -1, 0, 0, 1, 0, 0], 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute([-1, 1, 1, 1, -1, -1, 1, -1], 2));
+    return geo;
+  };
+  const OWN_LINE = 'secondary';
+  const coreGeo = new Map(); // kind -> the core line's own geometry
+  let ownLine = null;
   function rebuildLines() {
     linesDirty = false;
-    for (const m of lineMeshes) {
-      group.remove(m);
-      m.geometry.dispose();
+    if (ownLine) {
+      group.remove(ownLine);
+      ownLine.geometry.dispose();
+      ownLine = null;
     }
-    lineMeshes.length = 0;
     for (const kind of ['primary', 'secondary', 'water']) {
       const core = roadLayer?.lines?.[kind];
       if (!core) continue;
+      if (!coreGeo.has(kind)) coreGeo.set(kind, core.geometry);
+      const base = coreGeo.get(kind);
+      if (core.geometry !== base) core.geometry.dispose();
+      core.geometry = base;
       let n = 0;
       for (const T of tiles.values()) if (T.lines && T.state === 'shown') n += T.lines[kind].length;
       if (!n) continue;
-      const arr = new Float32Array(n);
-      let o = 0;
+      const head = kind === OWN_LINE ? null : base.attributes.instanceStart?.data.array;
+      if (kind !== OWN_LINE && !head) continue;
+      const arr = new Float32Array((head?.length || 0) + n);
+      if (head) arr.set(head);
+      let o = head?.length || 0;
       for (const T of tiles.values()) {
         if (!T.lines || T.state !== 'shown') continue;
         arr.set(T.lines[kind], o);
         o += T.lines[kind].length;
       }
       const geo = new LineSegmentsGeometry();
+      if (!head) bodyOnly(geo);
       geo.setPositions(arr);
-      const add = (mat, order, name) => {
-        const line = new LineSegments2(geo, mat);
-        line.renderOrder = order;
-        line.frustumCulled = false;
-        line.name = name;
-        line.userData.core = core;
-        group.add(line);
-        lineMeshes.push(line);
-      };
-      add(core.material, core.renderOrder, `tiles-road-${kind}`);
-      if (kind === 'primary') for (const gm of roadLayer.glows || []) add(gm, core.renderOrder + 1, 'tiles-road-primary-glow');
+      if (head) {
+        core.geometry = geo;
+        if (core.material.dashed) core.computeLineDistances();
+        continue;
+      }
+      ownLine = new LineSegments2(geo, core.material);
+      ownLine.renderOrder = core.renderOrder;
+      ownLine.frustumCulled = false;
+      ownLine.name = `tiles-road-${kind}`;
+      ownLine.userData.core = core;
+      ownLine.visible = core.visible;
+      group.add(ownLine);
     }
   }
 
@@ -686,8 +715,8 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
         m.castShadow = cast && m.userData.castOrig;
       });
     }
-    // the thin river line follows the core's (hidden in a close-up)
-    for (const l of lineMeshes) l.visible = l.userData.core.visible;
+    // the ring's own street line follows the core's (hidden in a close-up)
+    if (ownLine) ownLine.visible = ownLine.userData.core.visible;
 
     if (frames % 15 === 0) refreshStats();
   }
@@ -718,7 +747,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
       far,
       tris: Math.round(tris),
       gpuMB: +(gpuBytes / 1048576).toFixed(1),
-      meshes: meshes + lineMeshes.length,
+      meshes: meshes + (ownLine ? 1 : 0),
       fetchMs: nFetch[1] ? +(nFetch[0] / nFetch[1]).toFixed(1) : 0,
       buildMs: nBuild[1] ? +(nBuild[0] / nBuild[1]).toFixed(1) : 0,
       buildNearMs: nBuildNear[1] ? [+(nBuildNear[0] / nBuildNear[1]).toFixed(1), +nBuildNear[2].toFixed(1)] : 0,
