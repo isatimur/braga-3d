@@ -41,6 +41,7 @@ export function createFlyKeys({ rig, isBlocked = () => false, placeOpen = () => 
   if (overlay && !showKeys) overlay.hidden = true;
   const enabled = !embedded;
   const held = new Set();
+  const pad = { x: 0, y: 0, z: 0 };
   let shift = false;
   let alt = false;
   let hideTimer = 0;
@@ -50,12 +51,12 @@ export function createFlyKeys({ rig, isBlocked = () => false, placeOpen = () => 
   const flyHeld = () => [...held].some((c) => !isArrow(c));
 
   function axes() {
-    const z = +has('KeyW', 'ArrowUp') - +has('KeyS', 'ArrowDown');
-    const x = +has('KeyD', 'ArrowRight') - +has('KeyA', 'ArrowLeft');
-    let y = +has('KeyE', 'KeyR') - +has('KeyQ', 'KeyF');
+    const z = +has('KeyW', 'ArrowUp') - +has('KeyS', 'ArrowDown') + pad.z;
+    const x = +has('KeyD', 'ArrowRight') - +has('KeyA', 'ArrowLeft') + pad.x;
+    let y = +has('KeyE', 'KeyR') - +has('KeyQ', 'KeyF') + pad.y;
     if (held.has('Space')) y += shift ? -1 : 1;
     y = Math.max(-1, Math.min(1, y));
-    return { x, y, z, mult: (shift ? 3 : 1) * (alt ? 0.3 : 1), held: held.size > 0 };
+    return { x: Math.max(-1, Math.min(1, x)), y, z: Math.max(-1, Math.min(1, z)), mult: (shift ? 3 : 1) * (alt ? 0.3 : 1), held: held.size > 0 || pad.x !== 0 || pad.y !== 0 || pad.z !== 0 };
   }
 
   function lit(k) {
@@ -89,8 +90,17 @@ export function createFlyKeys({ rig, isBlocked = () => false, placeOpen = () => 
   function reset() {
     shift = false;
     alt = false;
-    if (!held.size) return;
+    const hadPadInput = pad.x !== 0 || pad.y !== 0 || pad.z !== 0;
+    pad.x = pad.y = pad.z = 0;
+    if (!held.size && !hadPadInput) return;
     held.clear();
+    push();
+  }
+
+  function setPadInput(input = {}) {
+    pad.x = Math.max(-1, Math.min(1, Number(input.x) || 0));
+    pad.y = Math.max(-1, Math.min(1, Number(input.y) || 0));
+    pad.z = Math.max(-1, Math.min(1, Number(input.z) || 0));
     push();
   }
 
@@ -159,6 +169,7 @@ export function createFlyKeys({ rig, isBlocked = () => false, placeOpen = () => 
   return {
     down,
     reset,
+    setPadInput,
     get held() {
       return held.size > 0;
     },

@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-10-13",
+  "last_updated": "2026-11-15",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -248,6 +248,48 @@
         "npm run verify: OK"
       ],
       "notes": "Ribbons live in the near building mesh (no draw call of their own), no service roads or tracks, none in the far LOD. Ring rivers and primary lines join the core's line geometry (the glow keeps the core-only geometry); secondary lines get one body-only line mesh, which replaces the old ring river line, so the overview keeps its call count. The ring poses gain about 8 calls: near tiles whose bounding sphere now spans their streets pass frustum culling more often, and tiles with streets but no buildings now have a mesh. Not deployed."
+    },
+    {
+      "id": "braga-014",
+      "priority": 14,
+      "area": "mobile",
+      "title": "Touch flight controls for Azulejo exploration",
+      "user_visible_behavior": "On touch devices, players can steer the game drone with an on-screen directional stick and hold-to-climb/descend controls; desktop keyboard and mouse controls remain available.",
+      "status": "passing",
+      "verification": [
+        "npm run build",
+        "npm run verify",
+        "Browser pass on 390x844 and 844x390: movement, altitude, pointer release/cancel, game exit and keyboard still work"
+      ],
+      "evidence": [
+        "src/game-hud.js adds a virtual stick and hold altitude buttons for coarse pointers",
+        "src/fly.js combines touch axes with keyboard movement and clears both on blur",
+        "2026-11-15, headless Chromium with touch emulation on the production build, 390x844 and 844x390: stick up and right send forward and strafe input and move the camera; climb and descend move it up and down; stick plus climb work with two fingers; release, window blur and game exit clear the input and centre the knob; re-entering the game starts with clear input; no console errors; desktop shows no touch controls and W still flies",
+        "2026-11-15 layout: stick and lift buttons overlap no HUD element, compass, scale or button with every clue in EN, PT and RU at 390x844, 360x640, 430x932, 844x390, 667x375 and 932x430",
+        "2026-11-15: node --test scripts/*.test.mjs and npm run verify passed"
+      ],
+      "notes": "Fixed in the browser pass: the descend button sat on the clue panel in portrait (controls now sit 196px up and the clue panel takes the full width; in landscape up to 900px wide the panel starts right of the controls); blur left the knob off-centre. Emulation only, no physical phone. Known and older than this feature: the compass covers the mute/help (portrait) or echo/mute (landscape) action buttons, and at 932x430 the clue panel overlaps the action row. Not deployed."
+    },
+    {
+      "id": "braga-015",
+      "priority": 15,
+      "area": "performance",
+      "title": "Defer optional modes until a visitor opens them",
+      "user_visible_behavior": "The main city map loads without downloading the Azulejo game, story mode, or the development-only AI guide; those chunks load when requested. A failed import shows a message and leaves the map usable.",
+      "status": "passing",
+      "verification": [
+        "npm run build",
+        "npm run verify",
+        "Browser: fresh home loads without game/story/guide chunks; #game and #story load and start; switching modes during a delayed import does not start the stale mode; ?guide=1 loads the guide"
+      ],
+      "evidence": [
+        "src/main.js uses dynamic imports for game.js, story.js and guide.js with retryable cached promises for game/story",
+        "Build 2026-11-07: index entry 1,239.25 kB / 427.86 kB gzip -> 862.61 kB / 335.70 kB gzip; shared Three/geometry chunks are still eagerly preloaded, so the full initial module graph falls by about 7.4 kB gzip. Game/story/guide chunks (22.38 kB gzip total) are deferred and not fetched on ordinary visits.",
+        "npm run build and git diff --check passed",
+        "2026-11-15, headless Chromium on the production build: #game, #story and #cinema open with no console errors at 1440x900, 390x844 and 844x390; a plain visit fetches no game, story or guide chunk; with the chunk held 3.5 s, game->cinema, game->story, story->game, story->cinema, Escape and opening a place never start the stale mode; ?guide=1 loads the guide on desktop and phone; the opening view matches a build of 84321c5 (same camera, same DOM layout, screenshots compared)",
+        "2026-11-15: node --test scripts/*.test.mjs and npm run verify passed"
+      ],
+      "notes": "Fixed in the browser pass: __braga.story stayed null after the lazy load; Escape, opening a place or a route, or a hash without a mode now cancel a mode that is still loading (cancelModeLoad). Known limit: after a failed import a second try in the same page does not refetch in Chromium (the browser keeps the failed module), so the toast shows again until a reload. Not explained: early in the session the desktop game lost #game from the address (empty hash or #weather=drizzle) while live weather was drizzle; later runs on this build and on 84321c5, with real and with mocked drizzle weather, kept #game. Not deployed."
     }
   ]
 }

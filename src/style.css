@@ -1981,3 +1981,81 @@ body.is-game .map-label.is-unexplored {
 .game-bursts { pointer-events: none !important; }
 .game-flight, .game-level { pointer-events: none; }
 .game-top, .game-scan { pointer-events: none; }
+
+.game-touch-controls { display: none; }
+.game-help-list li.game-touch-help { display: none; }
+@media (pointer: coarse) {
+  .game-touch-controls {
+    position: absolute;
+    left: 16px;
+    bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .game-stick {
+    width: 112px;
+    height: 112px;
+    border: 1px solid rgba(227, 234, 246, 0.52);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79, 143, 216, 0.34), rgba(10, 22, 44, 0.56));
+    box-shadow: inset 0 0 0 10px rgba(227, 234, 246, 0.06), 0 8px 22px rgba(4, 10, 24, 0.35);
+    touch-action: none;
+    pointer-events: auto;
+  }
+  .game-stick::before, .game-stick::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: rgba(227, 234, 246, 0.2);
+    pointer-events: none;
+  }
+  .game-stick::before { width: 1px; height: 72%; transform: translate(-50%, -50%); }
+  .game-stick::after { width: 72%; height: 1px; transform: translate(-50%, -50%); }
+  .game-stick { position: relative; }
+  .game-stick-knob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 210, 122, 0.82);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #76afea, #1d4e9e 75%);
+    box-shadow: 0 3px 12px rgba(4, 10, 24, 0.55);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .game-lift { display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
+  .game-lift button {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(227, 234, 246, 0.38);
+    border-radius: 12px;
+    background: rgba(10, 22, 44, 0.78);
+    color: var(--por);
+    font: 700 21px/1 var(--sans);
+    box-shadow: 0 6px 18px rgba(4, 10, 24, 0.35);
+    touch-action: none;
+  }
+  .game-lift button:active { background: #1d4e9e; border-color: #ffd27a; }
+  .game-help-list li.game-touch-help { display: flex; }
+}
+/* The clue panel and the touch controls share the bottom edge. Portrait: the
+   panel takes the full width (left: 50% had capped it at half), the
+   controls sit above it. Landscape: the controls take the left corner, the
+   panel starts to their right and stops before the action column. */
+@media (pointer: coarse) and (min-height: 501px) {
+  .game-touch-controls { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (pointer: coarse) and (min-height: 501px) and (max-width: 700px) {
+  .game-mission { left: 12px; right: 12px; transform: none; max-width: none; }
+}
+@media (pointer: coarse) and (max-height: 500px) {
+  .game-touch-controls { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (pointer: coarse) and (max-height: 500px) and (max-width: 900px) {
+  .game-mission { left: 196px; transform: none; max-width: calc(100vw - 312px); }
+}

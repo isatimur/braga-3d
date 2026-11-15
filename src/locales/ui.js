@@ -12,6 +12,12 @@ export const messages = {
   // Azulejo game mode (game.js)
   'Игра': ['Jogo', 'Game'],
   'Азулежу: охота за осколками по городу': ['Azulejo: caça aos fragmentos pela cidade', 'Azulejo: hunt the shards across the city'],
+  'Сенсорное управление': ['Controlos táteis', 'Touch controls'],
+  'Направление полёта': ['Direção do voo', 'Flight direction'],
+  'Лететь вверх': ['Subir', 'Fly up'], 'Лететь вниз': ['Descer', 'Fly down'],
+  'Джойстик': ['Joystick', 'Joystick'], 'направление и высота': ['direção e altitude', 'direction and altitude'],
+  'Не удалось загрузить игру': ['Não foi possível carregar o jogo', 'Could not load the game'],
+  'Не удалось загрузить гида': ['Não foi possível carregar o guia', 'Could not load the guide'],
   'очки': ['pontos', 'points'],
   'серия': ['série', 'streak'],
   'Подсказка': ['Pista', 'Clue'],

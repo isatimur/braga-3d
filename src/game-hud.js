@@ -5,7 +5,7 @@
 // underneath; this file only reads state and paints.
 import { t } from './i18n.js';
 
-export function createGameHud({ onExit, onGo, onAction }) {
+export function createGameHud({ onExit, onGo, onAction, onFlight }) {
   const root = document.createElement('div');
   root.className = 'game';
   root.id = 'game';
@@ -45,6 +45,15 @@ export function createGameHud({ onExit, onGo, onAction }) {
       <span class="game-scan-track"><span class="game-scan-fill"></span></span>
       <span class="game-scan-text">${t('Сканируем осколок…')}</span>
     </div>
+    <div class="game-touch-controls" aria-label="${t('Сенсорное управление')}">
+      <div class="game-stick" role="group" aria-label="${t('Направление полёта')}">
+        <span class="game-stick-knob"></span>
+      </div>
+      <div class="game-lift">
+        <button type="button" data-lift="up" aria-label="${t('Лететь вверх')}">↑</button>
+        <button type="button" data-lift="down" aria-label="${t('Лететь вниз')}">↓</button>
+      </div>
+    </div>
     <div class="game-flight">
       <span class="game-speed">0</span> <span class="game-unit">${t('км/ч')}</span>
       <span class="game-sep">·</span>
@@ -65,6 +74,7 @@ export function createGameHud({ onExit, onGo, onAction }) {
         <p class="game-help-title">${t('Как играть')}</p>
         <ul class="game-help-list">
           <li><b>W A S D</b> <span>${t('лететь')}</span></li>
+          <li class="game-touch-help"><b>${t('Джойстик')}</b> <span>${t('направление и высота')}</span></li>
           <li><b>R / F</b> <span>${t('вверх / вниз')}</span></li>
           <li><b>Shift</b> <span>${t('ускорение')}</span></li>
           <li><b>${t('мышь')}</b> <span>${t('повернуть взглядом (тяни)')}</span></li>
@@ -139,6 +149,78 @@ export function createGameHud({ onExit, onGo, onAction }) {
 
   el('.game-exit').addEventListener('click', () => onExit?.());
   el('.game-go').addEventListener('click', () => onGo?.());
+
+  const stick = el('.game-stick');
+  const knob = el('.game-stick-knob');
+  const stickInput = { x: 0, z: 0 };
+  const liftHeld = new Set();
+  let stickPointer = null;
+  const emitFlight = () => onFlight?.({
+    x: stickInput.x,
+    z: stickInput.z,
+    y: Number(liftHeld.has('up')) - Number(liftHeld.has('down')),
+  });
+  const setStick = (event) => {
+    const rect = stick.getBoundingClientRect();
+    const radius = Math.max(1, Math.min(rect.width, rect.height) * 0.34);
+    let dx = (event.clientX - (rect.left + rect.width / 2)) / radius;
+    let dy = (event.clientY - (rect.top + rect.height / 2)) / radius;
+    const length = Math.hypot(dx, dy);
+    if (length > 1) { dx /= length; dy /= length; }
+    if (Math.hypot(dx, dy) < 0.12) dx = dy = 0;
+    stickInput.x = dx;
+    stickInput.z = -dy;
+    knob.style.transform = `translate(calc(-50% + ${dx * radius}px), calc(-50% + ${dy * radius}px))`;
+    emitFlight();
+  };
+  const releaseStick = (event) => {
+    if (event.pointerId !== stickPointer) return;
+    stickPointer = null;
+    stickInput.x = stickInput.z = 0;
+    knob.style.transform = '';
+    emitFlight();
+  };
+  stick.addEventListener('pointerdown', (event) => {
+    if (stickPointer != null) return;
+    event.preventDefault();
+    stickPointer = event.pointerId;
+    stick.setPointerCapture(event.pointerId);
+    setStick(event);
+  });
+  stick.addEventListener('pointermove', (event) => {
+    if (event.pointerId === stickPointer) setStick(event);
+  });
+  stick.addEventListener('pointerup', releaseStick);
+  stick.addEventListener('pointercancel', releaseStick);
+  stick.addEventListener('lostpointercapture', releaseStick);
+  for (const button of root.querySelectorAll('[data-lift]')) {
+    const direction = button.dataset.lift;
+    const release = (event) => {
+      if (!liftHeld.delete(direction)) return;
+      event.preventDefault();
+      emitFlight();
+    };
+    button.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      button.setPointerCapture(event.pointerId);
+      liftHeld.add(direction);
+      emitFlight();
+    });
+    button.addEventListener('pointerup', release);
+    button.addEventListener('pointercancel', release);
+    button.addEventListener('lostpointercapture', release);
+  }
+  // Blur and game exit drop every touch; a finger still down does nothing
+  // until it presses again.
+  const resetTouch = () => {
+    stickPointer = null;
+    stickInput.x = stickInput.z = 0;
+    liftHeld.clear();
+    knob.style.transform = '';
+    emitFlight();
+  };
+  window.addEventListener('blur', resetTouch);
+  document.addEventListener('visibilitychange', () => document.hidden && resetTouch());
   for (const b of root.querySelectorAll('.game-act')) {
     b.addEventListener('click', () => onAction?.(b.dataset.act));
   }
@@ -165,6 +247,7 @@ export function createGameHud({ onExit, onGo, onAction }) {
       root.hidden = false;
     },
     hide() {
+      resetTouch();
       root.hidden = true;
       finale.hidden = true;
       finale.classList.remove('is-on');

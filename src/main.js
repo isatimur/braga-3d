@@ -18,8 +18,6 @@ import { createInstruments } from './ui.js';
 import { fitLandmark, padFor } from './fit.js';
 import { createCameraRig } from './camera.js';
 import { createSkyline, createCinema } from './tour.js';
-import { createStory } from './story.js';
-import { createGame } from './game.js';
 import { createUI, createLoader, placesWord, mountTool } from './ui.js';
 import { createSearch, IMPORTANCE } from './search.js';
 import { createDiscovery } from './discovery.js';
@@ -27,7 +25,6 @@ import { assetUrl } from './data.js';
 import { createRouteLayer, createFlyAlong } from './routes.js';
 import { createPanorama } from './panorama.js';
 import { installShare } from './share.js';
-import { createGuide } from './guide.js';
 import { createLife } from './life.js';
 import { createSeasons } from './seasons.js';
 import { createFlyKeys } from './fly.js';
@@ -602,7 +599,21 @@ async function start() {
   let tour = null; // fly-along driver while it plays
   let cinema = null; // cinema and story modes, created further down
   let story = null;
+  let storyLoad = null;
   let game = null; // the Azulejo discovery game (game.js)
+  let gameLoad = null;
+  // startMode() numbers each request; a mode whose chunk arrives after a
+  // newer request (or after the visitor left, cancelModeLoad) does not start
+  let modeRequest = 0;
+  let modeLoading = null;
+  function cancelModeLoad() {
+    if (!modeLoading) return false;
+    modeLoading = null;
+    modeRequest++;
+    setHash(currentHash());
+    return true;
+  }
+  let flyKeys = null;
 
   const rig = createCameraRig(camera, canvas, heightAt, {
     reducedMotion,
@@ -713,8 +724,9 @@ async function start() {
     if (tm && TIMES.includes(tm) && tm !== atmosphere.time) setTime(tm, { writeHash: false });
     // #cinema, #story and #game open the guided modes
     if (q.has('cinema')) return void (cinema.active || startMode('cinema'));
-    if (q.has('story')) return void (story.active || startMode('story'));
-    if (q.has('game')) return void (game.active || startMode('game'));
+    if (q.has('story')) return void (story?.active || startMode('story'));
+    if (q.has('game')) return void (game?.active || startMode('game'));
+    cancelModeLoad();
     const r = q.get('route');
     const p = q.get('place');
     if (r) {
@@ -802,6 +814,7 @@ async function start() {
   // route panel holds the right-hand side.
   function select(i) {
     if (i == null || i < 0) return;
+    cancelModeLoad();
     if (tour) stopTour();
     active = i;
     discovery.select(i);
@@ -888,6 +901,7 @@ async function start() {
   function openRoute(id) {
     const r = routeById.get(id);
     if (!r) return;
+    cancelModeLoad();
     if (tour) stopTour();
     ui.callout.hide();
     if (active >= 0) {
@@ -991,42 +1005,68 @@ async function start() {
     const on = new Set(ids);
     for (const it of marks.items) it.labelEl.classList.toggle('is-story-focus', on.has(it.data.id));
   };
-  story = createStory({
-    ...modeCtx,
-    load: loadStory,
-    onFocus: storyLabels,
-    onExit: () => {
-      storyLabels([]);
-      modeCtx.onExit();
-    },
-    onError: () => {
-      ui.toast(t('Не удалось загрузить историю'), 4000);
-      setHash(currentHash());
-    },
-  });
-  game = createGame({
-    scene,
-    camera,
-    rig,
-    heightAt,
-    items: marks.items,
-    terrain,
-    sky,
-    roads,
-    project,
-    atmosphere,
-    ui,
-    home,
-    reducedMotion,
-    debug,
-    city: CITY.id || 'braga',
-    setTime: (name) => modeTime(name),
-    onEnter: () => document.body.classList.add('is-game'),
-    onExit: () => {
-      document.body.classList.remove('is-game');
-      modeCtx.onExit();
-    },
-  });
+  async function ensureStory() {
+    if (story) return story;
+    if (!storyLoad) {
+      storyLoad = import('./story.js').then(({ createStory }) => {
+        story = createStory({
+          ...modeCtx,
+          load: loadStory,
+          onFocus: storyLabels,
+          onExit: () => {
+            storyLabels([]);
+            modeCtx.onExit();
+          },
+          onError: () => {
+            ui.toast(t('Не удалось загрузить историю'), 4000);
+            setHash(currentHash());
+          },
+        });
+        debug.story = story;
+        return story;
+      }).catch((error) => {
+        storyLoad = null;
+        throw error;
+      });
+    }
+    return storyLoad;
+  }
+  async function ensureGame() {
+    if (game) return game;
+    if (!gameLoad) {
+      gameLoad = import('./game.js').then(({ createGame }) => {
+        game = createGame({
+          scene,
+          camera,
+          rig,
+          heightAt,
+          items: marks.items,
+          terrain,
+          sky,
+          roads,
+          project,
+          atmosphere,
+          ui,
+          home,
+          reducedMotion,
+          debug,
+          city: CITY.id || 'braga',
+          onTouchFlight: (input) => flyKeys?.setPadInput(input),
+          setTime: (name) => modeTime(name),
+          onEnter: () => document.body.classList.add('is-game'),
+          onExit: () => {
+            document.body.classList.remove('is-game');
+            modeCtx.onExit();
+          },
+        });
+        return game;
+      }).catch((error) => {
+        gameLoad = null;
+        throw error;
+      });
+    }
+    return gameLoad;
+  }
   const gameBtn = document.createElement('button');
   gameBtn.type = 'button';
   gameBtn.className = 'tool mode-btn';
@@ -1035,8 +1075,10 @@ async function start() {
   gameBtn.title = t('Азулежу: охота за осколками по городу');
   gameBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z" /><path d="M5.2 6.3h1.4M5.2 9.4h3.6M11.6 5.4v3.4" /></svg><span class="mode-label">${t('Игра')}</span>`;
   mountTool(gameBtn, 'modes', { closes: true });
-  gameBtn.addEventListener('click', () => (game.active ? game.stop() : startMode('game')));
+  gameBtn.addEventListener('click', () => (game?.active ? game.stop() : startMode('game')));
   function startMode(name) {
+    const request = ++modeRequest;
+    modeLoading = name === 'cinema' ? null : name;
     if (intro?.active) intro.skip();
     if (tour) stopTour();
     if (active >= 0) close();
@@ -1048,16 +1090,42 @@ async function start() {
     flyKeys.reset();
     if (name === 'game') {
       cinema.stop();
-      story.stop();
-      game.start();
+      story?.stop();
+      setHash(name);
+      ensureGame().then((instance) => {
+        if (request !== modeRequest) return;
+        modeLoading = null;
+        instance.start();
+        setHash(name); // the wait for the chunk let other writers replace #game
+      }).catch(() => {
+        if (request === modeRequest) {
+          modeLoading = null;
+          ui.toast(t('Не удалось загрузить игру'), 4000);
+          setHash(currentHash());
+        }
+      });
+      return;
     } else if (name === 'cinema') {
-      story.stop();
-      game.stop();
+      story?.stop();
+      game?.stop();
       cinema.start();
     } else {
       cinema.stop();
-      game.stop();
-      story.start();
+      game?.stop();
+      setHash(name);
+      ensureStory().then((instance) => {
+        if (request !== modeRequest) return;
+        modeLoading = null;
+        instance.start();
+        setHash(name);
+      }).catch(() => {
+        if (request === modeRequest) {
+          modeLoading = null;
+          ui.toast(t('Не удалось загрузить историю'), 4000);
+          setHash(currentHash());
+        }
+      });
+      return;
     }
     setHash(name);
   }
@@ -1072,7 +1140,7 @@ async function start() {
   // Esc peels one layer: fly-along, detail (back to the route), route.
   // Then the fly keys (fly.js): WASD, Q/E, arrows. While a place is open and
   // no other fly key is held, ← / → still step through the places.
-  const flyKeys = createFlyKeys({
+  flyKeys = createFlyKeys({
     rig,
     debug,
     // the intro, the route fly-along and the guided modes own the camera
@@ -1091,6 +1159,7 @@ async function start() {
     if (cinema?.active) return void cinema.onKey(e);
     if (story?.active) return void story.onKey(e);
     if (e.key === 'Escape') {
+      if (cancelModeLoad()) return; // a mode still loading: stay on the map
       if (ui.tools.open) ui.tools.set(false); // the phone's tools sheet first
       else if (tour) stopTour();
       else if (active >= 0) close();
@@ -1704,7 +1773,9 @@ async function start() {
   installShare({ renderer, scene, camera, fx, setFx, atmosphere, roadLayer, routeLayer, marks, landmarks, routes, ui, getSize: () => size });
   // the talking guide (guide.js, api/guide.js) is parked until later; ?guide=1 turns it on for testing
   if (new URLSearchParams(location.search).get('guide') === '1') {
-    createGuide({ landmarks, select, getActive: () => active, project, rig, reducedMotion, debug });
+    import('./guide.js').then(({ createGuide }) => {
+      createGuide({ landmarks, select, getActive: () => active, project, rig, reducedMotion, debug });
+    }).catch(() => ui.toast(t('Не удалось загрузить гида'), 4000));
   }
 }
 
