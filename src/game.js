@@ -69,7 +69,7 @@ export function createGame(ctx) {
   const cityId = ctx.city || 'braga';
   const byId = new Map(items.map((it) => [it.data.id, it]));
 
-  const hud = createGameHud({ onExit: () => stop(), onGo: () => goToTarget(), onAction: (act) => action(act) });
+  const hud = createGameHud({ onExit: () => stop(), onGo: () => goToTarget(), onAction: (act) => action(act), onFlight: (input) => ctx.onTouchFlight?.(input) });
   const audio = createGameAudio();
   const vfx = createGameVfx({ scene });
   const progress = createGameProgress(cityId);
@@ -661,6 +661,7 @@ export function createGame(ctx) {
     hud.setAbility('orbit', false);
     hud.setAbility('overview', false);
     hud.setMuted(audio.muted);
+    ctx.onTouchFlight?.({ x: 0, y: 0, z: 0 });
     for (const s of shards) if (!s.found) hud.root.querySelector(`.game-tile[data-id="${s.def.id}"]`)?.classList.remove('is-found');
     hud.show();
     const sp = startPos();

@@ -11,8 +11,9 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current highest-priority unfinished work: adopt branch `repair/sync-origin` (history repair plus deploy hygiene, braga-011), then deploy it.
-- Current release limitation: braga-3d.com serves the new interface as of 2026-10-04 (build 22:53 UTC), but it still ships `cities/guimaraes.json` and answers `?city=guimaraes` with 200 and a broken city. The branch fixes that; it is not deployed yet.
+- Current local work: none open. Mobile flight controls (braga-014) and deferred loading of optional modes (braga-015) are merged into `main` from `feat/touch-and-lazy-modes`. Not pushed, not deployed.
+- Latest check: 2026-11-15. `node --test scripts/*.test.mjs` and `npm run verify` passed; the headless browser checks in Session 012 passed on the production build.
+- Production state: last documented check is from 2026-10-04; not rechecked since. braga-3d.com does not have braga-014 or braga-015.
 
 ## Session Log
 
@@ -171,3 +172,48 @@ updates it automatically.
 - Frame stats (1440x900, class XL, headless): overview 220 -> 220 calls, +1.9 % triangles; two ring poses +8 and +9 calls (tile meshes with streets pass culling more often), +1.6 % and +1.0 % triangles.
 - Verification: `npm run verify` OK.
 - Loader (porto-3d `4ba38a6`): after 12 s on the loader, a slow-connection hint and a Lite mode button. Braga has no lite scene (`src/lite/` is not ported), so the button reloads with `?quality=potato`: the full scene at class P. In Braga today that is the Low build (phone module budgets, no post-processing) plus: no sun shadows, DPR capped at 1, a smaller tile and tree radius near the ground, half the label and simulation rates. The `trees`, `cars` and `people` fields of the class table are not read yet, so Potato and Low draw the same overview (215 calls, 1.41M triangles, class P vs S, headless). `perf.js` saves that choice in `braga-quality`, so later visits stay on Potato until the quality menu or `?quality=auto` changes it. Checked on the build with the bundle held 16 s: hint and button at 13 s, the click reloads at class P (`reason: url`).
+
+### Session 010
+
+- Date: 2026-11-05
+- Goal: first mobile-usability improvement toward making Braga 3D stand out among browser-based city maps.
+- Finding: Azulejo mode had touch buttons for abilities and flying to a shard, but free flight still required a keyboard.
+- Done locally: added a touch directional stick and hold-to-climb/descend buttons; touch axes combine with keyboard flight input, and blur/game exit clear the controls. Added Portuguese and English labels for the new controls. Tracked as braga-014, still in progress.
+- Verification: `npm run build` passed. The full repository verification gate and touch-device interaction checks were not run in this turn; braga-014 remains in progress until those checks pass.
+- Files updated: `src/fly.js`, `src/game-hud.js`, `src/game.js`, `src/locales/ui.js`, `src/main.js`, `src/style.css`, `feature_list.json`.
+- Next step: run `npm run verify` and the documented browser checks at portrait and landscape phone sizes, then tune the controls from the result.
+
+### Session 011
+
+- Date: 2026-11-07
+- Goal: improve first-visit loading while continuing the mobile controls work.
+- Finding: the Azulejo game, story mode, and development-only talking guide were all bundled into the initial app entry even though they are opened only on demand.
+- Done locally: those modules now load dynamically when requested. Added a request token so a slow mode import cannot start after the user switches to another mode, and added translated load-error messages.
+- Build result: `npm run build` passed. The entry chunk changed from 1,239.25 kB / 427.86 kB gzip to 862.61 kB / 335.70 kB gzip. The shared Three and geometry chunks are still eagerly preloaded, so the full initial module graph is about 7.4 kB gzip smaller; game (11.91 kB gzip), story (3.76 kB), and guide (6.71 kB) are separate chunks and are deferred on ordinary visits. `git diff --check` passed.
+- Browser checks for `#game`, `#story`, `#cinema`, mode switching during a load, and `?guide=1` remain pending. No production deploy was made.
+- Files updated: `src/main.js`, `src/locales/ui.js`, `feature_list.json` (alongside the braga-014 mobile-control changes).
+- Next step: run the project verification and interaction checks when verification is requested, then continue with the biggest remaining visitor-facing gap.
+
+### Session 012
+
+- Date: 2026-11-15
+- Branch: `feat/touch-and-lazy-modes`, merged into `main` with `--no-ff`. Nothing is pushed or deployed.
+- Goal: run the pending browser checks for braga-014 and braga-015, fix what fails, commit.
+- Method: headless Chromium (playwright-core) against `vite preview` of the production build; phone sizes with touch emulation and CDP touch events. "Before" is a build of `84321c5` from a temporary worktree. Emulation only, no physical phone.
+- Passed:
+  - `#game`, `#story`, `#cinema` open with no console errors at 1440x900, 390x844 and 844x390.
+  - A plain visit fetches no game, story or guide chunk. `?guide=1` loads the guide.
+  - With the mode chunk held 3.5 s: game->cinema, game->story, story->game, story->cinema never start the stale mode.
+  - Game at 390x844 and 844x390: the stick moves the camera (forward, strafe), climb and descend work, stick plus climb work with two fingers, release stops the drone, blur and game exit clear the input, a new game starts with clear input. No key is needed for free flight.
+  - The opening view without a mode matches the `84321c5` build at all three sizes (same camera, same DOM layout, screenshots compared).
+- Fixed (found by the checks):
+  - `src/style.css`: in portrait the descend button sat on the clue panel. The controls now sit 196px above the bottom and the clue panel takes the full width (its `left: 50%` had capped it at half the screen). In landscape up to 900px wide the panel starts right of the controls and stops before the action column. Checked with every clue in EN, PT and RU at six phone sizes.
+  - `src/game-hud.js`: blur cleared the flight input but left the knob off-centre; blur and a hidden tab now reset the stick and the lift buttons.
+  - `src/main.js`: `__braga.story` stayed null after the lazy load. Escape, opening a place or a route, or a hash without a mode during a slow import let the mode start later; `cancelModeLoad()` now drops the pending request. The mode writes its hash again after it starts.
+- Still open:
+  - After a failed import, a second try in the same page does not refetch in Chromium (the browser keeps the failed module). The toast shows and the map stays usable; a reload recovers. The feature text no longer claims recovery.
+  - Older than these features, not changed: the compass covers the mute/help (portrait) or echo/mute (landscape) action buttons in the game; at 932x430 the clue panel overlaps the action row (same at `84321c5`).
+  - Not explained: early in the session the desktop game lost `#game` from the address (empty hash, or `#weather=drizzle`) while live weather was drizzle. Later runs on this build and on `84321c5`, with real and with mocked drizzle weather, kept `#game`. The game itself ran in every case.
+- Verification: `node --test scripts/*.test.mjs` passed; `npm run verify` passed.
+- Evidence: screenshots and the check script (`check.mjs`) are in `/tmp/braga-touch/`; they are not in the repository.
+- Next step: decide on a deploy; then the compass and action-button overlap in the game on phones.
