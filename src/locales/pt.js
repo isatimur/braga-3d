@@ -150,7 +150,7 @@ export const landmarks = {
   },
   'palacio-raio': {
     name: 'Palácio do Raio',
-    year: '1752–1755',
+    year: '1752–1754',
     short: 'Obra-prima do barroco joanino de André Soares com fachada azulejada azul',
     long: 'André Soares desenhou este palácio para o abastado comerciante João Duarte de Faria. Os azulejos azuis e brancos emolduram o trabalhado exuberante do granito. Deve o nome a Miguel José Raio, proprietário posterior. Abriga hoje o Centro Interpretativo das Memórias da Misericórdia de Braga.',
     history: 'O negociante João Duarte de Faria encomendou a construção entre 1752 e 1754 ao mestre André Soares, que desenhou um dos mais notáveis exemplares do barroco rocaille português, marcado pela assimetria, conchas e enrolamentos vegetais.\n\nEm 1853 foi adquirido por Miguel José Raio, primeiro visconde de São Lázaro, enriquecido no Brasil, que mandou revestir as paredes com azulejos azuis e lhe legou a denominação comum. A Santa Casa da Misericórdia comprou-o na década de 1880 para instalar dependências do Hospital de São Marcos, que aí funcionaram até 2011.\n\nRepare como o azulejo azul realça o rendilhado do granito nas janelas, cornijas e no portal de entrada. No interior preservam-se tetos pintados e uma escadaria nobre monumental em granito sob uma claraboia. Após restauro, o palácio abriu em 2015 como Centro Interpretativo: dez salas expõem arte sacra, alfaias, pintura, cerâmica e a farmácia histórica da Misericórdia.',

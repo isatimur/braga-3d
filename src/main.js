@@ -409,7 +409,7 @@ async function start() {
   // starts with the boot view, before the city is built.
   function makeIntro() {
     const param = new URLSearchParams(location.search).get('intro');
-    const deep = /(^|[#&])((place|route)=|(cinema|story)(&|$))/.test(location.hash);
+    const deep = /(^|[#&])((place|route)=|(cinema|story|quest)(&|$))/.test(location.hash);
     let seen = false;
     try {
       seen = sessionStorage.getItem('braga-intro') === '1';
@@ -549,7 +549,7 @@ async function start() {
   debug.perfSystem = perf;
   // scripted cameras (intro, tour, cinema, story) and the game cause frame
   // spikes that are not load: the governor holds while they run
-  perf.paused = () => !!(intro?.active || tour || cinema?.active || story?.active || game?.active);
+  perf.paused = () => !!(intro?.active || tour || cinema?.active || story?.active || game?.active || quest?.active);
   applyKnobs(perf.knobs); // the class's own baseline, before the first full frame
 
   // The menu: Auto / Ultra / High / Medium / Low / Potato. A choice inside the
@@ -602,6 +602,9 @@ async function start() {
   let storyLoad = null;
   let game = null; // the Azulejo discovery game (game.js)
   let gameLoad = null;
+  let quest = null; // the history route (quest.js)
+  let questLoad = null;
+  const hasQuest = CITY.id === 'braga'; // data/quest.json exists for Braga only
   // startMode() numbers each request; a mode whose chunk arrives after a
   // newer request (or after the visitor left, cancelModeLoad) does not start
   let modeRequest = 0;
@@ -677,7 +680,7 @@ async function start() {
     },
     onRoute: (id) => openRoute(id),
     toast: (msg, ms) => ui.toast(msg, ms),
-    isBlocked: () => !!(cinema?.active || story?.active || intro?.active || game?.active),
+    isBlocked: () => !!(cinema?.active || story?.active || intro?.active || game?.active || quest?.active),
   });
   debug.search = search;
   const discovery = createDiscovery({
@@ -722,10 +725,11 @@ async function start() {
     const q = new URLSearchParams(location.hash.replace(/^#/, ''));
     const tm = q.get('time');
     if (tm && TIMES.includes(tm) && tm !== atmosphere.time) setTime(tm, { writeHash: false });
-    // #cinema, #story and #game open the guided modes
+    // #cinema, #story, #game and #quest open the guided modes
     if (q.has('cinema')) return void (cinema.active || startMode('cinema'));
     if (q.has('story')) return void (story?.active || startMode('story'));
     if (q.has('game')) return void (game?.active || startMode('game'));
+    if (q.has('quest') && hasQuest) return void (quest?.active || startMode('quest'));
     cancelModeLoad();
     const r = q.get('route');
     const p = q.get('place');
@@ -1076,6 +1080,45 @@ async function start() {
   gameBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z" /><path d="M5.2 6.3h1.4M5.2 9.4h3.6M11.6 5.4v3.4" /></svg><span class="mode-label">${t('Игра')}</span>`;
   mountTool(gameBtn, 'modes', { closes: true });
   gameBtn.addEventListener('click', () => (game?.active ? game.stop() : startMode('game')));
+  // History route: five landmarks, one question each (quest.js, data/quest.json)
+  async function ensureQuest() {
+    if (quest) return quest;
+    if (!questLoad) {
+      questLoad = import('./quest.js').then(({ createQuest }) => {
+        quest = createQuest({
+          ...modeCtx,
+          city: CITY.id || 'braga',
+          onFocus: storyLabels,
+          onEnter: () => {
+            ui.callout.hide();
+            if (active >= 0) close();
+          },
+          onPlace: (i) => select(i),
+          onError: () => {
+            ui.toast(t('Не удалось загрузить маршрут'), 4000);
+            setHash(currentHash());
+          },
+        });
+        debug.quest = quest;
+        return quest;
+      }).catch((error) => {
+        questLoad = null;
+        throw error;
+      });
+    }
+    return questLoad;
+  }
+  if (hasQuest) {
+    const questBtn = document.createElement('button');
+    questBtn.type = 'button';
+    questBtn.className = 'tool mode-btn';
+    questBtn.id = 'quest-toggle';
+    questBtn.setAttribute('aria-controls', 'quest');
+    questBtn.title = t('Откройте историческую Брагу: пять мест, пять вопросов');
+    questBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.6 3.5 3.8.4-2.8 2.6.8 3.8L8 10.2 4.6 12.1l.8-3.8-2.8-2.6 3.8-.4z" /></svg><span class="mode-label">${t('Исторический маршрут')}</span>`;
+    mountTool(questBtn, 'modes', { closes: true });
+    questBtn.addEventListener('click', () => (quest?.active ? quest.stop() : startMode('quest')));
+  }
   function startMode(name) {
     const request = ++modeRequest;
     modeLoading = name === 'cinema' ? null : name;
@@ -1088,7 +1131,29 @@ async function start() {
     ui.atmo.close();
     search.close();
     flyKeys.reset();
-    if (name === 'game') {
+    if (name !== 'quest') quest?.stop();
+    if (name === 'quest') {
+      cinema.stop();
+      story?.stop();
+      game?.stop();
+      setHash(name);
+      ensureQuest().then((instance) => {
+        if (request !== modeRequest) return;
+        // modeLoading stays set until quest.json is in: Esc still cancels
+        return instance.start(() => request === modeRequest).then(() => {
+          if (request !== modeRequest) return;
+          modeLoading = null;
+          if (instance.active) setHash(name);
+        });
+      }).catch(() => {
+        if (request === modeRequest) {
+          modeLoading = null;
+          ui.toast(t('Не удалось загрузить маршрут'), 4000);
+          setHash(currentHash());
+        }
+      });
+      return;
+    } else if (name === 'game') {
       cinema.stop();
       story?.stop();
       setHash(name);
@@ -1144,7 +1209,7 @@ async function start() {
     rig,
     debug,
     // the intro, the route fly-along and the guided modes own the camera
-    isBlocked: () => !!(intro?.active || tour || cinema?.active || story?.active),
+    isBlocked: () => !!(intro?.active || tour || cinema?.active || story?.active || quest?.active),
     placeOpen: () => active >= 0,
   });
   window.addEventListener('keydown', (e) => {
@@ -1158,6 +1223,8 @@ async function start() {
     if (game?.active && game.onKey(e)) return;
     if (cinema?.active) return void cinema.onKey(e);
     if (story?.active) return void story.onKey(e);
+    // the history route: Esc leaves; Tab, Enter and Space stay with its buttons
+    if (quest?.active) return void quest.onKey(e);
     if (e.key === 'Escape') {
       if (cancelModeLoad()) return; // a mode still loading: stay on the map
       if (ui.tools.open) ui.tools.set(false); // the phone's tools sheet first
@@ -1188,7 +1255,7 @@ async function start() {
   });
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
-    if (game?.active) return; // the game owns the map
+    if (game?.active || quest?.active) return; // the game and the route own the map
     toNdc(e);
     raycaster.setFromCamera(ndc, camera);
     const hit = marks.pick(raycaster);
@@ -1196,7 +1263,7 @@ async function start() {
   });
   let hoverQueued = false;
   canvas.addEventListener('pointermove', (e) => {
-    if (hoverQueued || e.buttons || game?.active) return;
+    if (hoverQueued || e.buttons || game?.active || quest?.active) return;
     hoverQueued = true;
     requestAnimationFrame(() => {
       hoverQueued = false;
@@ -1335,7 +1402,9 @@ async function start() {
     lastDeclutter = now;
     const placed = [];
     const onRoute = route ? new Set(route.stopIdx) : null;
-    const rank = (it) => (it.index === active ? 2 : onRoute?.has(it.index) ? 1 : 0);
+    // the history route: its own stops win over the labels it hides
+    const routeFocus = quest?.active ? (it) => it.labelEl.classList.contains('is-story-focus') : () => false;
+    const rank = (it) => (it.index === active ? 2 : onRoute?.has(it.index) || routeFocus(it) ? 1 : 0);
     const order = marks.items
       .filter((it) => it.label.visible)
       .map((it) => {
@@ -1346,7 +1415,7 @@ async function start() {
       .sort((a, b) => rank(b.it) - rank(a.it) || b.score - a.score || a.d - b.d);
 
     // far zoom: greedy clusters around the highest-priority labels
-    const clustering = camDist > CLUSTER_FROM && !route && !story?.active && !cinema?.active;
+    const clustering = camDist > CLUSTER_FROM && !route && !story?.active && !cinema?.active && !quest?.active;
     const seeds = [];
     if (clustering) {
       for (const o of order) {

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { landmarks as EN } from '../src/locales/en.js';
 import { landmarks as PT } from '../src/locales/pt.js';
+import { messages } from '../src/locales/ui.js';
 import { createQuestProgress, questSummary } from '../src/quest-progress.js';
 
 const root = new URL('../', import.meta.url);
@@ -56,6 +57,20 @@ test('each right answer rests on a verbatim fact in every language', () => {
       for (const o of s.options) assert.ok(o[lang]?.trim(), `${s.id}/${lang}: option text`);
       assert.ok(inAny(s.basis[lang], sourceText(s.id, lang), ['history', 'facts']), `${s.id}/${lang}: basis not in the place card: «${s.basis[lang]}»`);
     }
+  }
+});
+
+test('the year shown on each stop agrees across languages', () => {
+  const years = (s) => (String(s ?? '').match(/\d{4}/g) || []).join(',');
+  for (const s of quest.stops) {
+    const ru = years(byId.get(s.id).year);
+    for (const tr of [EN, PT]) if (tr[s.id]?.year != null) assert.equal(years(tr[s.id].year), ru, `${s.id}: year «${tr[s.id].year}» vs «${byId.get(s.id).year}»`);
+  }
+});
+
+test('the menu label, its title and the load error are translated', () => {
+  for (const k of ['Исторический маршрут', 'Откройте историческую Брагу: пять мест, пять вопросов', 'Не удалось загрузить маршрут']) {
+    assert.ok(messages[k]?.[0] && messages[k]?.[1], `src/locales/ui.js: ${k}`);
   }
 });
 

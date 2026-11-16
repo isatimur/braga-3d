@@ -1,5 +1,6 @@
 {
   "_about": "History route (src/quest.js, #quest). Every 'text', 'basis' and 'visit' line is a verbatim excerpt of the landmark's own texts: ru from data/landmarks.json (history_ru, facts_ru, tip_ru), en and pt from src/locales/en.js and src/locales/pt.js (history, facts, tip). 'from' names the fields; 'sources' repeats the landmark's sources. scripts/quest.test.mjs checks both. Questions and wrong options are new wording; wrong options are wrong on their face (another century, another place, a technology that did not exist).",
+  "overview": ["termas-romanas", "se-braga", "arco-porta-nova", "palacio-raio"],
   "ui": {
     "kicker": { "ru": "Исторический маршрут", "en": "History route", "pt": "Rota da história" },
     "title": { "ru": "Откройте историческую Брагу", "en": "Discover historic Braga", "pt": "Descobrir a Braga histórica" },
