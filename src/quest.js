@@ -27,6 +27,7 @@ import { assetUrl } from './data.js';
 import { dataPath } from './city.js';
 import { creditNode } from './gallery.js';
 import { createQuestProgress, questSummary, stopResult, LEGACY_ROUTE } from './quest-progress.js';
+import { emit } from './events.js';
 import './quest.css';
 
 const SHOT_CLEAR = 10 * S; // 10 m over the roofs around the camera
@@ -230,7 +231,7 @@ export function createQuest(ctx) {
       plan.append(li);
     }
     let primary;
-    if (!sum.started) primary = button('quest-btn is-primary', s('start'), () => goStop(0));
+    if (!sum.started) primary = button('quest-btn is-primary', s('start'), () => begin());
     else if (sum.next < sum.total) primary = button('quest-btn is-primary', s('resume', { n: sum.next + 1, m: sum.total }), () => goStop(sum.next));
     else primary = button('quest-btn is-primary', s('finish'), () => renderEnd());
     const again = sum.started ? button('quest-btn', s('restart'), () => restart()) : null;
@@ -312,8 +313,13 @@ export function createQuest(ctx) {
       feedback.scrollIntoView({ block: 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
     }
     function answer(k) {
-      if (!rp.pick(st.id, k, st.answer)) return;
+      const verdict = rp.pick(st.id, k, st.answer);
+      if (!verdict) return;
       paint(true);
+      if (verdict !== 'right') return;
+      track('quest_step_completed', st.id, stopResult(rp.tries(st.id), st.answer).attempts);
+      const sum = questSummary(stops, rp);
+      if (sum.done === sum.total) track('quest_completed', st.id);
     }
 
     const showBtn = button('quest-btn is-quiet', s('show'), () => fly(shot));
@@ -344,6 +350,7 @@ export function createQuest(ctx) {
       li.append(stamp, h, el('p', 'quest-visit-text', pick(st.visit).join(' ')));
       const open = button('quest-link', s('open_card'), () => {
         const index = st.item.index;
+        track('outbound_visit_clicked', st.id);
         stop();
         ctx.onPlace?.(index);
       });
@@ -362,10 +369,19 @@ export function createQuest(ctx) {
     renderStop(THREE.MathUtils.clamp(i, 0, stops.length - 1));
   }
 
-  function restart() {
-    rp.reset();
+  // the route starts at its first stop (Start, or Start again after a reset)
+  function begin() {
+    track('quest_started', stops[0].id);
     goStop(0);
   }
+
+  function restart() {
+    rp.reset();
+    begin();
+  }
+
+  // product events (events.js): a CustomEvent on window, sent nowhere
+  const track = (name, stop = null, attempt = null) => emit(name, { city: ctx.city, route: route?.id ?? null, stop, attempt, lang: language });
 
   // ------------------------------------------------ camera
   // The part of the screen the card leaves free, as fractions of the view.
