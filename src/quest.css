@@ -63,9 +63,12 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--cob);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  /* a long route title wraps to two lines beside the stamps */
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .quest-stamps { display: flex; gap: 5px; margin: 0; padding: 0; list-style: none; flex: none; }
 .quest-stamp {
@@ -254,8 +257,6 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
   .quest-card { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 58vh; max-height: 58dvh; border-radius: 14px 14px 0 0; }
   .quest[data-screen='intro'] .quest-card, .quest[data-screen='end'] .quest-card { max-height: 66vh; max-height: 66dvh; }
   .quest-head { padding: 8px 10px 8px 16px; }
-  /* a long route title wraps to two lines beside the stamps */
-  .quest-kicker { white-space: normal; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .quest-body { padding: 14px 16px 16px; }
   .quest-actions { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); }
   .quest-title { font-size: 21px; margin-bottom: 10px; }

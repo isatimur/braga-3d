@@ -308,7 +308,26 @@
         "First load: entry JS +1,665 bytes (+475 gzip), CSS and HTML unchanged. Lazy: quest JS 10.4 kB (4.7 kB gzip), quest CSS 7.4 kB (2.2 kB gzip), data/quest.json 22.6 kB (7.9 kB gzip)",
         "Browser checks: 4 route runs and 18 behaviour checks pass, no console errors; screenshots in /tmp/braga-discover/ (not in the repository)"
       ],
-      "notes": "Mode id is quest, not discover: the left panel already has a «Discover» view (discovery.js). The route keeps the visitor's light; live mode (the default) shows the real sky, so at night the stops are dark. A demo can switch Atmosphere to Day first. Not checked: a physical phone, a screen reader. Fixed on the way: the Palácio do Raio year in pt.js said 1752–1755 against its own text (1752–1754). Not deployed."
+      "notes": "Mode id is quest, not discover: the left panel already has a «Discover» view (discovery.js). Round 2 (braga-017) replaced the light rule: the route now shows daylight. Not checked: a physical phone, a screen reader. Fixed on the way: the Palácio do Raio year in pt.js said 1752–1755 against its own text (1752–1754). Not deployed."
+    },
+    {
+      "id": "braga-017",
+      "priority": 17,
+      "area": "visitor modes",
+      "title": "History routes, round 2: daylight, retry, several routes, text version, event layer",
+      "user_visible_behavior": "While a route runs the scene shows clear daylight; on exit the visitor's own light comes back (preset or live sun, and weather), never written to storage or the URL; a time= set by hand during the route stays. A wrong pick says «not this one», disables that option and reveals nothing; right first time earns a gold stamp, right after a retry a plain one; the end says «5 places visited, 3 answered right first time». #quest opens a chooser (or the route in progress), #quest=<id> one route: two-thousand-years (round 1, unchanged) and old-town-on-foot (Biscainhos, Arco da Porta Nova, Sé, Santa Bárbara garden and old archbishops' palace, castle keep). Plain HTML pages at /route/, /route/<id>/ and their en/ and ru/ folders; the route intro, the chooser and the no-WebGL notice link to them. src/events.js fires p3d:event (quest_started, quest_step_completed, quest_completed, outbound_visit_clicked) on window and sends nothing.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (quest.test.mjs: every route passes the verbatim checks, shared stops ask different questions, unique kebab-case route ids, no stale visit lines, retry, per-route progress, migration of the round-1 save, broken and blocked storage, text pages current with the data and the sitemap; events.test.mjs: payload, no network, storage or identity)",
+        "npm run verify (adds «route pages»: public/route/ matches data/quest.json)",
+        "Browser (headless Chromium, production build, outside requests blocked): light (live night, night with rain, a hand change, a deep link), late (life.js forced to arrive after the route opened: no night or rain flash), retry with a migrated save, the second route at 1280x800 and 390x844 in pt and en with events, behaviour (lazy load, menu, keyboard, hash switches, the route in progress, unknown id, reduced motion ru), text pages with JavaScript off, the no-WebGL notice"
+      ],
+      "evidence": [
+        "2026-11-16: node --test scripts/*.test.mjs 27/27 pass; npm run verify OK",
+        "First load against round 1: entry JS +647 bytes (+267 gzip), CSS +75 bytes (+22 gzip), HTML unchanged. Lazy: quest JS 15.1 kB (6.5 kB gzip), quest CSS 8.2 kB (2.3 kB gzip), data/quest.json 45.0 kB (13.5 kB gzip)",
+        "Browser: 273 checks pass on the final build (light, late, retry, flow, behave, text), no console errors; screenshots in /tmp/braga-quest-2/ (not in the repository)"
+      ],
+      "notes": "Biscainhos and the castle keep rest on two sources each; their tips also carry status lines (closed on Mondays, history centre temporarily closed) that the route does not quote. The Paço has no landmark of its own: Santa Bárbara is «Jardim de Santa Bárbara e Antigo Paço Arquiepiscopal», so one stop covers both and Biscainhos is the fifth. From reading the code (not tested): story, cinema and the game still end live mode, because their own time change leaves live mode and modeCtx.onExit maps 'live' to the default preset; only the route was changed. Not checked: a physical phone, a screen reader. Not deployed."
     }
   ]
 }

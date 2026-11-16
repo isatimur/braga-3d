@@ -11,8 +11,8 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current local work: the history route (braga-016) on `feat/discover-route`, merged into `main` when its checks pass. Not pushed, not deployed.
-- Latest check: 2026-11-16. `node --test scripts/*.test.mjs` (16/16) and `npm run verify` passed; the headless browser checks in Session 013 passed on the production build.
+- Current local work: history routes round 2 (braga-017) on `feat/quest-round-2`, merged into `main` when its checks pass. Not pushed, not deployed.
+- Latest check: 2026-11-16. `node --test scripts/*.test.mjs` (27/27) and `npm run verify` passed; the headless browser checks in Session 014 passed on the production build.
 - Production state: last documented check is from 2026-10-04; not rechecked since. braga-3d.com does not have braga-014 or braga-015.
 
 ## Session Log
@@ -230,4 +230,20 @@ updates it automatically.
   - `src/locales/pt.js`: Palácio do Raio year 1752–1755 -> 1752–1754, as its own text and the ru/en data say.
 - Verification: `node --test scripts/*.test.mjs` 16/16; `npm run verify` OK. Browser checks with `/tmp/braga-discover/check.mjs` (headless Chromium, `vite preview` of the build): the full route at 1280x800 and 390x844 in pt and en, and behaviour checks (no chunk on a plain visit, menu entry, focus and Tab, inert map chrome, fly keys off, map clicks off, Esc restores the map, resume and start again, place card from the end, reduced motion cuts, Esc during the data load).
 - First load: entry JS +1,665 bytes (+475 gzip); CSS and HTML unchanged.
-- Known limits: the route keeps the visitor's light. Live mode (the default) follows the real sun, so at night the stops are dark; a forced preset would switch live mode off for good, so the route does not set one. Not checked on a physical phone or with a screen reader. The overview hides some stop labels where they collide.
+- Known limits: the route keeps the visitor's light. Live mode (the default) follows the real sun, so at night the stops are dark; a forced preset would switch live mode off for good, so the route does not set one. Not checked on a physical phone or with a screen reader. The overview hides some stop labels where they collide. (Session 014 replaced this light rule.)
+
+### Session 014
+
+- Date: 2026-11-16
+- Branch: `feat/quest-round-2`, merged into `main` when the checks pass. Nothing is pushed or deployed.
+- Goal: history routes, round 2 (braga-017).
+- Done:
+  - Daylight: `src/live.js` `hold()` pauses the real sun and weather and keeps a preset from leaving live mode, with no storage write. `src/quest.js` keeps the visitor's time, live mode and weather, shows `day` and `clear`, and restores them on exit; `main.js` `currentHash` uses `quest.heldLight`, so the URL never carries the override; `deferLayers` calls `quest.lifeReady()` when life.js arrives during a route; it puts day and clear back at once, since life.js sets the live sun and saved weather at once (a browser check forced this order and first saw a night and rain flash, now gone). A `time=` hash edit during the route is the visitor's and stays.
+  - Retry: `src/quest-progress.js` v2 save `braga-quests-<city>` (per route id, every pick kept). The round-1 save `braga-quest-<city>` is read once into `two-thousand-years`; an old wrong answer becomes a plain stamp.
+  - Routes: `data/quest.json` `routes[]`; chooser; `#quest` (chooser, the only route, or the route in progress) and `#quest=<id>`. Second route `old-town-on-foot`: Biscainhos, Arco da Porta Nova, Sé, Santa Bárbara (the old archbishops' palace is the same landmark), Torre de Menagem.
+  - Text version: `scripts/route-pages.mjs`, run by `make-og.mjs --pages`, writes `public/route/`; sitemap; verify step «route pages»; links from the intro, the chooser and the no-WebGL notice.
+  - Events: `src/events.js` `emit()` -> `p3d:event` on window; fired from the route.
+- Verification: `node --test scripts/*.test.mjs` 27/27; `npm run verify` OK. Browser checks with `/tmp/braga-quest-2/check.mjs` (sections light, late, retry, flow, behave, text; `run-all.sh` runs them on the build served by `vite preview --port 4874`): 273 checks pass, no console errors; screenshots in `/tmp/braga-quest-2/`.
+- First load against round 1: entry JS +647 bytes (+267 gzip), CSS +75 (+22 gzip), HTML unchanged. Lazy: quest JS 15.1 kB (6.5 kB gzip), quest CSS 8.2 kB, data/quest.json 45.0 kB (13.5 kB gzip).
+- Behaviour to know: while a route runs the hash also carries the visitor's own light (for example `#quest=old-town-on-foot&time=live&live=1`), never the daylight override. A `#quest` hash edit while a route is open goes back to the chooser.
+- Known limits: story, cinema and the game still appear to end live mode on exit (read in the code, not tested). A `#quest&live=1` link loses `live=1` (older: `startMode` rewrites the hash before life.js reads it). The menu label is still «History route» and its title says «five places, five questions». Not checked on a physical phone or with a screen reader.
