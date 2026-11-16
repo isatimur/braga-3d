@@ -22,7 +22,7 @@ import { S } from './geo.js';
 import { assetUrl } from './data.js';
 import { dataPath } from './city.js';
 import { creditNode } from './gallery.js';
-import { createQuestProgress, questSummary } from './quest-progress.js';
+import { createQuestProgress, questSummary, stopResult, LEGACY_ROUTE } from './quest-progress.js';
 import './quest.css';
 
 const SHOT_CLEAR = 10 * S; // 10 m over the roofs around the camera
@@ -43,7 +43,8 @@ async function loadQuest() {
 export function createQuest(ctx) {
   const { camera, rig, reducedMotion } = ctx;
   const byId = new Map(ctx.items.map((it) => [it.data.id, it]));
-  const progress = createQuestProgress(ctx.city);
+  let progress = null; // made once the data is in (the old save needs its answers)
+  let rp = null; // progress.route(<the open route>)
   // the map chrome quest.css hides; inert while the route runs, so Tab and
   // screen readers do not land in it
   const CHROME = '.side, .detail, .topbar, .brand, .instruments, .hint, .clusters, .callout, .callout-leader, .atmo, .guide-fab, .guide, #labels';
@@ -96,16 +97,21 @@ export function createQuest(ctx) {
   root.append(card);
   (document.getElementById('story')?.parentElement || document.body).append(root);
 
+  // a stop's stamp: gold (right first time), plain (right after a retry),
+  // seen (visited, not answered yet) or none
+  function stampOf(st) {
+    const tries = rp.tries(st.id);
+    const r = stopResult(tries, st.answer);
+    const kind = r.gold ? 'gold' : r.done ? 'plain' : rp.visited(st.id) || tries.length ? 'seen' : 'none';
+    return { cls: kind === 'none' ? '' : ` is-${kind}`, label: s(`stamp_${kind}`, { name: st.item.data.name }) };
+  }
+
   function renderStamps() {
     stampList.replaceChildren();
     stops.forEach((st, i) => {
-      const name = st.item.data.name;
-      const a = progress.answer(st.id);
-      const right = a != null && a === st.answer;
-      const seen = progress.visited(st.id) || a != null;
-      const li = el('li', `quest-stamp${right ? ' is-right' : seen ? ' is-seen' : ''}`);
+      const { cls, label } = stampOf(st);
+      const li = el('li', `quest-stamp${cls}`);
       li.append(el('span', 'quest-stamp-num', String(i + 1)));
-      const label = s(right ? 'stamp_right' : seen ? 'stamp_seen' : 'stamp_none', { name });
       li.setAttribute('aria-label', label);
       li.title = label;
       if (screen === 'stop' && i === current) li.setAttribute('aria-current', 'step');
@@ -141,7 +147,7 @@ export function createQuest(ctx) {
   function renderIntro() {
     screen = 'intro';
     current = -1;
-    const sum = questSummary(stops, progress);
+    const sum = questSummary(stops, rp);
     const title = el('h2', 'quest-title quest-title-main', s('title'));
     title.tabIndex = -1;
     const plan = el('ol', 'quest-plan');
@@ -151,10 +157,10 @@ export function createQuest(ctx) {
       plan.append(li);
     }
     let primary;
-    if (sum.answered === 0) primary = button('quest-btn is-primary', s('start'), () => goStop(0));
+    if (!sum.started) primary = button('quest-btn is-primary', s('start'), () => goStop(0));
     else if (sum.next < sum.total) primary = button('quest-btn is-primary', s('resume', { n: sum.next + 1, m: sum.total }), () => goStop(sum.next));
     else primary = button('quest-btn is-primary', s('finish'), () => renderEnd());
-    const again = sum.answered ? button('quest-btn', s('restart'), () => restart()) : null;
+    const again = sum.started ? button('quest-btn', s('restart'), () => restart()) : null;
     show([title, el('p', 'quest-lead', s('subtitle')), plan, el('p', 'quest-note', s('note'))], [again, primary]);
     frameOverview();
   }
@@ -164,7 +170,7 @@ export function createQuest(ctx) {
     current = i;
     const st = stops[i];
     const l = st.item.data;
-    progress.visit(st.id);
+    rp.visit(st.id);
     const step = el('p', 'quest-step', s('stop', { n: i + 1, m: stops.length }));
     if (l.year) step.append(el('span', 'quest-year', l.year));
     const title = el('h2', 'quest-title', l.name);
@@ -207,37 +213,39 @@ export function createQuest(ctx) {
     });
     qBox.append(el('p', 'quest-qlabel', s('question')), q, opts, feedback);
 
-    function settle(chosen, announce) {
-      const right = chosen === st.answer;
+    // A wrong pick: «not this one», that option is disabled, no reveal; the
+    // visitor picks again. The right pick shows the explanation. The saved
+    // picks repaint the same state on a revisit.
+    function paint(announce) {
+      const tries = rp.tries(st.id);
+      const r = stopResult(tries, st.answer);
       optButtons.forEach((b, k) => {
-        b.disabled = true;
-        b.classList.toggle('is-right', k === st.answer);
-        b.classList.toggle('is-wrong', k === chosen && !right);
-        if (k === chosen) b.setAttribute('aria-pressed', 'true');
+        const tried = tries.includes(k);
+        b.disabled = r.done || tried;
+        b.classList.toggle('is-right', r.done && k === st.answer);
+        b.classList.toggle('is-tried', tried && k !== st.answer);
       });
-      const verdict = el('p', `quest-verdict ${right ? 'is-right' : 'is-wrong'}`);
-      if (right) verdict.textContent = s('correct');
-      else verdict.append(document.createTextNode(`${s('wrong')} `), el('strong', '', pick(st.options[st.answer])));
-      const basis = el('blockquote', 'quest-basis');
-      basis.append(el('span', 'quest-basis-label', s('basis')), document.createTextNode(` ${s('basis_quote', { text: pick(st.basis) })}`));
-      feedback.replaceChildren(verdict, basis); // also on a revisit: the saved answer
-      nextBtn.hidden = false;
+      nextBtn.hidden = !r.done;
+      if (r.done) {
+        const verdict = el('p', 'quest-verdict is-right', s(r.gold ? 'correct_gold' : 'correct_plain'));
+        const basis = el('blockquote', 'quest-basis');
+        basis.append(el('span', 'quest-basis-label', s('basis')), document.createTextNode(` ${s('basis_quote', { text: pick(st.basis) })}`));
+        feedback.replaceChildren(verdict, basis);
+      } else feedback.replaceChildren(...(tries.length ? [el('p', 'quest-verdict is-retry', s('retry'))] : []));
       renderStamps();
-      if (announce) {
-        nextBtn.focus({ preventScroll: true });
-        feedback.scrollIntoView({ block: 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
-      }
+      if (!announce) return;
+      if (r.done) nextBtn.focus({ preventScroll: true });
+      else optButtons.find((b) => !b.disabled)?.focus({ preventScroll: true });
+      feedback.scrollIntoView({ block: 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
     }
     function answer(k) {
-      if (!progress.pick(st.id, k)) return;
-      settle(k, true);
+      if (!rp.pick(st.id, k, st.answer)) return;
+      paint(true);
     }
 
-    nextBtn.hidden = true;
     const showBtn = button('quest-btn is-quiet', s('show'), () => fly(shot));
     show([step, title, photo, text, qBox, sourcesLine(l)], [showBtn, nextBtn]);
-    const saved = progress.answer(st.id);
-    if (saved != null) settle(saved, false);
+    paint(false);
     ctx.onFocus?.([st.id]);
     shot = screenShot();
     fly(shot);
@@ -246,19 +254,19 @@ export function createQuest(ctx) {
   function renderEnd() {
     screen = 'end';
     current = -1;
-    const sum = questSummary(stops, progress);
-    const title = el('h2', 'quest-title quest-title-main', s('score', { n: sum.right, m: sum.total }));
+    const sum = questSummary(stops, rp);
+    const title = el('h2', 'quest-title quest-title-main', s('summary', { v: sum.visited, g: sum.gold }));
     title.tabIndex = -1;
     const list = el('ol', 'quest-visits');
     stops.forEach((st, i) => {
       const l = st.item.data;
       const li = el('li', 'quest-visit');
-      // the stop's stamp, large: filled for a right answer
-      const a = progress.answer(st.id);
-      const right = a != null && a === st.answer;
-      const seen = progress.visited(st.id) || a != null;
-      const stamp = el('span', `quest-stamp quest-visit-stamp${right ? ' is-right' : seen ? ' is-seen' : ''}`, String(i + 1));
-      stamp.setAttribute('aria-hidden', 'true');
+      // the stop's stamp, large; the list's heading names the place, the
+      // stamp's label says how it was answered
+      const { cls, label } = stampOf(st);
+      const stamp = el('span', `quest-stamp quest-visit-stamp${cls}`, String(i + 1));
+      stamp.setAttribute('role', 'img');
+      stamp.setAttribute('aria-label', label);
       const h = el('h3', 'quest-visit-name', l.name);
       li.append(stamp, h, el('p', 'quest-visit-text', pick(st.visit).join(' ')));
       const open = button('quest-link', s('open_card'), () => {
@@ -282,7 +290,7 @@ export function createQuest(ctx) {
   }
 
   function restart() {
-    progress.reset();
+    rp.reset();
     goStop(0);
   }
 
@@ -491,6 +499,8 @@ export function createQuest(ctx) {
         ctx.onError?.(new Error('no stops'));
         return;
       }
+      progress = createQuestProgress(ctx.city, Object.fromEntries(stops.map((st) => [st.id, st.answer])));
+      rp = progress.route(data.id || LEGACY_ROUTE);
       root.setAttribute('aria-label', s('title'));
       kicker.textContent = s('kicker');
       stampList.setAttribute('aria-label', s('stamps'));
@@ -550,7 +560,7 @@ export function createQuest(ctx) {
     },
     // tests and screenshots
     get state() {
-      const sum = stops.length ? questSummary(stops, progress) : null;
+      const sum = stops.length && rp ? questSummary(stops, rp) : null;
       return { active, screen, stop: current, id: stops[current]?.id ?? null, flying: flying && rig.touring, ...sum };
     },
     goStop,

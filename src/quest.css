@@ -79,7 +79,9 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
   border-radius: 50%;
 }
 .quest-stamp.is-seen { color: var(--cob); border: 1.5px solid var(--cob); }
-.quest-stamp.is-right { color: #fff; background: var(--cob); border: 1.5px solid var(--cob); box-shadow: inset 0 0 0 2px var(--por), 0 0 0 1px var(--cob); }
+/* plain: right after a retry; gold: right first time */
+.quest-stamp.is-plain { color: #fff; background: var(--cob); border: 1.5px solid var(--cob); box-shadow: inset 0 0 0 2px var(--por), 0 0 0 1px var(--cob); }
+.quest-stamp.is-gold { color: var(--cob-d); background: #e7b450; border: 1.5px solid #a87a1f; box-shadow: inset 0 0 0 2px var(--por), 0 0 0 1px #a87a1f; }
 .quest-stamp[aria-current='step'] { outline: 2px solid #e0a948; outline-offset: 2px; }
 .quest-close {
   flex: none;
@@ -190,13 +192,15 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
 .quest-option-text { flex: 1 1 auto; line-height: 1.35; }
 .quest-option.is-right { color: var(--ink-c); background: #e6f1e4; border-color: var(--moss); }
 .quest-option.is-right .quest-option-key { color: #fff; background: var(--moss); }
-.quest-option.is-wrong { background: #fbeaea; border-color: #b8454a; }
-.quest-option.is-wrong .quest-option-key { color: #fff; background: #b8454a; }
+/* an option already tried: set aside, not marked as a failure */
+.quest-option.is-tried { color: var(--text-3); background: transparent; border-style: dashed; }
+.quest-option.is-tried .quest-option-text { text-decoration: line-through; text-decoration-color: rgba(60, 74, 99, 0.45); }
+.quest-option.is-tried .quest-option-key { color: var(--text-3); background: transparent; }
 .quest-feedback:empty { display: none; }
 .quest-feedback { margin-top: 12px; }
 .quest-verdict { margin: 0 0 8px; font-weight: 700; }
 .quest-verdict.is-right { color: #2f6a2d; }
-.quest-verdict.is-wrong { color: #8f2f33; }
+.quest-verdict.is-retry { margin: 0; color: var(--cob-d); }
 .quest-basis { margin: 0; padding: 0 0 0 10px; font-size: 13.5px; line-height: 1.5; color: var(--text-2); border-left: 3px solid var(--cob); }
 .quest-basis-label { font-weight: 600; color: var(--cob-d); }
 .quest-sources { margin: 0 0 4px; font-size: 11.5px; line-height: 1.5; color: var(--text-3); }

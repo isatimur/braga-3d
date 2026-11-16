@@ -6,7 +6,7 @@ import { test as nodeTest } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { messages } from '../src/locales/ui.js';
-import { createQuestProgress, questSummary } from '../src/quest-progress.js';
+import { createQuestProgress, questSummary, stopResult, migrateProgress, LEGACY_ROUTE } from '../src/quest-progress.js';
 
 const root = new URL('../', import.meta.url);
 // a fork without the route's data skips these checks (as verify skips a
@@ -109,34 +109,94 @@ test('every interface string the module uses exists in all three languages', () 
   const code = readFileSync(new URL('src/quest.js', root), 'utf8');
   const used = new Set([...code.matchAll(/\bs\('([a-z_]+)'/g)].map((m) => m[1]));
   assert.ok(used.size > 10, 'the module reads its strings through s()');
+  // keys built or chosen at run time
+  for (const k of ['correct_gold', 'correct_plain', 'stamp_gold', 'stamp_plain', 'stamp_seen', 'stamp_none']) used.add(k);
   for (const k of used) assert.ok(quest.ui[k], `src/quest.js uses ui.${k}, missing in data/quest.json`);
   // no reconstruction is called historical; no feature is promised
   for (const v of Object.values(quest.ui)) for (const lang of LANGS) assert.doesNotMatch(v[lang], /reconstru|реконструк/i);
 });
 
-test('progress: visits, first answer is final, summary, reset', () => {
-  const store = new Map();
+// a localStorage stand-in; returns its Map
+function fakeStorage(seed = {}) {
+  const store = new Map(Object.entries(seed));
   globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
+  return store;
+}
+const wrongOf = (s, n = 1) => (s.answer + n) % 3;
+
+test('retry: a wrong pick is kept and disabled, the right one closes the stop', () => {
+  fakeStorage();
   const stops = quest.stops;
-  const p = createQuestProgress('braga');
-  assert.deepEqual(questSummary(stops, p), { right: 0, answered: 0, total: 5, next: 0 });
-  p.visit(stops[0].id);
-  assert.equal(p.visited(stops[0].id), true);
-  assert.equal(p.pick(stops[0].id, stops[0].answer), true);
-  assert.equal(p.pick(stops[0].id, (stops[0].answer + 1) % 3), false, 'a second pick is ignored');
-  assert.equal(p.pick(stops[1].id, (stops[1].answer + 1) % 3), true);
-  assert.deepEqual(questSummary(stops, p), { right: 1, answered: 2, total: 5, next: 2 });
-  // a fresh reader sees the saved state
-  const again = createQuestProgress('braga');
-  assert.equal(again.answer(stops[0].id), stops[0].answer);
-  assert.ok(store.has('braga-quest-braga'));
+  const rp = createQuestProgress('braga').route(LEGACY_ROUTE);
+  const [a, b] = stops;
+  assert.deepEqual(questSummary(stops, rp), { gold: 0, done: 0, visited: 0, started: 0, total: 5, next: 0 });
+  rp.visit(a.id);
+  assert.equal(rp.visited(a.id), true);
+  // stop 1: right first time
+  assert.equal(rp.pick(a.id, a.answer, a.answer), 'right');
+  assert.equal(rp.pick(a.id, wrongOf(a), a.answer), null, 'a done stop takes no more picks');
+  assert.deepEqual(stopResult(rp.tries(a.id), a.answer), { done: true, attempts: 1, gold: true });
+  // stop 2: wrong, the same wrong again (ignored), another wrong, then right
+  assert.equal(rp.pick(b.id, wrongOf(b), b.answer), 'wrong');
+  assert.deepEqual(stopResult(rp.tries(b.id), b.answer), { done: false, attempts: 1, gold: false });
+  assert.equal(rp.pick(b.id, wrongOf(b), b.answer), null, 'a tried option is disabled');
+  assert.equal(rp.pick(b.id, 7.5, b.answer), null, 'not an option');
+  assert.deepEqual(questSummary(stops, rp), { gold: 1, done: 1, visited: 2, started: 2, total: 5, next: 1 });
+  assert.equal(rp.pick(b.id, wrongOf(b, 2), b.answer), 'wrong');
+  assert.equal(rp.pick(b.id, b.answer, b.answer), 'right');
+  assert.deepEqual(stopResult(rp.tries(b.id), b.answer), { done: true, attempts: 3, gold: false });
+  assert.deepEqual(questSummary(stops, rp), { gold: 1, done: 2, visited: 2, started: 2, total: 5, next: 2 });
+  // a reload mid-stop does not give a fresh first try
+  const c = stops[2];
+  rp.pick(c.id, wrongOf(c), c.answer);
+  const again = createQuestProgress('braga').route(LEGACY_ROUTE);
+  assert.deepEqual(again.tries(c.id), [wrongOf(c)]);
+  assert.equal(again.pick(c.id, c.answer, c.answer), 'right');
+  assert.equal(stopResult(again.tries(c.id), c.answer).gold, false);
   again.reset();
-  assert.deepEqual(questSummary(stops, createQuestProgress('braga')), { right: 0, answered: 0, total: 5, next: 0 });
-  // blocked storage: memory only, no throw
+  assert.deepEqual(questSummary(stops, createQuestProgress('braga').route(LEGACY_ROUTE)), { gold: 0, done: 0, visited: 0, started: 0, total: 5, next: 0 });
+  delete globalThis.localStorage;
+});
+
+test('progress: the first-round save migrates without loss, once, into the first route only', () => {
+  const stops = quest.stops;
+  const answers = Object.fromEntries(stops.map((s) => [s.id, s.answer]));
+  const [a, b, c] = stops;
+  const old = { visited: { [a.id]: 1, [b.id]: 1, [c.id]: 1 }, answers: { [a.id]: a.answer, [b.id]: wrongOf(b) } };
+  const store = fakeStorage({ 'braga-quest-braga': JSON.stringify(old) });
+  const p = createQuestProgress('braga', answers);
+  const rp = p.route(LEGACY_ROUTE);
+  // right stays gold; the old wrong (final, it showed the answer) becomes a plain stamp
+  assert.deepEqual(stopResult(rp.tries(a.id), a.answer), { done: true, attempts: 1, gold: true });
+  assert.deepEqual(stopResult(rp.tries(b.id), b.answer), { done: true, attempts: 2, gold: false });
+  assert.equal(rp.visited(c.id), true);
+  assert.deepEqual(questSummary(stops, rp), { gold: 1, done: 2, visited: 3, started: 2, total: 5, next: 2 });
+  assert.equal(p.last, LEGACY_ROUTE);
+  // another route that shares a stop does not inherit the answer
+  assert.deepEqual(p.route('another').tries(a.id), []);
+  // the new key is written on the first change; the old one is left alone
+  rp.visit(stops[3].id);
+  assert.equal(store.get('braga-quest-braga'), JSON.stringify(old));
+  assert.equal(JSON.parse(store.get('braga-quests-braga')).v, 2);
+  // once the new save exists the old one is not read again
+  store.set('braga-quest-braga', JSON.stringify({ visited: {}, answers: { [c.id]: c.answer } }));
+  assert.deepEqual(createQuestProgress('braga', answers).route(LEGACY_ROUTE).tries(c.id), []);
+  delete globalThis.localStorage;
+});
+
+test('progress: broken or foreign saves and blocked storage never throw', () => {
+  for (const raw of ['{not json', 'null', '[]', '42', '"x"', JSON.stringify({ v: 2, routes: { r: { visited: 5, tries: { s: 'x', t: [1, 1, 'y', -1, 2] } } } })]) {
+    fakeStorage({ 'braga-quests-braga': raw, 'braga-quest-braga': '{broken' });
+    const rp = createQuestProgress('braga', {}).route('r');
+    assert.deepEqual(rp.tries('s'), []);
+    if (raw.includes('"t"')) assert.deepEqual(rp.tries('t'), [1, 2], 'only valid, unique picks survive');
+    assert.equal(rp.pick('s', 0, 1), 'wrong');
+  }
+  assert.deepEqual(migrateProgress(null, { answers: { x: 'a' } }), { v: 2, last: null, routes: {} });
   globalThis.localStorage = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
-  const blocked = createQuestProgress('braga');
+  const blocked = createQuestProgress('braga').route('r');
   blocked.visit('x');
-  assert.equal(blocked.pick('x', 1), true);
-  assert.equal(blocked.answer('x'), 1);
+  assert.equal(blocked.pick('x', 1, 1), 'right');
+  assert.deepEqual(blocked.tries('x'), [1]);
   delete globalThis.localStorage;
 });
