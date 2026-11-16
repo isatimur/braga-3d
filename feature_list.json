@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-11-15",
+  "last_updated": "2026-11-16",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -290,6 +290,25 @@
         "2026-11-15: node --test scripts/*.test.mjs and npm run verify passed"
       ],
       "notes": "Fixed in the browser pass: __braga.story stayed null after the lazy load; Escape, opening a place or a route, or a hash without a mode now cancel a mode that is still loading (cancelModeLoad). Known limit: after a failed import a second try in the same page does not refetch in Chromium (the browser keeps the failed module), so the toast shows again until a reload. Not explained: early in the session the desktop game lost #game from the address (empty hash or #weather=drizzle) while live weather was drizzle; later runs on this build and on 84321c5, with real and with mocked drizzle weather, kept #game. Not deployed."
+    },
+    {
+      "id": "braga-016",
+      "priority": 16,
+      "area": "visitor modes",
+      "title": "History route: five landmarks, one question each, a result",
+      "user_visible_behavior": "From Menu > Modes > History route, or the link ?lang=pt#quest, the visitor gets «Discover historic Braga»: the camera flies to five landmarks in time order (Roman baths, cathedral, Arco da Porta Nova, Raio Palace, Bom Jesus). Each stop shows a short sourced history, the photo with its credit, one question with three options, the answer with its source quote, and the source links. Right answers earn stamps, saved on the device. The end shows the score, the five stamps and how to see each place in the real city, with a link to its place card. Esc leaves and restores the map. pt, en, ru.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (scripts/quest.test.mjs: every history, answer and visit line is a verbatim excerpt of the place card in the same language; no opening hours; sources match; strings complete; progress save)",
+        "npm run verify",
+        "Browser (headless Chromium, production build): full route at 1280x800 and 390x844 in pt and en, behaviour checks (lazy load, menu entry, keyboard, Esc, resume, start again, place card, reduced motion, Esc during load)"
+      ],
+      "evidence": [
+        "2026-11-16: node --test scripts/*.test.mjs 16/16 pass; npm run verify OK",
+        "First load: entry JS +1,665 bytes (+475 gzip), CSS and HTML unchanged. Lazy: quest JS 10.4 kB (4.7 kB gzip), quest CSS 7.4 kB (2.2 kB gzip), data/quest.json 22.6 kB (7.9 kB gzip)",
+        "Browser checks: 4 route runs and 18 behaviour checks pass, no console errors; screenshots in /tmp/braga-discover/ (not in the repository)"
+      ],
+      "notes": "Mode id is quest, not discover: the left panel already has a «Discover» view (discovery.js). The route keeps the visitor's light; live mode (the default) shows the real sky, so at night the stops are dark. A demo can switch Atmosphere to Day first. Not checked: a physical phone, a screen reader. Fixed on the way: the Palácio do Raio year in pt.js said 1752–1755 against its own text (1752–1754). Not deployed."
     }
   ]
 }
