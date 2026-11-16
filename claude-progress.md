@@ -11,8 +11,8 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current local work: none open. Mobile flight controls (braga-014) and deferred loading of optional modes (braga-015) are merged into `main` from `feat/touch-and-lazy-modes`. Not pushed, not deployed.
-- Latest check: 2026-11-15. `node --test scripts/*.test.mjs` and `npm run verify` passed; the headless browser checks in Session 012 passed on the production build.
+- Current local work: the history route (braga-016) on `feat/discover-route`, merged into `main` when its checks pass. Not pushed, not deployed.
+- Latest check: 2026-11-16. `node --test scripts/*.test.mjs` (16/16) and `npm run verify` passed; the headless browser checks in Session 013 passed on the production build.
 - Production state: last documented check is from 2026-10-04; not rechecked since. braga-3d.com does not have braga-014 or braga-015.
 
 ## Session Log
@@ -217,3 +217,17 @@ updates it automatically.
 - Verification: `node --test scripts/*.test.mjs` passed; `npm run verify` passed.
 - Evidence: screenshots and the check script (`check.mjs`) are in `/tmp/braga-touch/`; they are not in the repository.
 - Next step: decide on a deploy; then the compass and action-button overlap in the game on phones.
+
+### Session 013
+
+- Date: 2026-11-16
+- Branch: `feat/discover-route`. Nothing is pushed or deployed.
+- Goal: a guided history route for a demo to the tourism office, schools and culture bodies (braga-016).
+- Done:
+  - `src/quest.js` (lazy chunk, with `src/quest.css`), `src/quest-progress.js`, `data/quest.json`. Entry: Menu > Modes > History route, or `#quest` (demo link `https://braga-3d.com/?lang=pt#quest`). The id is `quest`, because the left panel already has a «Discover» view.
+  - Stops, in time order: Termas Romanas do Alto da Cividade, Sé de Braga, Arco da Porta Nova, Palácio do Raio, Bom Jesus do Monte. Every history, answer and visit line is a verbatim excerpt of the place card in that language; `scripts/quest.test.mjs` checks it, and checks that visit lines carry no opening hours.
+  - `src/main.js`: the mode joins `startMode`, `applyHash`, the intro deep-link rule, the key dispatcher, map clicks, label clustering, the governor pause and the search block. Its stops win the label declutter while it runs.
+  - `src/locales/pt.js`: Palácio do Raio year 1752–1755 -> 1752–1754, as its own text and the ru/en data say.
+- Verification: `node --test scripts/*.test.mjs` 16/16; `npm run verify` OK. Browser checks with `/tmp/braga-discover/check.mjs` (headless Chromium, `vite preview` of the build): the full route at 1280x800 and 390x844 in pt and en, and behaviour checks (no chunk on a plain visit, menu entry, focus and Tab, inert map chrome, fly keys off, map clicks off, Esc restores the map, resume and start again, place card from the end, reduced motion cuts, Esc during the data load).
+- First load: entry JS +1,665 bytes (+475 gzip); CSS and HTML unchanged.
+- Known limits: the route keeps the visitor's light. Live mode (the default) follows the real sun, so at night the stops are dark; a forced preset would switch live mode off for good, so the route does not set one. Not checked on a physical phone or with a screen reader. The overview hides some stop labels where they collide.
