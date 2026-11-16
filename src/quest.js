@@ -519,7 +519,8 @@ export function createQuest(ctx) {
   function holdLight() {
     if (!atmosphere) return;
     const life = ctx.getLife?.();
-    if (!held) held = { time: atmosphere.time, live: false, weather: null, timeSet: false, weatherSet: false };
+    const first = !held;
+    if (first) held = { time: atmosphere.time, live: false, weather: null, timeSet: false, weatherSet: false };
     // life.js may arrive after the route opened: its live mode then sets
     // the real sun first, and that is the visitor's light
     else if (!held.timeSet && atmosphere.time === 'live') held.time = 'live';
@@ -534,9 +535,15 @@ export function createQuest(ctx) {
         });
       }
     }
+    // On entry the light blends to day. When life.js arrives later, its live
+    // sun and saved weather were just set at once (no frame drawn yet), so
+    // day and clear go back at once too: no flash of night or rain.
     quietly(() => {
-      if (!held.timeSet) ctx.setTime('day');
-      if (life && !held.weatherSet) life.weather.set('clear');
+      if (!held.timeSet) {
+        if (first) ctx.setTime('day');
+        else atmosphere.setTime('day', { animate: false });
+      }
+      if (life && !held.weatherSet) life.weather.set('clear', first ? {} : { instant: true });
     });
   }
   function releaseLight() {
