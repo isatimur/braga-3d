@@ -2,17 +2,21 @@
 // Every history line, every answer basis and every visit line must be a
 // verbatim excerpt of the landmark's own text in the same language, so the
 // route never says more than the sourced place cards do.
-import { test } from 'node:test';
+import { test as nodeTest } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { landmarks as EN } from '../src/locales/en.js';
-import { landmarks as PT } from '../src/locales/pt.js';
+import { existsSync, readFileSync } from 'node:fs';
 import { messages } from '../src/locales/ui.js';
 import { createQuestProgress, questSummary } from '../src/quest-progress.js';
 
 const root = new URL('../', import.meta.url);
-const quest = JSON.parse(readFileSync(new URL('data/quest.json', root), 'utf8'));
-const LM = JSON.parse(readFileSync(new URL('data/landmarks.json', root), 'utf8'));
+// a fork without the route's data skips these checks (as verify skips a
+// check whose input is missing)
+const HAS = existsSync(new URL('data/quest.json', root)) && existsSync(new URL('src/locales/en.js', root));
+const test = HAS ? nodeTest : (name) => nodeTest(name, { skip: 'no data/quest.json here' }, () => {});
+const quest = HAS ? JSON.parse(readFileSync(new URL('data/quest.json', root), 'utf8')) : null;
+const LM = HAS ? JSON.parse(readFileSync(new URL('data/landmarks.json', root), 'utf8')) : [];
+const EN = HAS ? (await import('../src/locales/en.js')).landmarks : {};
+const PT = HAS ? (await import('../src/locales/pt.js')).landmarks : {};
 const byId = new Map(LM.map((l) => [l.id, l]));
 const LANGS = ['ru', 'en', 'pt'];
 const CYRILLIC = /[А-Яа-яЁё]/;

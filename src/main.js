@@ -708,7 +708,9 @@ async function start() {
   // live=1, from live.js) when they differ from the default
   function currentHash() {
     const parts = [];
-    if (route) parts.push(`route=${route.route.id}`);
+    // the history route keeps #quest while it runs (a reload resumes it)
+    if (quest?.active) parts.push('quest');
+    else if (route) parts.push(`route=${route.route.id}`);
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
     if (atmosphere.time !== DEFAULT_TIME) parts.push(`time=${atmosphere.time}`);
     // until life and the seasons exist (deferLayers), keep what the link said

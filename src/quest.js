@@ -217,7 +217,7 @@ export function createQuest(ctx) {
       if (right) verdict.textContent = s('correct');
       else verdict.append(document.createTextNode(`${s('wrong')} `), el('strong', '', pick(st.options[st.answer])));
       const basis = el('blockquote', 'quest-basis');
-      basis.append(el('span', 'quest-basis-label', s('basis')), document.createTextNode(` “${pick(st.basis)}”`));
+      basis.append(el('span', 'quest-basis-label', s('basis')), document.createTextNode(` ${s('basis_quote', { text: pick(st.basis) })}`));
       feedback.replaceChildren(verdict, basis); // also on a revisit: the saved answer
       nextBtn.hidden = false;
       renderStamps();
