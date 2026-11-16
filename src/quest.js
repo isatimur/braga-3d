@@ -668,7 +668,7 @@ export function createQuest(ctx) {
       return { active, screen, route: route?.id ?? null, stop: current, id: stops[current]?.id ?? null, flying: flying && rig.touring, ...sum };
     },
     goStop,
-    showEnd: () => renderEnd(),
+    showEnd: () => route && renderEnd(),
     answer(k) {
       body.querySelectorAll('.quest-option')[k]?.click();
     },
