@@ -1,14 +1,18 @@
-// History route («Discover historic Braga», #quest): five landmarks in
-// time order, one at a time. The camera flies to each one (tour.js
-// flightCurve, over roofs and terrain); the card tells its history in a few
-// sentences, shows the photo with its credit and asks one question with
-// three options. A right answer earns a stamp. The end shows the score, the
-// five stamps and how to see each place in the real city.
+// History routes («Discover historic Braga», #quest, #quest=<route id>): a
+// small engine for several guided routes. #quest opens the chooser (or the
+// only route, or the one in progress); each route shows its landmarks one at
+// a time. The camera flies to each one (tour.js flightCurve, over roofs and
+// terrain); the card tells its history in a few sentences, shows the photo
+// with its credit and asks one question with three options. A wrong pick is
+// set aside and the visitor picks again; right first time earns a gold
+// stamp, right after a retry a plain one. The end counts the places and the
+// first-time answers and says how to see each place in the real city.
 //
 // Content: data/quest.json, loaded with the module. Its history, answer
 // and visit lines are verbatim excerpts of the place cards (checked by
 // scripts/quest.test.mjs); its `ui` table holds this mode's interface
-// strings in ru/en/pt, so the first load carries none of them.
+// strings in ru/en/pt, so the first load carries none of them. Progress is
+// saved per route id (quest-progress.js).
 //
 // While a stop is shown the visitor may orbit the map freely; «Show the
 // place» flies back to the framing. Reduced motion: every flight is a cut.
@@ -39,7 +43,8 @@ async function loadQuest() {
 }
 
 // ctx: { camera, rig, items, sky, home: {position, target}, reducedMotion,
-//        city, onFocus(ids), onEnter(), onExit(), onPlace(index), onError(err) }
+//        city, atmosphere, getLife(), setTime(name), onFocus(ids), onEnter(),
+//        onExit(), onRoute(), onPlace(index), onError(err) }
 export function createQuest(ctx) {
   const { camera, rig, reducedMotion } = ctx;
   const byId = new Map(ctx.items.map((it) => [it.data.id, it]));
@@ -53,9 +58,11 @@ export function createQuest(ctx) {
   const mobile = () => mq.matches;
 
   let data = null;
-  let stops = []; // { ...json stop, item }
+  let routes = []; // { ...json route, stops: [{ ...json stop, item }] } on this map
+  let route = null; // the open route; null on the chooser
+  let stops = []; // route.stops
   let active = false;
-  let screen = 'intro'; // intro | stop | end
+  let screen = 'intro'; // routes | intro | stop | end
   let current = -1; // stop index on the stop screen
   let shot = null; // the framing of the current screen
   let flying = false;
@@ -136,6 +143,8 @@ export function createQuest(ctx) {
 
   function show(nodes, buttons, focus) {
     root.dataset.screen = screen;
+    kicker.textContent = route ? pick(route.title) : s('kicker');
+    stampList.hidden = !route;
     body.replaceChildren(...nodes.filter(Boolean));
     foot.replaceChildren(...buttons.filter(Boolean));
     body.scrollTop = 0;
@@ -144,11 +153,65 @@ export function createQuest(ctx) {
   }
 
   // ------------------------------------------------ screens
+  // the chooser: every route with its intro, its length and its progress
+  function renderRoutes() {
+    screen = 'routes';
+    current = -1;
+    route = null;
+    stops = [];
+    rp = null;
+    const title = el('h2', 'quest-title quest-title-main', s('title'));
+    title.tabIndex = -1;
+    const list = el('ul', 'quest-routes');
+    for (const r of routes) {
+      const sum = questSummary(r.stops, progress.route(r.id));
+      const li = el('li', 'quest-route');
+      li.dataset.route = r.id;
+      const h = el('h3', 'quest-route-title', pick(r.title));
+      const meta = el('p', 'quest-route-meta', s('route_stops', { n: r.stops.length }));
+      if (sum.started) meta.append(document.createTextNode(` · ${s('route_done', { d: sum.done, m: sum.total })}`));
+      const open = button('quest-btn', s('open_route'), () => openRoute(r.id));
+      open.setAttribute('aria-label', `${s('open_route')}: ${pick(r.title)}`);
+      li.append(h, el('p', 'quest-route-intro', pick(r.intro)), meta, open);
+      list.append(li);
+    }
+    show([title, el('p', 'quest-lead', s('subtitle')), list, el('p', 'quest-note', s('note'))], []);
+    frameOverview();
+    ctx.onRoute?.();
+  }
+
+  function openRoute(id) {
+    const r = routes.find((x) => x.id === id);
+    if (!r) return renderRoutes();
+    route = r;
+    stops = r.stops;
+    rp = progress.route(r.id);
+    progress.setLast(r.id);
+    renderIntro();
+    ctx.onRoute?.();
+  }
+
+  // #quest=<id> opens that route; #quest the only route, the one in
+  // progress (opened last, started, not finished), or the chooser
+  function openFirst(id) {
+    if (id && routes.some((r) => r.id === id)) return openRoute(id);
+    if (id) console.warn(`[braga] #quest=${id}: no such route`);
+    if (routes.length === 1) return openRoute(routes[0].id);
+    const last = routes.find((r) => r.id === progress.last);
+    const sum = last && questSummary(last.stops, progress.route(last.id));
+    if (sum?.started && sum.next < sum.total) return openRoute(last.id);
+    renderRoutes();
+  }
+
+  function backLink() {
+    return routes.length > 1 ? button('quest-link quest-back', `← ${s('all_routes')}`, () => renderRoutes()) : null;
+  }
+
   function renderIntro() {
     screen = 'intro';
     current = -1;
     const sum = questSummary(stops, rp);
-    const title = el('h2', 'quest-title quest-title-main', s('title'));
+    const title = el('h2', 'quest-title quest-title-main', pick(route.title));
     title.tabIndex = -1;
     const plan = el('ol', 'quest-plan');
     for (const st of stops) {
@@ -161,7 +224,7 @@ export function createQuest(ctx) {
     else if (sum.next < sum.total) primary = button('quest-btn is-primary', s('resume', { n: sum.next + 1, m: sum.total }), () => goStop(sum.next));
     else primary = button('quest-btn is-primary', s('finish'), () => renderEnd());
     const again = sum.started ? button('quest-btn', s('restart'), () => restart()) : null;
-    show([title, el('p', 'quest-lead', s('subtitle')), plan, el('p', 'quest-note', s('note'))], [again, primary]);
+    show([backLink(), title, el('p', 'quest-lead', pick(route.intro)), plan, el('p', 'quest-note', s('note'))], [again, primary]);
     frameOverview();
   }
 
@@ -279,7 +342,7 @@ export function createQuest(ctx) {
       list.append(li);
     });
     show(
-      [el('p', 'quest-step', s('result')), title, el('p', 'quest-lead', s('end_lead')), el('h3', 'quest-sub', s('visit')), list],
+      [el('p', 'quest-step', s('result')), title, el('p', 'quest-lead', pick(route.end_lead)), el('h3', 'quest-sub', s('visit')), list, backLink()],
       [button('quest-btn', s('restart'), () => restart()), button('quest-btn is-primary', s('explore'), () => stop())],
     );
     frameOverview();
@@ -357,13 +420,15 @@ export function createQuest(ctx) {
   const homeBearing = () => Math.atan2(ctx.home.position.x - ctx.home.target.x, ctx.home.position.z - ctx.home.target.z);
   function screenShot() {
     if (screen === 'stop') return frame([stops[current].item], stops[current].view || {}, stops[current].item.viewBearing ?? 0);
-    // the old town's stops; the finale (Bom Jesus, 5 km out) is a reveal
-    const ids = new Set(data.overview || stops.map((st) => st.id));
-    const list = stops.filter((st) => ids.has(st.id)).map((st) => st.item);
-    return frame(list.length ? list : stops.map((st) => st.item), OVERVIEW, homeBearing());
+    // a route's `overview` stops (route 1 leaves out Bom Jesus, 5 km out:
+    // its finale is a reveal); the chooser frames every route's overview
+    const pool = route ? [route] : routes;
+    const ids = new Set(pool.flatMap((r) => r.overview || r.stops.map((st) => st.id)));
+    const list = [...new Map(pool.flatMap((r) => r.stops).filter((st) => ids.has(st.id)).map((st) => [st.id, st.item])).values()];
+    return frame(list, OVERVIEW, homeBearing());
   }
   function frameOverview() {
-    ctx.onFocus?.(stops.map((st) => st.id));
+    ctx.onFocus?.([...new Set((route ? [route] : routes).flatMap((r) => r.stops.map((st) => st.id)))]);
     shot = screenShot();
     fly(shot);
   }
@@ -482,7 +547,8 @@ export function createQuest(ctx) {
 
   // ------------------------------------------------ lifecycle
   // wanted(): false when the visitor moved on while quest.json loaded
-  async function start(wanted = () => true) {
+  // id: the route to open (#quest=<id>), or '' / null for #quest
+  async function start(wanted = () => true, id = null) {
     if (active) return;
     if (!data) {
       try {
@@ -492,17 +558,19 @@ export function createQuest(ctx) {
         if (wanted()) ctx.onError?.(err);
         return;
       }
-      stops = (data?.stops || []).map((st) => ({ ...st, item: byId.get(st.id) })).filter((st) => st.item);
-      if (stops.length < 2) {
-        console.error('[braga] quest.json: too few stops on this map');
+      // a route keeps the stops this map has; one with fewer than two is left out
+      routes = (data?.routes || [])
+        .map((r) => ({ ...r, stops: (r.stops || []).map((st) => ({ ...st, item: byId.get(st.id) })).filter((st) => st.item) }))
+        .filter((r) => r.id && r.stops.length >= 2);
+      if (!routes.length) {
+        console.error('[braga] quest.json: no route with two stops on this map');
         data = null;
         ctx.onError?.(new Error('no stops'));
         return;
       }
-      progress = createQuestProgress(ctx.city, Object.fromEntries(stops.map((st) => [st.id, st.answer])));
-      rp = progress.route(data.id || LEGACY_ROUTE);
+      const legacy = routes.find((r) => r.id === LEGACY_ROUTE);
+      progress = createQuestProgress(ctx.city, Object.fromEntries((legacy?.stops || []).map((st) => [st.id, st.answer])));
       root.setAttribute('aria-label', s('title'));
-      kicker.textContent = s('kicker');
       stampList.setAttribute('aria-label', s('stamps'));
       closeBtn.setAttribute('aria-label', s('close'));
       closeBtn.title = s('close');
@@ -516,7 +584,7 @@ export function createQuest(ctx) {
     inerted = [...document.querySelectorAll(CHROME)].filter((n) => !n.inert && !root.contains(n));
     for (const n of inerted) n.inert = true;
     requestAnimationFrame(() => root.classList.add('is-open'));
-    renderIntro();
+    openFirst(id);
   }
 
   function stop() {
@@ -558,10 +626,20 @@ export function createQuest(ctx) {
     lifeReady() {
       if (active) holdLight();
     },
+    // the hash while the mode runs: quest=<id> in a route, quest on the chooser
+    get hash() {
+      return route ? `quest=${route.id}` : 'quest';
+    },
+    // a hash edit while the mode runs (main.js applyHash)
+    open(id) {
+      if (!active || (route && route.id === id)) return;
+      if (id) openFirst(id);
+      else if (routes.length > 1) renderRoutes();
+    },
     // tests and screenshots
     get state() {
       const sum = stops.length && rp ? questSummary(stops, rp) : null;
-      return { active, screen, stop: current, id: stops[current]?.id ?? null, flying: flying && rig.touring, ...sum };
+      return { active, screen, route: route?.id ?? null, stop: current, id: stops[current]?.id ?? null, flying: flying && rig.touring, ...sum };
     },
     goStop,
     showEnd: () => renderEnd(),

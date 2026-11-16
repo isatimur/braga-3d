@@ -409,7 +409,7 @@ async function start() {
   // starts with the boot view, before the city is built.
   function makeIntro() {
     const param = new URLSearchParams(location.search).get('intro');
-    const deep = /(^|[#&])((place|route)=|(cinema|story|quest)(&|$))/.test(location.hash);
+    const deep = /(^|[#&])((place|route|quest)=|(cinema|story|quest)(&|$))/.test(location.hash);
     let seen = false;
     try {
       seen = sessionStorage.getItem('braga-intro') === '1';
@@ -708,8 +708,8 @@ async function start() {
   // live=1, from live.js) when they differ from the default
   function currentHash() {
     const parts = [];
-    // the history route keeps #quest while it runs (a reload resumes it)
-    if (quest?.active) parts.push('quest');
+    // the history routes keep #quest=<id> (or #quest) while they run (a reload resumes)
+    if (quest?.active) parts.push(quest.hash);
     else if (route) parts.push(`route=${route.route.id}`);
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
     // the route shows daylight but the link keeps the visitor's own light
@@ -735,7 +735,7 @@ async function start() {
     if (q.has('cinema')) return void (cinema.active || startMode('cinema'));
     if (q.has('story')) return void (story?.active || startMode('story'));
     if (q.has('game')) return void (game?.active || startMode('game'));
-    if (q.has('quest') && hasQuest) return void (quest?.active || startMode('quest'));
+    if (q.has('quest') && hasQuest) return void (quest?.active ? quest.open(q.get('quest')) : startMode('quest', q.get('quest')));
     cancelModeLoad();
     const r = q.get('route');
     const p = q.get('place');
@@ -1086,7 +1086,7 @@ async function start() {
   gameBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z" /><path d="M5.2 6.3h1.4M5.2 9.4h3.6M11.6 5.4v3.4" /></svg><span class="mode-label">${t('Игра')}</span>`;
   mountTool(gameBtn, 'modes', { closes: true });
   gameBtn.addEventListener('click', () => (game?.active ? game.stop() : startMode('game')));
-  // History route: five landmarks, one question each (quest.js, data/quest.json)
+  // History routes: a few landmarks each, one question per stop (quest.js, data/quest.json)
   async function ensureQuest() {
     if (quest) return quest;
     if (!questLoad) {
@@ -1104,6 +1104,7 @@ async function start() {
             if (active >= 0) close();
           },
           onPlace: (i) => select(i),
+          onRoute: () => setHash(currentHash()),
           onError: () => {
             ui.toast(t('Не удалось загрузить маршрут'), 4000);
             setHash(currentHash());
@@ -1129,7 +1130,8 @@ async function start() {
     mountTool(questBtn, 'modes', { closes: true });
     questBtn.addEventListener('click', () => (quest?.active ? quest.stop() : startMode('quest')));
   }
-  function startMode(name) {
+  // arg: the history route's id (#quest=<id>)
+  function startMode(name, arg) {
     const request = ++modeRequest;
     modeLoading = name === 'cinema' ? null : name;
     if (intro?.active) intro.skip();
@@ -1146,14 +1148,14 @@ async function start() {
       cinema.stop();
       story?.stop();
       game?.stop();
-      setHash(name);
+      setHash(arg ? `${name}=${arg}` : name);
       ensureQuest().then((instance) => {
         if (request !== modeRequest) return;
         // modeLoading stays set until quest.json is in: Esc still cancels
-        return instance.start(() => request === modeRequest).then(() => {
+        return instance.start(() => request === modeRequest, arg).then(() => {
           if (request !== modeRequest) return;
           modeLoading = null;
-          if (instance.active) setHash(name);
+          if (instance.active) setHash(currentHash());
         });
       }).catch(() => {
         if (request === modeRequest) {
