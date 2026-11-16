@@ -175,7 +175,7 @@ export function createQuest(ctx) {
       li.append(h, el('p', 'quest-route-intro', pick(r.intro)), meta, open);
       list.append(li);
     }
-    show([title, el('p', 'quest-lead', s('subtitle')), list, el('p', 'quest-note', s('note'))], []);
+    show([title, el('p', 'quest-lead', s('subtitle')), list, el('p', 'quest-note', s('note')), textLink(null)], []);
     frameOverview();
     ctx.onRoute?.();
   }
@@ -203,6 +203,16 @@ export function createQuest(ctx) {
     renderRoutes();
   }
 
+  // the plain HTML version of a route (or of the list): public/route/,
+  // made by scripts/route-pages.mjs
+  function textLink(id) {
+    const p = el('p', 'quest-note');
+    const a = el('a', 'quest-link quest-textlink', s('text_version'));
+    a.href = assetUrl(`route/${id ? `${id}/` : ''}${language === 'pt' ? '' : `${language}/`}`);
+    p.append(a);
+    return p;
+  }
+
   function backLink() {
     return routes.length > 1 ? button('quest-link quest-back', `← ${s('all_routes')}`, () => renderRoutes()) : null;
   }
@@ -224,7 +234,7 @@ export function createQuest(ctx) {
     else if (sum.next < sum.total) primary = button('quest-btn is-primary', s('resume', { n: sum.next + 1, m: sum.total }), () => goStop(sum.next));
     else primary = button('quest-btn is-primary', s('finish'), () => renderEnd());
     const again = sum.started ? button('quest-btn', s('restart'), () => restart()) : null;
-    show([backLink(), title, el('p', 'quest-lead', pick(route.intro)), plan, el('p', 'quest-note', s('note'))], [again, primary]);
+    show([backLink(), title, el('p', 'quest-lead', pick(route.intro)), plan, el('p', 'quest-note', s('note')), textLink(route.id)], [again, primary]);
     frameOverview();
   }
 

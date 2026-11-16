@@ -152,7 +152,7 @@ test('English and Portuguese texts have no Russian left in them', () => {
 
 test('every interface string the module uses exists in all three languages', () => {
   for (const [k, v] of Object.entries(quest.ui)) for (const lang of LANGS) assert.ok(v[lang]?.trim(), `ui.${k}.${lang}`);
-  const code = readFileSync(new URL('src/quest.js', root), 'utf8');
+  const code = readFileSync(new URL('src/quest.js', root), 'utf8') + readFileSync(new URL('scripts/route-pages.mjs', root), 'utf8');
   const used = new Set([...code.matchAll(/\bs\('([a-z_]+)'/g)].map((m) => m[1]));
   assert.ok(used.size > 10, 'the module reads its strings through s()');
   // keys built or chosen at run time
@@ -160,6 +160,44 @@ test('every interface string the module uses exists in all three languages', () 
   for (const k of used) assert.ok(quest.ui[k], `src/quest.js uses ui.${k}, missing in data/quest.json`);
   // no reconstruction is called historical; no feature is promised
   for (const v of Object.values(quest.ui)) for (const lang of LANGS) assert.doesNotMatch(v[lang], /reconstru|реконструк/i);
+});
+
+test('text pages: committed, current with the data, readable without JavaScript', async () => {
+  const { loadInputs, renderRoutePages, routePagePaths } = await import('./route-pages.mjs');
+  const inputs = await loadInputs();
+  const pages = renderRoutePages(inputs);
+  assert.equal(pages.length, (ROUTES.length + 1) * 3, 'a list and one page per route, in three languages');
+  for (const { path, html } of pages) {
+    const file = new URL(path, root);
+    assert.ok(existsSync(file), `${path} is missing: run node scripts/make-og.mjs --pages`);
+    assert.equal(readFileSync(file, 'utf8'), html, `${path} is stale: run node scripts/make-og.mjs --pages`);
+    assert.doesNotMatch(html, /<script/i, `${path}: no script, no redirect`);
+    assert.equal((html.match(/<h1>/g) || []).length, 1, `${path}: one h1`);
+    assert.match(html, /<html lang="(pt-PT|en|ru)">/, `${path}: page language`);
+    assert.match(html, /<nav aria-label="[^"]+"><ul>/, `${path}: language links`);
+    assert.doesNotMatch(html, /\b20\d\d-\d\d-\d\d\b/, `${path}: no build date (the page changes only with the data)`);
+    // en and pt pages carry no Russian outside the «Русский» language link
+    if (!/\/ru\/index\.html$/.test(path)) assert.doesNotMatch(html.replace(/<a [^>]*lang="ru"[^>]*>Русский<\/a>/g, ''), CYRILLIC, `${path}: Russian text`);
+  }
+  for (const r of ROUTES) {
+    for (const [lang, sub] of [['pt', ''], ['en', 'en/'], ['ru', 'ru/']]) {
+      const html = pages.find((p) => p.path === `public/route/${r.id}/${sub}index.html`).html;
+      assert.ok(html.includes(`href="/?lang=${lang}#quest=${r.id}"`), `${r.id}/${lang}: link to the route on the 3D map`);
+      for (const s of r.stops) {
+        assert.ok(html.includes(`<h2 id="stop-${s.id}">`), `${r.id}/${lang}: heading for ${s.id}`);
+        for (const line of s.text[lang]) assert.ok(html.includes(line.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;')), `${r.id}/${lang}: history line of ${s.id}`);
+        for (const url of s.sources) assert.ok(html.includes(`href="${url}"`), `${r.id}/${lang}: source ${url}`);
+      }
+    }
+  }
+  // the sitemap lists every page
+  const sitemap = readFileSync(new URL('public/sitemap.xml', root), 'utf8');
+  for (const p of routePagePaths(quest)) assert.ok(sitemap.includes(`${inputs.site}${p}</loc>`), `sitemap: ${p}`);
+});
+
+test('the route intro links to the text version of the open route', () => {
+  const code = readFileSync(new URL('src/quest.js', root), 'utf8');
+  assert.match(code, /`route\/\$\{id \? `\$\{id\}\/` : ''\}/, 'src/quest.js builds a route/<id>/ link');
 });
 
 // a localStorage stand-in; returns its Map

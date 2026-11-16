@@ -72,6 +72,8 @@ debug.tier = { ...TIER, dprCap: DPR.cap };
 // Load phases in ms since navigation (docs/perf, /tmp/perf/measure.mjs)
 debug.timing = {};
 let stopBoot = null; // set while the boot view runs (start)
+// without WebGL: the text version of the history routes (scripts/route-pages.mjs)
+const textRoutes = () => CITY.id === 'braga' && { href: `/route/${language === 'pt' ? '' : `${language}/`}`, text: t('Текстовая версия исторических маршрутов') };
 const mark = (name) => {
   debug.timing[name] = Math.round(performance.now());
 };
@@ -85,7 +87,7 @@ async function start() {
   if (!perf.caps.webgl2) {
     // three.js needs WebGL 2: say so plainly instead of a blank page
     loader.done();
-    showNotice(t('Нужен WebGL 2'), t('Этот браузер или видеокарта не поддерживает WebGL 2, поэтому 3D-карта здесь не откроется. Попробуйте свежий Chrome, Firefox, Edge или Safari на другом устройстве.'));
+    showNotice(t('Нужен WebGL 2'), t('Этот браузер или видеокарта не поддерживает WebGL 2, поэтому 3D-карта здесь не откроется. Попробуйте свежий Chrome, Firefox, Edge или Safari на другом устройстве.'), { link: textRoutes() });
     return;
   }
   loader.set(0.08, t('Загружаем данные'));
@@ -1878,8 +1880,10 @@ loadCity()
     const msg = t('Не удалось запустить карту. Нужен браузер с поддержкой WebGL.');
     const text = document.getElementById('loader-text');
     const loaderEl = document.getElementById('loader');
+    const link = textRoutes();
     if (text && loaderEl && !loaderEl.classList.contains('is-done')) {
       text.textContent = msg;
+      if (link) text.append(' ', Object.assign(document.createElement('a'), link));
       loaderEl.classList.add('is-error');
     } else if (!debug.interactive) {
       // the boot view already removed the loader: say it over the map

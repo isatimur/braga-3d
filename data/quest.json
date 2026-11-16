@@ -42,7 +42,17 @@
     "visit": { "ru": "В настоящем городе", "en": "In the real city", "pt": "Na cidade real" },
     "open_card": { "ru": "Открыть карточку", "en": "Open the place card", "pt": "Abrir a ficha" },
     "explore": { "ru": "Гулять по карте", "en": "Explore the map", "pt": "Explorar o mapa" },
-    "close": { "ru": "Выйти (Esc)", "en": "Exit (Esc)", "pt": "Sair (Esc)" }
+    "close": { "ru": "Выйти (Esc)", "en": "Exit (Esc)", "pt": "Sair (Esc)" },
+    "text_version": { "ru": "Текстовая версия", "en": "Text version", "pt": "Versão em texto" },
+    "text_lead": {
+      "ru": "Текстовая версия исторических маршрутов 3D-карты Браги: каждое место с историей, фотографией и источниками.",
+      "en": "The text version of the history routes on the 3D map of Braga: each place with its history, a photo and its sources.",
+      "pt": "A versão em texto das rotas da história do mapa 3D de Braga: cada lugar com a sua história, uma fotografia e as fontes."
+    },
+    "open_map": { "ru": "Открыть этот маршрут на 3D-карте", "en": "Open this route on the 3D map", "pt": "Abrir esta rota no mapa 3D" },
+    "open_map_all": { "ru": "Открыть 3D-карту", "en": "Open the 3D map", "pt": "Abrir o mapa 3D" },
+    "languages": { "ru": "Язык", "en": "Language", "pt": "Idioma" },
+    "places": { "ru": "Места маршрута", "en": "Places on the route", "pt": "Lugares da rota" }
   },
   "routes": [
     {
