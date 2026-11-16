@@ -12,7 +12,9 @@
 //
 // While a stop is shown the visitor may orbit the map freely; «Show the
 // place» flies back to the framing. Reduced motion: every flight is a cut.
-// Esc (main.js key dispatcher -> onKey) leaves the mode.
+// Esc (main.js key dispatcher -> onKey) leaves the mode. The scene shows
+// clear daylight while the route runs; the visitor's light comes back on
+// exit (see «light» below).
 import * as THREE from 'three';
 import { language } from './i18n.js';
 import { flightCurve, easeInOut } from './tour.js';
@@ -393,6 +395,72 @@ export function createQuest(ctx) {
     });
   }
 
+  // ------------------------------------------------ light
+  // While the route runs the scene shows clear daylight, so an evening demo
+  // is not dark. The visitor's own light (a preset or the live sun, and the
+  // weather) is kept here, never saved or put in the URL, and comes back on
+  // exit. A light the visitor sets meanwhile (a time= edit of the hash: the
+  // atmosphere panel is inert during the route) wins and stays.
+  const atmosphere = ctx.atmosphere;
+  let held = null; // { time, live, weather, timeSet, weatherSet }
+  let ours = false;
+  const quietly = (fn) => {
+    ours = true;
+    try {
+      fn();
+    } finally {
+      ours = false;
+    }
+  };
+  // 'live' is never a hand change here: it comes from live.js starting late
+  atmosphere?.onChange((name) => {
+    if (held && !ours && name !== 'live') held.timeSet = true;
+  });
+  const watched = new WeakSet();
+  function holdLight() {
+    if (!atmosphere) return;
+    const life = ctx.getLife?.();
+    if (!held) held = { time: atmosphere.time, live: false, weather: null, timeSet: false, weatherSet: false };
+    // life.js may arrive after the route opened: its live mode then sets
+    // the real sun first, and that is the visitor's light
+    else if (!held.timeSet && atmosphere.time === 'live') held.time = 'live';
+    if (life) {
+      held.live = life.live.live;
+      if (!held.weatherSet) held.weather = life.weather.name;
+      life.live.hold(true);
+      if (!watched.has(life.weather)) {
+        watched.add(life.weather);
+        life.weather.onChange(() => {
+          if (held && !ours) held.weatherSet = true;
+        });
+      }
+    }
+    quietly(() => {
+      if (!held.timeSet) ctx.setTime('day');
+      if (life && !held.weatherSet) life.weather.set('clear');
+    });
+  }
+  function releaseLight() {
+    const h = held;
+    held = null;
+    if (!h) return;
+    const life = ctx.getLife?.();
+    quietly(() => {
+      if (life && !h.weatherSet && h.weather) life.weather.set(h.weather);
+      if (!h.timeSet && h.time !== 'live') ctx.setTime(h.time);
+      life?.live.hold(false, !h.timeSet);
+    });
+  }
+  // the visitor's light while the route shows daylight (main.js currentHash)
+  function heldLight() {
+    if (!held) return null;
+    const life = ctx.getLife?.();
+    const time = held.timeSet ? atmosphere.time : held.time;
+    const weather = held.weatherSet ? life?.weather.name : held.weather;
+    const hash = held.live && !held.timeSet ? 'live=1' : weather && weather !== 'clear' ? `weather=${weather}` : '';
+    return { time, hash };
+  }
+
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     if (!active) return;
@@ -431,8 +499,7 @@ export function createQuest(ctx) {
     }
     if (active || !wanted()) return;
     active = true;
-    // The light stays the visitor's: a preset set here would also switch
-    // live mode off for good (live.js). A demo link may add &time=day.
+    holdLight();
     ctx.onEnter?.();
     root.hidden = false;
     document.body.classList.add('is-quest');
@@ -453,6 +520,7 @@ export function createQuest(ctx) {
     inerted = [];
     root.hidden = true;
     ctx.onFocus?.([]);
+    releaseLight();
     ctx.onExit?.();
   }
 
@@ -472,6 +540,13 @@ export function createQuest(ctx) {
     onKey,
     get active() {
       return active;
+    },
+    get heldLight() {
+      return heldLight();
+    },
+    // main.js: life.js was built while the route runs
+    lifeReady() {
+      if (active) holdLight();
     },
     // tests and screenshots
     get state() {

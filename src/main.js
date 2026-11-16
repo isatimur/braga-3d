@@ -712,11 +712,15 @@ async function start() {
     if (quest?.active) parts.push('quest');
     else if (route) parts.push(`route=${route.route.id}`);
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
-    if (atmosphere.time !== DEFAULT_TIME) parts.push(`time=${atmosphere.time}`);
+    // the route shows daylight but the link keeps the visitor's own light
+    const held = quest?.heldLight;
+    const time = held ? held.time : atmosphere.time;
+    if (time !== DEFAULT_TIME) parts.push(`time=${time}`);
     // until life and the seasons exist (deferLayers), keep what the link said
     const was = life && seasons ? null : new URLSearchParams(location.hash.replace(/^#/, ''));
     if (life) {
-      if (debug.life?.live.hash) parts.push(debug.life.live.hash);
+      const h = held ? held.hash : debug.life?.live.hash;
+      if (h) parts.push(h);
     } else for (const k of ['weather', 'live']) if (was.has(k)) parts.push(`${k}=${was.get(k)}`);
     if (seasons) {
       if (debug.season && debug.season !== debug.seasons?.today) parts.push('season=' + (debug.season === 'fall' ? 'autumn' : debug.season));
@@ -1090,6 +1094,10 @@ async function start() {
         quest = createQuest({
           ...modeCtx,
           city: CITY.id || 'braga',
+          atmosphere,
+          getLife: () => life,
+          // the route puts the visitor's light back itself (live mode too)
+          onExit: () => setHash(currentHash()),
           onFocus: storyLabels,
           onEnter: () => {
             ui.callout.hide();
@@ -1812,6 +1820,7 @@ async function start() {
     await step('life', () => {
       // footprints, outlines: where the people of streetscape.js may not walk
       life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines });
+      quest?.lifeReady();
     });
     await step('seasons', () => {
       seasons = createSeasons({ renderer, scene, camera, atmosphere, nature, fx, weather: life?.weather, terrain, ui, reducedMotion, mobile: LITE, lite: LITE, debug });
