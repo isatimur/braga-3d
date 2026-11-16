@@ -72,6 +72,8 @@ debug.tier = { ...TIER, dprCap: DPR.cap };
 // Load phases in ms since navigation (docs/perf, /tmp/perf/measure.mjs)
 debug.timing = {};
 let stopBoot = null; // set while the boot view runs (start)
+// without WebGL: the text version of the history routes (scripts/route-pages.mjs)
+const textRoutes = () => CITY.id === 'braga' && { href: `/route/${language === 'pt' ? '' : `${language}/`}`, text: t('Текстовая версия исторических маршрутов') };
 const mark = (name) => {
   debug.timing[name] = Math.round(performance.now());
 };
@@ -85,7 +87,7 @@ async function start() {
   if (!perf.caps.webgl2) {
     // three.js needs WebGL 2: say so plainly instead of a blank page
     loader.done();
-    showNotice(t('Нужен WebGL 2'), t('Этот браузер или видеокарта не поддерживает WebGL 2, поэтому 3D-карта здесь не откроется. Попробуйте свежий Chrome, Firefox, Edge или Safari на другом устройстве.'));
+    showNotice(t('Нужен WebGL 2'), t('Этот браузер или видеокарта не поддерживает WebGL 2, поэтому 3D-карта здесь не откроется. Попробуйте свежий Chrome, Firefox, Edge или Safari на другом устройстве.'), { link: textRoutes() });
     return;
   }
   loader.set(0.08, t('Загружаем данные'));
@@ -409,7 +411,7 @@ async function start() {
   // starts with the boot view, before the city is built.
   function makeIntro() {
     const param = new URLSearchParams(location.search).get('intro');
-    const deep = /(^|[#&])((place|route)=|(cinema|story|quest)(&|$))/.test(location.hash);
+    const deep = /(^|[#&])((place|route|quest)=|(cinema|story|quest)(&|$))/.test(location.hash);
     let seen = false;
     try {
       seen = sessionStorage.getItem('braga-intro') === '1';
@@ -708,15 +710,19 @@ async function start() {
   // live=1, from live.js) when they differ from the default
   function currentHash() {
     const parts = [];
-    // the history route keeps #quest while it runs (a reload resumes it)
-    if (quest?.active) parts.push('quest');
+    // the history routes keep #quest=<id> (or #quest) while they run (a reload resumes)
+    if (quest?.active) parts.push(quest.hash);
     else if (route) parts.push(`route=${route.route.id}`);
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
-    if (atmosphere.time !== DEFAULT_TIME) parts.push(`time=${atmosphere.time}`);
+    // the route shows daylight but the link keeps the visitor's own light
+    const held = quest?.heldLight;
+    const time = held ? held.time : atmosphere.time;
+    if (time !== DEFAULT_TIME) parts.push(`time=${time}`);
     // until life and the seasons exist (deferLayers), keep what the link said
     const was = life && seasons ? null : new URLSearchParams(location.hash.replace(/^#/, ''));
     if (life) {
-      if (debug.life?.live.hash) parts.push(debug.life.live.hash);
+      const h = held ? held.hash : debug.life?.live.hash;
+      if (h) parts.push(h);
     } else for (const k of ['weather', 'live']) if (was.has(k)) parts.push(`${k}=${was.get(k)}`);
     if (seasons) {
       if (debug.season && debug.season !== debug.seasons?.today) parts.push('season=' + (debug.season === 'fall' ? 'autumn' : debug.season));
@@ -731,7 +737,7 @@ async function start() {
     if (q.has('cinema')) return void (cinema.active || startMode('cinema'));
     if (q.has('story')) return void (story?.active || startMode('story'));
     if (q.has('game')) return void (game?.active || startMode('game'));
-    if (q.has('quest') && hasQuest) return void (quest?.active || startMode('quest'));
+    if (q.has('quest') && hasQuest) return void (quest?.active ? quest.open(q.get('quest')) : startMode('quest', q.get('quest')));
     cancelModeLoad();
     const r = q.get('route');
     const p = q.get('place');
@@ -1082,7 +1088,7 @@ async function start() {
   gameBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z" /><path d="M5.2 6.3h1.4M5.2 9.4h3.6M11.6 5.4v3.4" /></svg><span class="mode-label">${t('Игра')}</span>`;
   mountTool(gameBtn, 'modes', { closes: true });
   gameBtn.addEventListener('click', () => (game?.active ? game.stop() : startMode('game')));
-  // History route: five landmarks, one question each (quest.js, data/quest.json)
+  // History routes: a few landmarks each, one question per stop (quest.js, data/quest.json)
   async function ensureQuest() {
     if (quest) return quest;
     if (!questLoad) {
@@ -1090,12 +1096,17 @@ async function start() {
         quest = createQuest({
           ...modeCtx,
           city: CITY.id || 'braga',
+          atmosphere,
+          getLife: () => life,
+          // the route puts the visitor's light back itself (live mode too)
+          onExit: () => setHash(currentHash()),
           onFocus: storyLabels,
           onEnter: () => {
             ui.callout.hide();
             if (active >= 0) close();
           },
           onPlace: (i) => select(i),
+          onRoute: () => setHash(currentHash()),
           onError: () => {
             ui.toast(t('Не удалось загрузить маршрут'), 4000);
             setHash(currentHash());
@@ -1121,7 +1132,8 @@ async function start() {
     mountTool(questBtn, 'modes', { closes: true });
     questBtn.addEventListener('click', () => (quest?.active ? quest.stop() : startMode('quest')));
   }
-  function startMode(name) {
+  // arg: the history route's id (#quest=<id>)
+  function startMode(name, arg) {
     const request = ++modeRequest;
     modeLoading = name === 'cinema' ? null : name;
     if (intro?.active) intro.skip();
@@ -1138,14 +1150,14 @@ async function start() {
       cinema.stop();
       story?.stop();
       game?.stop();
-      setHash(name);
+      setHash(arg ? `${name}=${arg}` : name);
       ensureQuest().then((instance) => {
         if (request !== modeRequest) return;
         // modeLoading stays set until quest.json is in: Esc still cancels
-        return instance.start(() => request === modeRequest).then(() => {
+        return instance.start(() => request === modeRequest, arg).then(() => {
           if (request !== modeRequest) return;
           modeLoading = null;
-          if (instance.active) setHash(name);
+          if (instance.active) setHash(currentHash());
         });
       }).catch(() => {
         if (request === modeRequest) {
@@ -1812,6 +1824,7 @@ async function start() {
     await step('life', () => {
       // footprints, outlines: where the people of streetscape.js may not walk
       life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines });
+      quest?.lifeReady();
     });
     await step('seasons', () => {
       seasons = createSeasons({ renderer, scene, camera, atmosphere, nature, fx, weather: life?.weather, terrain, ui, reducedMotion, mobile: LITE, lite: LITE, debug });
@@ -1867,8 +1880,10 @@ loadCity()
     const msg = t('Не удалось запустить карту. Нужен браузер с поддержкой WebGL.');
     const text = document.getElementById('loader-text');
     const loaderEl = document.getElementById('loader');
+    const link = textRoutes();
     if (text && loaderEl && !loaderEl.classList.contains('is-done')) {
       text.textContent = msg;
+      if (link) text.append(' ', Object.assign(document.createElement('a'), link));
       loaderEl.classList.add('is-error');
     } else if (!debug.interactive) {
       // the boot view already removed the loader: say it over the map
