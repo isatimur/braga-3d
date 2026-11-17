@@ -331,8 +331,13 @@ export function createQuest(ctx) {
         fly(shot);
       }
       if (!how) return;
-      if (S.done) nextBtn.focus({ preventScroll: true });
-      else if (how !== 'map') view.focus()?.focus({ preventScroll: true });
+      if (S.done) {
+        const next = () => nextBtn.isConnected && nextBtn.focus({ preventScroll: true });
+        next();
+        // a tap's compatibility mousedown comes after the pick and moves
+        // focus to the page: put it back on Next
+        if (how === 'map') setTimeout(() => document.activeElement === document.body && next(), 150);
+      } else if (how !== 'map') view.focus()?.focus({ preventScroll: true });
       feedback.scrollIntoView({ block: 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
     }
 

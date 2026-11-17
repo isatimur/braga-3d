@@ -328,6 +328,21 @@
         "Browser: 273 checks pass on the final build (light, late, retry, flow, behave, text), no console errors; screenshots in /tmp/braga-quest-2/ (not in the repository)"
       ],
       "notes": "Biscainhos and the castle keep rest on two sources each; their tips also carry status lines (closed on Mondays, history centre temporarily closed) that the route does not quote. The Paço has no landmark of its own: Santa Bárbara is «Jardim de Santa Bárbara e Antigo Paço Arquiepiscopal», so one stop covers both and Biscainhos is the fifth. From reading the code (not tested): story, cinema and the game still end live mode, because their own time change leaves live mode and modeCtx.onExit maps 'live' to the default preset; only the route was changed. Not checked: a physical phone, a screen reader. Not deployed."
+    },
+    {
+      "id": "braga-018",
+      "priority": 18,
+      "area": "visitor modes",
+      "title": "History routes, round 3: task types that use the 3D map",
+      "user_visible_behavior": "Each stop of a history route sets one task, by type: multiple choice, true/false (two buttons, then whether the statement is true and the quote that settles it), sequence (three or four events moved up and down by keyboard or touch, «Check the order», then each event's dated quote), visual detail (a question about what the 3D model shows, with «Show the place»), and find on the map (the camera pulls back over several landmarks shown as «?» markers; a click or tap on the right model, pin or marker solves it; a wrong one names the place picked; after two wrong picks the place's marker stands out; the card lists the same places as buttons). Every type: retry with no penalty, gold first time, plain after a retry, the quote and sources after success. Both routes mix the types; text pages show no tasks. quest_step_completed carries the task type.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (quest.test.mjs: task shape and its failures, every quote verbatim per language and type, sequence quotes hold their years, find-on-map candidates are real landmarks with coordinates and models, shared stops set different tasks, progress v3 with round-1 and round-2 saves keeping every stamp; events.test.mjs: seven keys, every task type documented)",
+        "npm run verify",
+        "Browser (headless Chromium, production build, outside requests blocked): /tmp/braga-quest-3/check.mjs flow, find, seq, migrate; /tmp/braga-quest-3/check-r2.mjs light, late, behave, text"
+      ],
+      "evidence": [],
+      "notes": "visual_detail is used once: the keep's battlements are in the ru, en and pt texts and in the model (src/models/torre.js merlons), and legible in phone and desktop screenshots. No other stop has a detail that both its text and its simplified model show. Not checked: a physical phone, a screen reader. Not deployed."
     }
   ]
 }

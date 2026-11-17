@@ -143,15 +143,16 @@ test('choice tasks: each right answer rests on a verbatim fact in every language
   assert.ok(new Set(CHOICE.map((s) => s.task.options.findIndex((o) => o.id === s.task.answer))).size >= 2, 'answer positions vary');
 });
 
-test('visual detail: only on a model that shows it, about the top of the Torre de Menagem', () => {
-  // the one detail both the texts and the model support: the keep's
-  // battlements (src/models/torre.js builds its merlons)
+test('visual detail: the model builds the detail the quote names', () => {
+  // model_check names the builder and a word for the detail in its code
+  // (Braga: the keep's merlons in src/models/torre.js); the detail itself
+  // was checked by eye in a phone and a desktop screenshot
   for (const s of of('visual_detail')) {
-    assert.equal(s.id, 'torre-menagem', `${tag(s)}: no other model was checked for a visible detail`);
-    assert.match(readFileSync(new URL('src/models/torre.js', root), 'utf8'), /merlon/);
-    assert.match(s.task.basis.en, /Battlements/);
-    assert.match(s.task.basis.pt, /ameias/);
-    assert.match(s.task.basis.ru, /зубц/);
+    const { file, word } = s.task.model_check || {};
+    assert.ok(file && word, `${tag(s)}: model_check { file, word }`);
+    assert.ok(existsSync(new URL(file, root)), `${tag(s)}: ${file} is missing`);
+    assert.ok(readFileSync(new URL(file, root), 'utf8').toLowerCase().includes(word.toLowerCase()), `${tag(s)}: ${file} never mentions ${word}`);
+    for (const lang of LANGS) assert.ok(inAny(s.task.basis[lang], sourceText(s.id, lang), ['history', 'facts']), `${tag(s)}/${lang}: basis`);
   }
 });
 

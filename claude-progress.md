@@ -11,7 +11,7 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current local work: history routes round 2 (braga-017) on `feat/quest-round-2`, merged into `main` when its checks pass. Not pushed, not deployed.
+- Current local work: history routes round 3, task types (braga-018) on `feat/quest-task-types`, merged into `main` when its checks pass. Not pushed, not deployed.
 - Latest check: 2026-11-16. `node --test scripts/*.test.mjs` (27/27) and `npm run verify` passed; the headless browser checks in Session 014 passed on the production build.
 - Production state: last documented check is from 2026-10-04; not rechecked since. braga-3d.com does not have braga-014 or braga-015.
 
@@ -247,3 +247,18 @@ updates it automatically.
 - First load against round 1: entry JS +647 bytes (+267 gzip), CSS +75 (+22 gzip), HTML unchanged. Lazy: quest JS 15.1 kB (6.5 kB gzip), quest CSS 8.2 kB, data/quest.json 45.0 kB (13.5 kB gzip).
 - Behaviour to know: while a route runs the hash also carries the visitor's own light (for example `#quest=old-town-on-foot&time=live&live=1`), never the daylight override. A `#quest` hash edit while a route is open goes back to the chooser.
 - Known limits: story, cinema and the game still appear to end live mode on exit (read in the code, not tested). A `#quest&live=1` link loses `live=1` (older: `startMode` rewrites the hash before life.js reads it). The menu label is still «History route» and its title says «five places, five questions». Not checked on a physical phone or with a screen reader.
+
+### Session 015
+
+- Date: 2026-11-17
+- Branch: `feat/quest-task-types`, merged into `main` when the checks pass. Nothing is pushed or deployed.
+- Goal: history routes, round 3: task types, so the route uses the 3D map (braga-018).
+- Done:
+  - Task model: `src/quest-tasks.js` (types, the answer token of each, a shape check used by the route and the test). Each stop in `data/quest.json` has one `task` with a stable `id` and a `type`; options and sequence items have ids. Types: `multiple_choice`, `true_false`, `find_on_map`, `sequence`, `visual_detail`.
+  - Routes: two-thousand-years = Termas (multiple choice), Sé (true/false, true), Arco da Porta Nova (find on the map), Palácio do Raio (multiple choice), Bom Jesus (sequence 1373/1629/1784/1882). old-town-on-foot = Biscainhos (multiple choice), Arco (true/false, false), Sé (find on the map), Santa Bárbara (sequence 1112/1336/1866/1934), Torre de Menagem (visual detail: the battlements). Stop order unchanged. Where a sequence stop's history lines held the dates, other lines of the same card replace them.
+  - Find on the map: the camera shows the candidates (the route's stops and neighbours) as «?» markers; a click on a model, pin or marker picks (`main.js` asks `quest.pickable`, `landmarks.js` `pick(raycaster, only)`); a wrong pick names the place; after two, the place's marker pulses (a still ring with reduced motion); the card lists the same candidates as buttons. The history text waits until the place is found, then the camera goes to it. Every screen change, Esc and exit end the picking.
+  - Progress v3 (`src/quest-progress.js`): tries by task id as id tokens, stamps by stop. The round-2 save (option indices) and the round-1 save migrate through `legacy.v2` in the data: every stamp stays, a kept question keeps its tries.
+  - Events: `quest_step_completed` carries `type` (seven keys now).
+  - Text pages: the intro's task sentence is left out, as the question sentence was.
+- Verification: see braga-018 in `feature_list.json`.
+- Known limits: the find-on-map view is wide on a phone (the models are small; the markers and the list carry the task). The visual detail rests on one model (the keep), checked by eye in screenshots. Not checked on a physical phone or with a screen reader.
