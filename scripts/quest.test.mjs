@@ -232,7 +232,7 @@ test('the year shown on each stop agrees across languages', () => {
 });
 
 test('the menu label, its title and the load error are translated', () => {
-  for (const k of ['Исторический маршрут', 'Откройте историческую Брагу: пять мест, пять вопросов', 'Не удалось загрузить маршрут']) {
+  for (const k of ['Исторические маршруты', 'Откройте историческую Брагу: маршруты с заданием на каждой остановке', 'Не удалось загрузить маршрут']) {
     assert.ok(messages[k]?.[0] && messages[k]?.[1], `src/locales/ui.js: ${k}`);
   }
 });
