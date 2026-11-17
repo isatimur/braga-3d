@@ -22,6 +22,7 @@
 //     tunnel it is a faint dashed hint (Legend toggle).
 import * as THREE from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+import { createCellCuller } from './cell-runs.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { S } from './geo.js';
@@ -664,6 +665,20 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
 
   if (hint) legendToggle((on) => api.setTunnelHint(on));
 
+  // Every mesh and line set here spans the whole city: each draws only the
+  // grid cells in view (cell-runs.js; the shadow camera's too for the
+  // structures, which cast). 1 km cells, at most 3 draws per object; over the
+  // whole city it is one draw each, as before. The one-time sort of each
+  // object waits for prepareCells(), which main.js calls one object per idle
+  // slot after `ready`; until then an object draws whole. The geometry is
+  // taken now: tiles.js later joins the ring's lines to the primary and
+  // water lines in a new geometry, and such a line draws whole (cell-runs.js).
+  const culler = createCellCuller();
+  const pendingCells = [];
+  group.traverse((o) => {
+    if (o !== group && !o.isPoints && (o.isMesh || o.isLineSegments2)) pendingCells.push([o, o.geometry]);
+  });
+
   let detailOn = true;
   const api = {
     group,
@@ -726,6 +741,24 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
     setTunnelHint(on) {
       hintOn = !!on;
       if (hint) hint.visible = hintOn;
+    },
+    // once a frame before the render: the view and the sun's shadow camera
+    // (its matrices for this frame), or null without a shadow pass
+    updateCells(camera, shadowCamera = null) {
+      culler.update(camera, shadowCamera);
+    },
+    // sort up to `n` more objects into cells; returns how many still wait
+    // (fat lines: 30 units around each cell for their width on screen and
+    // the glow)
+    prepareCells(n = Infinity) {
+      for (let k = 0; k < n && pendingCells.length; k++) {
+        const [o, geometry] = pendingCells.shift();
+        culler.add(o, { cell: 250, maxRuns: 3, pad: o.isLineSegments2 ? 30 : 0, geometry });
+      }
+      return pendingCells.length;
+    },
+    get cellStats() {
+      return culler.stats;
     },
   };
   return api;

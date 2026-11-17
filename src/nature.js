@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { S } from './geo.js';
 import { FOG_UNIFORMS, WEATHER_UNIFORMS, CLOUD_GLSL, SEASON_GLSL } from './scene.js';
 import { createWater } from './water.js';
+import { setRingBounds } from './bounds.js';
 import { CITY } from './city.js';
 
 // ------------------------------------------------------------ tuning
@@ -1032,7 +1033,9 @@ export function buildNature(opts) {
     mesh.customDepthMaterial = treeDepthMaterial(uniforms, s);
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     mesh.count = 0;
-    mesh.frustumCulled = false;
+    mesh.visible = false; // until partition() fills it
+    // bounds: the ball around the camera that holds its trees (partition)
+    mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(), -1);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.name = `trees-${s}`;
@@ -1075,6 +1078,7 @@ export function buildNature(opts) {
     for (let s = 0; s < near.length; s++) {
       const N = near[s];
       let k = 0;
+      let smax = 0;
       const wr = SPECIES[s].w;
       for (let ti = 0, nl = N.list.length, nt = nl + N.stream.length; ti < nt; ti++) {
         const t = ti < nl ? N.list[ti] : N.stream[ti - nl];
@@ -1088,6 +1092,7 @@ export function buildNature(opts) {
           _m.compose(_p, _q, _s);
           N.mesh.setMatrixAt(k, _m);
           N.tintAttr.setXYZ(k, t.tint[0], t.tint[1], t.tint[2]);
+          smax = Math.max(smax, t.h * Math.max(t.wx || 1, t.wy || 1, t.wz || 1, 1));
           k++;
         } else {
           bbInst.setXYZW(far, t.x, t.y, t.z, t.h * (t.wy || 1));
@@ -1097,6 +1102,12 @@ export function buildNature(opts) {
         }
       }
       N.mesh.count = k;
+      // an empty species is no draw at all (it was one in the view and one in
+      // the shadow pass); a filled one is culled when its ball is out of view.
+      // Every near tree stands within nearR of `cam` (3D): the ball holds it
+      // until the next partition, wherever the camera goes meanwhile.
+      N.mesh.visible = k > 0;
+      if (k) setRingBounds(N.mesh, cam.x, cam.z, nearR, cam.y, cam.y, smax * 1.15); // +15 %: the wind sway
       N.mesh.instanceMatrix.needsUpdate = true;
       N.tintAttr.needsUpdate = true;
       nearCount += k;
