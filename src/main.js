@@ -192,6 +192,23 @@ async function start() {
   const roadLayer = buildRoads(roads, project, heightAt, { waterRibbon: !loaded.nature, lite: LITE });
   scene.add(roadLayer.group);
   debug.roadSegments = roadLayer.counts;
+  debug.roadCells = () => roadLayer.cellStats; // per object: cells, runs, drawn of total
+  // The road layer's city-wide meshes draw only their cells in view
+  // (cell-runs.js): right before each render, with this frame's camera and
+  // shadow camera (three.js would update both inside render, too late here).
+  function cullCells() {
+    camera.updateMatrixWorld();
+    const sun = atmosphere.sun;
+    let shadowCam = null;
+    if (sun?.castShadow && renderer.shadowMap.enabled) {
+      // the sun follows the focus: this frame's position, not the last one's
+      sun.updateMatrixWorld();
+      sun.target.updateMatrixWorld();
+      sun.shadow.updateMatrices(sun);
+      shadowCam = sun.shadow.camera;
+    }
+    roadLayer.updateCells(camera, shadowCam);
+  }
   mark('roads');
 
   loader.set(0.72, t('Возводим здания'));
@@ -1681,6 +1698,7 @@ async function start() {
         m.castShadow = m.userData.liteCast && camDist < 4000 && m.position.distanceToSquared(camera.position) < 1200 * 1200;
       }
     }
+    cullCells();
     if (fx.enabled) {
       fx.update(rawDt, atmosphere.sunDir, night);
       fx.render();
@@ -1844,6 +1862,16 @@ async function start() {
     perf.scene = () => ({ tris: debug.triangles, calls: debug.calls });
     perf.start(applyKnobs);
     perf.warmUntil = performance.now() + 2500;
+    // The road layer's cell order (cell-runs.js), one object per idle slot,
+    // inside the governor's warm-up: it would hold the first full frame and
+    // `ready` back (porto-3d measured 60 ms on a desktop, 350 ms at 6x CPU).
+    // Until an object is sorted it draws whole.
+    try {
+      while (roadLayer.prepareCells(1) > 0) await idle();
+      mark('roadCells');
+    } catch (e) {
+      console.error('[braga] road cells failed', e);
+    }
   }
 
   loader.set(0.95, t('Первый кадр'));
@@ -1859,7 +1887,7 @@ async function start() {
 
   Object.assign(debug, { select, close, openRoute, exitRoute, startTour, stopTour, ui, panorama, routes, rig, landmarksRealScale: marks.realScale, shrink: marks.shrink });
   Object.defineProperty(debug, 'touring', { get: () => !!tour });
-  installShare({ renderer, scene, camera, fx, setFx, atmosphere, roadLayer, routeLayer, marks, landmarks, routes, ui, getSize: () => size });
+  installShare({ renderer, scene, camera, fx, setFx, atmosphere, roadLayer, routeLayer, marks, landmarks, routes, ui, getSize: () => size, beforeRender: cullCells });
   // the talking guide (guide.js, api/guide.js) is parked until later; ?guide=1 turns it on for testing
   if (new URLSearchParams(location.search).get('guide') === '1') {
     import('./guide.js').then(({ createGuide }) => {
