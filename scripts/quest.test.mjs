@@ -346,6 +346,9 @@ function wrongOf(s, n = 1) {
   return t.options.filter((o) => o.id !== t.answer)[n - 1].id;
 }
 const sub = (rp, s, token) => rp.submit(s.id, s.task.id, token, answerKey(s.task));
+// a city with no round-2 saves to migrate (no legacy.v2 table) skips those tests
+const HAS_LEGACY = HAS && !!LEGACY[ROUTES[0]?.id] && !!LEGACY[ROUTES[1]?.id];
+const legacyTest = HAS_LEGACY ? test : (name) => nodeTest(name, { skip: 'no legacy.v2 table in data/quest.json' }, () => {});
 
 test('legacy table: the round-2 answers, kept questions mapped to their option ids', () => {
   for (const [rid, stops] of Object.entries(LEGACY)) {
@@ -400,12 +403,13 @@ test('retry: a wrong try is kept, the same try again is ignored, the right one s
   delete globalThis.localStorage;
 });
 
-test('retry: every task type takes its own tokens', () => {
+test('retry: every task type in the data takes its own tokens', () => {
   fakeStorage();
   const p = createQuestProgress('braga', LEGACY);
   for (const type of TASK_TYPES) {
     const s = STOPS.find((x) => x.task.type === type);
-    assert.ok(s, `no ${type} task in the data`);
+    if (!s) continue; // a city may use fewer types
+    assert.ok(type !== 'find_on_map' || s.task.candidates.length >= 3);
     const rp = p.route(s.route);
     assert.equal(sub(rp, s, wrongOf(s)), 'wrong', `${type}: a wrong try`);
     if (type !== 'true_false') assert.equal(sub(rp, s, wrongOf(s, 2)), 'wrong', `${type}: a second wrong try`);
@@ -427,7 +431,7 @@ test('progress: saved per route id; the last route is remembered', () => {
   delete globalThis.localStorage;
 });
 
-test('progress: the first-round save migrates without losing a stamp, once, into the first route only', () => {
+legacyTest('progress: the first-round save migrates without losing a stamp, once, into the first route only', () => {
   const stops = FIRST;
   const old1 = LEGACY[LEGACY_ROUTE];
   const [a, b, c] = stops;
@@ -456,7 +460,7 @@ test('progress: the first-round save migrates without losing a stamp, once, into
   delete globalThis.localStorage;
 });
 
-test('progress: a round-2 save keeps every stamp; kept questions keep their tries by id', () => {
+legacyTest('progress: a round-2 save keeps every stamp; kept questions keep their tries by id', () => {
   const r1 = LEGACY[ROUTES[0].id];
   const r2 = LEGACY[ROUTES[1].id];
   const kept = Object.keys(r1).find((id) => r1[id].task);

@@ -607,12 +607,13 @@ export function buildLandmarks(list, fits, heightAt, outlines, onLabelClick) {
   }
 
   const _ray = new THREE.Vector3();
-  // only: a Set of item indices that may be picked (all when absent)
+  // only: a Set of item indices that may be picked, whatever the category
+  // filter (quest.js shows them); else every shown item
   function pick(raycaster, only) {
     let best = null;
     let bestD = Infinity;
     for (const it of items) {
-      if (hidden.has(it.data.category) || (only && !only.has(it.index))) continue;
+      if (only ? !only.has(it.index) : hidden.has(it.data.category)) continue;
       const pinPos = _pos.set(it.center.x, it.pinY ?? it.top, it.center.z);
       const r = Math.max(it.pinH * 0.6, 0.6);
       const pinHit = raycaster.ray.distanceSqToPoint(pinPos) < r * r;

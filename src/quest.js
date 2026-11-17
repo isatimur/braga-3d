@@ -555,8 +555,16 @@ export function createQuest(ctx) {
   const labelsEl = document.getElementById('labels');
   function startPick(task, onPick) {
     const list = task.candidates.map((id) => byId.get(id)).filter(Boolean);
-    picking = { task, list, ids: new Set(list.map((it) => it.data.id)), allow: new Set(list.map((it) => it.index)), onPick };
-    for (const it of list) it.labelEl.classList.add('is-quest-candidate');
+    // a candidate whose category the visitor filtered out still shows (its
+    // model, outline and label), and comes back to the filter afterwards
+    const saved = list.map((it) => ({ it, meshes: it.meshes.map((m) => m.visible), outline: it.outline?.visible, label: it.label.visible }));
+    picking = { task, list, saved, ids: new Set(list.map((it) => it.data.id)), allow: new Set(list.map((it) => it.index)), onPick };
+    for (const it of list) {
+      for (const m of it.meshes) m.visible = true;
+      if (it.outline) it.outline.visible = true;
+      it.label.visible = true;
+      it.labelEl.classList.add('is-quest-candidate');
+    }
     document.body.classList.add('is-quest-picking');
     root.dataset.picking = '1';
     if (labelsEl) {
@@ -568,6 +576,11 @@ export function createQuest(ctx) {
   function endPick() {
     if (!picking) return;
     for (const it of picking.list) it.labelEl.classList.remove('is-quest-candidate', 'is-quest-tried', 'is-quest-hint');
+    for (const { it, meshes, outline, label } of picking.saved) {
+      it.meshes.forEach((m, k) => (m.visible = meshes[k]));
+      if (it.outline) it.outline.visible = outline;
+      it.label.visible = label;
+    }
     document.body.classList.remove('is-quest-picking');
     delete root.dataset.picking;
     if (labelsEl) {
