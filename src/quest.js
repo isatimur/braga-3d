@@ -45,19 +45,34 @@ const OVERVIEW = { az: 0, elev: 0.78, k: 1.05 }; // intro and end: every stop in
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const pick = (o) => (o && typeof o === 'object' ? o[language] ?? o.ru : o) ?? '';
 
-// <data_dir>/quest.json, fetched when the route first opens
-async function loadQuest() {
-  const res = await fetch(assetUrl(dataPath('quest.json')), { cache: 'no-cache' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  if (!(res.headers.get('content-type') || '').includes('json')) throw new Error('not JSON');
-  return res.json();
+// <data_dir>/quest.json, fetched when the route first opens. A #quest deep
+// link starts the fetch with the page (main.js preloads it next to the
+// map's data), so the route's card does not wait for the city to be built.
+// (The early card is ported from porto-3d perf round 3, 4476621.)
+let questData = null;
+export function preloadQuest() {
+  questData ??= (async () => {
+    const res = await fetch(assetUrl(dataPath('quest.json')), { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!(res.headers.get('content-type') || '').includes('json')) throw new Error('not JSON');
+    return res.json();
+  })();
+  questData.catch(() => {
+    questData = null; // a failed fetch is tried again on the next open
+  });
+  return questData;
 }
+const loadQuest = preloadQuest;
 
 // ctx: { camera, rig, items, sky, home: {position, target}, reducedMotion,
 //        city, atmosphere, getLife(), setTime(name), onFocus(ids), onEnter(),
 //        onExit(), onRoute(), onPlace(index), onError(err) }
+// A #quest deep link creates the route as soon as the landmarks exist
+// (main.js), before the rest of the city and the UI: then `rig`, `sky` and
+// the UI callbacks are missing. The card shows and works at once; the camera
+// flights wait until attach() hands them over.
 export function createQuest(ctx) {
-  const { camera, rig, reducedMotion } = ctx;
+  const { camera, reducedMotion } = ctx;
   const byId = new Map(ctx.items.map((it) => [it.data.id, it]));
   let progress = null; // made once the data is in (the old save needs its answers)
   let rp = null; // progress.route(<the open route>)
@@ -327,7 +342,7 @@ export function createQuest(ctx) {
         text.hidden = false;
         showBtn.textContent = s('show');
         ctx.onFocus?.([st.id]);
-        shot = screenShot();
+        shot = cameraReady() ? screenShot() : null;
         fly(shot);
       }
       if (!how) return;
@@ -354,7 +369,7 @@ export function createQuest(ctx) {
     }
     paint(false);
     if (!finding) ctx.onFocus?.([st.id]);
-    shot = screenShot();
+    shot = cameraReady() ? screenShot() : null;
     fly(shot);
   }
 
@@ -552,7 +567,16 @@ export function createQuest(ctx) {
   // change and stop() call it.
   let picking = null; // { task, list: [item], ids: Set(id), allow: Set(index), onPick(id) }
   const NONE = new Set();
-  const labelsEl = document.getElementById('labels');
+  const labelsEl = () => document.getElementById('labels');
+  // the labels layer takes clicks while picking; out of it, it is inert like
+  // the rest of the map chrome (attach() may inert it after a pick started)
+  function pickLabels(on) {
+    const layer = labelsEl();
+    if (!layer) return;
+    layer.inert = on ? false : inerted.includes(layer);
+    if (on) layer.setAttribute('aria-hidden', 'true');
+    else layer.removeAttribute('aria-hidden');
+  }
   function startPick(task, onPick) {
     const list = task.candidates.map((id) => byId.get(id)).filter(Boolean);
     // a candidate whose category the visitor filtered out still shows (its
@@ -567,10 +591,7 @@ export function createQuest(ctx) {
     }
     document.body.classList.add('is-quest-picking');
     root.dataset.picking = '1';
-    if (labelsEl) {
-      labelsEl.inert = false;
-      labelsEl.setAttribute('aria-hidden', 'true');
-    }
+    pickLabels(true);
     ctx.onFocus?.([...picking.ids]);
   }
   function endPick() {
@@ -583,10 +604,7 @@ export function createQuest(ctx) {
     }
     document.body.classList.remove('is-quest-picking');
     delete root.dataset.picking;
-    if (labelsEl) {
-      labelsEl.inert = inerted.includes(labelsEl);
-      labelsEl.removeAttribute('aria-hidden');
-    }
+    pickLabels(false);
     picking = null;
   }
 
@@ -717,15 +735,19 @@ export function createQuest(ctx) {
   }
   function frameOverview() {
     ctx.onFocus?.([...new Set((route ? [route] : routes).flatMap((r) => r.stops.map((st) => st.id)))]);
-    shot = screenShot();
+    shot = cameraReady() ? screenShot() : null;
     fly(shot);
   }
+  // the framing reads the skyline and the flight drives the rig: both exist
+  // once the city is built (an early deep link has neither yet)
+  const cameraReady = () => !!(ctx.rig && ctx.sky);
 
   // One flight to `to` along a curve over the city, driven through the
   // rig (camera.js drive). At the end the rig hands the orbit controls
   // back, so the visitor can look around the stop.
   function fly(to) {
-    if (!to || !active) return;
+    if (!to || !active || !ctx.rig) return;
+    const rig = ctx.rig;
     const from = camera.position.clone();
     const look0 = rig.controls.target.clone();
     const far = from.distanceTo(to.pos) > 40;
@@ -834,7 +856,7 @@ export function createQuest(ctx) {
     if (!active) return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (!active) return;
+      if (!active || !cameraReady()) return;
       shot = screenShot();
       fly(shot);
     }, 200);
@@ -887,10 +909,40 @@ export function createQuest(ctx) {
     ctx.onEnter?.();
     root.hidden = false;
     document.body.classList.add('is-quest');
-    inerted = [...document.querySelectorAll(CHROME)].filter((n) => !n.inert && !root.contains(n));
-    for (const n of inerted) n.inert = true;
-    requestAnimationFrame(() => root.classList.add('is-open'));
+    inertChrome();
+    // an early card (deep link) opens at once: the build's next long task
+    // would hold a fade at its first frame
+    if (ctx.rig) requestAnimationFrame(() => root.classList.add('is-open'));
+    else root.classList.add('is-open');
     openFirst(id);
+  }
+  // the map chrome present now (attach() catches what the UI made later)
+  function inertChrome() {
+    const more = [...document.querySelectorAll(CHROME)].filter((n) => !n.inert && !root.contains(n));
+    for (const n of more) n.inert = true;
+    inerted.push(...more);
+  }
+
+  // An early route (deep link) gets the rest of its context once the city
+  // and the UI exist: the camera flies to the open screen's view, the
+  // chrome made since then goes inert, life's weather is held.
+  function attach(more) {
+    Object.assign(ctx, more);
+    if (!active) return;
+    inertChrome();
+    holdLight();
+    ctx.onEnter?.();
+    ctx.onRoute?.();
+    // a find-on-map task opened early: its labels take clicks again (the
+    // chrome pass above may have made them inert), and the focus names every
+    // candidate, never the place alone
+    if (picking) {
+      pickLabels(true);
+      ctx.onFocus?.([...picking.ids]);
+    } else if (screen === 'stop') ctx.onFocus?.([stops[current].id]);
+    else ctx.onFocus?.([...new Set((route ? [route] : routes).flatMap((r) => r.stops.map((st) => st.id)))]);
+    shot = cameraReady() ? screenShot() : null;
+    fly(shot);
   }
 
   function stop() {
@@ -898,7 +950,7 @@ export function createQuest(ctx) {
     endPick();
     active = false;
     flying = false;
-    rig.stopDrive();
+    ctx.rig?.stopDrive();
     root.classList.remove('is-open');
     document.body.classList.remove('is-quest');
     for (const n of inerted) n.inert = false;
@@ -922,12 +974,17 @@ export function createQuest(ctx) {
   return {
     start,
     stop,
+    attach,
     onKey,
     get active() {
       return active;
     },
     get heldLight() {
       return heldLight();
+    },
+    // main.js: the visitor's start-up light, read after an early route took the sky
+    holdTime(name) {
+      if (held && !held.timeSet) held.time = name;
     },
     // main.js: life.js was built while the route runs
     lifeReady() {
@@ -957,7 +1014,7 @@ export function createQuest(ctx) {
     get state() {
       const sum = stops.length && rp ? questSummary(stops, rp) : null;
       const task = stops[current]?.task;
-      return { active, screen, route: route?.id ?? null, stop: current, id: stops[current]?.id ?? null, type: task?.type ?? null, picking: !!picking, flying: flying && rig.touring, ...sum };
+      return { active, screen, route: route?.id ?? null, stop: current, id: stops[current]?.id ?? null, type: task?.type ?? null, picking: !!picking, flying: flying && !!ctx.rig?.touring, ...sum };
     },
     goStop,
     showEnd: () => route && renderEnd(),
