@@ -1,12 +1,12 @@
 {
-  "_about": "History routes (src/quest.js, #quest, #quest=<route id>). 'routes' is a list; each route has a stable 'id' (it keys the saved progress and the link, so never rename one), a title, an intro, an end_lead and its stops in order. Every stop's 'text', 'basis' and 'visit' line is a verbatim excerpt of the landmark's own texts: ru from data/landmarks.json (history_ru, facts_ru, tip_ru), en and pt from src/locales/en.js and src/locales/pt.js (history, facts, tip). 'from' names the fields; 'sources' repeats the landmark's sources. A stop shared by two routes asks a different question in each. scripts/quest.test.mjs checks all of this. Questions and wrong options are new wording; wrong options are wrong on their face (another century, another place, a technology that did not exist). The text pages public/route/ are generated from this file (scripts/route-pages.mjs, run by make-og.mjs --pages).",
+  "_about": "History routes (src/quest.js, #quest, #quest=<route id>). 'routes' is a list; each route has a stable 'id' (it keys the saved progress and the link, so never rename one), a title, an intro, an end_lead and its stops in order. Each stop has one 'task' with a stable 'id' (it keys the saved tries: a new task gets a new id) and a 'type': multiple_choice (question, options with ids, answer = an option id, basis), visual_detail (the same, about a detail the 3D model shows; model_check names the builder file and a word for that detail in it), true_false (statement, answer true or false, basis), find_on_map (target = the stop's landmark, candidates = landmark ids shown as unnamed markers, view = the camera over them, basis) or sequence (items in time order, each with an id, a year, a label with no date and a quote that holds the year; start = the order shown first). Every stop's 'text', 'basis', item 'quote' and 'visit' line is a verbatim excerpt of the landmark's own texts: ru from data/landmarks.json (history_ru, facts_ru, tip_ru), en and pt from src/locales/en.js and src/locales/pt.js (history, facts, tip). 'from' names the fields; 'sources' repeats the landmark's sources. A stop shared by two routes sets a different task in each. scripts/quest.test.mjs checks all of this. Questions, statements, labels and wrong options are new wording; wrong options and false statements are wrong on their face (another century, another place, a technology that did not exist, the opposite of the quote). 'legacy.v2' keeps the round-2 answers by option index, so older saved progress keeps its stamps. The text pages public/route/ are generated from this file (scripts/route-pages.mjs, run by make-og.mjs --pages); they show no tasks.",
   "ui": {
     "kicker": { "ru": "Исторические маршруты", "en": "History routes", "pt": "Rotas da história" },
     "title": { "ru": "Откройте историческую Брагу", "en": "Discover historic Braga", "pt": "Descobrir a Braga histórica" },
     "subtitle": {
-      "ru": "Выберите маршрут. На каждой остановке один вопрос, за верный ответ — печать.",
-      "en": "Choose a route. Each stop asks one question, and each right answer earns a stamp.",
-      "pt": "Escolha uma rota. Cada paragem faz uma pergunta, e cada resposta certa vale um selo."
+      "ru": "Выберите маршрут. На каждой остановке задание: вопрос, поиск на карте или события по порядку. За верный ответ — печать.",
+      "en": "Choose a route. Each stop sets a task: a question, a place to find on the map or events to put in order. Each right answer earns a stamp.",
+      "pt": "Escolha uma rota. Cada paragem traz uma tarefa: uma pergunta, um lugar para encontrar no mapa ou acontecimentos para ordenar. Cada resposta certa vale um selo."
     },
     "note": {
       "ru": "Тексты взяты из карточек мест этой карты, у каждого указаны источники. 3D-здания — упрощённые модели нынешних построек.",
@@ -52,16 +52,81 @@
     "open_map": { "ru": "Открыть этот маршрут на 3D-карте", "en": "Open this route on the 3D map", "pt": "Abrir esta rota no mapa 3D" },
     "open_map_all": { "ru": "Открыть 3D-карту", "en": "Open the 3D map", "pt": "Abrir o mapa 3D" },
     "languages": { "ru": "Язык", "en": "Language", "pt": "Idioma" },
-    "places": { "ru": "Места маршрута", "en": "Places on the route", "pt": "Lugares da rota" }
+    "places": { "ru": "Места маршрута", "en": "Places on the route", "pt": "Lugares da rota" },
+    "tf_label": { "ru": "Верно или нет?", "en": "True or false?", "pt": "Verdadeiro ou falso?" },
+    "tf_true": { "ru": "Верно", "en": "True", "pt": "Verdadeiro" },
+    "tf_false": { "ru": "Неверно", "en": "False", "pt": "Falso" },
+    "tf_is_true": { "ru": "Утверждение верно.", "en": "The statement is true.", "pt": "A afirmação é verdadeira." },
+    "tf_is_false": { "ru": "Утверждение неверно.", "en": "The statement is false.", "pt": "A afirmação é falsa." },
+    "find_label": { "ru": "Найдите на карте", "en": "Find it on the map", "pt": "Encontre no mapa" },
+    "find_prompt": {
+      "ru": "Где на карте {name}? Нажмите на здание или на его метку «?». Как оно выглядит, видно на фото.",
+      "en": "Where is {name} on the map? Click or tap its building or its «?» marker. The photo shows what it looks like.",
+      "pt": "Onde fica {name} no mapa? Clique ou toque no edifício ou na sua marca «?». A fotografia mostra como é."
+    },
+    "find_list": { "ru": "Или выберите из списка:", "en": "Or choose from the list:", "pt": "Ou escolha na lista:" },
+    "find_wrong": { "ru": "Не то: это {name}. Попробуйте другое место.", "en": "Not this one: that is {name}. Try another place.", "pt": "Não é este: é {name}. Experimente outro lugar." },
+    "find_hint": {
+      "ru": "Подсказка: метка нужного места теперь выделена на карте.",
+      "en": "A hint: the marker of the place you are looking for now stands out on the map.",
+      "pt": "Uma ajuda: a marca do lugar que procura está agora destacada no mapa."
+    },
+    "show_area": { "ru": "Показать район", "en": "Show the area", "pt": "Mostrar a zona" },
+    "seq_label": { "ru": "Расставьте по порядку", "en": "Put in order", "pt": "Ponha por ordem" },
+    "seq_prompt": {
+      "ru": "Расставьте события по времени: самое раннее наверху. Двигайте их стрелками.",
+      "en": "Put these events in time order, the earliest at the top. Move them with the arrows.",
+      "pt": "Ordene estes acontecimentos no tempo, o mais antigo em cima. Mova-os com as setas."
+    },
+    "seq_up": { "ru": "Выше: {item}", "en": "Move up: {item}", "pt": "Subir: {item}" },
+    "seq_down": { "ru": "Ниже: {item}", "en": "Move down: {item}", "pt": "Descer: {item}" },
+    "seq_moved": { "ru": "{item}: теперь {n}-е из {m}.", "en": "{item}: now {n} of {m}.", "pt": "{item}: agora {n} de {m}." },
+    "seq_check": { "ru": "Проверить порядок", "en": "Check the order", "pt": "Verificar a ordem" },
+    "seq_wrong": {
+      "ru": "Пока не по порядку: на своём месте {k} из {m}. Переставьте и проверьте снова.",
+      "en": "Not in order yet: {k} of {m} in the right place. Move them and check again.",
+      "pt": "Ainda não está por ordem: {k} de {m} no lugar certo. Mude-os e verifique de novo."
+    },
+    "seq_same": {
+      "ru": "Этот порядок вы уже проверяли. Переставьте событие и проверьте снова.",
+      "en": "You have checked this order already. Move an event and check again.",
+      "pt": "Já verificou esta ordem. Mude um acontecimento e verifique de novo."
+    },
+    "seq_basis": { "ru": "Даты из карточки места:", "en": "Dates from the place card:", "pt": "Datas da ficha do lugar:" },
+    "look_label": { "ru": "Посмотрите на карту", "en": "Look at the map", "pt": "Observe o mapa" },
+    "look_hint": {
+      "ru": "Ответ — на 3D-модели. Кнопка «{show}» вернёт её в кадр.",
+      "en": "The answer is on the 3D model. “{show}” brings it back into view.",
+      "pt": "A resposta está no modelo 3D. «{show}» volta a enquadrá-lo."
+    }
+  },
+  "legacy": {
+    "_about": "Round 2 saved tries as option indices per stop. For each stop: the right index then; for a question still asked, its task id and its option ids in the old order. scripts/quest.test.mjs checks the kept ones against the tasks.",
+    "v2": {
+      "two-thousand-years": {
+        "termas-romanas": { "answer": 1, "task": "termas-floor-heating", "options": ["electric-cables", "furnace-hot-air", "volcano-steam"] },
+        "se-braga": { "answer": 2 },
+        "arco-porta-nova": { "answer": 2 },
+        "palacio-raio": { "answer": 1, "task": "raio-name", "options": ["bishop-pedro", "miguel-jose-raio", "roman-builder"] },
+        "bom-jesus": { "answer": 0 }
+      },
+      "old-town-on-foot": {
+        "biscainhos": { "answer": 2, "task": "biscainhos-street-name", "options": ["biscuit-bakery", "owner-surname", "biscay-craftsmen"] },
+        "arco-porta-nova": { "answer": 1 },
+        "se-braga": { "answer": 0 },
+        "santa-barbara": { "answer": 2 },
+        "torre-menagem": { "answer": 0 }
+      }
+    }
   },
   "routes": [
     {
       "id": "two-thousand-years",
       "title": { "ru": "Две тысячи лет", "en": "Two thousand years", "pt": "Dois mil anos" },
       "intro": {
-        "ru": "Пять мест и две тысячи лет: от римских терм до Бом-Жезуша. На каждой остановке один вопрос, за верный ответ — печать.",
-        "en": "Five places and two thousand years, from the Roman baths to Bom Jesus. Each stop asks one question. Each right answer earns a stamp.",
-        "pt": "Cinco lugares e dois mil anos, das termas romanas ao Bom Jesus. Cada paragem faz uma pergunta. Cada resposta certa vale um selo."
+        "ru": "Пять мест и две тысячи лет: от римских терм до Бом-Жезуша. На каждой остановке своё задание, за верный ответ — печать.",
+        "en": "Five places and two thousand years, from the Roman baths to Bom Jesus. Each stop sets a task. Each right answer earns a stamp.",
+        "pt": "Cinco lugares e dois mil anos, das termas romanas ao Bom Jesus. Cada paragem traz uma tarefa. Cada resposta certa vale um selo."
       },
       "end_lead": {
         "ru": "Вы прошли пять мест на карте. Все они стоят в Браге, и их можно увидеть своими глазами.",
@@ -97,21 +162,25 @@
               "Pilares de tijolo (suspensurae) elevavam o chão permitindo a circulação de ar quente forçado pela fornalha."
             ]
           },
-          "question": {
-            "ru": "Как обогревали полы этих бань?",
-            "en": "How were the floors of these baths heated?",
-            "pt": "Como era aquecido o chão destas termas?"
-          },
-          "options": [
-            { "ru": "Электрическими кабелями под камнем", "en": "With electric cables under the stone", "pt": "Com cabos elétricos sob a pedra" },
-            { "ru": "Горячим воздухом от печи под приподнятым полом", "en": "With hot air from a furnace, under a raised floor", "pt": "Com ar quente de uma fornalha, sob um chão elevado" },
-            { "ru": "Паром из вулкана", "en": "With steam from a volcano", "pt": "Com vapor de um vulcão" }
-          ],
-          "answer": 1,
-          "basis": {
-            "ru": "На них лежал пол, а под ним шёл горячий воздух от печи.",
-            "en": "Low brick columns supported the floor, allowing hot air from a furnace to circulate beneath it: the hypocaust system.",
-            "pt": "Pilares de tijolo (suspensurae) elevavam o chão permitindo a circulação de ar quente forçado pela fornalha."
+          "task": {
+            "id": "termas-floor-heating",
+            "type": "multiple_choice",
+            "question": {
+              "ru": "Как обогревали полы этих бань?",
+              "en": "How were the floors of these baths heated?",
+              "pt": "Como era aquecido o chão destas termas?"
+            },
+            "options": [
+              { "id": "electric-cables", "ru": "Электрическими кабелями под камнем", "en": "With electric cables under the stone", "pt": "Com cabos elétricos sob a pedra" },
+              { "id": "furnace-hot-air", "ru": "Горячим воздухом от печи под приподнятым полом", "en": "With hot air from a furnace, under a raised floor", "pt": "Com ar quente de uma fornalha, sob um chão elevado" },
+              { "id": "volcano-steam", "ru": "Паром из вулкана", "en": "With steam from a volcano", "pt": "Com vapor de um vulcão" }
+            ],
+            "answer": "furnace-hot-air",
+            "basis": {
+              "ru": "На них лежал пол, а под ним шёл горячий воздух от печи.",
+              "en": "Low brick columns supported the floor, allowing hot air from a furnace to circulate beneath it: the hypocaust system.",
+              "pt": "Pilares de tijolo (suspensurae) elevavam o chão permitindo a circulação de ar quente forçado pela fornalha."
+            }
           },
           "visit": {
             "ru": [
@@ -131,7 +200,7 @@
         {
           "id": "se-braga",
           "view": { "az": 0, "elev": 0.42, "k": 1.1 },
-          "from": { "text": "history", "basis": "facts", "visit": "tip" },
+          "from": { "text": "history", "basis": "history (ru: facts)", "visit": "tip" },
           "sources": [
             "https://pt.wikipedia.org/wiki/S%C3%A9_de_Braga",
             "https://en.wikipedia.org/wiki/Braga_Cathedral",
@@ -141,32 +210,31 @@
             "ru": [
               "Собор стоит в самом сердце старой Браги.",
               "Под ним лежат остатки римской постройки и раннехристианской базилики.",
-              "Епископ Педру начал строить новый собор и освятил его 28 августа 1089 года."
+              "Первый храм строили в бургундском романском стиле, по образцу аббатства Клюни."
             ],
             "en": [
               "The cathedral stands over Roman remains and an early Christian basilica.",
-              "Following the restoration of the bishopric around 1070, Bishop Pedro began the new building and consecrated it on 28 August 1089, before the foundation of the Portuguese kingdom."
+              "Its Romanesque design drew on Burgundy and Cluny."
             ],
             "pt": [
               "A catedral assenta sobre vestígios romanos e uma basílica paleocristã.",
-              "Após a restauração da diocese por volta de 1070, o bispo D. Pedro iniciou a nova catedral e consagrou-a a 28 de agosto de 1089, antes da fundação de Portugal."
+              "O plano românico de influência borgonhesa e cluniacense desenvolveu-se até ao século XIII, seguindo-se intervenções góticas e manuelinas."
             ]
           },
-          "question": {
-            "ru": "В каком году епископ Педру освятил собор?",
-            "en": "In which year did Bishop Pedro consecrate the cathedral?",
-            "pt": "Em que ano o bispo D. Pedro consagrou a catedral?"
-          },
-          "options": [
-            { "ru": "В 1589 году", "en": "In 1589", "pt": "Em 1589" },
-            { "ru": "В 1989 году", "en": "In 1989", "pt": "Em 1989" },
-            { "ru": "В 1089 году", "en": "In 1089", "pt": "Em 1089" }
-          ],
-          "answer": 2,
-          "basis": {
-            "ru": "Епископ Педру освятил собор 28 августа 1089 года, за полвека до рождения Португалии.",
-            "en": "Bishop Pedro consecrated the cathedral on 28 August 1089.",
-            "pt": "O bispo D. Pedro consagrou a catedral a 28 de agosto de 1089."
+          "task": {
+            "id": "se-older-than-the-kingdom",
+            "type": "true_false",
+            "statement": {
+              "ru": "Собор освятили раньше, чем появилось Португальское королевство.",
+              "en": "The cathedral was consecrated before the Portuguese kingdom was founded.",
+              "pt": "A catedral foi consagrada antes da fundação de Portugal."
+            },
+            "answer": true,
+            "basis": {
+              "ru": "Епископ Педру освятил собор 28 августа 1089 года, за полвека до рождения Португалии.",
+              "en": "Following the restoration of the bishopric around 1070, Bishop Pedro began the new building and consecrated it on 28 August 1089, before the foundation of the Portuguese kingdom.",
+              "pt": "Após a restauração da diocese por volta de 1070, o bispo D. Pedro iniciou a nova catedral e consagrou-a a 28 de agosto de 1089, antes da fundação de Portugal."
+            }
           },
           "visit": {
             "ru": [
@@ -210,21 +278,17 @@
               "Por nunca ter tido portas de fechar, deu origem ao provérbio \"És de Braga?\"."
             ]
           },
-          "question": {
-            "ru": "С этой аркой связана шутка «Ты что, из Браги?». Почему?",
-            "en": "The joke “Are you from Braga?” comes from this arch. Why?",
-            "pt": "O provérbio \"És de Braga?\" vem deste arco. Porquê?"
-          },
-          "options": [
-            { "ru": "Её построили за одну ночь", "en": "It was built in a single night", "pt": "Foi construído numa só noite" },
-            { "ru": "Её двери были из чистого золота", "en": "Its doors were made of solid gold", "pt": "As suas portas eram de ouro maciço" },
-            { "ru": "В ней никогда не было дверей", "en": "It never had any doors", "pt": "Nunca teve portas" }
-          ],
-          "answer": 2,
-          "basis": {
-            "ru": "В арке никогда не было дверей, отсюда шутка «Ты что, из Браги?».",
-            "en": "Its lack of doors inspired the saying “Are you from Braga?”",
-            "pt": "Por nunca ter tido portas de fechar, deu origem ao provérbio \"És de Braga?\"."
+          "task": {
+            "id": "find-arco-porta-nova",
+            "type": "find_on_map",
+            "target": "arco-porta-nova",
+            "candidates": ["arco-porta-nova", "se-braga", "biscainhos", "santa-barbara", "torre-menagem", "palacio-raio", "termas-romanas"],
+            "view": { "az": 0, "elev": 0.85, "k": 1 },
+            "basis": {
+              "ru": "Ворота в стене открыли в 1512 году, нынешнюю арку построили в 1772 году.",
+              "en": "The original gateway dates from 1512; the current arch from 1772.",
+              "pt": "A abertura original data de 1512; o arco triunfal atual foi erguido em 1772."
+            }
           },
           "visit": {
             "ru": [
@@ -265,21 +329,25 @@
               "Em 1853 foi adquirido por Miguel José Raio, primeiro visconde de São Lázaro, enriquecido no Brasil, que mandou revestir as paredes com azulejos azuis e lhe legou a denominação comum."
             ]
           },
-          "question": {
-            "ru": "Кто дал дворцу его имя?",
-            "en": "Who gave the palace its name?",
-            "pt": "Quem deu o nome ao palácio?"
-          },
-          "options": [
-            { "ru": "Епископ Педру, освятивший собор", "en": "Bishop Pedro, who consecrated the cathedral", "pt": "O bispo D. Pedro, que consagrou a catedral" },
-            { "ru": "Мигел Жозе Райу, купивший дом в 1853 году", "en": "Miguel José Raio, who bought the house in 1853", "pt": "Miguel José Raio, que comprou a casa em 1853" },
-            { "ru": "Римский строитель терм", "en": "The Roman builder of the baths", "pt": "O construtor romano das termas" }
-          ],
-          "answer": 1,
-          "basis": {
-            "ru": "Название дал виконт Мигел Жозе Райу, который купил дом в 1853 году.",
-            "en": "Miguel José Raio bought the house in 1853 and gave it his name.",
-            "pt": "Miguel José Raio adquiriu o imóvel em 1853 e deu-lhe o nome pelo qual é conhecido."
+          "task": {
+            "id": "raio-name",
+            "type": "multiple_choice",
+            "question": {
+              "ru": "Кто дал дворцу его имя?",
+              "en": "Who gave the palace its name?",
+              "pt": "Quem deu o nome ao palácio?"
+            },
+            "options": [
+              { "id": "bishop-pedro", "ru": "Епископ Педру, освятивший собор", "en": "Bishop Pedro, who consecrated the cathedral", "pt": "O bispo D. Pedro, que consagrou a catedral" },
+              { "id": "miguel-jose-raio", "ru": "Мигел Жозе Райу, купивший дом в 1853 году", "en": "Miguel José Raio, who bought the house in 1853", "pt": "Miguel José Raio, que comprou a casa em 1853" },
+              { "id": "roman-builder", "ru": "Римский строитель терм", "en": "The Roman builder of the baths", "pt": "O construtor romano das termas" }
+            ],
+            "answer": "miguel-jose-raio",
+            "basis": {
+              "ru": "Название дал виконт Мигел Жозе Райу, который купил дом в 1853 году.",
+              "en": "Miguel José Raio bought the house in 1853 and gave it his name.",
+              "pt": "Miguel José Raio adquiriu o imóvel em 1853 e deu-lhe o nome pelo qual é conhecido."
+            }
           },
           "visit": {
             "ru": [
@@ -299,7 +367,7 @@
         {
           "id": "bom-jesus",
           "view": { "az": 0, "elev": 0.4, "k": 0.95 },
-          "from": { "text": "history", "basis": "history", "visit": "tip" },
+          "from": { "text": "history, facts", "items": "history", "visit": "tip" },
           "sources": [
             "https://en.wikipedia.org/wiki/Bom_Jesus_do_Monte",
             "https://pt.wikipedia.org/wiki/Santu%C3%A1rio_do_Bom_Jesus_do_Monte",
@@ -308,36 +376,66 @@
           ],
           "text": {
             "ru": [
-              "В 1882 году рядом пустили фуникулёр.",
-              "Верхний вагон наполняют водой, он идёт вниз и тянет второй вагон вверх.",
-              "В 2015 году церковь стала малой базиликой, а 7 июля 2019 года святилище вошло в список Всемирного наследия ЮНЕСКО."
+              "На каждой площадке стоит фонтан, и вода течёт из глаз, ушей, носа или рта статуи.",
+              "Вся лестница поднимается на 116 метров.",
+              "Верхний вагон наполняют водой, он идёт вниз и тянет второй вагон вверх."
             ],
             "en": [
-              "Archbishop Rodrigo de Moura Teles began the great transformation in 1720.",
-              "In 1882, a funicular designed by Niklaus Riggenbach and built under Raoul Mesnier du Ponsard opened alongside it: the descending, water-filled car pulls the other uphill.",
-              "On 7 July 2019 the sanctuary was inscribed as a UNESCO World Heritage Site."
+              "Water flows from the eyes, ears, nose or mouth of the fountain figures.",
+              "The staircase climbs 116 metres.",
+              "Its wooded park welcomes pilgrims and visitors; the staircase was conceived as a spiritual journey as well as an ascent."
             ],
             "pt": [
-              "O arcebispo D. Rodrigo de Moura Teles iniciou a grande transformação em 1720.",
-              "Em 1882 foi inaugurado o funicular concebido por Niklaus Riggenbach e executado por Raoul Mesnier du Ponsard: a cabina que desce, cheia de água, puxa a que sobe.",
-              "A igreja foi elevada a basílica menor em 2015 e, a 7 de julho de 2019, o conjunto foi classificado como Património Mundial da UNESCO."
+              "O escadório vence um desnível de 116 metros em 583 degraus.",
+              "O parque florestal acolhe devotos e visitantes num percurso concebido tanto como ascensão física como itinerário espiritual."
             ]
           },
-          "question": {
-            "ru": "Что приводит в движение фуникулёр 1882 года?",
-            "en": "What moves the 1882 funicular?",
-            "pt": "O que move o funicular de 1882?"
-          },
-          "options": [
-            { "ru": "Вес воды: вагон с водой идёт вниз и тянет второй вверх", "en": "The weight of water: the water-filled car goes down and pulls the other up", "pt": "O peso da água: a cabina cheia de água desce e puxa a outra" },
-            { "ru": "Упряжка лошадей", "en": "A team of horses", "pt": "Uma parelha de cavalos" },
-            { "ru": "Ветряной парус", "en": "A wind-powered sail", "pt": "Uma vela movida pelo vento" }
-          ],
-          "answer": 0,
-          "basis": {
-            "ru": "Верхний вагон наполняют водой, он идёт вниз и тянет второй вагон вверх.",
-            "en": "In 1882, a funicular designed by Niklaus Riggenbach and built under Raoul Mesnier du Ponsard opened alongside it: the descending, water-filled car pulls the other uphill.",
-            "pt": "Em 1882 foi inaugurado o funicular concebido por Niklaus Riggenbach e executado por Raoul Mesnier du Ponsard: a cabina que desce, cheia de água, puxa a que sobe."
+          "task": {
+            "id": "bom-jesus-timeline",
+            "type": "sequence",
+            "items": [
+              {
+                "id": "chapel-holy-cross",
+                "year": 1373,
+                "label": { "ru": "На холме Эшпинью стоит часовня Святого Креста", "en": "A chapel of the Holy Cross stands on Mount Espinho", "pt": "Uma ermida da Santa Cruz ergue-se no monte Espinho" },
+                "quote": {
+                  "ru": "Уже в 1373 году здесь стояла часовня Святого Креста.",
+                  "en": "A chapel of the Holy Cross stood on Mount Espinho as early as 1373.",
+                  "pt": "No monte Espinho existia já em 1373 uma ermida dedicada à Santa Cruz"
+                }
+              },
+              {
+                "id": "brotherhood-founded",
+                "year": 1629,
+                "label": { "ru": "Горожане создают братство Бом-Жезуш-ду-Монте", "en": "Local people found the brotherhood of Bom Jesus do Monte", "pt": "Funda-se a confraria do Bom Jesus do Monte" },
+                "quote": {
+                  "ru": "В 1629 году горожане создали братство Бом-Жезуш-ду-Монте, «Доброго Иисуса на горе».",
+                  "en": "In 1629, local people founded the brotherhood of Bom Jesus do Monte, building a church, accommodation for pilgrims and small Passion chapels.",
+                  "pt": "Em 1629 fundou-se a confraria do Bom Jesus do Monte, que construiu uma igreja, hospedaria e capelas da Paixão."
+                }
+              },
+              {
+                "id": "church-begun",
+                "year": 1784,
+                "label": { "ru": "Начинают строить церковь по проекту Карлуша Амаранте", "en": "Building starts on the church designed by Carlos Amarante", "pt": "Começa a construção da basílica desenhada por Carlos Amarante" },
+                "quote": {
+                  "ru": "Старую церковь снесли. 1 июня 1784 года заложили новую по проекту Карлуша Амаранте.",
+                  "en": "The new church was begun on 1 June 1784 to a design by Carlos Amarante and completed in 1811.",
+                  "pt": "A atual basílica foi iniciada a 1 de junho de 1784 com traço de Carlos Amarante e terminada em 1811"
+                }
+              },
+              {
+                "id": "funicular-opens",
+                "year": 1882,
+                "label": { "ru": "Рядом с лестницей пускают фуникулёр", "en": "A funicular opens alongside the staircase", "pt": "É inaugurado o funicular de contrapeso de água" },
+                "quote": {
+                  "ru": "В 1882 году рядом пустили фуникулёр.",
+                  "en": "In 1882, a funicular designed by Niklaus Riggenbach and built under Raoul Mesnier du Ponsard opened alongside it: the descending, water-filled car pulls the other uphill.",
+                  "pt": "Em 1882 foi inaugurado o funicular concebido por Niklaus Riggenbach e executado por Raoul Mesnier du Ponsard: a cabina que desce, cheia de água, puxa a que sobe."
+                }
+              }
+            ],
+            "start": ["funicular-opens", "church-begun", "chapel-holy-cross", "brotherhood-founded"]
           },
           "visit": {
             "ru": [
@@ -360,9 +458,9 @@
       "id": "old-town-on-foot",
       "title": { "ru": "Старый город пешком", "en": "The old town on foot", "pt": "O centro histórico a pé" },
       "intro": {
-        "ru": "Пять мест старого центра, от дворца Бискайньюш до башни замка, в порядке пешей прогулки. На каждой остановке один вопрос.",
-        "en": "Five places in the old town, from the Biscainhos palace to the castle keep, in walking order. Each stop asks one question.",
-        "pt": "Cinco lugares do centro histórico, do Palácio dos Biscainhos à Torre de Menagem, pela ordem de um passeio a pé. Cada paragem faz uma pergunta."
+        "ru": "Пять мест старого центра, от дворца Бискайньюш до башни замка, в порядке пешей прогулки. На каждой остановке своё задание.",
+        "en": "Five places in the old town, from the Biscainhos palace to the castle keep, in walking order. Each stop sets a task.",
+        "pt": "Cinco lugares do centro histórico, do Palácio dos Biscainhos à Torre de Menagem, pela ordem de um passeio a pé. Cada paragem traz uma tarefa."
       },
       "end_lead": {
         "ru": "Все пять мест стоят в старом центре Браги, и этот путь можно пройти пешком.",
@@ -394,21 +492,25 @@
               "O Museu dos Biscainhos abriu as portas a 11 de fevereiro de 1978, reconstituindo o quotidiano e o gosto da aristocracia setecentista através de coleções de mobiliário, pratas, cerâmica e vidros."
             ]
           },
-          "question": {
-            "ru": "Дворец назван по своей улице. А откуда имя у улицы?",
-            "en": "The palace takes its name from its street. Where does the street’s name come from?",
-            "pt": "O palácio tem o nome da sua rua. De onde vem o nome da rua?"
-          },
-          "options": [
-            { "ru": "От знаменитой пекарни печенья начала XX века", "en": "From a famous biscuit bakery of the early 1900s", "pt": "De uma famosa fábrica de biscoitos do início do século XX" },
-            { "ru": "От первого хозяина по фамилии Бискайньюш", "en": "From the first owner, whose surname was Biscainhos", "pt": "Do primeiro dono, de apelido Biscainhos" },
-            { "ru": "От мастеров из Бискайи, которые жили здесь в XVI веке", "en": "From craftsmen from Biscay who settled there in the 16th century", "pt": "Dos mestres da Biscaia que aqui se instalaram no século XVI" }
-          ],
-          "answer": 2,
-          "basis": {
-            "ru": "Имя дала улица, где в XVI веке жили мастера из Бискайи.",
-            "en": "Its street was named for craftsmen from Biscay.",
-            "pt": "A rua recebeu o nome dos mestres de obras biscainhos chegados no século XVI."
+          "task": {
+            "id": "biscainhos-street-name",
+            "type": "multiple_choice",
+            "question": {
+              "ru": "Дворец назван по своей улице. А откуда имя у улицы?",
+              "en": "The palace takes its name from its street. Where does the street’s name come from?",
+              "pt": "O palácio tem o nome da sua rua. De onde vem o nome da rua?"
+            },
+            "options": [
+              { "id": "biscuit-bakery", "ru": "От знаменитой пекарни печенья начала XX века", "en": "From a famous biscuit bakery of the early 1900s", "pt": "De uma famosa fábrica de biscoitos do início do século XX" },
+              { "id": "owner-surname", "ru": "От первого хозяина по фамилии Бискайньюш", "en": "From the first owner, whose surname was Biscainhos", "pt": "Do primeiro dono, de apelido Biscainhos" },
+              { "id": "biscay-craftsmen", "ru": "От мастеров из Бискайи, которые жили здесь в XVI веке", "en": "From craftsmen from Biscay who settled there in the 16th century", "pt": "Dos mestres da Biscaia que aqui se instalaram no século XVI" }
+            ],
+            "answer": "biscay-craftsmen",
+            "basis": {
+              "ru": "Имя дала улица, где в XVI веке жили мастера из Бискайи.",
+              "en": "Its street was named for craftsmen from Biscay.",
+              "pt": "A rua recebeu o nome dos mestres de obras biscainhos chegados no século XVI."
+            }
           },
           "visit": {
             "ru": [
@@ -451,21 +553,20 @@
               "O arco atual foi mandado construir em 1772 quando a cidade já se expandia além das suas defesas militares."
             ]
           },
-          "question": {
-            "ru": "У арки два фасада. Чем они различаются?",
-            "en": "The arch has two faces. How do they differ?",
-            "pt": "O arco tem duas faces. Em que diferem?"
-          },
-          "options": [
-            { "ru": "Одна сторона из стекла, другая из стали", "en": "One side is glass, the other steel", "pt": "Uma face é de vidro, a outra de aço" },
-            { "ru": "Сторона к центру — барокко, внешняя — неоклассицизм", "en": "Baroque towards the centre, neoclassical on the outside", "pt": "Barroca virada para a cidade, neoclássica para fora" },
-            { "ru": "Обе стороны римские, I века", "en": "Both sides are Roman, from the 1st century", "pt": "As duas faces são romanas, do século I" }
-          ],
-          "answer": 1,
-          "basis": {
-            "ru": "Сторона к центру — барокко, внешняя сторона — неоклассицизм.",
-            "en": "The inner face is Baroque; the outer face is neoclassical.",
-            "pt": "A fachada interior é barroca rocaille e a exterior é de inspiração neoclássica."
+          "task": {
+            "id": "arco-doors",
+            "type": "true_false",
+            "statement": {
+              "ru": "В арке Порта-Нова есть двери, которые можно закрыть.",
+              "en": "The Porta Nova arch has doors that can be shut.",
+              "pt": "O Arco da Porta Nova tem portas que se podem fechar."
+            },
+            "answer": false,
+            "basis": {
+              "ru": "В арке никогда не было дверей, отсюда шутка «Ты что, из Браги?».",
+              "en": "Its lack of doors inspired the saying “Are you from Braga?”",
+              "pt": "Por nunca ter tido portas de fechar, deu origem ao provérbio \"És de Braga?\"."
+            }
           },
           "visit": {
             "ru": ["Пройдите под аркой в обе стороны и сравните её фасады."],
@@ -499,21 +600,17 @@
               "É a sede do antiquíssimo rito bracarense, e as antigas salas capitulares acolhem o Museu do Tesouro."
             ]
           },
-          "question": {
-            "ru": "Кто похоронен в Капелле королей собора?",
-            "en": "Whose tombs are in the cathedral’s Kings’ Chapel?",
-            "pt": "Quem está sepultado na Capela dos Reis da Sé?"
-          },
-          "options": [
-            { "ru": "Граф Энрике Бургундский и Тереза Леонская", "en": "Henry of Burgundy and Teresa of León", "pt": "Os condes D. Henrique e D. Teresa" },
-            { "ru": "Юлий Цезарь и Клеопатра", "en": "Julius Caesar and Cleopatra", "pt": "Júlio César e Cleópatra" },
-            { "ru": "Строители фуникулёра Бом-Жезуша", "en": "The builders of the Bom Jesus funicular", "pt": "Os construtores do funicular do Bom Jesus" }
-          ],
-          "answer": 0,
-          "basis": {
-            "ru": "В готической Капелле королей лежат граф Энрике Бургундский и Тереза Леонская, родители первого короля Афонсу Энрикеша.",
-            "en": "Inside, visit the Kings’ Chapel, with the tombs of Henry of Burgundy and Teresa of León.",
-            "pt": "No interior, destaca-se a Capela dos Reis, com os túmulos dos condes D. Henrique e D. Teresa."
+          "task": {
+            "id": "find-se-braga",
+            "type": "find_on_map",
+            "target": "se-braga",
+            "candidates": ["se-braga", "biscainhos", "arco-porta-nova", "santa-barbara", "torre-menagem", "santa-cruz", "populo"],
+            "view": { "az": 0, "elev": 0.85, "k": 1 },
+            "basis": {
+              "ru": "В готической Капелле королей лежат граф Энрике Бургундский и Тереза Леонская, родители первого короля Афонсу Энрикеша.",
+              "en": "Inside, visit the Kings’ Chapel, with the tombs of Henry of Burgundy and Teresa of León.",
+              "pt": "No interior, destaca-se a Capela dos Reis, com os túmulos dos condes D. Henrique e D. Teresa."
+            }
           },
           "visit": {
             "ru": ["Капеллы и Сокровищницу смотрят по отдельному маршруту, оставьте на них час."],
@@ -524,7 +621,7 @@
         {
           "id": "santa-barbara",
           "view": { "az": 0, "elev": 0.5, "k": 1.15 },
-          "from": { "text": "history", "basis": "facts", "visit": "tip" },
+          "from": { "text": "history", "items": "history, facts", "visit": "tip" },
           "sources": [
             "https://pt.wikipedia.org/wiki/Jardim_de_Santa_B%C3%A1rbara",
             "https://en.wikipedia.org/wiki/Garden_of_Santa_Barbara_(Braga)",
@@ -534,36 +631,66 @@
           "text": {
             "ru": [
               "Сад лежит у восточного, самого старого крыла дворца архиепископов Браги.",
-              "Первое здание дворца начал строить архиепископ Гонсалу Перейра в 1336 году.",
               "Сам сад намного моложе дворца.",
-              "Его разбили в 1955 году по проекту садовода Жозе Кардозу да Силвы."
+              "В центре стоит восьмиугольный фонтан XVII века со статуей святой Варвары.",
+              "Раньше он стоял в монастыре Ремедиуш."
             ],
             "en": [
               "The garden borders the palace’s oldest, eastern wing.",
-              "Archbishop Gonçalo Pereira began the palace in 1336; Fernando da Guerra expanded it in 1422–1436, with the tower completed by 1439.",
-              "The garden is much younger: José Cardoso da Silva designed it in 1955."
+              "Geometric beds, box hedges and clipped trees surround a 17th-century octagonal fountain brought from the Convent of Remédios.",
+              "Medieval arches line the flower beds."
             ],
             "pt": [
               "O jardim confronta a ala oriental do paço, a mais antiga do conjunto.",
-              "D. Gonçalo Pereira começou a construir o paço em 1336 e D. Fernando da Guerra ampliou-o entre 1422 e 1436, concluindo a torre ameada em 1439.",
-              "O jardim é mais recente: foi desenhado em 1955 por José Cardoso da Silva."
+              "Canteiros geométricos e buxos podados cercam uma fonte seiscentista proveniente do antigo Convento dos Remédios."
             ]
           },
-          "question": {
-            "ru": "В 1112 году граф Энрике и Тереза отдали Брагу во владение. Кому?",
-            "en": "In 1112, Henry and Teresa granted the city of Braga. To whom?",
-            "pt": "Em 1112, D. Henrique e D. Teresa doaram a cidade de Braga. A quem?"
-          },
-          "options": [
-            { "ru": "Римскому легиону", "en": "To a Roman legion", "pt": "A uma legião romana" },
-            { "ru": "Компании фламандских купцов", "en": "To a company of Flemish merchants", "pt": "A uma companhia de mercadores flamengos" },
-            { "ru": "Архиепископам Браги", "en": "To the archbishops of Braga", "pt": "Aos arcebispos de Braga" }
-          ],
-          "answer": 2,
-          "basis": {
-            "ru": "В 1112 году граф Энрике и Тереза отдали Брагу во владение архиепископам.",
-            "en": "Henry and Teresa granted Braga to the archbishops in 1112.",
-            "pt": "D. Henrique e D. Teresa doaram a cidade de Braga aos arcebispos em 1112."
+          "task": {
+            "id": "santa-barbara-timeline",
+            "type": "sequence",
+            "items": [
+              {
+                "id": "city-granted",
+                "year": 1112,
+                "label": { "ru": "Граф Энрике и Тереза отдают Брагу во владение архиепископам", "en": "Henry and Teresa grant Braga to the archbishops", "pt": "D. Henrique e D. Teresa doam Braga aos arcebispos" },
+                "quote": {
+                  "ru": "В 1112 году граф Энрике и Тереза отдали Брагу во владение архиепископам.",
+                  "en": "Henry and Teresa granted Braga to the archbishops in 1112.",
+                  "pt": "D. Henrique e D. Teresa doaram a cidade de Braga aos arcebispos em 1112."
+                }
+              },
+              {
+                "id": "palace-begun",
+                "year": 1336,
+                "label": { "ru": "Архиепископ Гонсалу Перейра начинает строить дворец", "en": "Archbishop Gonçalo Pereira begins the palace", "pt": "D. Gonçalo Pereira começa a construir o paço" },
+                "quote": {
+                  "ru": "Первое здание дворца начал строить архиепископ Гонсалу Перейра в 1336 году.",
+                  "en": "Archbishop Gonçalo Pereira began the palace in 1336",
+                  "pt": "D. Gonçalo Pereira começou a construir o paço em 1336"
+                }
+              },
+              {
+                "id": "fire",
+                "year": 1866,
+                "label": { "ru": "Пожар уничтожает барочное крыло дворца и библиотеку", "en": "A fire destroys the palace’s Baroque wing and library", "pt": "Um incêndio destrói a ala barroca e a biblioteca do paço" },
+                "quote": {
+                  "ru": "Пожар 1866 года уничтожил барочное крыло дворца и библиотеку архиепископов.",
+                  "en": "The 1866 fire destroyed the palace’s Baroque wing and library.",
+                  "pt": "Um incêndio em 1866 destruiu a ala barroca e a biblioteca."
+                }
+              },
+              {
+                "id": "public-library",
+                "year": 1934,
+                "label": { "ru": "Во дворце открывается Публичная библиотека Браги", "en": "Braga Public Library opens in the palace", "pt": "A Biblioteca Pública de Braga instala-se no paço" },
+                "quote": {
+                  "ru": "Публичная библиотека Браги открылась во дворце 1 декабря 1934 года.",
+                  "en": "Braga Public Library opened in the palace on 1 December 1934.",
+                  "pt": "A Biblioteca Pública de Braga foi instalada no paço a 1 de dezembro de 1934."
+                }
+              }
+            ],
+            "start": ["fire", "public-library", "palace-begun", "city-granted"]
           },
           "visit": {
             "ru": [
@@ -582,8 +709,8 @@
         },
         {
           "id": "torre-menagem",
-          "view": { "az": 0, "elev": 0.36, "k": 1.4 },
-          "from": { "text": "history", "basis": "facts", "visit": "tip" },
+          "view": { "az": 0, "elev": 0.22, "k": 0.9 },
+          "from": { "text": "history", "basis": "history", "visit": "tip" },
           "sources": [
             "https://pt.wikipedia.org/wiki/Castelo_de_Braga",
             "https://visitbraga.travel/en/highlights/monumentos/torre-de-menagem/"
@@ -606,21 +733,26 @@
               "Perdida a função militar, a fortaleza foi demolida a 15 de novembro de 1905 no meio de festejos populares, sobrevivendo apenas a torre de menagem e a sineira vizinha."
             ]
           },
-          "question": {
-            "ru": "На камнях башни нашли около 533 знаков. Кто их оставил?",
-            "en": "Some 533 marks have been found on the tower’s stones. Who made them?",
-            "pt": "Foram encontradas cerca de 533 marcas nas pedras da torre. Quem as gravou?"
-          },
-          "options": [
-            { "ru": "Каменщики, которые тесали камни", "en": "The masons who cut the stones", "pt": "Os canteiros que talharam as pedras" },
-            { "ru": "Туристы 1990-х годов", "en": "Tourists in the 1990s", "pt": "Turistas dos anos 1990" },
-            { "ru": "Римские солдаты, считавшие дни", "en": "Roman soldiers counting the days", "pt": "Soldados romanos a contar os dias" }
-          ],
-          "answer": 0,
-          "basis": {
-            "ru": "На камнях башни нашли около 533 знаков каменщиков.",
-            "en": "Around 533 masons’ marks have been found on its stones.",
-            "pt": "Foram identificadas cerca de 533 siglas gravadas pelos canteiros medievais nas pedras."
+          "task": {
+            "id": "torre-battlements",
+            "type": "visual_detail",
+            "model_check": { "file": "src/models/torre.js", "word": "merlon" },
+            "question": {
+              "ru": "Посмотрите на верх башни на карте. Что идёт по её краю?",
+              "en": "Look at the top of the keep on the map. What runs along its edge?",
+              "pt": "Observe o topo da torre no mapa. O que corre ao longo da sua borda?"
+            },
+            "options": [
+              { "id": "dome", "ru": "Круглый купол", "en": "A round dome", "pt": "Uma cúpula redonda" },
+              { "id": "tiled-roof", "ru": "Скатная черепичная крыша", "en": "A sloping tiled roof", "pt": "Um telhado inclinado de telha" },
+              { "id": "battlements", "ru": "Ряд каменных зубцов", "en": "A row of stone battlements", "pt": "Uma fila de ameias de pedra" }
+            ],
+            "answer": "battlements",
+            "basis": {
+              "ru": "После этого король Фернанду укрепил город, а донжону добавили зубцы и навесные бойницы, машикули.",
+              "en": "Battlements and machicolations were added to the keep.",
+              "pt": "Após o saque da cidade por tropas castelhanas em 1369, D. Fernando reforçou as defesas, acrescentando balcões de matacães e ameias à torre de menagem."
+            }
           },
           "visit": {
             "ru": ["Снаружи башню хорошо видно с Терейру-ду-Каштелу; от площади Республики и Аркады до неё две минуты пешком."],
