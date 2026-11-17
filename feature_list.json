@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-11-16",
+  "last_updated": "2026-11-17",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -347,6 +347,26 @@
         "Browser: 559 checks pass on the final build (flow 388, find 26, seq 4, migrate 9, matrix 38; round-2 light 50, late 8, behave 14, text 22), no console errors; screenshots in /tmp/braga-quest-3/ (not in the repository)"
       ],
       "notes": "visual_detail is used once: the keep's battlements are in the ru, en and pt texts and in the model (src/models/torre.js merlons), and legible in phone and desktop screenshots. No other stop has a detail that both its text and its simplified model show. Not checked: a physical phone, a screen reader. Not deployed."
+    },
+    {
+      "id": "braga-019",
+      "priority": 19,
+      "area": "performance",
+      "title": "Draw only what is in view (porto-3d perf round 3, ported)",
+      "user_visible_behavior": "The map looks the same, but close views draw fewer triangles: the city-wide road meshes draw only their 1 km cells in view (and in the shadow camera's view), the near trees and the street furniture are culled by honest bounds, and an empty tree species is no draw. A #quest deep link shows the route card as soon as the landmarks exist instead of after the first full frame and the deferred layers.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (cell-runs.test.mjs: the reorder keeps every triangle and segment, no primitive in the view or the shadow view is dropped for random cameras, a NaN centre is kept once, a line given another geometry by tiles.js draws whole and culls again with its own)",
+        "npm run verify",
+        "Browser (headless Chromium, ANGLE Metal, builds served by porto's perf-serve.mjs): /tmp/braga-perf/bench/measure.mjs views, startup, exact; /tmp/braga-perf/bench/qcheck.mjs; /tmp/braga-quest-3/ round-3 suite"
+      ],
+      "evidence": [
+        "2026-11-17: node --test scripts/*.test.mjs 45/45; npm run verify OK (10 steps)",
+        "Main-pass primitives main -> branch, desktop-gpu: old town 2.46 -> 2.10 M, Bom Jesus 1.71 -> 1.11 M, route stop 1.99 -> 1.29 M, night 2.00 -> 1.37 M, overview 2.04 -> 2.05 M; phone-low (class S): 1.53 -> 1.26, 1.82 -> 1.19, 1.30 -> 0.60, 1.79 -> 1.04, 1.63 -> 0.88 M. Close views +5 to +15 draw calls on desktop.",
+        "Route card on #quest=old-town-on-foot: desktop 2.67-2.72 -> 2.26-2.34 s, phone-low 27.3-29.0 -> 20.5-21.8 s; first frame, interactive and ready unchanged",
+        "Culled against whole, the same frame in one task, 8 draws each: 96 of 96 poses identical on every stable pixel (desktop and phone sizes)"
+      ],
+      "notes": "Braga differences from Porto: tiles.js joins the ring's streets to the core's primary line (that line draws whole once ring tiles show); no tram rails; landmarks are built after roads and buildings, so the early card gains less. Tree bounds hardly cull in the main view (the camera is inside the ball); the gain is the shadow pass and hidden empty species. Not checked: physical phones, other GPUs, Safari, Firefox. Not deployed."
     }
   ]
 }
