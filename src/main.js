@@ -205,7 +205,8 @@ async function start() {
   debug.buildings = city.stats;
   mark('buildings');
 
-  const marks = buildLandmarks(landmarks, fits, heightAt, outlines, (i) => select(i));
+  // during a history route a label click is a find-on-map pick (quest.js)
+  const marks = buildLandmarks(landmarks, fits, heightAt, outlines, (i) => (quest?.active ? quest.mapPick(i) : select(i)));
   scene.add(marks.group);
   debug.landmarks = marks.items.map((it) => ({
     id: it.data.id,
@@ -1269,21 +1270,24 @@ async function start() {
   });
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
-    if (game?.active || quest?.active) return; // the game and the route own the map
+    if (game?.active) return; // the game owns the map
     toNdc(e);
     raycaster.setFromCamera(ndc, camera);
+    // the route owns it too: only a find-on-map task's candidates pick
+    if (quest?.active) return void quest.mapPick(marks.pick(raycaster, quest.pickable));
     const hit = marks.pick(raycaster);
     if (hit != null) select(hit);
   });
   let hoverQueued = false;
   canvas.addEventListener('pointermove', (e) => {
-    if (hoverQueued || e.buttons || game?.active || quest?.active) return;
+    if (quest?.active && !quest.pickable.size) return void setHover(-1);
+    if (hoverQueued || e.buttons || game?.active) return;
     hoverQueued = true;
     requestAnimationFrame(() => {
       hoverQueued = false;
       toNdc(e);
       raycaster.setFromCamera(ndc, camera);
-      setHover(marks.pick(raycaster) ?? -1);
+      setHover(marks.pick(raycaster, quest?.active ? quest.pickable : null) ?? -1);
     });
   });
   canvas.addEventListener('pointerleave', () => setHover(-1));
