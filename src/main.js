@@ -1525,7 +1525,8 @@ async function start() {
       const box = { l: o.sx - w / 2 - 4, r: o.sx + w / 2 + 4, t: o.sy - h - 2, b: o.sy + 2 };
       const clash = placed.some((p) => box.l < p.r && box.r > p.l && box.t < p.b && box.b > p.t);
       const offEdge = box.l < 0 || box.r > size.w || box.t < 0; // a clipped name reads as a typo
-      const show = !o.behind && (!clash || o.it.index === active) && !hits(box) && !offEdge;
+      // a find-on-map candidate's small «?» marker shows even where it touches another
+      const show = !o.behind && (!clash || o.it.index === active || el.classList.contains('is-quest-candidate')) && !hits(box) && !offEdge;
       el.classList.toggle('is-muted', !show);
       if (show) placed.push(box);
     }
