@@ -709,7 +709,7 @@
         },
         {
           "id": "torre-menagem",
-          "view": { "az": 0, "elev": 0.36, "k": 1.4 },
+          "view": { "az": 0, "elev": 0.22, "k": 0.9 },
           "from": { "text": "history", "basis": "history", "visit": "tip" },
           "sources": [
             "https://pt.wikipedia.org/wiki/Castelo_de_Braga",
