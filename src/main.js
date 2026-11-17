@@ -1128,8 +1128,8 @@ async function start() {
     questBtn.className = 'tool mode-btn';
     questBtn.id = 'quest-toggle';
     questBtn.setAttribute('aria-controls', 'quest');
-    questBtn.title = t('Откройте историческую Брагу: пять мест, пять вопросов');
-    questBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.6 3.5 3.8.4-2.8 2.6.8 3.8L8 10.2 4.6 12.1l.8-3.8-2.8-2.6 3.8-.4z" /></svg><span class="mode-label">${t('Исторический маршрут')}</span>`;
+    questBtn.title = t('Откройте историческую Брагу: маршруты с заданием на каждой остановке');
+    questBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.6 3.5 3.8.4-2.8 2.6.8 3.8L8 10.2 4.6 12.1l.8-3.8-2.8-2.6 3.8-.4z" /></svg><span class="mode-label">${t('Исторические маршруты')}</span>`;
     mountTool(questBtn, 'modes', { closes: true });
     questBtn.addEventListener('click', () => (quest?.active ? quest.stop() : startMode('quest')));
   }

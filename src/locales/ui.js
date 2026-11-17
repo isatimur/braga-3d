@@ -18,8 +18,8 @@ export const messages = {
   'Джойстик': ['Joystick', 'Joystick'], 'направление и высота': ['direção e altitude', 'direction and altitude'],
   'Не удалось загрузить игру': ['Não foi possível carregar o jogo', 'Could not load the game'],
   // history route (quest.js); its own texts live in data/quest.json
-  'Исторический маршрут': ['Rota da história', 'History route'],
-  'Откройте историческую Брагу: пять мест, пять вопросов': ['Descobrir a Braga histórica: cinco lugares, cinco perguntas', 'Discover historic Braga: five places, five questions'],
+  'Исторические маршруты': ['Rotas da história', 'History routes'],
+  'Откройте историческую Брагу: маршруты с заданием на каждой остановке': ['Descobrir a Braga histórica: rotas com uma tarefa em cada paragem', 'Discover historic Braga: routes with a task at every stop'],
   'Не удалось загрузить маршрут': ['Não foi possível carregar a rota', 'Could not load the route'],
   'Не удалось загрузить гида': ['Não foi possível carregar o guia', 'Could not load the guide'],
   'очки': ['pontos', 'points'],
