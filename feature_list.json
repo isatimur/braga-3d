@@ -343,8 +343,8 @@
       ],
       "evidence": [
         "2026-11-17: node --test scripts/*.test.mjs 37/37 pass; npm run verify OK",
-        "First load against round 2: entry JS +208 bytes (+105 gzip), CSS and HTML unchanged. Lazy: quest JS 23.9 kB (9.4 kB gzip, was 15.1 / 6.5), quest CSS 11.0 kB (2.8 kB gzip, was 8.2 / 2.3), data/quest.json 54.4 kB (16.2 kB gzip, was 45.0 / 13.5)",
-        "Browser: 521 checks pass on the final build (flow 388, find 26, seq 4, migrate 9; round-2 light 50, late 8, behave 14, text 22), no console errors; screenshots in /tmp/braga-quest-3/ (not in the repository)"
+        "First load against round 2: entry JS +206 bytes (+101 gzip), CSS and HTML unchanged. Lazy: quest JS 24.2 kB (9.5 kB gzip, was 15.1 / 6.5), quest CSS 11.0 kB (2.8 kB gzip, was 8.2 / 2.3), data/quest.json 54.4 kB (16.2 kB gzip, was 45.0 / 13.5)",
+        "Browser: 559 checks pass on the final build (flow 388, find 26, seq 4, migrate 9, matrix 38; round-2 light 50, late 8, behave 14, text 22), no console errors; screenshots in /tmp/braga-quest-3/ (not in the repository)"
       ],
       "notes": "visual_detail is used once: the keep's battlements are in the ru, en and pt texts and in the model (src/models/torre.js merlons), and legible in phone and desktop screenshots. No other stop has a detail that both its text and its simplified model show. Not checked: a physical phone, a screen reader. Not deployed."
     }
