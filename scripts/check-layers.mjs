@@ -96,6 +96,9 @@ const openPanel = async () => {
   if (await page.evaluate(() => window.__braga.layersUI.isOpen)) return;
   await page.evaluate(() => window.__braga.layersUI.open());
   await page.waitForSelector('#layers.is-open');
+  // the panel fades in (style.css .atmo, 0.18 s): a screenshot taken at
+  // once shows the page through a half-open panel
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('layers')).opacity === '1', null, { timeout: 5000 });
 };
 
 // ---- 1. light: nothing optional on the wire
