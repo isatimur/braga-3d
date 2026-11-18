@@ -33,6 +33,23 @@ test('the buses ride on the TUB timetable: the live layer owns data/gtfs', () =>
   assert.deepEqual([...live.chunks].sort(), ['liveair', 'livebus']);
 });
 
+test('every Russian source string of the panel and the pill has a pt and an en text', async () => {
+  const { messages } = await import('../src/locales/ui.js');
+  const read = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
+  const src = read('layers-ui.js') + read('load-status.js');
+  const keys = new Set([
+    ...LAYERS.flatMap((l) => [l.name, l.hint]),
+    ...[...src.matchAll(/t\('([^']*[а-яё][^']*)'\)/gi)].map((m) => m[1]),
+    // the name tables of layers-ui.js (passed through t() by variable)
+    ...[...read('layers-ui.js').matchAll(/(?:PRESET_NAMES|STATE_NAMES) = \{([^}]*)\}/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]).filter((s) => /[а-яё]/i.test(s))),
+  ]);
+  assert.ok(keys.size > 30, `only ${keys.size} strings found`);
+  for (const k of keys) {
+    const v = messages[k];
+    assert.ok(Array.isArray(v) && v.length === 2 && v.every((s) => typeof s === 'string' && s.length), `no pt/en for «${k}»`);
+  }
+});
+
 test('Full is every layer, Light is none; with no fullOnly layer Standard equals Full and the panel offers two presets', () => {
   assert.deepEqual([...PRESETS.full].sort(), [...ids].sort());
   assert.deepEqual(PRESETS.light, []);
