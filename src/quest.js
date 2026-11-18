@@ -356,7 +356,9 @@ export function createQuest(ctx) {
         // focus to the page: put it back on Next
         if (how === 'map') setTimeout(() => document.activeElement === document.body && next(), 150);
       } else if (how !== 'map') view.focus()?.focus({ preventScroll: true });
-      feedback.scrollIntoView({ block: 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
+      // the verdict stays in view: a long explanation (a solved sequence)
+      // starts at the top of the card, a short one shows whole
+      feedback.scrollIntoView({ block: feedback.offsetHeight > body.clientHeight ? 'start' : 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
     }
 
     show([step, title, photo, text, qBox, sourcesLine(l)], [showBtn, nextBtn]);
@@ -371,6 +373,12 @@ export function createQuest(ctx) {
       });
     }
     paint(false);
+    // a short card (a phone's sheet): the find task's question would sit
+    // below the photo, out of view; scroll just enough to show it whole
+    if (finding) {
+      const over = q.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 8;
+      if (over > 0) body.scrollTop = over;
+    }
     if (!finding) ctx.onFocus?.([st.id]);
     shot = cameraReady() ? screenShot() : null;
     fly(shot);
