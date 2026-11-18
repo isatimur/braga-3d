@@ -59,16 +59,20 @@ export const LAYER_IDS = LAYERS.map((l) => l.id);
 // is every layer but the fullOnly ones.
 export const PRESETS = {
   light: [],
+  // the phone default: the town looks whole (the extra buildings, the calçada
+  // and the people on the squares); the ring and the live data stay off
+  compact: ['ms', 'street'],
   standard: LAYERS.filter((l) => !l.fullOnly).map((l) => l.id),
   full: [...LAYER_IDS],
 };
 const samePreset = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
 // the presets the panel offers: one that equals Full is left out (it would
 // be a second button for the same layers, and presetOf could never name Full)
-export const PRESET_ORDER = ['light', 'standard', 'full'].filter((p) => p === 'full' || !samePreset(PRESETS[p], PRESETS.full));
+export const PRESET_ORDER = ['light', 'compact', 'standard', 'full'].filter((p) => p === 'full' || !samePreset(PRESETS[p], PRESETS.full));
 
-// device class (perf-classes.js) -> default preset (the lisboa-3d rule)
-export const CLASS_PRESET = { XL: 'full', L: 'full', M: 'standard', S: 'light', P: 'light' };
+// device class (perf-classes.js) -> default preset. lisboa-3d starts S and P
+// on Light; here that left the main squares bare (owner decision, 2026-11-18)
+export const CLASS_PRESET = { XL: 'full', L: 'full', M: 'standard', S: 'compact', P: 'compact' };
 
 const fromList = (list) => Object.fromEntries(LAYER_IDS.map((id) => [id, list.includes(id)]));
 

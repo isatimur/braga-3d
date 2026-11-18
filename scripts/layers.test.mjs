@@ -54,13 +54,14 @@ test('Full is every layer, Light is none; with no fullOnly layer Standard equals
   assert.deepEqual([...PRESETS.full].sort(), [...ids].sort());
   assert.deepEqual(PRESETS.light, []);
   assert.deepEqual([...PRESETS.standard].sort(), [...ids].sort());
-  assert.deepEqual(PRESET_ORDER, ['light', 'full']);
+  assert.deepEqual(PRESET_ORDER, ['light', 'compact', 'full']);
 });
 
-test('class defaults: phones of the low and potato class start light, the rest get every layer', () => {
+test('class defaults: phones of the low and potato class start compact (extra buildings and street level, no ring, no live data), the rest get every layer', () => {
   for (const c of ['XL', 'L', 'M', 'S', 'P']) assert.ok(CLASS_PRESET[c], c);
-  assert.equal(presetOf(defaultsFor('S')), 'light');
-  assert.equal(presetOf(defaultsFor('P')), 'light');
+  assert.equal(presetOf(defaultsFor('S')), 'compact');
+  assert.equal(presetOf(defaultsFor('P')), 'compact');
+  assert.deepEqual(defaultsFor('S'), { ring: false, ms: true, street: true, live: false });
   assert.equal(presetOf(defaultsFor('XL')), 'full');
   assert.equal(presetOf(defaultsFor('L')), 'full');
   // M keeps the lisboa-3d rule (Standard), which is every layer here
@@ -76,8 +77,8 @@ test('a saved choice wins, and merges with the class defaults for new layers', (
   assert.equal(r.source, 'saved');
   assert.equal(r.layers.ring, true);
   assert.equal(r.layers.live, false);
-  // not in the saved record: the class default (S: off)
-  assert.equal(r.layers.street, false);
+  // not in the saved record: the class default (S: street level on)
+  assert.equal(r.layers.street, true);
   for (const id of ids) assert.equal(typeof r.layers[id], 'boolean');
 });
 

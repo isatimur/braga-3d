@@ -24,8 +24,8 @@
         "XL": true,
         "L": true,
         "M": true,
-        "S": false,
-        "P": false
+        "S": true,
+        "P": true
       },
       "streamed": true
     },
@@ -38,13 +38,13 @@
         "XL": true,
         "L": true,
         "M": true,
-        "S": false,
-        "P": false
+        "S": true,
+        "P": true
       }
     },
     "live": {
       "name": "Самолёты и автобусы",
-      "bytes": 138440,
+      "bytes": 138472,
       "raw": 796287,
       "files": 3,
       "defaultOn": {

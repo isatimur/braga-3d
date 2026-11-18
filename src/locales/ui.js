@@ -234,7 +234,7 @@ export const messages = {
   // the Layers panel and the status pill (layer-defs.js, layers-ui.js, load-status.js); from lisboa-3d,
   // except the street and live hints, which say what Braga's layers hold
   'Слои карты': ['Camadas do mapa', 'Map layers'], 'Слои': ['Camadas', 'Layers'], 'Набор': ['Conjunto', 'Preset'],
-  'Лёгкий': ['Leve', 'Light'], 'Стандарт': ['Padrão', 'Standard'], 'Полный': ['Completo', 'Full'],
+  'Лёгкий': ['Leve', 'Light'], 'Компактный': ['Compacto', 'Compact'], 'Стандарт': ['Padrão', 'Standard'], 'Полный': ['Completo', 'Full'],
   'Город вокруг центра': ['Cidade à volta do centro', 'City around the centre'],
   'Кварталы, улицы и вода за пределами центра, по мере движения камеры': ['Quarteirões, ruas e água fora do centro, à medida que a câmara se move', 'Blocks, streets and water beyond the centre, as the camera moves'],
   'Дополнительные здания': ['Edifícios adicionais', 'Extra buildings'],

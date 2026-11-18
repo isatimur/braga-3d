@@ -23,7 +23,7 @@ import { LAYERS, PRESET_ORDER, selectionBytes, formatMB } from './layer-defs.js'
 import { summarize } from './load-status.js';
 import { mountTool, toolsSheet } from './ui.js';
 
-const PRESET_NAMES = { light: 'Лёгкий', standard: 'Стандарт', full: 'Полный' };
+const PRESET_NAMES = { light: 'Лёгкий', compact: 'Компактный', standard: 'Стандарт', full: 'Полный' };
 const STATE_NAMES = { off: 'не загружается', waiting: 'ждёт загрузки карты', loading: 'загрузка…', ready: 'загружено', failed: 'не загрузилось' };
 const NARROW_Q = '(max-width: 900px)';
 // the body classes of the modes that hide the pill (style.css keeps the same list)
