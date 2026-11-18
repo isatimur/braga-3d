@@ -2114,6 +2114,13 @@ body.is-game .map-label.is-unexplored {
   .load-status { min-height: 44px; padding: 4px 4px 4px 14px; border-radius: 22px; }
   .ls-retry, .ls-open { height: 36px; padding: 0 14px; border-radius: 18px; }
 }
+/* a narrow phone: the line may take two rows rather than lose its count
+   ("Map areas that failed to load: 6" next to Retry and Layers at 360 px) */
+@media (max-width: 480px) {
+  /* left: 50% would cap a shrink-to-fit width at half the screen */
+  .load-status { width: max-content; }
+  .ls-text { flex: 1 1 auto; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; line-height: 1.25; }
+}
 /* the full-screen modes keep the map to themselves (layers-ui.js MODES):
    lisboa-3d hides it for cinema, story and embeds; Braga also for the
    history routes (header hidden, route card, «?» markers) and the game */
