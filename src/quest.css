@@ -5,6 +5,9 @@
 
 /* the map chrome steps aside, as in the story */
 body.is-quest :is(.side, .detail, .topbar, .brand, .instruments, .hint, .clusters, .callout, .callout-leader, .atmo, .guide-fab, .guide) { opacity: 0 !important; pointer-events: none !important; }
+/* the hidden header takes no room: main.js mutes the map labels under the
+   header's parts, so a find-on-map «?» near the top of a phone would not show */
+body.is-quest .topbar > * { display: none !important; }
 body.is-quest .map-label { pointer-events: none !important; }
 body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
 
@@ -12,10 +15,11 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
    of their names; a tried one shows «✕» (the card names it; a name would
    crowd the other markers); the place's own marker stands out after two
    wrong picks */
-body.is-quest-picking .map-label.is-quest-candidate { pointer-events: auto !important; cursor: pointer; padding: 4px 11px; font-weight: 800; }
+/* a marker is a 44 px target for a finger */
+body.is-quest-picking .map-label.is-quest-candidate { pointer-events: auto !important; cursor: pointer; justify-content: center; min-width: 44px; min-height: 44px; padding: 4px 10px; font-weight: 800; }
 body.is-quest-picking .map-label.is-quest-candidate :is(.map-label-text, .map-label-thumb) { display: none; }
-body.is-quest-picking .map-label.is-quest-candidate::before { content: '?'; font-size: 15px; line-height: 1.2; }
-body.is-quest-picking .map-label.is-quest-tried { color: var(--text-3, #6d7890); background: rgba(245, 247, 251, 0.6); box-shadow: none; }
+body.is-quest-picking .map-label.is-quest-candidate::before { content: '?'; font-size: 20px; line-height: 1; }
+body.is-quest-picking .map-label.is-quest-tried { color: #5a6580; background: rgba(245, 247, 251, 0.8); box-shadow: none; }
 body.is-quest-picking .map-label.is-quest-tried::before { content: '✕'; }
 body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--cob); animation: quest-hint 1.1s ease-in-out infinite; }
 @keyframes quest-hint { 50% { box-shadow: 0 0 0 9px rgba(224, 169, 72, 0.55); } }
