@@ -80,8 +80,11 @@ export function createQuest(ctx) {
   // screen readers do not land in it
   const CHROME = '.side, .detail, .topbar, .brand, .instruments, .hint, .clusters, .callout, .callout-leader, .atmo, .guide-fab, .guide, #labels';
   let inerted = [];
+  // a bottom sheet (quest.css): a narrow screen, except a phone on its side,
+  // where the card stands on the left as on a desktop
   const mq = window.matchMedia('(max-width: 900px)');
-  const mobile = () => mq.matches;
+  const side = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
+  const mobile = () => mq.matches && !side.matches;
 
   let data = null;
   let routes = []; // { ...json route, stops: [{ ...json stop, item }] } on this map

@@ -326,6 +326,20 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
   .quest[data-picking] .quest-title { font-size: 19px; margin-bottom: 8px; }
   .quest-seq-label { font-size: 13.5px; }
 }
+/* a phone on its side: a bottom sheet would leave about 100 px of text and a
+   strip of map, so the card stands on the left at full height and the map
+   keeps the right (quest.js `side` matches the same query) */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .quest-card,
+  .quest[data-screen] .quest-card,
+  .quest[data-picking] .quest-card { top: 0; bottom: 0; left: 0; right: auto; width: min(380px, 46vw); max-height: none; border-radius: 0 14px 14px 0; }
+}
+/* a narrow phone: the two buttons share one row (a long label wraps inside
+   its button) so the text above keeps its height */
+@media (max-width: 400px) {
+  .quest-actions { flex-wrap: nowrap; }
+  .quest-actions .quest-btn { flex: 0 1 auto; padding: 8px 12px; line-height: 1.2; }
+}
 @media (prefers-reduced-motion: reduce) {
   .quest { transition: none; }
   body.is-quest-picking .map-label.is-quest-hint { animation: none; box-shadow: 0 0 0 4px #e0a948; }
