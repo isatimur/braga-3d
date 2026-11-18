@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "verify": "node scripts/verify.mjs",
     "test": "node --test scripts/*.test.mjs",
+    "layers": "node scripts/layers-manifest.mjs",
     "check:data": "node scripts/check-data.mjs",
     "check:discovery": "node scripts/check-discovery.mjs",
     "check:geo": "node scripts/check-geo.mjs",

@@ -35,6 +35,8 @@ import { loadCityModels } from './models.js';
 import { setLifeData } from './life.js';
 import { setTrafficAxes } from './traffic-model.js';
 import { installPois } from './pois.js';
+import { createLayers } from './layers.js';
+import { createLayersUI } from './layers-ui.js';
 
 initLanguage();
 
@@ -93,6 +95,13 @@ async function start() {
   loader.set(0.08, t('Загружаем данные'));
 
   mark('start');
+  // The optional layers (layer-defs.js, from lisboa-3d): ?layers= > the
+  // saved choice > the device class default. A layer that is off is never
+  // fetched; the Layers panel (layers-ui.js) switches them later without a
+  // reload. The core (and pois.json, below) always loads.
+  const layers = createLayers({ cls: perf.cls, cityId: CITY.id });
+  debug.layers = layers;
+  debug.buildingClock = () => BUILDING_UNIFORMS.uClock.value; // check-layers: the MS fade clock runs
   // the history routes (quest.js, data/quest.json): a lazy chunk, made on
   // the first #quest or menu click; Braga's data only. A #quest deep link
   // fetches the chunk and the route data now, beside the map's data, and
@@ -104,6 +113,7 @@ async function start() {
   const questChunk = hasQuest && /(^|[#&])quest(=|&|$)/.test(location.hash) ? import('./quest.js') : null;
   questChunk?.then((m) => m.preloadQuest()).catch(() => {}); // a failure shows when the route opens
   // __braga.pois (pois.js): the POI list with opening hours, for the search
+  // and the Discovery panel (core in Braga, whatever the layer choice)
   installPois(debug);
   const loaded = await loadData(() => loader.set(0.35, t('Данные получены')));
   mark('data');
@@ -320,12 +330,22 @@ async function start() {
     debug.water = { seek: seekWater, resume: resumeWater };
     nature.setNearRadius(perf.knobs.natureNearM);
     mark('nature');
-    // the city around the core, streamed in once the core is on screen (tiles.js)
-    tiles = createTiles({ renderer, scene, camera, terrain, heightAt, proj, roadLayer, nature, ground, mobile: LITE, debug });
+    // the city around the core, streamed in once the core is on screen
+    // (tiles.js); only when its layer is on
+    if (layers.on('ring')) startRing();
   }
-  // Microsoft footprints in the OSM gaps, core and ring (buildings-ms.js; ?ms=0 off)
+  // The ring needs nature (its land cover and stream trees): a switch-on
+  // before nature exists waits for buildNatureLayer.
+  function startRing() {
+    if (tiles || !nature) return;
+    tiles = createTiles({ renderer, scene, camera, terrain, heightAt, proj, roadLayer, nature, ground, mobile: LITE, debug });
+    tiles.setBudgetScale(perf.knobs.radius); // the governor's current radius
+  }
+  // Microsoft footprints in the OSM gaps, core and ring (buildings-ms.js;
+  // ?ms=0 off), when their layer is on
   const msPlans = fits.filter((f) => !f.fallback).map((f) => f.plan);
-  const ms = createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints, plans: msPlans, osm: city.footprints, mobile: LITE, lite: LITE, debug });
+  const createMs = () => createMsBuildings({ scene, camera, terrain, heightAt, proj, footprints, plans: msPlans, osm: city.footprints, mobile: LITE, lite: LITE, debug });
+  let ms = layers.on('ms') ? createMs() : null;
   const lightInfo = { dir: atmosphere.sunDir, color: new THREE.Color(), ambient: new THREE.Color() };
   const _amb = new THREE.Color();
 
@@ -1731,8 +1751,11 @@ async function start() {
     lightInfo.ambient.add(_amb.copy(atmosphere.hemi.color).multiplyScalar(atmosphere.hemi.intensity * 0.5));
     // nature, tiles, life and seasons are null until deferLayers built them
     nature?.update(reducedMotion ? 0 : dt, camera, lightInfo); // no sway or ripples under reduced motion
-    tiles?.update(rawDt);
-    ms.update(rawDt);
+    // tiles.js advances the fade clock the MS buildings read; while the ring
+    // layer is off (no tiles), this loop does, or MS buildings never fade in
+    if (tiles) tiles.update(rawDt);
+    else BUILDING_UNIFORMS.uClock.value += rawDt;
+    ms?.update(rawDt);
     // traffic, birds, funicular, fountains, weather (life.js) at the class's
     // simulation rate: the time of the skipped frames is handed over at once
     simAcc = Math.min(simAcc + dt, 0.25);
@@ -1904,7 +1927,10 @@ async function start() {
     await step('nature', buildNatureLayer);
     await step('life', () => {
       // footprints, outlines: where the people of streetscape.js may not walk
-      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines });
+      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines, layers: { street: layers.on('street'), live: layers.on('live') } });
+      // the status pill follows the first load of the two life layers
+      if (layers.on('street')) track('street', life.setStreet(true));
+      if (layers.on('live')) track('live', life.setLive(true));
       quest?.lifeReady();
     });
     await step('seasons', () => {
@@ -1931,6 +1957,91 @@ async function start() {
       console.error('[braga] road cells failed', e);
     }
   }
+
+  // ------------------------------------------------------------ layers
+  // From lisboa-3d. The load of a switched-on layer that has one promise
+  // (street, live): { active, error, endedAt } for the status pill and the
+  // panel.
+  const tasks = {};
+  function track(id, promise) {
+    const task = (tasks[id] = { active: true, error: false, endedAt: 0 });
+    Promise.resolve(promise)
+      .then((ok) => {
+        task.active = false;
+        task.error = ok === false;
+        task.endedAt = Date.now();
+      })
+      .catch(() => {
+        task.active = false;
+        task.error = true;
+        task.endedAt = Date.now();
+      });
+  }
+  const LAYER_LABEL = { street: 'Уровень улицы', live: 'Самолёты и автобусы' };
+  function stateOf(id) {
+    if (!layers.on(id)) return 'off';
+    if (id === 'ring' || id === 'ms') {
+      const src = id === 'ring' ? tiles : ms;
+      if (!src) return 'waiting';
+      // switched on, its index on the way, no tile asked for yet: loading,
+      // not "loaded" (it said loaded for the first half second)
+      if (!src.begun || src.wave.snapshot().active) return 'loading';
+      return src.stats.stuck > 0 ? 'failed' : 'ready';
+    }
+    const task = tasks[id];
+    if (!task) return 'waiting';
+    return task.active ? 'loading' : task.error ? 'failed' : 'ready';
+  }
+  // what the pill reads: one entry for the area (ring and MS tiles of this
+  // camera move together), one per layer load
+  function sources() {
+    const out = [];
+    const waves = [layers.on('ring') && tiles, layers.on('ms') && ms].filter(Boolean).map((s) => ({ w: s.wave.snapshot(), stuck: s.stats.stuck || 0 }));
+    if (waves.length) {
+      out.push({
+        id: 'area',
+        kind: 'area',
+        active: waves.some((x) => x.w.active),
+        // a finished wave of one source does not count into the other's
+        done: waves.reduce((a, x) => a + (x.w.active ? x.w.done : 0), 0),
+        total: waves.reduce((a, x) => a + (x.w.active ? x.w.total : 0), 0),
+        stuck: waves.reduce((a, x) => a + x.stuck, 0),
+        endedAt: Math.max(0, ...waves.map((x) => x.w.endedAt)),
+      });
+    }
+    for (const id of ['street', 'live']) {
+      const task = tasks[id];
+      if (task && layers.on(id)) out.push({ id, kind: 'layer', label: LAYER_LABEL[id], active: task.active, done: 0, total: 0, error: task.error, endedAt: task.endedAt });
+    }
+    return out;
+  }
+  function retryLayer(id) {
+    if (id === 'area') {
+      tiles?.retry();
+      ms?.retry();
+    } else if (id === 'street' && life) track('street', life.retryStreet());
+    else if (id === 'live' && life) track('live', life.setLive(true));
+  }
+  layers.onChange((id, on) => {
+    if (id === 'ring') {
+      if (!on) tiles?.setEnabled(false);
+      else if (tiles) tiles.setEnabled(true);
+      else startRing(); // waits for nature when it does not exist yet
+    } else if (id === 'ms') {
+      if (!on) ms?.setEnabled(false);
+      else if (ms) ms.setEnabled(true);
+      else ms = createMs();
+    } else if (id === 'street') {
+      // before life exists, deferLayers reads the switch itself
+      if (life && on) track('street', life.setStreet(true));
+      else if (life) life.setStreet(false);
+    } else if (id === 'live') {
+      if (life && on) track('live', life.setLive(true));
+      else if (life) life.setLive(false);
+    }
+  });
+  const layersUI = createLayersUI({ layers, stateOf, sources, retry: retryLayer, reducedMotion });
+  debug.layersUI = layersUI;
 
   loader.set(0.95, t('Первый кадр'));
   await nextFrame();

@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-11-17",
+  "last_updated": "2026-11-18",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -387,6 +387,27 @@
         "check-route-mobile.browser.js fails on main (small targets at 320x568) and passes on the branch; reload and rotation checks 17/17; round-3 quest suite 551/559 (8: one phone find step whose bare-canvas click precondition a 44 px marker now covers)"
       ],
       "notes": "Open decision: a 44 px marker can cover a neighbour's building (2 of 14 candidate buildings' centres at 390x844, 5 of 14 at 320x568). On «The old town on foot» at 320x568 a tap on the Sé's building centre picks Arco da Porta Nova's marker, a wrong try; before the branch the Sé's own marker did not show. A reload lands on the intro with «Resume», not on the stop (existing design). Not checked: a physical phone, sunlight, a screen reader, Firefox. Not deployed."
+    },
+    {
+      "id": "braga-021",
+      "priority": 21,
+      "area": "performance",
+      "title": "Map layers and loading status (from lisboa-3d)",
+      "user_visible_behavior": "A «Map layers» panel (menu, or «Layers» in the status pill) lists four optional layers with their size and state: the city around the centre (ring tiles), extra buildings (Microsoft Building Footprints), street level (calçada, lamps, people, terraces, signs) and aircraft and buses (live aircraft, TUB buses on the GTFS timetable). A layer that is off is never downloaded; switching one on loads it without a reload, and its row says loading until its first tiles are asked for. Presets: Light (no optional layers) is the default on class S and P phones, Full on the rest; the choice is saved, and ?layers=light|full overrides it. A pill under the header counts the ring and MS tiles of the current camera move («Loading this area… 3 of 6»), then says «Area loaded», or «Map areas that failed to load: n» with Retry. The pill and the panel stay out of the history routes, the Azulejo game, story and cinema. pt, en and ru.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (layers.test.mjs: presets, class defaults, saved choice, status logic, manifest)",
+        "npm run verify (layers manifest: data/layers.json matches the build)",
+        "node scripts/check-layers.mjs --url <vite preview> --size 1440x900 and --size 360x740 (plain Playwright, headless Chromium ANGLE Metal)",
+        "scripts/check-route-mobile.browser.js in Light, Full and the class default",
+        "Browser: /tmp/braga-layers/tools/modes.mjs (routes, early route card, game, story, cinema, place card, road culling, GTFS buses, ?guide=1) and measure-load.mjs (phone-low profile)"
+      ],
+      "evidence": [
+        "2026-11-18: node --test scripts/*.test.mjs 70/70; npm run build OK; npm run verify OK (12 steps)",
+        "check-layers.mjs five runs in a row on the final build: 1440x900 40/40 each, 360x740 42/42 each; the failed pill and the panel show whole in pt, ru and en at 360x740 and 320x568; check-route-mobile passes at 320x568, 390x844, 844x390 in Light, Full and default; modes check 22/22 at 1440x900 default, 360x740 Light and Full",
+        "phone-low (360x740, CPU 6x, Fast 3G, class S), two runs each: main 2.43 MB / 38 requests, ready 25.4-28.1 s, quiet 30.7-33.6 s; Light 1.96 MB / 24 requests, ready 24.8-25.7 s, quiet 25.3-26.2 s; Full 2.43 MB / 36 requests, ready 25.3-25.6 s, quiet 30.4-32.9 s"
+      ],
+      "notes": "Ready does not move: the optional layers load after it. Light saves 470 KB and ends the downloads 5-7 s sooner on that phone, but drops the MS buildings (whole blocks in the eastern districts) and the calçada of the central squares; the phone default is an open owner decision. No photo-texture layer in Braga, so Standard equals Full and the panel shows two presets. Not checked: a physical phone, GPU time on a weak phone, Safari, Firefox. Not deployed."
     }
   ]
 }

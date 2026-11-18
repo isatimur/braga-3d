@@ -28,6 +28,8 @@ const has = (...parts) => existsSync(join(ROOT, ...parts));
 
 const checks = [
   { name: 'build', cmd: ['npm', 'run', 'build'], needs: [] },
+  // the Layers panel's sizes (<data dir>/layers.json) match the build just made
+  { name: 'layers manifest', cmd: ['node', 'scripts/layers-manifest.mjs', '--check', '--city', CITY], needs: [`${dataDir}/layers.json`] },
   ...(CITY === 'braga' ? [{ name: 'discovery', cmd: ['npm', 'run', 'check:discovery'], needs: ['data/pois.json', 'data/landmarks.json'] }] : []),
   // the history routes' text pages (public/route/) match data/quest.json
   ...(CITY === 'braga' ? [{ name: 'route pages', cmd: ['node', 'scripts/route-pages.mjs', '--check'], needs: ['data/quest.json'] }] : []),

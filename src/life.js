@@ -1182,23 +1182,48 @@ export function createLife(ctx) {
   const traffic = safe('traffic', () => buildTraffic({ roads, project, heightAt, mobile, model, N: carMax }));
   const birds = safe('birds', () => buildBirds({ items, heightAt, project, nature, mobile, lite }));
   const fountains = safe('fountains', () => buildFountains({ project, heightAt, items, mobile }));
+  for (const p of [funicular, traffic, birds, fountains]) if (p) group.add(p.object);
+  // Two optional layers (layer-defs.js, the Layers panel; from lisboa-3d):
+  // the street level and the live aircraft and buses. Off: their data and
+  // code are never fetched. setStreet / setLive switch them later without a
+  // reload.
+  const layerOn = { street: ctx.layers?.street !== false, live: ctx.layers?.live !== false };
+
   // the street level: calçada squares, furniture, people, POI signs
   // (streetscape.js; it builds once its data has arrived)
-  const street = safe('streetscape', () =>
-    createStreetscape({ camera, roads, project, heightAt, items, outlines: ctx.outlines, footprints: ctx.footprints, lite, mobile, debug, model, fx, surfaceHeights }),
-  );
-  for (const p of [funicular, traffic, birds, fountains, street]) if (p) group.add(p.object);
+  let street = null;
+  function makeStreet() {
+    street = safe('streetscape', () =>
+      createStreetscape({ camera, roads, project, heightAt, items, outlines: ctx.outlines, footprints: ctx.footprints, lite, mobile, debug, model, fx, surfaceHeights }),
+    );
+    if (street) {
+      group.add(street.object);
+      debug.streetscape = street;
+      stats.streetscape = street.stats;
+    }
+    return street;
+  }
 
   const ctxLive = { scene, camera, renderer, project, heightAt, datumM, mobile, reducedMotion, live, model, atmosphere, group };
   // aircraft and buses: a separate chunk, loaded after the first frame
   let air = null;
   let buses = null;
-  Promise.all([import('./liveair.js'), import('./livebus.js')])
-    .then(([a, b]) => {
-      air = safe('aircraft', () => a.createLiveAir(ctxLive));
-      buses = safe('buses', () => b.createLiveBus(ctxLive));
-    })
-    .catch((e) => console.warn('[braga] life: live layers failed to load', e));
+  let liveLoad = null;
+  function loadLive() {
+    liveLoad ||= Promise.all([import('./liveair.js'), import('./livebus.js')])
+      .then(([a, b]) => {
+        air = safe('aircraft', () => a.createLiveAir(ctxLive));
+        buses = safe('buses', () => b.createLiveBus(ctxLive));
+        return !!(air || buses);
+      })
+      .catch((e) => {
+        console.warn('[braga] life: live layers failed to load', e);
+        liveLoad = null; // a retry may import again
+        return false;
+      });
+    return liveLoad;
+  }
+  if (layerOn.live) loadLive();
   const buildMs = Math.round(performance.now() - t0);
 
   const frustum = new THREE.Frustum();
@@ -1216,10 +1241,11 @@ export function createLife(ctx) {
     traffic: traffic?.stats ?? null,
     birds: birds?.stats ?? null,
     fountains: fountains?.stats ?? null,
-    streetscape: street?.stats ?? null,
+    streetscape: null,
     rainDrops: 0,
     visibleVehicles: 0,
   };
+  if (layerOn.street) makeStreet();
 
   // the live badge's extra lines: aircraft, buses, traffic (once a second)
   let lastBadge = -Infinity;
@@ -1228,8 +1254,8 @@ export function createLife(ctx) {
     if (tNow - lastBadge < 1000) return;
     lastBadge = tNow;
     if (!live.live) return;
-    live.setExtra('air', air?.badge() ?? null);
-    live.setExtra('bus', buses?.badge() ?? null);
+    live.setExtra('air', layerOn.live ? air?.badge() ?? null : null);
+    live.setExtra('bus', layerOn.live ? buses?.badge() ?? null : null);
     const ms = model?.state;
     if (ms && traffic) {
       const n = Math.round(traffic.active / 10) * 10;
@@ -1264,7 +1290,7 @@ export function createLife(ctx) {
     fountains?.update(camera, view);
     // market crowd: only when data/life.json lists market stalls (Braga has
     // none yet, so this is a no-op until the stalls are authored)
-    const built = street?.built;
+    const built = layerOn.street ? street?.built : null;
     if (built?.people && marketStalls.length) {
       if (!marketApplied) {
         built.people.addMarket(marketStalls.map((s) => project(s.lat, s.lon)));
@@ -1274,9 +1300,11 @@ export function createLife(ctx) {
       const st = model?.state;
       built.people.setMarketOpen(!!(st && clk && MARKET_DAYS.has(clk.weekday) && st.hour >= 8 && st.hour < 20));
     }
-    street?.update(adt, frustum, view);
-    air?.update(adt, dt, view);
-    buses?.update(adt, dt, view);
+    if (layerOn.street) street?.update(adt, frustum, view);
+    if (layerOn.live) {
+      air?.update(adt, dt, view);
+      buses?.update(adt, dt, view);
+    }
     badgeLines();
 
     stats.visibleVehicles = traffic?.visible ?? 0;
@@ -1294,10 +1322,37 @@ export function createLife(ctx) {
     traffic,
     birds,
     fountains,
-    street,
+    get street() {
+      return street;
+    },
     stats,
     group,
     model,
+    // the Layers panel: switch the street level on or off. On the first
+    // switch-on its data is fetched; resolves true when built.
+    setStreet(on) {
+      layerOn.street = !!on;
+      if (on && !street) makeStreet();
+      if (street) street.object.visible = !!on;
+      return on ? street?.ready ?? Promise.resolve(false) : Promise.resolve(true);
+    },
+    // after a failed load: a fresh streetscape (the old group goes)
+    retryStreet() {
+      if (street) group.remove(street.object);
+      street = null;
+      return this.setStreet(true);
+    },
+    setLive(on) {
+      layerOn.live = !!on;
+      // the bus mesh sets its own visibility every update; the aircraft root
+      // only when live mode changes, so it is set back here
+      if (air?.object) air.object.visible = !!on && !!live.live;
+      if (buses?.object && !on) buses.object.visible = false;
+      return on ? loadLive() : Promise.resolve(true);
+    },
+    get layers() {
+      return { ...layerOn };
+    },
     get air() {
       return air;
     },
@@ -1306,6 +1361,5 @@ export function createLife(ctx) {
     },
   };
   debug.life = api;
-  if (street) debug.streetscape = street;
   return api;
 }
