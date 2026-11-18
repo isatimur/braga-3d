@@ -483,24 +483,30 @@ export function createStreetscape(ctx) {
   const stats = { status: 'loading' };
   let built = null;
   const t0 = performance.now();
-  Promise.all([fetchStreet(), loadPois()])
+  // resolves true once built, false when the data or the build failed (the
+  // status pill of layers-ui.js shows it)
+  const ready = Promise.all([fetchStreet(), loadPois()])
     .then(([doc, pois]) => {
       try {
         built = build(ctx, group, doc, pois, stats);
         stats.status = 'ready';
         stats.buildMs = Math.round(performance.now() - t0);
+        return true;
       } catch (e) {
         stats.status = `failed: ${e.message}`;
         console.warn('[braga] streetscape failed', e);
+        return false;
       }
     })
     .catch((e) => {
       stats.status = `no data: ${e.message}`;
       console.info(`[braga] ${dataPath('streetscape.json')} unavailable (${e.message}); no street level.`);
+      return false;
     });
   return {
     object: group,
     stats,
+    ready,
     update(dt, frustum, view) {
       built?.update(dt, frustum, view);
     },
