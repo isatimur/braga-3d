@@ -97,9 +97,31 @@ function measure() {
 
 const doc = measure();
 const text = `${JSON.stringify(doc, null, 2)}\n`;
+// --check: the same layers, files, flags and defaults, and sizes within 1 %
+// or 4 KB. A bundle chunk imports the main chunk by its hashed name, so any
+// change to the app moves the live chunks by a few bytes (138440 -> 138436
+// after a CSS edit); the panel shows KB, so that is not a stale manifest.
+// Braga: many branches touch main.js; an exact match failed verify on each.
+function sameManifest(curText) {
+  let cur;
+  try {
+    cur = JSON.parse(curText);
+  } catch {
+    return false;
+  }
+  const near = (a, b) => Number.isFinite(a) && Math.abs(a - b) <= Math.max(4096, b * 0.01);
+  const strip = (v) => ({ ...v, bytes: 0, raw: 0 });
+  const ids = Object.keys(doc.layers);
+  if (JSON.stringify(Object.keys(cur.layers || {})) !== JSON.stringify(ids)) return false;
+  return ids.every((id) => {
+    const a = cur.layers[id];
+    const b = doc.layers[id];
+    return JSON.stringify(strip(a)) === JSON.stringify(strip(b)) && near(a.bytes, b.bytes) && near(a.raw, b.raw);
+  });
+}
 if (CHECK) {
   const cur = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';
-  if (cur !== text) {
+  if (!sameManifest(cur)) {
     console.error(`layers-manifest: ${DATA_DIR}/layers.json is stale. Run: npm run build && node scripts/layers-manifest.mjs --city ${CITY_ID}`);
     for (const [id, v] of Object.entries(doc.layers)) console.error(`  ${id}: ${v.bytes} bytes (${v.files} files)`);
     process.exit(1);
