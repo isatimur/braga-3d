@@ -2128,6 +2128,11 @@ body.is-game .map-label.is-unexplored {
   /* left: 50% would cap a shrink-to-fit width at half the screen */
   .load-status { width: max-content; }
   .ls-text { flex: 1 1 auto; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; line-height: 1.25; }
+  /* failed: the line gets the whole first row and Retry and Layers move to a
+     second one. Beside the two buttons the pt line («Zonas do mapa que
+     falharam: 6», «Tentar de novo», «Camadas») had 88 px and lost its count */
+  .load-status[data-state='failed'] { flex-wrap: wrap; justify-content: flex-end; row-gap: 2px; padding-top: 8px; padding-bottom: 6px; border-radius: 18px; }
+  .load-status[data-state='failed'] .ls-text { flex-basis: calc(100% - 24px); padding-right: 8px; }
 }
 /* the full-screen modes keep the map to themselves (layers-ui.js MODES):
    lisboa-3d hides it for cinema, story and embeds; Braga also for the
