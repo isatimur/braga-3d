@@ -19,6 +19,11 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
 body.is-quest-picking .map-label.is-quest-candidate { pointer-events: auto !important; cursor: pointer; justify-content: center; min-width: 44px; min-height: 44px; padding: 4px 10px; font-weight: 800; }
 body.is-quest-picking .map-label.is-quest-candidate :is(.map-label-text, .map-label-thumb) { display: none; }
 body.is-quest-picking .map-label.is-quest-candidate::before { content: '?'; font-size: 20px; line-height: 1; }
+/* where markers touch, an untried one lies over a tried one, the hinted one
+   over all (!important: the label renderer sets z-index by depth inline) */
+body.is-quest-picking .map-label.is-quest-candidate { z-index: 1000001 !important; }
+body.is-quest-picking .map-label.is-quest-tried { z-index: 1000000 !important; }
+body.is-quest-picking .map-label.is-quest-hint { z-index: 1000002 !important; }
 body.is-quest-picking .map-label.is-quest-tried { color: #5a6580; background: rgba(245, 247, 251, 0.8); box-shadow: none; }
 body.is-quest-picking .map-label.is-quest-tried::before { content: '✕'; }
 body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--cob); animation: quest-hint 1.1s ease-in-out infinite; }
