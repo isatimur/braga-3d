@@ -357,8 +357,12 @@ export function createQuest(ctx) {
         if (how === 'map') setTimeout(() => document.activeElement === document.body && next(), 150);
       } else if (how !== 'map') view.focus()?.focus({ preventScroll: true });
       // the verdict stays in view: a long explanation (a solved sequence)
-      // starts at the top of the card, a short one shows whole
-      feedback.scrollIntoView({ block: feedback.offsetHeight > body.clientHeight ? 'start' : 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
+      // starts at the top of the card's text, a short one shows whole. Only
+      // the text scrolls (scrollIntoView would scroll the card itself too)
+      const fb = feedback.getBoundingClientRect();
+      const bb = body.getBoundingClientRect();
+      const by = fb.height > bb.height ? fb.top - bb.top - 8 : fb.bottom - bb.bottom;
+      body.scrollTo({ top: Math.max(0, body.scrollTop + by), behavior: reducedMotion ? 'auto' : 'smooth' });
     }
 
     show([step, title, photo, text, qBox, sourcesLine(l)], [showBtn, nextBtn]);
