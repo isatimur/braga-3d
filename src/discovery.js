@@ -130,15 +130,21 @@ export function createDiscovery({ landmarks, pois, onPlace, onPoi, toast }) {
   }
   const cardButtons = ['#callout .callout-acts', '#detail .detail-head'].map(selector => {
     const group = el('div', 'discover-card-actions');
-    const b = button('', () => selected && toggleSaved(selected.id));
-    group.append(b, button(c.share, () => selected && sharePlace(selected)));
+    // icons only on the card: the row already holds three text buttons
+    const b = button('', () => selected && toggleSaved(selected.id), 'discover-button discover-icon');
+    const share = button('', () => selected && sharePlace(selected), 'discover-button discover-icon');
+    share.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v7h14v-7"/></svg>';
+    share.setAttribute('aria-label', c.share); share.title = c.share;
+    group.append(b, share);
     document.querySelector(selector)?.append(group);
     return b;
   });
   function updateCardButtons() {
     for (const b of cardButtons) {
-      b.textContent = selected && saved.has(selected.id) ? `★ ${c.saved}` : `☆ ${c.save}`;
-      b.setAttribute('aria-pressed', String(!!selected && saved.has(selected.id)));
+      const on = !!selected && saved.has(selected.id);
+      b.textContent = on ? '★' : '☆';
+      b.setAttribute('aria-label', on ? c.saved : c.save); b.title = on ? c.saved : c.save;
+      b.setAttribute('aria-pressed', String(on));
       b.disabled = !selected;
     }
   }
