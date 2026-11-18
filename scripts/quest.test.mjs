@@ -528,3 +528,25 @@ test('progress: broken or foreign saves and blocked storage never throw', () => 
   assert.equal(blocked.stamp('x'), 'gold');
   delete globalThis.localStorage;
 });
+
+// A visitor holds the phone in one hand in the street: every control of the
+// route card is a 44 px target and no text is under 12 px. The browser check
+// scripts/check-route-mobile.browser.js measures the same on the page.
+nodeTest('route card: 44 px touch targets and no text under 12 px (quest.css)', () => {
+  const css = readFileSync(new URL('src/quest.css', root), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: m[1].trim(), body: m[2] }));
+  const px = (body, prop) => [...body.matchAll(new RegExp(`(?:^|[;\\s])${prop}\\s*:\\s*([\\d.]+)px`, 'g'))].map((m) => +m[1]);
+  // font sizes: `font-size: Npx` and the size inside a `font:` shorthand
+  for (const { sel, body } of rules) {
+    const sizes = [...px(body, 'font-size'), ...[...body.matchAll(/(?:^|[;\s])font\s*:[^;]*?\s([\d.]+)px/g)].map((m) => +m[1])];
+    for (const s of sizes) assert.ok(s >= 12, `${sel}: ${s}px text is under 12 px`);
+  }
+  const tallest = (want) => Math.max(0, ...rules.filter((r) => r.sel.split(',').some((s) => s.trim() === want)).flatMap((r) => [...px(r.body, 'min-height'), ...px(r.body, 'height')]));
+  const widest = (want) => Math.max(0, ...rules.filter((r) => r.sel.split(',').some((s) => s.trim() === want)).flatMap((r) => [...px(r.body, 'min-width'), ...px(r.body, 'width')]));
+  for (const sel of ['.quest-close', '.quest-option', '.quest-candidate', '.quest-btn', '.quest-seq-move', '.quest-link', 'body.is-quest-picking .map-label.is-quest-candidate']) {
+    assert.ok(tallest(sel) >= 44, `${sel} is under 44 px tall`);
+  }
+  for (const sel of ['.quest-close', '.quest-seq-move', 'body.is-quest-picking .map-label.is-quest-candidate']) {
+    assert.ok(widest(sel) >= 44, `${sel} is under 44 px wide`);
+  }
+});
