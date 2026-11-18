@@ -337,6 +337,9 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 /* a narrow phone: the two buttons share one row (a long label wraps inside
    its button) so the text above keeps its height */
 @media (max-width: 400px) {
+  /* a two-word route title keeps both words beside the stamps */
+  .quest-kicker { letter-spacing: 0.05em; }
+  .quest-stamps { gap: 3px; }
   .quest-actions { flex-wrap: nowrap; }
   .quest-actions .quest-btn { flex: 0 1 auto; padding: 8px 12px; line-height: 1.2; }
 }
