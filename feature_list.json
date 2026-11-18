@@ -404,7 +404,7 @@
       ],
       "evidence": [
         "2026-11-18: node --test scripts/*.test.mjs 70/70; npm run build OK; npm run verify OK (12 steps)",
-        "check-layers.mjs five runs in a row after the merge of main: 1440x900 40/40 each, 360x740 42/42 each; check-route-mobile passes at 320x568, 390x844, 844x390 in Light, Full and default; modes check 22/22 at 1440x900 default, 360x740 Light and Full",
+        "check-layers.mjs five runs in a row on the final build: 1440x900 40/40 each, 360x740 42/42 each; the failed pill and the panel show whole in pt, ru and en at 360x740 and 320x568; check-route-mobile passes at 320x568, 390x844, 844x390 in Light, Full and default; modes check 22/22 at 1440x900 default, 360x740 Light and Full",
         "phone-low (360x740, CPU 6x, Fast 3G, class S), two runs each: main 2.43 MB / 38 requests, ready 25.4-28.1 s, quiet 30.7-33.6 s; Light 1.96 MB / 24 requests, ready 24.8-25.7 s, quiet 25.3-26.2 s; Full 2.43 MB / 36 requests, ready 25.3-25.6 s, quiet 30.4-32.9 s"
       ],
       "notes": "Ready does not move: the optional layers load after it. Light saves 470 KB and ends the downloads 5-7 s sooner on that phone, but drops the MS buildings (whole blocks in the eastern districts) and the calçada of the central squares; the phone default is an open owner decision. No photo-texture layer in Braga, so Standard equals Full and the panel shows two presets. Not checked: a physical phone, GPU time on a weak phone, Safari, Firefox. Not deployed."
