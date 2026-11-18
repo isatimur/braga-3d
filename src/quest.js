@@ -80,8 +80,11 @@ export function createQuest(ctx) {
   // screen readers do not land in it
   const CHROME = '.side, .detail, .topbar, .brand, .instruments, .hint, .clusters, .callout, .callout-leader, .atmo, .guide-fab, .guide, #labels';
   let inerted = [];
+  // a bottom sheet (quest.css): a narrow screen, except a phone on its side,
+  // where the card stands on the left as on a desktop
   const mq = window.matchMedia('(max-width: 900px)');
-  const mobile = () => mq.matches;
+  const side = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
+  const mobile = () => mq.matches && !side.matches;
 
   let data = null;
   let routes = []; // { ...json route, stops: [{ ...json stop, item }] } on this map
@@ -353,7 +356,13 @@ export function createQuest(ctx) {
         // focus to the page: put it back on Next
         if (how === 'map') setTimeout(() => document.activeElement === document.body && next(), 150);
       } else if (how !== 'map') view.focus()?.focus({ preventScroll: true });
-      feedback.scrollIntoView({ block: 'end', behavior: reducedMotion ? 'auto' : 'smooth' });
+      // the verdict stays in view: a long explanation (a solved sequence)
+      // starts at the top of the card's text, a short one shows whole. Only
+      // the text scrolls (scrollIntoView would scroll the card itself too)
+      const fb = feedback.getBoundingClientRect();
+      const bb = body.getBoundingClientRect();
+      const by = fb.height > bb.height ? fb.top - bb.top - 8 : fb.bottom - bb.bottom;
+      body.scrollTo({ top: Math.max(0, body.scrollTop + by), behavior: reducedMotion ? 'auto' : 'smooth' });
     }
 
     show([step, title, photo, text, qBox, sourcesLine(l)], [showBtn, nextBtn]);
@@ -368,6 +377,12 @@ export function createQuest(ctx) {
       });
     }
     paint(false);
+    // a short card (a phone's sheet): the find task's question would sit
+    // below the photo, out of view; scroll just enough to show it whole
+    if (finding) {
+      const over = q.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 8;
+      if (over > 0) body.scrollTop = over;
+    }
     if (!finding) ctx.onFocus?.([st.id]);
     shot = cameraReady() ? screenShot() : null;
     fly(shot);

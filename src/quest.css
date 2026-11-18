@@ -5,6 +5,9 @@
 
 /* the map chrome steps aside, as in the story */
 body.is-quest :is(.side, .detail, .topbar, .brand, .instruments, .hint, .clusters, .callout, .callout-leader, .atmo, .guide-fab, .guide) { opacity: 0 !important; pointer-events: none !important; }
+/* the hidden header takes no room: main.js mutes the map labels under the
+   header's parts, so a find-on-map «?» near the top of a phone would not show */
+body.is-quest .topbar > * { display: none !important; }
 body.is-quest .map-label { pointer-events: none !important; }
 body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
 
@@ -12,10 +15,16 @@ body.is-quest .map-label:not(.is-story-focus) { opacity: 0 !important; }
    of their names; a tried one shows «✕» (the card names it; a name would
    crowd the other markers); the place's own marker stands out after two
    wrong picks */
-body.is-quest-picking .map-label.is-quest-candidate { pointer-events: auto !important; cursor: pointer; padding: 4px 11px; font-weight: 800; }
+/* a marker is a 44 px target for a finger */
+body.is-quest-picking .map-label.is-quest-candidate { pointer-events: auto !important; cursor: pointer; justify-content: center; min-width: 44px; min-height: 44px; padding: 4px 10px; font-weight: 800; }
 body.is-quest-picking .map-label.is-quest-candidate :is(.map-label-text, .map-label-thumb) { display: none; }
-body.is-quest-picking .map-label.is-quest-candidate::before { content: '?'; font-size: 15px; line-height: 1.2; }
-body.is-quest-picking .map-label.is-quest-tried { color: var(--text-3, #6d7890); background: rgba(245, 247, 251, 0.6); box-shadow: none; }
+body.is-quest-picking .map-label.is-quest-candidate::before { content: '?'; font-size: 20px; line-height: 1; }
+/* where markers touch, an untried one lies over a tried one, the hinted one
+   over all (!important: the label renderer sets z-index by depth inline) */
+body.is-quest-picking .map-label.is-quest-candidate { z-index: 1000001 !important; }
+body.is-quest-picking .map-label.is-quest-tried { z-index: 1000000 !important; }
+body.is-quest-picking .map-label.is-quest-hint { z-index: 1000002 !important; }
+body.is-quest-picking .map-label.is-quest-tried { color: #5a6580; background: rgba(245, 247, 251, 0.8); box-shadow: none; }
 body.is-quest-picking .map-label.is-quest-tried::before { content: '✕'; }
 body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--cob); animation: quest-hint 1.1s ease-in-out infinite; }
 @keyframes quest-hint { 50% { box-shadow: 0 0 0 9px rgba(224, 169, 72, 0.55); } }
@@ -33,7 +42,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 .quest-card {
   --text: var(--ink-c);
   --text-2: #3c4a63;
-  --text-3: #6d7890;
+  --text-3: #5a6580; /* 5.4:1 on the porcelain, 4.8:1 on the question box */
   --gold: var(--cob); /* focus rings */
   --line: var(--line-c);
   position: absolute;
@@ -71,7 +80,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
-  font: 700 11px/1.2 var(--sans);
+  font: 700 12px/1.2 var(--sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--cob);
@@ -88,7 +97,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
   place-items: center;
   width: 24px;
   height: 24px;
-  font: 700 11px/1 var(--sans);
+  font: 700 12px/1 var(--sans);
   color: var(--text-3);
   border: 1.5px dashed #b6c1d6;
   border-radius: 50%;
@@ -100,9 +109,9 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 .quest-stamp[aria-current='step'] { outline: 2px solid #e0a948; outline-offset: 2px; }
 .quest-close {
   flex: none;
-  width: 34px;
-  height: 34px;
-  font-size: 22px;
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
   line-height: 1;
   color: var(--text-2);
   background: transparent;
@@ -162,7 +171,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 .quest-route-title { margin: 0 0 4px; font: 800 18px/1.2 var(--sans); font-stretch: var(--wide); color: var(--cob-d); }
 .quest-route-intro { margin: 0 0 6px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
 .quest-route-meta { margin: 0 0 10px; font-size: 12px; color: var(--text-3); }
-.quest-back { display: inline-block; margin: 0 0 8px; }
+.quest-back { margin: -6px 0 2px; }
 
 .quest-photo { position: relative; margin: 0 0 12px; border-radius: 8px; overflow: hidden; background: var(--cob-l); }
 .quest-photo img { display: block; width: 100%; height: 170px; object-fit: cover; }
@@ -172,17 +181,17 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
   bottom: 0;
   max-width: 100%;
   padding: 3px 8px;
-  font-size: 10.5px;
+  font-size: 12px;
   line-height: 1.3;
   color: #fff;
-  background: rgba(15, 42, 87, 0.72);
+  background: rgba(15, 42, 87, 0.9); /* white text stays legible over a bright photo */
   border-top-left-radius: 6px;
 }
 .quest-credit a { color: inherit; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.5); }
 .quest-text { margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: var(--ink-c); }
 
 .quest-q { margin: 0 0 14px; padding: 14px; background: var(--cob-l); border-radius: 10px; }
-.quest-qlabel { margin: 0 0 4px; font: 700 11px/1.2 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cob); }
+.quest-qlabel { margin: 0 0 4px; font: 700 12px/1.2 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cob); }
 .quest-question { margin: 0 0 10px; font: 700 16px/1.35 var(--sans); color: var(--cob-d); }
 .quest-options { display: grid; gap: 7px; }
 .quest-option {
@@ -226,7 +235,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 .quest-verdict.is-retry { margin: 0; color: var(--cob-d); }
 .quest-basis { margin: 0; padding: 0 0 0 10px; font-size: 13.5px; line-height: 1.5; color: var(--text-2); border-left: 3px solid var(--cob); }
 .quest-basis-label { font-weight: 600; color: var(--cob-d); }
-.quest-sources { margin: 0 0 4px; font-size: 11.5px; line-height: 1.5; color: var(--text-3); }
+.quest-sources { margin: 0 0 4px; font-size: 12px; line-height: 1.5; color: var(--text-3); }
 .quest-text[hidden] { display: none; }
 
 /* true or false: two buttons side by side */
@@ -238,7 +247,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 /* find on the map: the candidates as compact buttons, the keyboard path */
 .quest-listlabel { margin: 0 0 6px; font-size: 12.5px; color: var(--text-2); }
 .quest-candidates { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.quest-candidate { width: auto; min-height: 40px; padding: 7px 11px; font-size: 13.5px; line-height: 1.25; }
+.quest-candidate { width: auto; min-height: 44px; padding: 7px 11px; font-size: 13.5px; line-height: 1.25; }
 .quest-hint { margin: 6px 0 0; font-size: 13.5px; color: var(--cob-d); }
 
 /* put in order: rows with up/down arrows */
@@ -249,8 +258,8 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 .quest-seq-label { flex: 1 1 auto; font-size: 14px; line-height: 1.35; color: var(--ink-c); }
 .quest-seq-move {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   font-size: 18px;
   line-height: 1;
   color: var(--cob-d);
@@ -279,7 +288,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 }
 .quest-actions:empty { display: none; }
 .quest-btn {
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 16px;
   font-size: 14px;
   font-weight: 600;
@@ -295,18 +304,19 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
 .quest-btn.is-quiet { margin-right: auto; border-color: var(--line-c); color: var(--text-2); }
 .quest-btn[hidden] { display: none; }
 
-.quest-sub { margin: 16px 0 6px; font: 700 11px/1.2 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cob); }
+.quest-sub { margin: 16px 0 6px; font: 700 12px/1.2 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cob); }
 .quest-visits { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line-c); }
 .quest-visit { position: relative; padding: 10px 0 10px 40px; border-bottom: 1px solid var(--line-c); }
 .quest-visit-stamp { position: absolute; left: 0; top: 10px; width: 28px; height: 28px; font-size: 12px; }
 .quest-visit-name { margin: 0 0 3px; font: 700 14.5px/1.3 var(--sans); color: var(--cob-d); }
 .quest-visit-text { margin: 0 0 4px; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
-.quest-link { padding: 4px 0; font-size: 13px; font-weight: 600; background: none; border: 0; cursor: pointer; }
+/* a 44 px tall hit area for a finger; the text stays a link */
+.quest-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0; font-size: 14px; font-weight: 600; background: none; border: 0; cursor: pointer; }
 
 @media (max-width: 900px) {
   .quest-card { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 58vh; max-height: 58dvh; border-radius: 14px 14px 0 0; }
   .quest[data-screen='intro'] .quest-card, .quest[data-screen='end'] .quest-card { max-height: 66vh; max-height: 66dvh; }
-  .quest-head { padding: 8px 10px 8px 16px; }
+  .quest-head { padding: 4px 6px 4px 16px; }
   .quest-body { padding: 14px 16px 16px; }
   .quest-actions { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); }
   .quest-title { font-size: 21px; margin-bottom: 10px; }
@@ -320,6 +330,23 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
   .quest[data-picking] .quest-photo img { height: 76px; }
   .quest[data-picking] .quest-title { font-size: 19px; margin-bottom: 8px; }
   .quest-seq-label { font-size: 13.5px; }
+}
+/* a phone on its side: a bottom sheet would leave about 100 px of text and a
+   strip of map, so the card stands on the left at full height and the map
+   keeps the right (quest.js `side` matches the same query) */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .quest-card,
+  .quest[data-screen] .quest-card,
+  .quest[data-picking] .quest-card { top: 0; bottom: 0; left: 0; right: auto; width: min(380px, 46vw); max-height: none; border-radius: 0 14px 14px 0; }
+}
+/* a narrow phone: the two buttons share one row (a long label wraps inside
+   its button) so the text above keeps its height */
+@media (max-width: 400px) {
+  /* a two-word route title keeps both words beside the stamps */
+  .quest-kicker { letter-spacing: 0.05em; }
+  .quest-stamps { gap: 3px; }
+  .quest-actions { flex-wrap: nowrap; }
+  .quest-actions .quest-btn { flex: 0 1 auto; padding: 8px 12px; line-height: 1.2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .quest { transition: none; }

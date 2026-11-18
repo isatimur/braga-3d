@@ -367,6 +367,26 @@
         "Culled against whole, the same frame in one task, 8 draws each: 96 of 96 poses identical on every stable pixel (desktop and phone sizes)"
       ],
       "notes": "Braga differences from Porto: tiles.js joins the ring's streets to the core's primary line (that line draws whole once ring tiles show); no tram rails; landmarks are built after roads and buildings, so the early card gains less. Tree bounds hardly cull in the main view (the camera is inside the ball); the gain is the shadow pass and hidden empty species. Not checked: physical phones, other GPUs, Safari, Firefox. Not deployed."
+    },
+    {
+      "id": "braga-020",
+      "priority": 20,
+      "area": "visitor modes",
+      "title": "History routes on a phone: mobile and UX pass",
+      "user_visible_behavior": "On a phone every control of the route card is a 44 px target and no text is under 12 px; the grey text and the photo credit read at 4.5:1 or better. Find on the map shows every candidate's «?» marker (44 px) also near the top of a phone, and the hinted one lies over the rest. A phone on its side shows the card on the left at full height with the map on the right. After an answer the verdict stays in view; a find task's question shows on a short sheet. The text pages' language and back links are 44 px tall.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (quest.test.mjs: quest.css controls 44 px, no text under 12 px)",
+        "npm run verify",
+        "scripts/check-route-mobile.browser.js (playwright-cli run-code) at 320x568, 390x844, 844x390",
+        "Browser (headless Chromium ANGLE Metal and WebKit, production build): /tmp/braga-route-pass/tools/ audit matrix (7 sizes x pt, en, ru), checks.mjs (reload, rotation), textpages.mjs"
+      ],
+      "evidence": [
+        "2026-11-18: node --test scripts/*.test.mjs 46/46; npm run verify OK (10 steps)",
+        "Route matrix before -> after (24 runs): card targets under 44 px 10 kinds -> 0; texts under 12 px 7 kinds -> 0; CSS contrast failures 7 kinds -> 0; hidden find markers 9-24 of 42 per phone run -> 0; landscape text box 106 / 63 px (find) -> 266 / 266 px; verdict out of view 1-3 per phone run -> 0; console clean",
+        "check-route-mobile.browser.js fails on main (small targets at 320x568) and passes on the branch; reload and rotation checks 17/17; round-3 quest suite 551/559 (8: one phone find step whose bare-canvas click precondition a 44 px marker now covers)"
+      ],
+      "notes": "Open decision: a 44 px marker can cover a neighbour's building (2 of 14 candidate buildings' centres at 390x844, 5 of 14 at 320x568). On «The old town on foot» at 320x568 a tap on the Sé's building centre picks Arco da Porta Nova's marker, a wrong try; before the branch the Sé's own marker did not show. A reload lands on the intro with «Resume», not on the stop (existing design). Not checked: a physical phone, sunlight, a screen reader, Firefox. Not deployed."
     }
   ]
 }
