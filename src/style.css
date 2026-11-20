@@ -2198,8 +2198,36 @@ body.is-walk canvas { cursor: grab; touch-action: none; }
   pointer-events: auto;
   cursor: pointer;
 }
-.walk-exit:hover { border-color: var(--gold); }
-.walk-exit:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.walk-exit:hover, .walk-view:hover, .walk-place:hover { border-color: var(--gold); }
+.walk-exit:focus-visible, .walk-view:focus-visible, .walk-place:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.walk-view, .walk-place {
+  position: absolute;
+  min-height: 44px;
+  padding: 0 16px;
+  font: 600 14px/1 var(--sans);
+  color: var(--text);
+  background: var(--glass-strong);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.walk-view { top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; }
+.walk-view[aria-pressed='true'] { color: var(--ink-0); background: var(--gold); border-color: var(--gold); }
+.walk-place {
+  left: 50%;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  max-width: min(78vw, 420px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-color: var(--gold);
+  transform: translateX(-50%);
+}
+.walk-place[hidden] { display: none; }
+@media (pointer: coarse) {
+  .walk-place { bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
+}
 .walk-hint {
   position: absolute;
   left: 50%;

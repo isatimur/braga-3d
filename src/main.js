@@ -1195,7 +1195,11 @@ async function start() {
           rig,
           heightAt,
           dom: canvas,
+          scene,
           polys: [...city.footprints, ...outlines.filter(Boolean)],
+          places: () => marks.items.map((it, i) => ({ i, name: it.labelEl.textContent, x: it.center.x, z: it.center.z, outline: outlines[i] })),
+          // the card belongs to the map view: the walk ends, then the place opens
+          onPlace: (i) => select(i),
           reducedMotion,
           bounds: terrain.bounds,
           onEnter: () => document.body.classList.add('is-walk'),

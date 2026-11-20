@@ -77,6 +77,8 @@ async function run(profile) {
   ok(/walk/.test(s.hash), `${profile}: the link says ${s.hash}`);
   ok(await page.locator('.walk-exit').isVisible(), `${profile}: the Go up button shows`);
   ok((await page.locator('.walk-stick').isVisible()) === phone, `${profile}: the stick ${phone ? 'shows' : 'is hidden'}`);
+  ok(s.view === 'third' && s.figure, `${profile}: third person, the figure shows`);
+  ok(s.camM > 1.5 && s.camM < 5 && !s.camInside, `${profile}: the camera is ${s.camM} m behind, in the street`);
   if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-start.png` });
 
   // eight headings: walk, and on the desktop run, never inside a building
@@ -135,6 +137,46 @@ async function run(profile) {
     await page.screenshot({ path: `${OUT}/walk-${profile}-street.png` });
   }
 
+  // first person: the button on a phone, V on the desktop
+  if (phone) await page.locator('.walk-view').click();
+  else await page.keyboard.press('KeyV');
+  await page.waitForTimeout(600);
+  s = await state(page);
+  ok(s.view === 'first' && !s.figure && s.camM < 0.05, `${profile}: first person, the camera is at the eyes`);
+  if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-first.png` });
+  if (phone) await page.locator('.walk-view').click();
+  else await page.keyboard.press('KeyV');
+  await page.waitForTimeout(1200);
+  s = await state(page);
+  ok(s.view === 'third' && !s.camInside && (s.figure ? s.camM > 1.5 : s.camM < 0.05), `${profile}: back to third person (${s.figure ? `camera ${s.camM} m behind` : 'a wall behind, so the view is from the eyes'})`);
+
+  // a place within reach offers its card: stand by the cathedral
+  const stood = await page.evaluate(async () => {
+    const P = window.__braga;
+    const q = P.project(41.54998, -8.42715);
+    for (let d = 5; d <= 30; d += 1) {
+      for (let a = 0; a < 16; a++) {
+        const x = q.x + Math.cos((a / 16) * 6.283) * d, z = q.z + Math.sin((a / 16) * 6.283) * d;
+        if (!P.walk.teleport(x, z)) continue;
+        await new Promise((r) => setTimeout(r, 700));
+        if (P.walk.state.near != null) return { d: d * 4, near: P.walk.state.near };
+      }
+    }
+    return null;
+  });
+  ok(!!stood, `${profile}: by the cathedral a place is within reach${stood ? ` (${stood.d} m from its centre)` : ''}`);
+  const chip = page.locator('.walk-place');
+  ok(await chip.isVisible(), `${profile}: the place button shows: ${(await chip.textContent()) || ''}`);
+  if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-place.png` });
+  await chip.click();
+  await page.waitForTimeout(3500);
+  s = await state(page);
+  ok(!s.active && /place=/.test(s.hash), `${profile}: the button ends the walk and opens the place (${s.hash})`);
+  if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-card.png` });
+  await page.evaluate(() => { location.hash = 'walk'; });
+  await page.waitForFunction(() => window.__braga.walk?.active === true, null, { timeout: 20000 });
+  await page.waitForTimeout(1000);
+
   // leave
   if (phone) await page.locator('.walk-exit').click();
   else await page.keyboard.press('Escape');
@@ -149,6 +191,7 @@ async function run(profile) {
   ok(Math.abs(s.fov - fov0) < 0.01, `${profile}: the lens is back (${s.fov})`);
   ok(up > 60, `${profile}: the camera is ${up.toFixed(0)} m up again`);
   ok(!/walk/.test(s.hash), `${profile}: the link no longer says walk (${s.hash || 'empty'})`);
+  ok(s.figure === false, `${profile}: the figure is gone`);
   ok(s.near >= 0.5, `${profile}: the orbit near plane is back`);
   if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-after.png` });
   ok(errors.length === 0, `${profile}: no page errors${errors.length ? ': ' + errors[0] : ''}`);

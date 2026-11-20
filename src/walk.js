@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { t } from './i18n.js';
 import { METRES_PER_UNIT } from './geo.js';
 import { createCollider } from './walk-collide.js';
+import { createFigure } from './walk-figure.js';
 
 const M = 1 / METRES_PER_UNIT; // world units per metre
 export const EYE = 1.7 * M; // eye height above the ground
@@ -26,14 +27,43 @@ const FOV = 62; // the orbit camera's 38 degrees is a telephoto at eye level
 const LOOK = 0.0042; // radians per pixel
 const PITCH = 1.25; // look up and down limit, radians
 const AHEAD = 12 * M; // the orbit target rides this far ahead
+const BACK = 4.6 * M; // third person: the camera's distance from the head
+const HEAD = 1.62 * M; // third person: the point the camera turns about
+const TILT = 0.3; // third person: the camera sits this far above level, radians
+const CLOSE = 1.6 * M; // third person: with less room than this the camera looks from the eyes
+const PLACE_M = 25; // a place this near offers its card
+
+// distance from a point to an outline ([{x, z}]), world units
+function outlineDistance(pts, x, z) {
+  let best = Infinity;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const ax = pts[j].x, az = pts[j].z;
+    const dx = pts[i].x - ax, dz = pts[i].z - az;
+    const len = dx * dx + dz * dz;
+    const k = len > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / len)) : 0;
+    best = Math.min(best, Math.hypot(x - ax - dx * k, z - az - dz * k));
+  }
+  return best;
+}
 
 const KEYS = {
   KeyW: ['z', 1], ArrowUp: ['z', 1], KeyS: ['z', -1], ArrowDown: ['z', -1],
   KeyD: ['x', 1], ArrowRight: ['x', 1], KeyA: ['x', -1], ArrowLeft: ['x', -1],
 };
 
-export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = false, bounds = null, onEnter, onExit }) {
+// places: () => [{ i, name, x, z, outline }] (world units), read at start;
+// onPlace(i): the visitor asked for that place's card (the mode has ended)
+export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
   const collider = createCollider(polys);
+  const figure = createFigure();
+  figure.root.visible = false;
+  scene.add(figure.root);
+  let view = 'third'; // 'third' | 'first'
+  let back = BACK; // the camera's current distance, eased
+  let faceYaw = 0; // where the figure faces
+  let spots = [];
+  let near = null; // the place within reach, or null
+  let nearClock = 0;
   const pos = { x: 0, z: 0 };
   let yaw = 0; // 0 looks north (-z), positive turns east
   let pitch = 0;
@@ -52,11 +82,28 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
   root.hidden = true;
   root.innerHTML = `
     <button type="button" class="walk-exit">${t('Наверх')}</button>
-    <p class="walk-hint walk-hint-keys">${t('WASD — идти, мышь — смотреть, Shift — бегом')}</p>
+    <button type="button" class="walk-view" aria-pressed="false">${t('От первого лица')}</button>
+    <button type="button" class="walk-place" hidden></button>
+    <p class="walk-hint walk-hint-keys">${t('WASD — идти, мышь — смотреть, Shift — бегом, V — вид')}</p>
     <p class="walk-hint walk-hint-touch">${t('Стик — идти, проведите по экрану — смотреть')}</p>
     <div class="walk-stick" role="group" aria-label="${t('Направление шага')}"><span class="walk-stick-knob"></span></div>`;
   document.body.appendChild(root);
   root.querySelector('.walk-exit').addEventListener('click', () => stop());
+  const viewBtn = root.querySelector('.walk-view');
+  function setView(next) {
+    view = next === 'first' ? 'first' : 'third';
+    viewBtn.setAttribute('aria-pressed', String(view === 'first'));
+    figure.root.visible = active && view === 'third';
+    back = BODY; // the camera eases out from the head
+  }
+  viewBtn.addEventListener('click', () => setView(view === 'first' ? 'third' : 'first'));
+  const placeBtn = root.querySelector('.walk-place');
+  placeBtn.addEventListener('click', () => {
+    const spot = near;
+    if (!spot) return;
+    stop();
+    onPlace?.(spot.i);
+  });
   const stickEl = root.querySelector('.walk-stick');
   const knob = root.querySelector('.walk-stick-knob');
   let stickPointer = null;
@@ -130,6 +177,10 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
       return true;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return false;
+    if (e.code === 'KeyV' && !e.repeat) {
+      setView(view === 'first' ? 'third' : 'first');
+      return true;
+    }
     if (KEYS[e.code] || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       held.add(e.code);
       e.preventDefault();
@@ -166,6 +217,12 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
     camera.updateProjectionMatrix();
     active = true;
     root.hidden = false;
+    faceYaw = yaw;
+    spots = places();
+    near = null;
+    nearClock = 0;
+    placeBtn.hidden = true;
+    setView(view);
     onEnter?.();
     place(0);
     return true;
@@ -175,6 +232,7 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
     if (!active) return;
     active = false;
     root.hidden = true;
+    figure.root.visible = false;
     held.clear();
     releaseStick();
     lookPointer = null;
@@ -196,10 +254,44 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
     // steps and kerbs ease in; a first frame snaps
     eyeY = dt > 0 ? eyeY + (ground - eyeY) * Math.min(1, dt * 12) : ground;
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
-    const c = Math.cos(pitch);
-    camera.position.set(pos.x, eyeY, pos.z);
-    _look.set(pos.x + fx * c, eyeY + Math.sin(pitch), pos.z + fz * c);
     camera.up.set(0, 1, 0);
+    const feet = eyeY - EYE;
+    figure.root.position.set(pos.x, feet, pos.z);
+    figure.root.rotation.y = -faceYaw;
+    if (view === 'first') {
+      const c = Math.cos(pitch);
+      camera.position.set(pos.x, eyeY, pos.z);
+      _look.set(pos.x + fx * c, eyeY + Math.sin(pitch), pos.z + fz * c);
+    } else {
+      // the camera turns about the head: behind the walker, a little above
+      // level; it comes closer when a house stands in the way
+      const e = THREE.MathUtils.clamp(TILT - pitch, 0.02, 1.3);
+      const ce = Math.cos(e), se = Math.sin(e);
+      let reach = BACK;
+      for (let k = 1; k <= 12; k++) {
+        const d = (BACK * k) / 12;
+        if (collider.blocked(pos.x - fx * ce * d, pos.z - fz * ce * d, BODY * 0.6)) {
+          reach = Math.max(BODY, (BACK * (k - 1)) / 12);
+          break;
+        }
+      }
+      back = reach < back || dt <= 0 ? Math.min(back, reach) : back + (reach - back) * Math.min(1, dt * 4);
+      if (dt <= 0) back = reach;
+      const headY = feet + HEAD;
+      // a wall right behind: no room for the camera, so it looks from the
+      // eyes and the figure hides until there is room again
+      const tight = back < CLOSE;
+      figure.root.visible = !tight;
+      if (tight) {
+        const c = Math.cos(pitch);
+        camera.position.set(pos.x, eyeY, pos.z);
+        _look.set(pos.x + fx * c, eyeY + Math.sin(pitch), pos.z + fz * c);
+      } else {
+        const cx = pos.x - fx * ce * back, cz = pos.z - fz * ce * back;
+        camera.position.set(cx, Math.max(headY + se * back, heightAt(cx, cz) + 0.4), cz);
+        _look.set(pos.x, headY + 0.15 * M, pos.z);
+      }
+    }
     camera.lookAt(_look);
     const ax = pos.x + fx * AHEAD, az = pos.z + fz * AHEAD;
     rig.controls.target.set(ax, heightAt(ax, az), az);
@@ -224,6 +316,7 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
     const k = reducedMotion ? 1 : 1 - Math.exp(-dt * 10);
     vel.x += (wx - vel.x) * k;
     vel.z += (wz - vel.z) * k;
+    let stepM = 0;
     if (Math.abs(vel.x) + Math.abs(vel.z) > 1e-5) {
       let dx = vel.x * dt, dz = vel.z * dt;
       const next = collider.move(pos.x, pos.z, dx, dz, BODY);
@@ -231,10 +324,34 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
         next.x = THREE.MathUtils.clamp(next.x, bounds.x0, bounds.x1);
         next.z = THREE.MathUtils.clamp(next.z, Math.min(bounds.zN, bounds.zS), Math.max(bounds.zN, bounds.zS));
       }
-      walked += Math.hypot(next.x - pos.x, next.z - pos.z) * METRES_PER_UNIT;
+      stepM = Math.hypot(next.x - pos.x, next.z - pos.z) * METRES_PER_UNIT;
+      walked += stepM;
       if (next.hit) { vel.x *= 0.5; vel.z *= 0.5; }
       pos.x = next.x;
       pos.z = next.z;
+    }
+    // the figure turns to where it walks; standing, it keeps its last heading
+    if (n > 0.1 && stepM > 1e-4) {
+      const want = Math.atan2(vel.x, -vel.z);
+      const d = Math.atan2(Math.sin(want - faceYaw), Math.cos(want - faceYaw));
+      faceYaw += d * Math.min(1, dt * 10);
+    }
+    figure.step(stepM, dt, speed === RUN);
+    // a place within reach offers its card (checked three times a second)
+    nearClock -= dt;
+    if (nearClock <= 0) {
+      nearClock = 0.33;
+      let best = null, bestD = PLACE_M * M;
+      for (const s of spots) {
+        if (Math.abs(s.x - pos.x) > 120 || Math.abs(s.z - pos.z) > 120) continue; // 480 m
+        const d = s.outline ? (collider.inside(pos.x, pos.z) ? 0 : outlineDistance(s.outline, pos.x, pos.z)) : Math.hypot(s.x - pos.x, s.z - pos.z);
+        if (d < bestD) { bestD = d; best = s; }
+      }
+      if (best !== near) {
+        near = best;
+        placeBtn.hidden = !near;
+        if (near) placeBtn.textContent = `${near.name} ›`;
+      }
     }
     place(dt);
     return true;
@@ -252,9 +369,22 @@ export function createWalk({ camera, rig, heightAt, dom, polys, reducedMotion = 
     get state() {
       return {
         x: +pos.x.toFixed(3), z: +pos.z.toFixed(3), yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3),
-        eyeM: +((camera.position.y - heightAt(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
+        eyeM: +((eyeY - heightAt(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
         walkedM: +walked.toFixed(1), inside: collider.inside(pos.x, pos.z), buildings: collider.count,
+        view, near: near ? near.i : null,
+        camM: +(Math.hypot(camera.position.x - pos.x, camera.position.z - pos.z) * METRES_PER_UNIT).toFixed(2),
+        camInside: collider.inside(camera.position.x, camera.position.z),
+        figure: figure.root.visible,
       };
+    },
+    setView,
+    // tests: put the walker at a point (world units); false when it is blocked
+    teleport(x, z) {
+      if (collider.blocked(x, z, BODY)) return false;
+      pos.x = x;
+      pos.z = z;
+      nearClock = 0;
+      return true;
     },
     // tests: hold a direction without a keyboard ({x, z} in -1..1), turn
     setInput(x = 0, z = 0) {
