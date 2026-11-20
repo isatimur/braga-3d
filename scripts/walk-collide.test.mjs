@@ -1,0 +1,62 @@
+// Walk mode collision (src/walk-collide.js).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createCollider } from '../src/walk-collide.js';
+
+// two houses with a 4-unit street between them, and one far house
+const A = [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }];
+const B = [[14, 0], [24, 0], [24, 10], [14, 10]]; // array points work too
+const FAR = [{ x: 100, z: 100 }, { x: 103, z: 100 }, { x: 103, z: 103 }, { x: 100, z: 103 }];
+const c = createCollider([A, B, FAR, null, [{ x: 1, z: 1 }]], 8);
+
+test('counts only real outlines', () => {
+  assert.equal(c.count, 3);
+});
+
+test('inside: houses yes, street no', () => {
+  assert.equal(c.inside(5, 5), true);
+  assert.equal(c.inside(20, 5), true);
+  assert.equal(c.inside(12, 5), false);
+  assert.equal(c.inside(101, 101), true);
+  assert.equal(c.inside(-50, -50), false);
+});
+
+test('blocked uses the body radius', () => {
+  assert.equal(c.blocked(10.05, 5, 0), false);
+  assert.equal(c.blocked(10.05, 5, 0.1), true);
+  assert.equal(c.blocked(12, 5, 0.1), false);
+});
+
+test('a walk down the street is free', () => {
+  const r = c.move(12, -5, 0, 20, 0.1);
+  assert.equal(r.hit, false);
+  assert.ok(Math.abs(r.x - 12) < 1e-9 && Math.abs(r.z - 15) < 1e-9);
+});
+
+test('a walk into a wall stops at the wall', () => {
+  const r = c.move(12, 5, -5, 0, 0.1);
+  assert.equal(r.hit, true);
+  assert.equal(c.blocked(r.x, r.z, 0.1), false);
+  assert.ok(r.x > 10 && r.x < 10.3, `x ${r.x}`);
+});
+
+test('a diagonal step slides along the wall', () => {
+  const r = c.move(10.2, 2, -1, 3, 0.1);
+  assert.equal(r.hit, true);
+  assert.equal(c.blocked(r.x, r.z, 0.1), false);
+  assert.ok(r.z > 4.5, `z ${r.z}`); // it kept going along the street
+  assert.ok(r.x > 10, `x ${r.x}`);
+});
+
+test('a long step does not jump through a house', () => {
+  const r = c.move(-2, 5, 40, 0, 0.1);
+  assert.ok(r.x < 0, `x ${r.x}`);
+});
+
+test('freeNear leaves a house by the short way', () => {
+  const p = c.freeNear(9, 5, 0.1);
+  assert.ok(p);
+  assert.equal(c.blocked(p.x, p.z, 0.1), false);
+  assert.ok(Math.hypot(p.x - 9, p.z - 5) < 2, JSON.stringify(p));
+  assert.deepEqual(c.freeNear(12, 5, 0.1), { x: 12, z: 5 });
+});

@@ -9,6 +9,15 @@ export const messages = {
   // {n}: the number of places with its word ("30 мест", "30 locais", "30 places")
   'Фильм о Браге: {n} с утра до ночи': ['Um filme sobre Braga: {n}, da manhã à noite', 'A film of Braga: {n} from morning to night'],
   '2000 лет истории Браги': ['2000 anos de história de Braga', '2,000 years of Braga’s history'],
+  // Walk mode (walk.js)
+  'Пешком': ['A pé', 'Walk'],
+  'Прогулка по улицам на уровне глаз': ['Passeio pelas ruas, à altura dos olhos', 'Walk the streets at eye level'],
+  'Наверх': ['Subir', 'Go up'],
+  'WASD — идти, мышь — смотреть, Shift — бегом': ['WASD para andar, rato para olhar, Shift para correr', 'WASD to walk, drag to look, Shift to run'],
+  'Стик — идти, проведите по экрану — смотреть': ['Manípulo para andar, deslize para olhar', 'Stick to walk, drag to look'],
+  'Направление шага': ['Direção do passo', 'Walking direction'],
+  'Здесь нет улицы рядом. Выберите другое место.': ['Não há rua aqui perto. Escolha outro local.', 'No street near this point. Choose another place.'],
+  'Не удалось загрузить прогулку': ['Não foi possível carregar o passeio', 'The walk could not load'],
   // Azulejo game mode (game.js)
   'Игра': ['Jogo', 'Game'],
   'Азулежу: охота за осколками по городу': ['Azulejo: caça aos fragmentos pela cidade', 'Azulejo: hunt the shards across the city'],
