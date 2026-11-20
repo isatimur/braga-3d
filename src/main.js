@@ -688,6 +688,8 @@ async function start() {
   let storyLoad = null;
   let game = null; // the Azulejo discovery game (game.js)
   let gameLoad = null;
+  let walk = null; // walk mode: the street at eye height (walk.js)
+  let walkLoad = null;
   // (quest, questLoad, hasQuest: at the top of start())
   // startMode() numbers each request; a mode whose chunk arrives after a
   // newer request (or after the visitor left, cancelModeLoad) does not start
@@ -764,7 +766,7 @@ async function start() {
     },
     onRoute: (id) => openRoute(id),
     toast: (msg, ms) => ui.toast(msg, ms),
-    isBlocked: () => !!(cinema?.active || story?.active || intro?.active || game?.active || quest?.active),
+    isBlocked: () => !!(cinema?.active || story?.active || intro?.active || game?.active || quest?.active || walk?.active),
   });
   debug.search = search;
   const discovery = createDiscovery({
@@ -793,7 +795,8 @@ async function start() {
   function currentHash() {
     const parts = [];
     // the history routes keep #quest=<id> (or #quest) while they run (a reload resumes)
-    if (quest?.active) parts.push(quest.hash);
+    if (walk?.active) parts.push('walk');
+    else if (quest?.active) parts.push(quest.hash);
     else if (route) parts.push(`route=${route.route.id}`);
     else if (active >= 0) parts.push(`place=${landmarks[active].id}`);
     // the route shows daylight but the link keeps the visitor's own light
@@ -822,6 +825,8 @@ async function start() {
     if (q.has('cinema')) return void (cinema.active || startMode('cinema'));
     if (q.has('story')) return void (story?.active || startMode('story'));
     if (q.has('game')) return void (game?.active || startMode('game'));
+    if (q.has('walk')) return void (walk?.active || startMode('walk'));
+    walk?.stop(); // the link no longer says #walk (Back)
     if (q.has('quest') && hasQuest) return void (quest?.active ? quest.open(q.get('quest')) : startMode('quest', q.get('quest')));
     cancelModeLoad();
     const r = q.get('route');
@@ -1179,6 +1184,48 @@ async function start() {
   gameBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v9h-11z" /><path d="M5.2 6.3h1.4M5.2 9.4h3.6M11.6 5.4v3.4" /></svg><span class="mode-label">${t('Игра')}</span>`;
   mountTool(gameBtn, 'modes', { closes: true });
   gameBtn.addEventListener('click', () => (game?.active ? game.stop() : startMode('game')));
+  // Walk mode: the street at eye height (walk.js). The walker stops at the
+  // outlines of the buildings and of the landmark models.
+  async function ensureWalk() {
+    if (walk) return walk;
+    if (!walkLoad) {
+      walkLoad = import('./walk.js').then(({ createWalk }) => {
+        walk = createWalk({
+          camera,
+          rig,
+          heightAt,
+          dom: canvas,
+          scene,
+          polys: [...city.footprints, ...outlines.filter(Boolean)],
+          places: () => marks.items.map((it, i) => ({ i, name: it.labelEl.textContent, x: it.center.x, z: it.center.z, outline: outlines[i] })),
+          street: () => life?.street?.built ?? null,
+          // the card belongs to the map view: the walk ends, then the place opens
+          onPlace: (i) => select(i),
+          reducedMotion,
+          bounds: terrain.bounds,
+          onEnter: () => document.body.classList.add('is-walk'),
+          onExit: () => {
+            document.body.classList.remove('is-walk');
+            modeCtx.onExit();
+          },
+        });
+        debug.walk = walk;
+        return walk;
+      }).catch((error) => {
+        walkLoad = null;
+        throw error;
+      });
+    }
+    return walkLoad;
+  }
+  const walkBtn = document.createElement('button');
+  walkBtn.type = 'button';
+  walkBtn.className = 'tool mode-btn';
+  walkBtn.id = 'walk-toggle';
+  walkBtn.title = t('Прогулка по улицам на уровне глаз');
+  walkBtn.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8.6" cy="2.9" r="1.4" /><path d="M8.2 5.2 6.4 9l1.9 1.6.6 3.4M6.4 9l-1.5 4.9M8.2 5.2l2.4 1.9 1.6.3M7.6 6.3 5.4 7.2l-.6 1.9" /></svg><span class="mode-label">${t('Пешком')}</span>`;
+  mountTool(walkBtn, 'modes', { closes: true });
+  walkBtn.addEventListener('click', () => (walk?.active ? walk.stop() : startMode('walk')));
   // History routes: a few landmarks each, one question per stop (quest.js, data/quest.json)
   const questCtx = () => ({
     ...modeCtx,
@@ -1242,6 +1289,7 @@ async function start() {
     search.close();
     flyKeys.reset();
     if (name !== 'quest') quest?.stop();
+    if (name !== 'walk') walk?.stop();
     if (name === 'quest') {
       cinema.stop();
       story?.stop();
@@ -1259,6 +1307,23 @@ async function start() {
         if (request === modeRequest) {
           modeLoading = null;
           ui.toast(t('Не удалось загрузить маршрут'), 4000);
+          setHash(currentHash());
+        }
+      });
+      return;
+    } else if (name === 'walk') {
+      cinema.stop();
+      story?.stop();
+      game?.stop();
+      ensureWalk().then((instance) => {
+        if (request !== modeRequest) return;
+        modeLoading = null;
+        if (!instance.start()) ui.toast(t('Здесь нет улицы рядом. Выберите другое место.'), 4000);
+        setHash(currentHash());
+      }).catch(() => {
+        if (request === modeRequest) {
+          modeLoading = null;
+          ui.toast(t('Не удалось загрузить прогулку'), 4000);
           setHash(currentHash());
         }
       });
@@ -1319,7 +1384,7 @@ async function start() {
     rig,
     debug,
     // the intro, the route fly-along and the guided modes own the camera
-    isBlocked: () => !!(intro?.active || tour || cinema?.active || story?.active || quest?.active),
+    isBlocked: () => !!(intro?.active || tour || cinema?.active || story?.active || quest?.active || walk?.active),
     placeOpen: () => active >= 0,
   });
   window.addEventListener('keydown', (e) => {
@@ -1331,6 +1396,7 @@ async function start() {
     if (e.key !== 'Escape' && (ui.tools.open || ui.atmo.isOpen || t.closest?.('.search, .share-pop'))) return;
     // cinema and story own every key while they play
     if (game?.active && game.onKey(e)) return;
+    if (walk?.active) return void walk.onKey(e); // walk owns the keys; Esc goes up
     if (cinema?.active) return void cinema.onKey(e);
     if (story?.active) return void story.onKey(e);
     // the history route: Esc leaves; Tab, Enter and Space stay with its buttons
@@ -1365,7 +1431,7 @@ async function start() {
   });
   canvas.addEventListener('pointerup', (e) => {
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
-    if (game?.active) return; // the game owns the map
+    if (game?.active || walk?.active) return; // the game and the walk own the map
     toNdc(e);
     raycaster.setFromCamera(ndc, camera);
     // the route owns it too: only a find-on-map task's candidates pick
@@ -1376,7 +1442,7 @@ async function start() {
   let hoverQueued = false;
   canvas.addEventListener('pointermove', (e) => {
     if (quest?.active && !quest.pickable.size) return void setHover(-1);
-    if (hoverQueued || e.buttons || game?.active) return;
+    if (hoverQueued || e.buttons || game?.active || walk?.active) return;
     hoverQueued = true;
     requestAnimationFrame(() => {
       hoverQueued = false;
@@ -1719,14 +1785,16 @@ async function start() {
     clock += dt;
     renderer.info.reset();
     // the intro owns the camera while it plays; then the rig does
-    if (!intro?.update(rawDt)) rig.update(dt, now, rawDt);
+    // (walk mode owns it while it is on, and stands lower than the orbit floor)
+    if (!intro?.update(rawDt) && !walk?.update(dt)) rig.update(dt, now, rawDt);
     // never below the ground, whoever moved the camera (parallax included)
-    const floorY = heightAt(camera.position.x, camera.position.z) + 2;
+    const floorY = heightAt(camera.position.x, camera.position.z) + (walk?.active ? 0.38 : 2);
     if (camera.position.y < floorY) camera.position.y = floorY;
     const camDist = intro?.active ? camera.position.distanceTo(home.target) : camera.position.distanceTo(rig.controls.target);
     // near plane follows the orbit distance: 0.5 units (2 m) in a close-up,
     // up to 6 units over the whole city, for depth precision far away
-    const near = THREE.MathUtils.clamp(camDist * 0.004, 0.5, 6);
+    // walk mode: 0.3 m, so a wall beside the walker is not cut open
+    const near = walk?.active ? 0.075 : THREE.MathUtils.clamp(camDist * 0.004, 0.5, 6);
     if (Math.abs(near - camera.near) > camera.near * 0.1) {
       camera.near = near;
       camera.updateProjectionMatrix();

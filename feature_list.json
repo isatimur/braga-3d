@@ -408,6 +408,23 @@
         "phone-low (360x740, CPU 6x, Fast 3G, class S), two runs each: main 2.43 MB / 38 requests, ready 25.4-28.1 s, quiet 30.7-33.6 s; Light 1.96 MB / 24 requests, ready 24.8-25.7 s, quiet 25.3-26.2 s; Full 2.43 MB / 36 requests, ready 25.3-25.6 s, quiet 30.4-32.9 s"
       ],
       "notes": "Ready does not move: the optional layers load after it. Light saves 470 KB and ends the downloads 5-7 s sooner on that phone, but drops the MS buildings (whole blocks in the eastern districts) and the calçada of the central squares; the phone default is an open owner decision. No photo-texture layer in Braga, so Standard equals Full and the panel shows two presets. Not checked: a physical phone, GPU time on a weak phone, Safari, Firefox. Not deployed."
+    },
+    {
+      "id": "braga-022",
+      "priority": 22,
+      "area": "modes",
+      "title": "Walk mode: the street at eye height",
+      "user_visible_behavior": "A «Walk» button in the modes menu, or a link ending in #walk, puts the visitor on the nearest pavement as a small figure seen from behind. WASD or the on-screen stick walks, a drag looks around, Shift runs, V or «First person» switches the view. The walker stops at buildings, landmark models and café seats. Within 25 m of a place a button with its name ends the walk and opens the place card. Esc or «Go up» returns to the map view above the same spot.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (walk-collide.test.mjs: inside, body radius, slide, long step, free point)",
+        "npm run build && npx vite preview --port 5471, then PLAYWRIGHT_CORE=... node scripts/check-walk.mjs (desktop and Pixel 7 profile)",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-20: check-walk all passed on both profiles; 78/78 unit tests; verify OK; screenshots in docs/walk-spike/ (git-ignored)"
+      ],
+      "notes": "An early version. The walker passes through the moving crowd, trees, lamps and cars. No collision with the river or the outer-ring buildings. The walker's ground is the mean of the walk-lane points within 8 m, so with the street layer off it stands on the terrain, about 0.5 m low. No draw distance of its own. The crowd is still box figures. Place names hide while walking. Not checked: a physical phone, Safari, Firefox. Not deployed."
     }
   ]
 }
