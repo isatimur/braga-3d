@@ -1198,6 +1198,7 @@ async function start() {
           scene,
           polys: [...city.footprints, ...outlines.filter(Boolean)],
           places: () => marks.items.map((it, i) => ({ i, name: it.labelEl.textContent, x: it.center.x, z: it.center.z, outline: outlines[i] })),
+          street: () => life?.street?.built ?? null,
           // the card belongs to the map view: the walk ends, then the place opens
           onPlace: (i) => select(i),
           reducedMotion,

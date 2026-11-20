@@ -53,8 +53,82 @@ const KEYS = {
 
 // places: () => [{ i, name, x, z, outline }] (world units), read at start;
 // onPlace(i): the visitor asked for that place's card (the mode has ended)
-export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
-  const collider = createCollider(polys);
+// street: () => the built street layer ({ lanes, spots }) or null
+export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], street = () => null, reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
+  let collider = createCollider(polys);
+  let seatCount = 0;
+  // The street layer may arrive after this module, or be switched off. At
+  // each start: seated people and their tables become obstacles, and the
+  // walk lanes (where the crowd walks) say where a street is.
+  // The paving sits above the terrain (about 0.6 m in Braga: kerbs and the
+  // graded street). The walk lanes carry that surface height, so the walker
+  // stands on the mean of the lane points around; with none within 8 m, on
+  // the terrain plus the usual lift.
+  const CELL = 2; // world units
+  let laneGrid = null;
+  let laneY = null;
+  let lift = 0;
+  function readLanes() {
+    const lanes = street()?.lanes;
+    if (!lanes?.X?.length || laneY === lanes.Y) return;
+    laneY = lanes.Y;
+    laneGrid = new Map();
+    const lifts = [];
+    for (let k = 0; k < lanes.X.length; k++) {
+      const key = Math.floor(lanes.X[k] / CELL) * 65536 + Math.floor(lanes.Z[k] / CELL);
+      let bucket = laneGrid.get(key);
+      if (!bucket) laneGrid.set(key, (bucket = []));
+      bucket.push(lanes.X[k], lanes.Z[k], lanes.Y[k]);
+      if (k % 9 === 0) lifts.push(lanes.Y[k] - heightAt(lanes.X[k], lanes.Z[k]));
+    }
+    lifts.sort((a, b) => a - b);
+    lift = Math.max(0, lifts[lifts.length >> 1] || 0);
+  }
+  function ground(x, z) {
+    if (!laneGrid) return heightAt(x, z);
+    const ci = Math.floor(x / CELL), cj = Math.floor(z / CELL);
+    let sum = 0, weight = 0;
+    for (let i = ci - 1; i <= ci + 1; i++) {
+      for (let j = cj - 1; j <= cj + 1; j++) {
+        const bucket = laneGrid.get(i * 65536 + j);
+        if (!bucket) continue;
+        for (let k = 0; k < bucket.length; k += 3) {
+          const d2 = (bucket[k] - x) ** 2 + (bucket[k + 1] - z) ** 2;
+          if (d2 > CELL * CELL) continue;
+          const w = 1 / (d2 + 0.02);
+          sum += bucket[k + 2] * w;
+          weight += w;
+        }
+      }
+    }
+    return weight > 0 ? sum / weight : heightAt(x, z) + lift;
+  }
+  function readStreet() {
+    readLanes();
+    const sp = street()?.spots;
+    const n = sp ? sp.x.length : 0;
+    if (n === seatCount) return;
+    seatCount = n;
+    const extra = [];
+    const r = 0.55 * M; // a chair and a share of its table
+    for (let k = 0; k < n; k++) {
+      if (!sp.sit[k]) continue;
+      const x = sp.x[k], z = sp.z[k];
+      extra.push([[x - r, z - r], [x + r, z - r], [x + r, z + r], [x - r, z + r]]);
+    }
+    collider = createCollider([...polys, ...extra]);
+  }
+  // the free walk-lane point nearest to (x, z), within 80 m; null without lanes
+  function laneNear(x, z) {
+    const lanes = street()?.lanes;
+    if (!lanes?.X?.length) return null;
+    let best = -1, bestD = (80 * M) ** 2;
+    for (let k = 0; k < lanes.X.length; k++) {
+      const d = (lanes.X[k] - x) ** 2 + (lanes.Z[k] - z) ** 2;
+      if (d < bestD && !collider.blocked(lanes.X[k], lanes.Z[k], BODY)) { bestD = d; best = k; }
+    }
+    return best < 0 ? null : { x: lanes.X[best], z: lanes.Z[best] };
+  }
   const figure = createFigure();
   figure.root.visible = false;
   scene.add(figure.root);
@@ -194,7 +268,9 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   function start(at = null, heading = null) {
     if (active) return true;
     const from = at || rig.controls.target;
-    const free = collider.freeNear(from.x, from.z, BODY);
+    readStreet();
+    // a pavement or a pedestrian street first; any free ground otherwise
+    const free = laneNear(from.x, from.z) || collider.freeNear(from.x, from.z, BODY);
     if (!free) return false; // no street within reach
     pos.x = free.x;
     pos.z = free.z;
@@ -209,7 +285,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     walked = 0;
     held.clear();
     releaseStick();
-    eyeY = heightAt(pos.x, pos.z) + EYE;
+    eyeY = ground(pos.x, pos.z) + EYE;
     rig.cancelFlight?.();
     rig.controls.enabled = false;
     fov0 = camera.fov;
@@ -241,18 +317,18 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     rig.controls.enabled = true;
     // back up: 160 m behind and 110 m above the walker, looking at the spot
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
-    const ground = heightAt(pos.x, pos.z);
-    const target = new THREE.Vector3(pos.x, ground, pos.z);
-    const up = new THREE.Vector3(pos.x - fx * 160 * M, ground + 110 * M, pos.z - fz * 160 * M);
+    const base = heightAt(pos.x, pos.z);
+    const target = new THREE.Vector3(pos.x, base, pos.z);
+    const up = new THREE.Vector3(pos.x - fx * 160 * M, base + 110 * M, pos.z - fz * 160 * M);
     rig.controls.target.copy(target);
     rig.flyTo(up, target, reducedMotion ? 0.01 : 1.4);
     onExit?.();
   }
 
   function place(dt) {
-    const ground = heightAt(pos.x, pos.z) + EYE;
+    const want = ground(pos.x, pos.z) + EYE;
     // steps and kerbs ease in; a first frame snaps
-    eyeY = dt > 0 ? eyeY + (ground - eyeY) * Math.min(1, dt * 12) : ground;
+    eyeY = dt > 0 ? eyeY + (want - eyeY) * Math.min(1, dt * 12) : want;
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
     camera.up.set(0, 1, 0);
     const feet = eyeY - EYE;
@@ -288,8 +364,8 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         _look.set(pos.x + fx * c, eyeY + Math.sin(pitch), pos.z + fz * c);
       } else {
         const cx = pos.x - fx * ce * back, cz = pos.z - fz * ce * back;
-        camera.position.set(cx, Math.max(headY + se * back, heightAt(cx, cz) + 0.4), cz);
-        _look.set(pos.x, headY + 0.15 * M, pos.z);
+        camera.position.set(cx, Math.max(headY + se * back, ground(cx, cz) + 0.3), cz);
+        _look.set(pos.x, feet + 1.3 * M, pos.z); // the chest: the whole figure stays in view
       }
     }
     camera.lookAt(_look);
@@ -369,9 +445,11 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     get state() {
       return {
         x: +pos.x.toFixed(3), z: +pos.z.toFixed(3), yaw: +yaw.toFixed(3), pitch: +pitch.toFixed(3),
-        eyeM: +((eyeY - heightAt(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
+        eyeM: +((eyeY - ground(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
+        liftM: +((ground(pos.x, pos.z) - heightAt(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
         walkedM: +walked.toFixed(1), inside: collider.inside(pos.x, pos.z), buildings: collider.count,
-        view, near: near ? near.i : null,
+        view, near: near ? near.i : null, seats: seatCount, lanes: street()?.lanes?.X?.length || 0,
+        blocked: collider.blocked(pos.x, pos.z, BODY * 0.9),
         camM: +(Math.hypot(camera.position.x - pos.x, camera.position.z - pos.z) * METRES_PER_UNIT).toFixed(2),
         camInside: collider.inside(camera.position.x, camera.position.z),
         figure: figure.root.visible,

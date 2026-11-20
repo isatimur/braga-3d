@@ -1517,5 +1517,6 @@ function build(ctx, group, doc, pois, stats) {
     }
     return { walkers: w.length / 2, onCar, inBuilding, spots: spots.x.length, spotsBad, laneSamples: NSm, samplesBad, bad };
   }
-  return { update, check, people, signs, layers, lanes, terraces, glow, calcadaMesh, marks, areas };
+  // spots: where people stay (walk.js keeps the walker out of the seated ones)
+  return { update, check, people, signs, layers, lanes, terraces, spots, glow, calcadaMesh, marks, areas };
 }
