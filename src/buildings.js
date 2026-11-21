@@ -17,6 +17,7 @@ const MAX_TRIS = 1_500_000;
 const SMALL_M2 = 30; // dropped first if over budget ...
 const FAR_M = 2500; // ... when farther than this from the centre
 const SKIRT = 0.4; // world units the walls reach below the lowest ground point
+const STREET_UP = 0.12; // world units: the streets' lift over the terrain
 const FLAT = { shape: 'flat', planes: [], parapet: false, clutter: 0 }; // far LOD: a plain box
 // core tiles farther than this from the camera draw flat caps for their
 // pitched roofs (a ridge is a pixel or two out there)
@@ -102,9 +103,16 @@ export const lastPlan = { plan: null, style: 0 };
 export function extrudeBuilding(T, pts, h, k, areaM2, seedIndex, heightAt, roofOnly = false, attrs = null) {
   const n = pts.length;
   const gs = pts.map((p) => heightAt(p.x, p.z));
-  const gmin = Math.min(...gs);
+  // the ground floor stands at street level: the streets lie about 0.5 m
+  // over the terrain (RIBBON_LIFT in src/roads.js), and so does the town
+  // ground between them; a door at terrain level would be half buried
+  // On a slope the floor takes the mean ground, at most 1.6 m over the low
+  // side: the low side shows a plinth, the high side sinks half as deep as
+  // it did with the floor at the lowest corner.
+  const low = Math.min(...gs);
+  const gmin = Math.min(gs.reduce((a, b) => a + b, 0) / n, low + 0.4) + STREET_UP;
+  const base = low - SKIRT;
   const gmax = Math.max(...gs);
-  const base = gmin - SKIRT;
   const top = Math.max(gmin + h * S, gmax + 0.5);
   // metres, for the window grid
   const hM = (top - gmin) / S;

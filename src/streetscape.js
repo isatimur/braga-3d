@@ -31,7 +31,7 @@ import { S } from './geo.js';
 import { setRingBounds } from './bounds.js';
 import { CITY, dataPath } from './city.js';
 import { buildNetwork } from './road-network.js';
-import { RIBBON_LIFT, SIDEWALK_R, WALKED, sidewalkM, lampSites, lampGlow, LAMP_HEIGHT_M } from './roads.js';
+import { RIBBON_LIFT, asphaltGrain, SIDEWALK_R, WALKED, sidewalkM, lampSites, lampGlow, LAMP_HEIGHT_M } from './roads.js';
 import { loadPois, createPoiSigns, isOpenAtHour, guessOpen } from './pois.js';
 import { createPeople, pedestrianDemand } from './people.js';
 import { LEAF_GLSL } from './nature.js';
@@ -1029,7 +1029,7 @@ function build(ctx, group, doc, pois, stats) {
         g.setIndex(new THREE.Uint32BufferAttribute(P.idx, 1));
         g.computeVertexNormals();
         g.computeBoundingSphere();
-        plateMesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
+        plateMesh = new THREE.Mesh(g, asphaltGrain(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 })));
         plateMesh.name = 'street-plate';
         plateMesh.receiveShadow = true;
         group.add(plateMesh);
