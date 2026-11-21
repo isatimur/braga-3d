@@ -39,6 +39,7 @@ import { LEAF_GLSL } from './nature.js';
 // ------------------------------------------------------------ calçada
 // pattern ids (aPat.x): 0 none (the vertex colour)
 export const CALCADA = { waves: 1, net: 2, sidewalk: 3, street: 4 };
+const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const WAVE_NAMES = /Pra[çc]a da Rep[úu]blica|Avenida Central|Largo do Pa[çc]o|Rossio|Pra[çc]a do Munic[íi]pio/i;
 const SQUARE_NAMES = /^(Largo|Pra[çc]a|Praceta|Campo|Terreiro|Rossio|Adro|Avenida|Alameda)\b/i;
 // the pattern of a street or square by its OSM name; kind 'square' for areas
@@ -857,6 +858,185 @@ function build(ctx, group, doc, pois, stats) {
     for (const [i, j, k] of faces) drapeTri(v(i), v(j), v(k), ar.pat);
     ar.tris = (CT.idx.length - tris0) / 3;
   }
+  // Frontage: the ground between a sidewalk (or a pedestrian street) and the
+  // house fronts along it is paved at the walk's level, up to 9 m deep. In a
+  // town there is no bare soil between the kerb and a doorstep, and without
+  // this the walk stood as a ledge over the terrain. Probed every 3 m; a
+  // stretch with no house behind it, or with another carriageway first,
+  // stays open.
+  let frontage = 0;
+  {
+    const MAXF = 9 * S;
+    const STEPF = 0.5 * S;
+    const inArea = (x, z) => areas.some((a) => pip(a.poly, x, z));
+    for (const w of net.ways) {
+      if (w.tunnel || w.bridge || w.n < 2) continue;
+      const m = w.start + (w.n >> 1);
+      if (X[m] * X[m] + Z[m] * Z[m] > SIDEWALK_R * SIDEWALK_R || !nearC(X[m], Z[m])) continue;
+      const ped = w.hw === 'pedestrian';
+      if (!ped && !WALKED.has(w.hw)) continue;
+      const half = (w.widthM / 2) * S;
+      const o2 = ped ? half - 0.1 * S : half + 0.25 * S + sidewalkM(w.hw) * S - 0.05 * S;
+      const top = (ped ? RIBBON_LIFT : RIBBON_LIFT + 0.03) - 0.004;
+      for (let i = w.start; i < w.start + w.n - 1; i++) {
+        const ax = X[i], az = Z[i];
+        let dx = X[i + 1] - ax, dz = Z[i + 1] - az;
+        const L = Math.hypot(dx, dz);
+        if (L < 1e-5) continue;
+        dx /= L;
+        dz /= L;
+        const steps = Math.max(1, Math.ceil(L / (3 * S)));
+        for (const sgn of [1, -1]) {
+          const lx = dz * sgn, lz = -dx * sgn;
+          // from the walk's outer edge to the first house wall; -1: none
+          const reach = (t) => {
+            const bx = ax + dx * t, bz = az + dz * t;
+            for (let d = STEPF; d <= MAXF; d += STEPF) {
+              const x = bx + lx * (o2 + d), z = bz + lz * (o2 + d);
+              if (bIdx.inside(x, z)) return d + 0.4 * S;
+              if (cars.near(x, z, 0)) return -1;
+            }
+            return -1;
+          };
+          const at = (t, o) => {
+            const u = t / L;
+            return { x: ax + dx * t + lx * o, z: az + dz * t + lz * o, y: net.surfaceY(i, sgn * o2) * (1 - u) + net.surfaceY(i + 1, sgn * o2) * u + top };
+          };
+          let ra = reach(0);
+          for (let s = 0; s < steps; s++) {
+            const ta = (L * s) / steps, tb = (L * (s + 1)) / steps;
+            const rb = reach(tb);
+            const r0 = ra;
+            ra = rb;
+            if (r0 < 0 || rb < 0) continue;
+            const mid = at((ta + tb) / 2, o2 + Math.min(r0, rb) / 2);
+            if (onAnyFloor(mid.x, mid.z) || inArea(mid.x, mid.z)) continue;
+            const a0 = at(ta, o2), b0 = at(tb, o2), a1 = at(ta, o2 + r0), b1 = at(tb, o2 + rb);
+            tri(CT, a0, b0, b1, CALCADA.sidewalk);
+            tri(CT, a0, b1, a1, CALCADA.sidewalk);
+            frontage++;
+          }
+        }
+      }
+    }
+  }
+  // Town ground: one sheet that fills the space between the streets, at the
+  // streets' own level. The roads lie about 0.5 m over the terrain (their
+  // grade is smoothed and each is level across), so without it every road
+  // and sidewalk edge is a ledge and a road on a slope is a ramp in the air.
+  // A 5 m grid within 24 m of a street: beside a kerbed street it meets the
+  // top of the sidewalk, under a carriageway it dips below it, away from the
+  // streets it sinks back into the terrain. None on a park, a wood, a field,
+  // water or a landmark's own floor.
+  let plateMesh = null;
+  let plateTris = 0;
+  if (!lite) {
+    const CELLP = 1.25; // 5 m
+    const RP = 6; // 24 m: a street's reach
+    const smp = []; // x, z, lift over (terrain + RIBBON_LIFT), outer edge, kerbed
+    const bkt = new Map();
+    const bkey = (x, z) => Math.floor(x / RP) * 65536 + Math.floor(z / RP);
+    let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
+    for (const w of net.ways) {
+      if (w.tunnel || w.bridge || w.n < 2 || !(w.car || w.hw === 'pedestrian')) continue;
+      const kerbed = WALKED.has(w.hw);
+      const half = (w.widthM / 2) * S;
+      const edge = kerbed ? half + 0.25 * S + sidewalkM(w.hw) * S : half;
+      for (let i = w.start; i < w.start + w.n - 1; i++) {
+        if (net.HID[i] && net.HID[i + 1]) continue;
+        const L = Math.hypot(X[i + 1] - X[i], Z[i + 1] - Z[i]);
+        const n = Math.max(1, Math.ceil(L / 0.75));
+        for (let s = 0; s < n; s++) {
+          const u = (s + 0.5) / n;
+          const x = X[i] + (X[i + 1] - X[i]) * u, z = Z[i] + (Z[i + 1] - Z[i]) * u;
+          if (!nearC(x, z) || x * x + z * z > SIDEWALK_R * SIDEWALK_R) continue;
+          const road = net.surfaceY(i, 0) * (1 - u) + net.surfaceY(i + 1, 0) * u;
+          const k = smp.length / 5;
+          smp.push(x, z, road - heightAt(x, z), edge, kerbed ? 1 : 0);
+          const key = bkey(x, z);
+          let c = bkt.get(key);
+          if (!c) bkt.set(key, (c = []));
+          c.push(k);
+          bx0 = Math.min(bx0, x);
+          bx1 = Math.max(bx1, x);
+          bz0 = Math.min(bz0, z);
+          bz1 = Math.max(bz1, z);
+        }
+      }
+    }
+    if (smp.length) {
+      const gx0 = Math.floor((bx0 - RP) / CELLP), gz0 = Math.floor((bz0 - RP) / CELLP);
+      const nx = Math.ceil((bx1 + RP) / CELLP) - gx0 + 1, nz = Math.ceil((bz1 + RP) / CELLP) - gz0 + 1;
+      const PY = new Float32Array(nx * nz).fill(NaN);
+      const open = ctx.openAt || (() => false);
+      for (let j = 0; j < nz; j++) {
+        for (let i = 0; i < nx; i++) {
+          const x = (gx0 + i) * CELLP, z = (gz0 + j) * CELLP;
+          const cx = Math.floor(x / RP), cz = Math.floor(z / RP);
+          let near = RP, nk = -1, sw = 0, sd = 0;
+          for (let a = -1; a <= 1; a++) {
+            for (let b = -1; b <= 1; b++) {
+              const c = bkt.get((cx + a) * 65536 + cz + b);
+              if (!c) continue;
+              for (const k of c) {
+                const o = k * 5;
+                const d = Math.hypot(smp[o] - x, smp[o + 1] - z);
+                if (d >= RP) continue;
+                if (d < near) { near = d; nk = k; }
+                const wgt = (1 - d / RP) ** 3;
+                sw += wgt;
+                // beside a kerbed street: up to just under the sidewalk's top
+                sd += wgt * (smp[o + 2] + (smp[o + 4] ? 0.03 + 0.018 : 0));
+              }
+            }
+          }
+          if (nk < 0 || open(x, z) || onAnyFloor(x, z)) continue;
+          const g = heightAt(x, z);
+          let y;
+          if (near < smp[nk * 5 + 3] + 0.1) y = g + RIBBON_LIFT + smp[nk * 5 + 2] - 0.075; // under the street itself
+          else {
+            const f = 1 - smooth01((near - 3.5) / (RP - 3.5)); // 1 near a street, 0 at its reach
+            y = g + f * (RIBBON_LIFT - 0.03 + sd / Math.max(sw, 0.02)) - (1 - f) * 0.1;
+          }
+          PY[j * nx + i] = y;
+        }
+      }
+      const P = { pos: [], col: [], idx: [] };
+      const vid = new Int32Array(nx * nz).fill(-1);
+      const vert = (i, j) => {
+        const k = j * nx + i;
+        if (vid[k] >= 0) return vid[k];
+        const x = (gx0 + i) * CELLP, z = (gz0 + j) * CELLP;
+        vid[k] = P.pos.length / 3;
+        P.pos.push(x, PY[k], z);
+        const h = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+        const s = 0.9 + 0.2 * (h - Math.floor(h));
+        P.col.push(0.235 * s, 0.225 * s, 0.205 * s);
+        return vid[k];
+      };
+      for (let j = 0; j < nz - 1; j++) {
+        for (let i = 0; i < nx - 1; i++) {
+          const k = j * nx + i;
+          if (Number.isNaN(PY[k] + PY[k + 1] + PY[k + nx] + PY[k + nx + 1])) continue;
+          const a = vert(i, j), b = vert(i + 1, j), c = vert(i, j + 1), d = vert(i + 1, j + 1);
+          P.idx.push(a, c, b, b, c, d);
+        }
+      }
+      if (P.idx.length) {
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(P.pos, 3));
+        g.setAttribute('color', new THREE.Float32BufferAttribute(P.col, 3));
+        g.setIndex(new THREE.Uint32BufferAttribute(P.idx, 1));
+        g.computeVertexNormals();
+        g.computeBoundingSphere();
+        plateMesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 }));
+        plateMesh.name = 'street-plate';
+        plateMesh.receiveShadow = true;
+        group.add(plateMesh);
+        plateTris = P.idx.length / 3;
+      }
+    }
+  }
   let calcadaMesh = null;
   if (CT.idx.length) {
     const g = new THREE.BufferGeometry();
@@ -1548,6 +1728,9 @@ function build(ctx, group, doc, pois, stats) {
       if (L.mesh.visible) fn += L.shown;
     }
     if (calcadaMesh) calcadaMesh.visible = camDist < (lite ? 450 : 900);
+    // the town ground only matters from near the street; from high up the
+    // terrain below it looks the same
+    if (plateMesh) plateMesh.visible = camDist < 110;
     if (glow) {
       glow.material.uniforms.uNight.value = night;
       glow.visible = night > 0.02 && camDist < (lite ? 450 : 2500);

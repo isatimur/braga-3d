@@ -701,6 +701,33 @@ export function buildNature(opts) {
     const town = soft[i] * Math.min(1, Math.max(0, (dense[i] - 30) / 30));
     mask[i * 4 + 3] = Math.min(255, Math.max(u[i] * 1.6, town));
   }
+  // open ground: wood, green, field or water, with a rim of one pixel
+  // (streetscape.js lays no town paving there)
+  const Lw = layer();
+  fillKinds(Lw.ctx, { water: 255 });
+  Lw.ctx.strokeStyle = '#fff';
+  Lw.ctx.lineCap = 'round';
+  for (const l of data.lines || []) {
+    if (!Array.isArray(l.p) || l.p.length < 2) continue;
+    Lw.ctx.lineWidth = Math.max((l.w || 4) * S, 1.5 / LAND_PX);
+    Lw.ctx.beginPath();
+    l.p.forEach((q, i) => {
+      const p = project(q[0], q[1]);
+      if (i) Lw.ctx.lineTo(p.x, p.z);
+      else Lw.ctx.moveTo(p.x, p.z);
+    });
+    Lw.ctx.stroke();
+  }
+  const wtr = rd(Lw);
+  const open = new Uint8Array(px);
+  for (let i = 0; i < px; i++) open[i] = f[i * 4] > 40 || g[i * 4] > 40 || b[i * 4] > 40 || wtr[i * 4] > 40 ? 255 : 0;
+  const openSoft = blur(open, lw, lh, 1, 1);
+  const openAt = (x, z) => {
+    const c = Math.floor((x - rect.x0) * LAND_PX);
+    const r = Math.floor((z - rect.zN) * LAND_PX);
+    if (c < 0 || r < 0 || c >= lw || r >= lh) return true;
+    return openSoft[r * lw + c] > 20;
+  };
   // canvas rows run north to south, as do world z; no flip needed
   const landcover = new THREE.DataTexture(mask, lw, lh, THREE.RGBAFormat);
   landcover.flipY = false;
@@ -1182,6 +1209,7 @@ export function buildNature(opts) {
     data, // the OSM lines and areas (life.js puts a flock over the Rio Este)
     landcover,
     landRect,
+    openAt,
     uniforms,
     water,
     leafField,

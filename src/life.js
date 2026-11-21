@@ -1194,7 +1194,7 @@ export function createLife(ctx) {
   let street = null;
   function makeStreet() {
     street = safe('streetscape', () =>
-      createStreetscape({ camera, roads, project, heightAt, items, outlines: ctx.outlines, footprints: ctx.footprints, lite, mobile, debug, model, fx, surfaceHeights, roadGroup: ctx.roadGroup }),
+      createStreetscape({ camera, roads, project, heightAt, items, outlines: ctx.outlines, footprints: ctx.footprints, lite, mobile, debug, model, fx, surfaceHeights, roadGroup: ctx.roadGroup, openAt: nature?.openAt }),
     );
     if (street) {
       group.add(street.object);

@@ -154,8 +154,12 @@ function sidewalk(T, net, heightAt, w, sgn, half, sw, swc, kerb, crossing) {
     }
     if (pat) T.pat.push(pat[0], pat[1], pat[2], pat[0], -pat[1], pat[2], pat[0], -pat[1], pat[2], pat[0], pat[1], pat[2]);
     else T.pat.push(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-    // both faces: the order of the corners depends on the side of the way
-    T.idx.push(v, v + 1, v + 2, v, v + 2, v + 3, v, v + 2, v + 1, v, v + 3, v + 2);
+    // wound so the face looks along n (the corner order depends on the side)
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const wx = d[0] - a[0], wy = d[1] - a[1], wz = d[2] - a[2];
+    const f = (uy * wz - uz * wy) * n[0] + (uz * wx - ux * wz) * n[1] + (ux * wy - uy * wx) * n[2];
+    if (f >= 0) T.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
+    else T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
   };
   for (let i = w.start; i < w.start + w.n - 1; i++) {
     if (HID[i] && HID[i + 1]) continue;
@@ -174,12 +178,21 @@ function sidewalk(T, net, heightAt, w, sgn, half, sw, swc, kerb, crossing) {
       const y = net.surfaceY(i, sgn * o) * (1 - u) + net.surfaceY(i + 1, sgn * o) * u;
       return [ax + dx * t + lx * o, y, az + dz * t + lz * o];
     };
+    // which steps stay; a run of them becomes one piece (the surface is
+    // straight between the segment's ends, so nothing is lost)
+    const keep = [];
     for (let s = 0; s < steps; s++) {
-      const ta = s === 0 ? t0 : (L * s) / steps;
-      const tb = s === steps - 1 ? t1 : (L * (s + 1)) / steps;
-      const tm = (ta + tb) / 2;
+      const tm = (L * (s + 0.5)) / steps;
       const mid = at(tm, (o0 + o2) / 2);
-      if (crossing.inside(mid[0], mid[2], w) || crossing.inside(ax + dx * tm + lx * o0, az + dz * tm + lz * o0, w) || crossing.inside(ax + dx * tm + lx * o2, az + dz * tm + lz * o2, w)) continue;
+      keep.push(!(crossing.inside(mid[0], mid[2], w) || crossing.inside(ax + dx * tm + lx * o0, az + dz * tm + lz * o0, w) || crossing.inside(ax + dx * tm + lx * o2, az + dz * tm + lz * o2, w)));
+    }
+    for (let s = 0; s < steps; s++) {
+      if (!keep[s]) continue;
+      let e = s;
+      while (e + 1 < steps && keep[e + 1]) e++;
+      const ta = s === 0 ? t0 : (L * s) / steps;
+      const tb = e === steps - 1 ? t1 : (L * (e + 1)) / steps;
+      s = e;
       const up = (p, d) => [p[0], p[1] + d, p[2]];
       const a0 = at(ta, o0), b0 = at(tb, o0);
       const a1 = at(ta, o1), b1 = at(tb, o1);
