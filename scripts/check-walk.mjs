@@ -78,6 +78,7 @@ async function run(profile) {
   ok(s.inside === false && s.blocked === false, `${profile}: the start point is in the street, clear of houses and café seats`);
   ok(s.liftM > 0.2 && s.liftM < 1.5, `${profile}: the walker stands on the paving, ${s.liftM} m above the terrain`);
   ok(s.lanes > 1000 && s.seats > 10, `${profile}: the street layer gave ${s.lanes} lane points and ${s.seats} staying spots`);
+  ok(s.solids > 50, `${profile}: ${s.solids} lamps, benches, tables and trees block the walker`);
   ok(s.orbit === false, `${profile}: the orbit controls are off`);
   ok(s.near < 0.2, `${profile}: near plane ${(s.near * 4).toFixed(2)} m`);
   ok(s.buildings > 1000, `${profile}: ${s.buildings} outlines in the collider`);

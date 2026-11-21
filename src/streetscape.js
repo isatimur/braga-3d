@@ -1561,5 +1561,7 @@ function build(ctx, group, doc, pois, stats) {
     return { walkers: w.length / 2, onCar, inBuilding, spots: spots.x.length, spotsBad, laneSamples: NSm, samplesBad, bad };
   }
   // spots: where people stay (walk.js keeps the walker out of the seated ones)
-  return { update, check, people, signs, layers, lanes, terraces, spots, glow, calcadaMesh, marks, areas };
+  // furniture: per type a flat list of [x, y, z, yaw, scale, colour] (walk.js
+  // keeps the walker out of the lamps, benches, tables and trees)
+  return { update, check, people, signs, layers, lanes, terraces, spots, glow, calcadaMesh, marks, areas, furniture: F };
 }
