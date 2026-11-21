@@ -55,7 +55,7 @@ export const PALETTE = {
 };
 
 // Surface ids for the detail shader in landmarks.js.
-export const MAT = { flat: 0, ashlar: 1, tile: 2, render: 3, azulejo: 4, leaf: 5, slate: 6, water: 7, smooth: 8, metal: 9 };
+export const MAT = { flat: 0, ashlar: 1, tile: 2, render: 3, azulejo: 4, leaf: 5, slate: 6, water: 7, smooth: 8, metal: 9, crown: 10 };
 
 const MAT_OF = {
   granite: MAT.ashlar, graniteDark: MAT.ashlar, graniteLight: MAT.ashlar, graniteWarm: MAT.ashlar, graniteGrey: MAT.ashlar, graniteGold: MAT.ashlar,
@@ -286,7 +286,8 @@ export class Kit {
         p.setXYZ(i, p.getX(i) * f, p.getY(i) * f, p.getZ(i) * f);
       }
     }
-    this.add(g, color, { flat: !o.soft, ...o, x, y, z });
+    // a soft crown is foliage with leaves (MAT.crown); a lawn or hedge is MAT.leaf
+    this.add(g, color, { flat: !o.soft, ...(o.soft ? { mat: MAT.crown } : {}), ...o, x, y, z });
     if (o.soft) {
       // foliage: radial normals (a soft round crown instead of a cut gem)
       // and a darker underside (self-shade), baked into the part

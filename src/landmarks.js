@@ -14,6 +14,7 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { createStoneTextures, createAzulejoTexture } from './textures.js';
 import { shrinkCheck, SHRINK_MIN } from './fit.js';
 import { S } from './geo.js';
+import { LEAF_GLSL } from './nature.js';
 
 // Far LOD (performance): far away a model draws a vertex-clustered copy of
 // itself, grid cell = bounding radius / LOD_K, about 23 % of the triangles
@@ -159,6 +160,7 @@ function stoneMaterial(count) {
       .replace(
         '#include <common>',
         `#include <common>
+${LEAF_GLSL}
 varying float vEmit;
 varying float vMat;
 varying float vLid;
@@ -260,9 +262,10 @@ if (brgM == 1) {            // granite ashlar: two-tone blocks, thin joints
 } else if (brgM == 4) {     // azulejo (14 cm tiles)
   diffuseColor.rgb *= texture2D(tAzulejo, vDUv * 0.9).rgb;
   brgRough = 0.3;
-} else if (brgM == 5) {     // foliage and grass
+} else if (brgM == 5 || brgM == 10) {     // foliage and grass; 10: a tree crown
   brgH = texture2D(tDetail, vDUv * 0.3).b;
   diffuseColor.rgb *= mix(0.62, 1.25, brgH);
+  if (brgM == 10) diffuseColor.rgb *= brgLeaf(vWPos * ${(1 / S).toFixed(1)});
   #ifdef USE_FOG
   // season tint for model foliage (avenue trees, lawns, hedges): spring fresh + blossom, autumn rust, winter dull
   diffuseColor.rgb *= seasonW.x * vec3(1.08, 1.14, 0.9) + vec3(seasonW.y) + seasonW.z * vec3(1.5, 1.0, 0.6) + seasonW.w * vec3(0.95, 0.88, 0.85);
