@@ -295,6 +295,73 @@ function strip(T, net, i0, i1, off, h, lift, col, ext = h) {
 }
 
 // Dashes along a way at offset `off`: dash / gap in metres (gap 0: solid)
+// Zebra crossings. The data has no crossing points, so each arm of a street
+// junction gets one, the way a Portuguese town paints them: set back behind
+// the crossing street's sidewalk, 3 m deep, stripes 0.5 m wide every metre
+// along the carriageway's width. An arm is a street with sidewalks that
+// runs at least 12 m from the junction; a junction has three arms or more.
+function zebras(T, net, lift, col, inTown, paintable) {
+  const { X, Z, C, HID, ways, nodeWays } = net;
+  const DEEP = 3 * S;
+  let count = 0;
+  const armOk = (w) => w.car && WALKED.has(w.hw) && !w.tunnel && !w.bridge && !w.t.jn && paintable(w);
+  for (let node = 0; node < nodeWays.length; node++) {
+    const nw = nodeWays[node];
+    if (nw.length < 4) continue;
+    // the arms: each way leaves the node forward, backward or both
+    const arms = [];
+    let wide = 0;
+    for (let k = 0; k < nw.length; k += 2) {
+      const w = ways[nw[k]];
+      const p = nw[k + 1];
+      if (!w.car) continue;
+      wide = Math.max(wide, (w.widthM / 2) * S);
+      if (!armOk(w)) continue;
+      if (p < w.start + w.n - 1) arms.push([w, p, 1]);
+      if (p > w.start) arms.push([w, p, -1]);
+    }
+    if (arms.length < 3 || !inTown(X[nw[1]], Z[nw[1]])) continue;
+    for (const [w, p, dir] of arms) {
+      // behind the crossing street's kerb and its sidewalk
+      const from = wide + (0.25 + sidewalkM(w.hw) + 0.6) * S;
+      const end = dir > 0 ? w.start + w.n - 1 : w.start;
+      if (Math.abs(C[end] - C[p]) < from + DEEP + 6 * S) continue; // a stub
+      const half = (w.widthM / 2) * S - 0.3 * S;
+      const n = Math.floor((2 * half) / S); // one stripe per metre
+      if (n < 3) continue;
+      const pts = [];
+      for (const d of [from, from + DEEP]) {
+        const c = C[p] + dir * d;
+        let i = p;
+        while (dir > 0 ? C[i + 1] < c : C[i - 1] > c) i += dir;
+        const a = dir > 0 ? i : i - 1; // the segment a .. a + 1
+        if (HID[a] || HID[a + 1]) { pts.length = 0; break; }
+        const L = C[a + 1] - C[a];
+        const u = (c - C[a]) / L;
+        const dx = (X[a + 1] - X[a]) / L, dz = (Z[a + 1] - Z[a]) / L;
+        pts.push({ x: X[a] + (X[a + 1] - X[a]) * u, z: Z[a] + (Z[a + 1] - Z[a]) * u, lx: dz, lz: -dx, a, u });
+      }
+      if (pts.length < 2) continue;
+      const [q0, q1] = pts;
+      for (let s = 0; s < n; s++) {
+        const o0 = -half + ((2 * half) / n) * (s + 0.25), o1 = -half + ((2 * half) / n) * (s + 0.75);
+        const v = T.pos.length / 3;
+        for (const [q, o] of [[q0, o1], [q0, o0], [q1, o0], [q1, o1]]) {
+          const y = net.surfaceY(q.a, o) * (1 - q.u) + net.surfaceY(q.a + 1, o) * q.u + lift;
+          T.pos.push(q.x + q.lx * o, y, q.z + q.lz * o);
+          T.nor.push(0, 1, 0);
+          T.col.push(col[0], col[1], col[2]);
+        }
+        // faces up whichever way the arm runs
+        if (dir > 0) T.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
+        else T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
+      }
+      count++;
+    }
+  }
+  return count;
+}
+
 function dashes(T, net, w, off, halfM, dashM, gapM, lift, col) {
   const { X, Z, C, HID } = net;
   const h = halfM * S;
@@ -667,6 +734,7 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
       dashes(MT, net, w, -e, 0.08, 0, 0, MARK_LIFT, mk);
     }
   }
+  const zebraCount = zebras(MT, net, MARK_LIFT + 0.001, mk, (x, z) => x * x + z * z < SIDEWALK_R * SIDEWALK_R, (w) => !SETT.has(w.t.sf)); // no paint on setts
   // sidewalks in the city: calçada both sides of the streets (plain white
   // limestone; the kerbs keep their granite colour)
   const SW = newT(true);
@@ -808,6 +876,7 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
   counts.ribbonTriangles = ribbonTris;
   counts.structureTriangles = structTris;
   counts.detailTriangles = swTris + mTris + iTris;
+  counts.zebras = zebraCount;
   counts.bridges = net.bridges.length;
   counts.archBridges = archBridges;
   counts.tunnels = net.tunnels.length;
