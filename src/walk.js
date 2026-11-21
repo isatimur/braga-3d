@@ -57,6 +57,7 @@ const KEYS = {
 export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], street = () => null, reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
   let collider = createCollider(polys);
   let seatCount = 0;
+  let solidCount = 0; // furniture obstacles in the collider
   // The street layer may arrive after this module, or be switched off. At
   // each start: seated people and their tables become obstacles, and the
   // walk lanes (where the crowd walks) say where a street is.
@@ -103,6 +104,9 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     }
     return weight > 0 ? sum / weight : heightAt(x, z) + lift;
   }
+  // half sizes (metres) of the furniture a walker cannot pass through; an
+  // umbrella is only its pole
+  const SOLID = { tall: 0.2, lantern: 0.2, bench: 0.45, bollard: 0.15, table: 0.4, umbrella: 0.08, tree: 0.3 };
   function readStreet() {
     readLanes();
     const sp = street()?.spots;
@@ -116,9 +120,20 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       const x = sp.x[k], z = sp.z[k];
       extra.push([[x - r, z - r], [x + r, z - r], [x + r, z + r], [x - r, z + r]]);
     }
+    // street furniture: a small square about each post, bench, table and tree
+    const F = street()?.furniture || {};
+    const before = extra.length;
+    for (const [type, half] of Object.entries(SOLID)) {
+      const a = F[type] || [];
+      for (let k = 0; k < a.length; k += 6) {
+        const x = a[k], z = a[k + 2], h = half * M * (a[k + 4] || 1);
+        extra.push([[x - h, z - h], [x + h, z - h], [x + h, z + h], [x - h, z + h]]);
+      }
+    }
+    solidCount = extra.length - before;
     collider = createCollider([...polys, ...extra]);
   }
-  // the free walk-lane point nearest to (x, z), within 80 m; null without lanes
+  // the free walk-lane point nearest to (x, z), within 600 m; null without lanes
   function laneNear(x, z) {
     const lanes = street()?.lanes;
     if (!lanes?.X?.length) return null;
@@ -451,7 +466,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         eyeM: +((eyeY - ground(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
         liftM: +((ground(pos.x, pos.z) - heightAt(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
         walkedM: +walked.toFixed(1), inside: collider.inside(pos.x, pos.z), buildings: collider.count,
-        view, near: near ? near.i : null, seats: seatCount, lanes: street()?.lanes?.X?.length || 0,
+        view, near: near ? near.i : null, seats: seatCount, solids: solidCount, lanes: street()?.lanes?.X?.length || 0,
         blocked: collider.blocked(pos.x, pos.z, BODY * 0.9),
         camM: +(Math.hypot(camera.position.x - pos.x, camera.position.z - pos.z) * METRES_PER_UNIT).toFixed(2),
         camInside: collider.inside(camera.position.x, camera.position.z),
