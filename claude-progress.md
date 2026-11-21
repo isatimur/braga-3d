@@ -11,9 +11,9 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current local work: map layers and loading status (braga-021) on `feat/layers-and-loading`, `main` cb3f93f merged in, not merged back. Not pushed, not deployed.
-- Latest check: 2026-11-18. `node --test scripts/*.test.mjs` (70/70) and `npm run verify` (12 steps) passed on `feat/layers-and-loading`; browser checks in Session 018.
-- Production state: last documented check is from 2026-10-04; not rechecked since. braga-3d.com does not have braga-014 or braga-015.
+- Current local work: none open. `main` is ed509ca (street level rework and walk physics, Session 019). Not pushed.
+- Latest check: 2026-11-21. `node --test scripts/*.test.mjs` (79/79), `npm run verify` and `scripts/check-walk.mjs` (desktop and Pixel 7 profile) passed on `main` ed509ca.
+- Production state: braga-3d.com serves `main` ed509ca (bundle `index-C8RfbSf7.js`), deployed by the owner with `vercel --prod` on 2026-11-21; `scripts/check-walk.mjs --base https://braga-3d.com` passed after the deploy.
 
 ## Session Log
 
@@ -316,3 +316,20 @@ updates it automatically.
 - Pill and languages: the failed line and the longest loading line show whole in pt, ru and en at 360x740 and 320x568 (`/tmp/braga-layers/tools/pill-lang.mjs`); the panel opens in each language with no clipped text (at 320x568 it scrolls).
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
+
+### Session 019
+
+- Date: 2026-11-21
+- Branch: short branches merged into `main` one by one; `main` ends at ed509ca. Deployed by the owner after each merge. Not pushed.
+- Goal (owner): from above the map looks good, at walking height the road layers do not. Rework the street level to be precise; then review the walk engine and its physics.
+- Root cause: the roads lie about 0.5 m over the terrain (`RIBBON_LIFT`, a smoothed grade, level across) on a terrain grid of about 120 m per cell. From above this does not show. At eye height every road and sidewalk edge was a ledge, sidewalks were flat strips that ran across the crossing street, houses stood at the lowest terrain corner of their footprint, and the walker's height came from a model of its own.
+- Commits:
+  - `71df205` sidewalks are kerbed bodies (kerb face, kerb stone, walk 12 cm up, side wall) and end at a crossing street's carriageway (`sidewalk()`, `carriageways()` in `src/roads.js`).
+  - `e0f75d9` town ground at street level (`street-plate` in `src/streetscape.js`: 5 m grid within 24 m of a street, off in lite, drawn only near the ground; `nature.openAt` keeps it off parks, fields and water), paved frontage between a walk and the house fronts, uncut sidewalk steps merged (838k -> 232k triangles).
+  - `7653c0b` house floors at street level (`STREET_UP` and the mean ground in `extrudeBuilding`, `src/buildings.js`); `asphaltGrain()` on the carriageways and the town ground.
+  - `1e5e9b9` the walker stands on the top drawn triangle (`readSurface()`, `surfaceAt()` in `src/walk.js`) and slides along a wall at any angle (`TURNS` in `src/walk-collide.js`).
+  - `6243efb` open water blocks the walker, except under a drawn street, sidewalk or paved square (`wetAt`, `nature.waterRings`); `scripts/check-walk.mjs` tests the middle of every water area.
+  - `3823620` zebra crossings at junctions with three arms or more (`zebras()` in `src/roads.js`; placed by rule, the data has no crossing points).
+- Measured: feet against the top drawn triangle, 41 points across each of five streets: before 20-80 cm over the town ground, up to 30 cm over a carriageway, up to 57 cm sunk; after 0 cm at four of five spots. Slide along a wall at 45 degrees: 7 % of the speed before, 100 % after (unit test). Triangles near the ground on desktop: 1.85 M -> 2.11 M with the town ground; phone profile 732k -> 784k. Surface index rebuild: about 110 ms on desktop.
+- Checks: `node --test scripts/*.test.mjs` 79/79; `scripts/check-walk.mjs` all passed on both profiles, locally and on braga-3d.com; `npm run verify` OK. Screenshots at 1.7 m eye height at Avenida da Liberdade, a residential street and a ring-road junction, and the overhead views of the centre, viewed before each merge.
+- Known limits: kerb corners are square; on a sloped junction the sidewalk corners meet as small steps; beside a park the sidewalk drops to the lawn; a zebra has no dropped kerb; on a steep street the uphill end of a long house still sinks; streams drawn as lines, fountains, fences and landmark model parts do not block; vehicles do not stop for the walker; no stairs or jumping; one spot near a roundabout (41.5455, -8.4268) shows a ramp with a 29-54 cm gap under the feet, not examined. Not checked: a physical phone, Safari, Firefox, frame time on a real device. The forks (guimaraes-3d, porto-3d) do not have these changes.

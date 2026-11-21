@@ -422,9 +422,10 @@
         "npm run verify"
       ],
       "evidence": [
-        "2026-11-20: check-walk all passed on both profiles; 78/78 unit tests; verify OK; screenshots in docs/walk-spike/ (git-ignored)"
+        "2026-11-20: check-walk all passed on both profiles; 78/78 unit tests; verify OK; screenshots in docs/walk-spike/ (git-ignored)",
+        "2026-11-21 (main ed509ca, Session 019): 79/79 unit tests; check-walk all passed on both profiles, locally and on braga-3d.com (water: 41 of 43 areas block on desktop, 43 of 43 on the phone profile); verify OK; feet 0 cm from the drawn surface at four of five measured streets"
       ],
-      "notes": "An early version. The walker passes through the moving crowd, trees, lamps and cars. No collision with the river or the outer-ring buildings. The walker's ground is the mean of the walk-lane points within 8 m, so with the street layer off it stands on the terrain, about 0.5 m low. No draw distance of its own. The crowd is still box figures. Place names hide while walking. Not checked: a physical phone, Safari, Firefox. Not deployed."
+      "notes": "The walker stands on the top drawn triangle (terrain, town ground, carriageways, sidewalks, squares), slides along walls at any angle, is pushed out by people and vehicles, and is stopped by buildings, furniture and open water. Streams drawn as lines, fountains, fences and landmark model parts do not block. Vehicles do not stop for the walker. No stairs or jumping. No draw distance of its own. The crowd is still box figures. Place names hide while walking. Not checked: a physical phone, Safari, Firefox. Deployed 2026-11-21."
     }
   ]
 }
