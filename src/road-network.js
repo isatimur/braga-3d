@@ -231,6 +231,27 @@ function build(roads, project, heightAt) {
   ways.forEach((w, wi) => {
     for (let k = 0; k < w.jp.length; k += 2) nodeWays[w.jp[k + 1]].push(wi, w.jp[k]);
   });
+  // Near a junction a street lies on the hillside itself, on both sides. A
+  // street along a slope keeps its downhill half level (an embankment); where
+  // a second street leaves it downhill, that level half stood over the
+  // second street as a wedge. JK: 1 at the junction, 0 from 12 m away.
+  const JK = new Float32Array(NP);
+  const JR = 3;
+  for (const w of ways) {
+    const end = w.start + w.n - 1;
+    for (let k = 0; k < w.jp.length; k += 2) {
+      if (nodeWays[w.jp[k + 1]].length < 4) continue;
+      const c = w.jp[k];
+      for (const dir of [-1, 1]) {
+        let d = 0;
+        for (let i = c; i >= w.start && i <= end; i += dir) {
+          if (i !== c) d += Math.hypot(PX[i] - PX[i - dir], PZ[i] - PZ[i - dir]);
+          if (d > JR) break;
+          JK[i] = Math.max(JK[i], 1 - d / JR);
+        }
+      }
+    }
+  }
   const endNode = (w, end) => {
     if (!w.jp.length) return -1;
     return end ? (w.jp.at(-2) === w.start + w.n - 1 ? w.jp.at(-1) : -1) : w.jp[0] === w.start ? w.jp[1] : -1;
@@ -618,7 +639,11 @@ function build(roads, project, heightAt) {
     // the way's height, or the hillside where it rises above it
     surfaceY(i, left) {
       const h = G[i] + SL[i] * left;
-      return h > Y[i] ? h : Y[i];
+      if (h > Y[i]) return h;
+      // at a junction the downhill half follows the hillside too (JK); a
+      // bridge deck (Y above the ground) stays level
+      const k = JK[i];
+      return k > 0 && Y[i] - G[i] < 0.05 ? Y[i] + (h - Y[i]) * k : Y[i];
     },
     nNodes,
     nodeWays,
