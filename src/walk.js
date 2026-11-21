@@ -133,6 +133,58 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     solidCount = extra.length - before;
     collider = createCollider([...polys, ...extra]);
   }
+  // People and vehicles are bodies too: the walker cannot stand inside one.
+  // Their places come from the instance matrices the crowd and the traffic
+  // draw this frame (the drawn ones, so what the walker sees is what stops
+  // them). A person is a circle, a vehicle a capsule along its heading. The
+  // walker is pushed out, but never into a wall.
+  const MOVERS = [
+    { name: 'people', half: 0, rad: 0.28 * M },
+    { name: 'traffic', half: 1.5 * M, rad: 1.0 * M },
+  ];
+  let bumps = 0;
+  let touching = false;
+  function shove() {
+    let px = pos.x, pz = pos.z;
+    let hit = false;
+    for (const mv of MOVERS) {
+      if (mv.root === undefined || (mv.root && !mv.root.parent)) mv.root = scene.getObjectByName(mv.name) || undefined;
+      const root = mv.root;
+      if (!root || !root.visible) continue;
+      const reach = mv.half + mv.rad + BODY;
+      root.traverse((o) => {
+        if (!o.isInstancedMesh || !o.visible || o.name === 'traffic-lights') return;
+        const e = o.instanceMatrix.array;
+        for (let k = 0, b = 0; k < o.count; k++, b += 16) {
+          let cx = e[b + 12], cz = e[b + 14];
+          if (Math.abs(cx - px) > reach || Math.abs(cz - pz) > reach) continue;
+          if (mv.half > 0) {
+            // +z of the vehicle is its travel direction
+            let hx = e[b + 8], hz = e[b + 10];
+            const hl = Math.hypot(hx, hz) || 1;
+            hx /= hl;
+            hz /= hl;
+            const t = THREE.MathUtils.clamp((px - cx) * hx + (pz - cz) * hz, -mv.half, mv.half);
+            cx += hx * t;
+            cz += hz * t;
+          }
+          let dx = px - cx, dz = pz - cz;
+          let d = Math.hypot(dx, dz);
+          const min = mv.rad + BODY;
+          if (d >= min) continue;
+          if (d < 1e-4) { dx = Math.sin(yaw + 1.57); dz = -Math.cos(yaw + 1.57); d = 1; }
+          px += (dx / d) * (min - d);
+          pz += (dz / d) * (min - d);
+          hit = true;
+        }
+      });
+    }
+    if (hit && !touching) bumps++;
+    touching = hit;
+    if (!hit || collider.blocked(px, pz, BODY)) return;
+    pos.x = px;
+    pos.z = pz;
+  }
   // the free walk-lane point nearest to (x, z), within 600 m; null without lanes
   function laneNear(x, z) {
     const lanes = street()?.lanes;
@@ -424,6 +476,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       pos.x = next.x;
       pos.z = next.z;
     }
+    shove();
     // the figure turns to where it walks; standing, it keeps its last heading
     if (n > 0.1 && stepM > 1e-4) {
       const want = Math.atan2(vel.x, -vel.z);
@@ -466,7 +519,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         eyeM: +((eyeY - ground(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
         liftM: +((ground(pos.x, pos.z) - heightAt(pos.x, pos.z)) * METRES_PER_UNIT).toFixed(2),
         walkedM: +walked.toFixed(1), inside: collider.inside(pos.x, pos.z), buildings: collider.count,
-        view, near: near ? near.i : null, seats: seatCount, solids: solidCount, lanes: street()?.lanes?.X?.length || 0,
+        view, near: near ? near.i : null, seats: seatCount, solids: solidCount, bumps, touching, lanes: street()?.lanes?.X?.length || 0,
         blocked: collider.blocked(pos.x, pos.z, BODY * 0.9),
         camM: +(Math.hypot(camera.position.x - pos.x, camera.position.z - pos.z) * METRES_PER_UNIT).toFixed(2),
         camInside: collider.inside(camera.position.x, camera.position.z),
@@ -481,6 +534,16 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       pos.z = z;
       nearClock = 0;
       return true;
+    },
+    // tests: the drawn bodies of a kind ('people', 'traffic') as [x, z] pairs
+    bodies(name) {
+      const out = [];
+      scene.getObjectByName(name)?.traverse((o) => {
+        if (!o.isInstancedMesh || !o.visible || o.name === 'traffic-lights') return;
+        const e = o.instanceMatrix.array;
+        for (let k = 0; k < o.count; k++) out.push([e[k * 16 + 12], e[k * 16 + 14]]);
+      });
+      return out;
     },
     // tests: hold a direction without a keyboard ({x, z} in -1..1), turn
     setInput(x = 0, z = 0) {

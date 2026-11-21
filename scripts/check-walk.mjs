@@ -125,6 +125,37 @@ async function run(profile) {
   ok(s.walkedM - before > (phone ? 4 : 10), `${profile}: walked ${(s.walkedM - before).toFixed(1)} m`);
   ok(Math.abs(s.eyeM - 1.7) < 0.3, `${profile}: eye height after the walk ${s.eyeM} m`);
 
+  // bodies: put the walker on a drawn pedestrian, then on a drawn vehicle;
+  // each time the walker must end outside the body
+  for (const [kind, name, clearM] of [['pedestrian', 'people', 0.6], ['vehicle', 'traffic', 1.2]]) {
+    const r = await page.evaluate(async ([name]) => {
+      const P = window.__braga;
+      const w = P.walk;
+      for (let tries = 0; tries < 40; tries++) {
+        const c = w.bodies(name);
+        for (const [x, z] of c.slice(0, 60)) {
+          const bumps0 = w.state.bumps;
+          if (!w.teleport(x, z)) continue;
+          await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+          const s = w.state;
+          if (s.bumps === bumps0) continue; // that body left the view this frame
+          // from where that body stood two frames ago (it moves a few cm)
+          return { m: Math.hypot(s.x - x, s.z - z) * 4, drawn: c.length };
+        }
+        await new Promise((res) => setTimeout(res, 500));
+      }
+      return { none: 'no body the walker could reach' };
+    }, [name]);
+    if (r.none && kind === 'vehicle') console.log(`note ${profile}: ${r.none} (${kind})`);
+    else ok(!r.none && r.m >= clearM, `${profile}: a ${kind} pushes the walker out${r.none ? ` (${r.none})` : ` (${r.m.toFixed(2)} m from its centre, ${r.drawn} drawn)`}`);
+  }
+  await page.evaluate(({ lat, lon }) => {
+    const P = window.__braga;
+    const q = P.project(lat, lon);
+    for (let d = 0; d < 12; d += 0.5) for (let a = 0; a < 8; a++) if (P.walk.teleport(q.x + Math.cos(a * 0.785) * d, q.z + Math.sin(a * 0.785) * d)) return;
+  }, START);
+  await page.waitForTimeout(400);
+
   // look: a drag on the map turns the view
   await page.evaluate(() => window.__braga.walk.turn(0));
   const yaw0 = (await state(page)).yaw;
