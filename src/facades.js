@@ -642,6 +642,13 @@ float bHash(vec2 p) {
   q += dot(q, q.yzx + 33.33);
   return fract((q.x + q.y) * q.z);
 }
+// smooth value noise, 0..1
+float bNoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(bHash(i), bHash(i + vec2(1.0, 0.0)), f.x), mix(bHash(i + vec2(0.0, 1.0)), bHash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
 // 1 inside the rectangle r = (x0, y0, x1, y1) of the unit cell
 float bRect(vec2 f, vec4 r) {
   return step(r.x, f.x) * step(f.x, r.z) * step(r.y, f.y) * step(f.y, r.w);
@@ -705,6 +712,23 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
   float bNearK = bNear * aa;
   float glassK = 0.0; // how much of this pixel is window glass (lit at night)
   float shopK = 0.0; // ... shop window
+
+  // ---- the wall's surface up close: no wall is one flat colour
+  #ifndef BRG_WIN_LITE
+  if (bNear > 0.0 && bSt != 6.0) {
+    float mw = fwidth(bY); // metres per pixel
+    // weather: broad patches, and rain streaks that run down from the top
+    // ("patch" is a reserved word in GLSL ES 3)
+    float blot = bNoise(vec2(bX, bY) * 0.45 + bSd * 40.0);
+    float streak = bNoise(vec2(bX * 2.6 + bSd * 9.0, bY * 0.22));
+    float age = (0.12 * (blot - 0.5) + 0.1 * (streak - 0.5) * smoothstep(bH - 6.0, bH, bY)) * (1.0 - smoothstep(0.1, 0.4, mw));
+    // dirt splashed up from the street
+    float splash = (1.0 - smoothstep(0.5, 1.9, bY)) * (0.1 + 0.1 * bNoise(vec2(bX * 1.3, 3.0)));
+    // the grain of the plaster, for the walker
+    float grain = (bHash(floor(vec2(bX, bY) / 0.02)) - 0.5) * 0.07 * (1.0 - smoothstep(0.008, 0.025, mw));
+    col *= 1.0 + (age - splash + grain) * bNear;
+  }
+  #endif
 
   // ---- azulejo: tiled upper floors
   if (bSt == 2.0 && bY > g0) {
@@ -895,9 +919,24 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
       }
     }
     #endif
+    #ifndef BRG_WIN_LITE
+    if (bNear > 0.0 && gk > 0.0 && bSt != 6.0) {
+      // depth without geometry: the glass sits back in the wall, so the
+      // lintel and one jamb shade it; some rooms have a curtain; the pane
+      // shows a little sky toward its top
+      vec2 wf = (f - wr.xy) / (wr.zw - wr.xy); // 0..1 in the window
+      float curtain = step(hw, 0.45) * step(0.12, hw);
+      float fold = 0.8 + 0.2 * sin(wf.x * (30.0 + 20.0 * hw));
+      float drawn = curtain * (hw < 0.3 ? step(abs(wf.x - 0.5), 0.5) * step(wf.y, 0.55 + 0.4 * hw) : step(0.28, abs(wf.x - 0.5)));
+      glass = mix(glass, vec3(0.34, 0.32, 0.27) * fold, drawn * 0.7 * bNear);
+      glass += vec3(0.02, 0.026, 0.034) * wf.y * bNear;
+      float reveal = max(smoothstep(0.86, 0.97, wf.y), smoothstep(0.14, 0.03, wf.x) * 0.7);
+      glass *= 1.0 - 0.6 * reveal * bNear;
+    }
+    #endif
     col = mix(col, glass, gk * 0.85);
     glassK = max(glassK, gk);
-    roughnessFactor = mix(roughnessFactor, 0.35, gk);
+    roughnessFactor = mix(roughnessFactor, mix(0.35, 0.16, bNear), gk);
     #ifndef BRG_WIN_LITE
     // wrought-iron balconies: the first floor of most centre houses, some others
     if (bHist && bNear > 0.0) {

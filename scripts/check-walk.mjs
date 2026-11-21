@@ -50,6 +50,11 @@ async function run(profile) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
+  // a shader that does not compile throws nothing: three.js logs it and the
+  // mesh (once, every house in the city) is simply not drawn
+  page.on('console', (m) => {
+    if (m.type() === 'error' && /shader|WebGLProgram|GLSL/i.test(m.text())) errors.push(m.text().slice(0, 200));
+  });
   await page.goto(`${BASE}?intro=0&lang=en#time=day&weather=clear&live=0`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__braga?.ready === true, null, { timeout: 240000 });
   await page.waitForTimeout(3000);
