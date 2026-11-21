@@ -34,6 +34,7 @@ import { buildNetwork } from './road-network.js';
 import { RIBBON_LIFT, SIDEWALK_R, WALKED, sidewalkM, lampSites, lampGlow, LAMP_HEIGHT_M } from './roads.js';
 import { loadPois, createPoiSigns, isOpenAtHour, guessOpen } from './pois.js';
 import { createPeople, pedestrianDemand } from './people.js';
+import { LEAF_GLSL } from './nature.js';
 
 // ------------------------------------------------------------ calçada
 // pattern ids (aPat.x): 0 none (the vertex colour)
@@ -406,6 +407,33 @@ const boxG = (w, h, d, x, y, z, color, glow = 0) => part(new THREE.BoxGeometry(w
 const cylG = (rt, rb, h, seg, x, y, z, color, glow = 0) => part(new THREE.CylinderGeometry(rt, rb, h, seg, 1, false).translate(x, y + h / 2, z), color, glow);
 const coneG = (r, h, seg, x, y, z, color) => part(new THREE.ConeGeometry(r, h, seg, 1, true).translate(x, y + h / 2, z), color);
 const icoG = (r, x, y, z, color) => part(new THREE.IcosahedronGeometry(r, 0).translate(x, y, z), color);
+// a tree crown: 80 faces, each corner pushed in or out a little (the same at
+// every face that shares it), normals out from the centre so it shades as a
+// soft mass of leaves, darker underneath
+function crownG(r, x, y, z, color) {
+  const g = new THREE.IcosahedronGeometry(1, 1);
+  const p = g.attributes.position;
+  const nor = g.attributes.normal;
+  const n = p.count;
+  const c = new Float32Array(n * 3);
+  const col = new THREE.Color(color);
+  for (let i = 0; i < n; i++) {
+    const ux = p.getX(i), uy = p.getY(i), uz = p.getZ(i);
+    const h = Math.sin(ux * 127.1 + uy * 311.7 + uz * 74.7 + r * 13.0) * 43758.5453;
+    const j = 0.84 + (h - Math.floor(h)) * 0.32;
+    p.setXYZ(i, x + ux * r * j, y + uy * r * 0.85 * j, z + uz * r * j);
+    const l = Math.hypot(ux, uy * 0.8 + 0.25, uz) || 1;
+    nor.setXYZ(i, ux / l, (uy * 0.8 + 0.25) / l, uz / l);
+    const shade = 0.6 + 0.5 * (uy * 0.5 + 0.5);
+    c[i * 3] = col.r * shade;
+    c[i * 3 + 1] = col.g * shade;
+    c[i * 3 + 2] = col.b * shade;
+  }
+  if (g.attributes.uv) g.deleteAttribute('uv');
+  g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+  g.setAttribute('aGlow', new THREE.BufferAttribute(new Float32Array(n), 1));
+  return g;
+}
 function merged(parts) {
   const g = mergeGeometries(parts);
   g.scale(S, S, S);
@@ -447,7 +475,7 @@ const FURNITURE = {
     ]),
   // a parasol; the instance colour tints it
   umbrella: () => merged([cylG(0.025, 0.025, 2.3, 4, 0, 0, 0, 0xe8e4da), coneG(1.35, 0.42, 8, 0, 1.98, 0, 0xf6f2ea), cylG(1.35, 1.35, 0.12, 8, 0, 1.86, 0, 0xf6f2ea)]),
-  tree: () => merged([cylG(0.12, 0.2, 3.6, 5, 0, -0.3, 0, 0x5b4636), icoG(2.1, 0, 4.9, 0, 0x4f6d30), icoG(1.5, 0.7, 5.9, -0.4, 0x5a7a36), icoG(1.3, -0.8, 5.5, 0.6, 0x48662b)]),
+  tree: () => merged([cylG(0.12, 0.2, 3.6, 8, 0, -0.3, 0, 0x5b4636), crownG(2.1, 0, 4.9, 0, 0x4f6d30), crownG(1.5, 0.7, 5.9, -0.4, 0x5a7a36), crownG(1.3, -0.8, 5.5, 0.6, 0x48662b), crownG(1.2, 0.5, 4.6, 0.9, 0x526f2f)]),
 };
 const UMBRELLA_COLORS = [0xf3efe6, 0xb23a2e, 0x24452f, 0x23324f, 0xe7d9b0, 0x8a2433].map((h) => new THREE.Color(h));
 
@@ -461,6 +489,15 @@ function furnitureMaterial(uniforms, key) {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uStNight;\nuniform float uStGlow;\nvarying float vStGlow;')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += vec3(1.0, 0.74, 0.42) * vStGlow * uStNight * uStGlow * 1.8;');
+    if (key === 'tree') {
+      // leaves on the crowns (the green parts; the trunk is brown)
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vLeafP;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>\nvLeafP = (instanceMatrix * vec4(position, 1.0)).xyz * ${(1 / S).toFixed(1)};`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', `#include <common>\nvarying vec3 vLeafP;\n${LEAF_GLSL}`)
+        .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(1.0, brgLeaf(vLeafP), step(vColor.r * 1.05, vColor.g));');
+    }
   };
   return mat;
 }

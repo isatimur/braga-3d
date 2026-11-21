@@ -12,7 +12,7 @@
 // are rasterised into an occupancy mask first and every candidate point is
 // tested against it.
 import * as THREE from 'three';
-import { S } from './geo.js';
+import { S, METRES_PER_UNIT } from './geo.js';
 import { FOG_UNIFORMS, WEATHER_UNIFORMS, CLOUD_GLSL, SEASON_GLSL } from './scene.js';
 import { createWater } from './water.js';
 import { setRingBounds } from './bounds.js';
@@ -133,6 +133,8 @@ function ringArea(poly) {
 // ------------------------------------------------------------ geometry
 // A crown: an icosahedron squashed to an ellipsoid, normals pointing out
 // from its centre (soft, rounded shading), jittered so no two look alike.
+// 20 faces: with 80 a wooded hillside draws 1.2 million triangles more for a
+// slightly rounder outline; the leaf pattern in the shader does more.
 function crown(geos, cx, cy, cz, rx, ry, seed, color) {
   const g = new THREE.IcosahedronGeometry(1, 0); // already non-indexed
   const r = lcg(seed);
@@ -1382,6 +1384,37 @@ const TREE_SEASON_COLOR = /* glsl */ `
 }
 `;
 
+// Leaves on a crown (also the street trees, streetscape.js): clusters of
+// about 0.3 m in light and shade, and larger boughs, as a factor on the
+// colour around 1. p in metres. It fades out where a cluster is smaller than
+// a pixel, so a far wood does not shimmer.
+export const LEAF_GLSL = /* glsl */ `
+float brgLeafH(vec3 p) {
+  p = fract(p * 0.3183099 + vec3(0.71, 0.113, 0.419));
+  p *= 17.0;
+  return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+float brgLeafN(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(mix(brgLeafH(i), brgLeafH(i + vec3(1, 0, 0)), f.x), mix(brgLeafH(i + vec3(0, 1, 0)), brgLeafH(i + vec3(1, 1, 0)), f.x), f.y),
+    mix(mix(brgLeafH(i + vec3(0, 0, 1)), brgLeafH(i + vec3(1, 0, 1)), f.x), mix(brgLeafH(i + vec3(0, 1, 1)), brgLeafH(i + vec3(1, 1, 1)), f.x), f.y),
+    f.z);
+}
+float brgLeaf(vec3 p) {
+  float px = length(fwidth(p));
+  float fine = 1.0 - smoothstep(0.06, 0.3, px);
+  float bough = 1.0 - smoothstep(0.3, 1.4, px);
+  float c = brgLeafN(p * 3.4);
+  float d = brgLeafN(p * 9.0);
+  float b = brgLeafN(p * 0.8);
+  float leaf = 0.58 + 0.62 * smoothstep(0.2, 0.8, c) + 0.3 * (d - 0.5);
+  return mix(1.0, leaf, fine) * mix(1.0, 0.8 + 0.4 * b, bough);
+}
+`;
+
 function treeMaterial(uniforms, s) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0 });
   mat.name = 'trees';
@@ -1393,12 +1426,13 @@ function treeMaterial(uniforms, s) {
     sh.vertexShader = sh.vertexShader
       .replace(
         '#include <common>',
-        `#include <common>\n${TREE_VERT_PARS}\nuniform vec3 uPal[5];\nuniform vec3 uBase;\nattribute float aCrown;\nattribute vec3 aTint;\nvarying float vCrown;\nvarying float vBack;\nvarying vec3 vTint;`,
+        `#include <common>\n${TREE_VERT_PARS}\nuniform vec3 uPal[5];\nuniform vec3 uBase;\nattribute float aCrown;\nattribute vec3 aTint;\nvarying float vCrown;\nvarying float vBack;\nvarying vec3 vTint;\nvarying vec3 vLeafP;`,
       )
-      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvCrown = aCrown;\n${TREE_DEFORM}\n${TREE_SEASON_COLOR}`);
+      // the leaf pattern rides on the tree (the place before the wind sway), in metres
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvCrown = aCrown;\nvLeafP = (instanceMatrix * vec4(position, 1.0)).xyz * ${METRES_PER_UNIT.toFixed(1)};\n${TREE_DEFORM}\n${TREE_SEASON_COLOR}`);
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSunView;\nuniform vec3 uSunColor;\nvarying float vCrown;\nvarying float vBack;\nvarying vec3 vTint;')
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(vec3(1.0), vTint, vCrown);')
+      .replace('#include <common>', `#include <common>\nuniform vec3 uSunView;\nuniform vec3 uSunColor;\nvarying float vCrown;\nvarying float vBack;\nvarying vec3 vTint;\nvarying vec3 vLeafP;\n${LEAF_GLSL}`)
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(vec3(1.0), vTint, vCrown);\ndiffuseColor.rgb *= mix(1.0, brgLeaf(vLeafP), vCrown);')
       // leaves glow a little when the sun is behind them
       .replace(
         '#include <emissivemap_fragment>',
