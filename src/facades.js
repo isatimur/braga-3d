@@ -685,6 +685,26 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
   float bH = vWall.z - 1000.0 * bShop;
   float bY = vWall.y;
   float bX = vWall.x;
+  // Depth without geometry: what lies d metres behind the wall's face is seen
+  // at the face shifted by -d * bPar (metres along the wall, up). bPar comes
+  // from the view direction in the wall's own axes, and those from how the
+  // wall coordinates change across the screen, so no tangent is stored.
+  vec2 bPar = vec2(0.0);
+  #ifndef BRG_WIN_LITE
+  if (bNear > 0.0) {
+    vec3 pdx = -dFdx(vViewPosition), pdy = -dFdy(vViewPosition);
+    vec2 udx = dFdx(vWall.xy), udy = dFdy(vWall.xy);
+    float det = udx.x * udy.y - udy.x * udx.y;
+    if (abs(det) > 1e-9) {
+      vec3 wt = (pdx * udy.y - pdy * udx.y) / det;
+      vec3 wb = (pdy * udx.x - pdx * udy.x) / det;
+      vec3 wv = normalize(vViewPosition);
+      vec3 wn = normalize(cross(pdx, pdy));
+      float vz = max(abs(dot(wv, wn)), 0.3);
+      bPar = vec2(dot(wv, normalize(wt)), dot(wv, normalize(wb))) / vz * bNear;
+    }
+  }
+  #endif
   float bAo = 0.62 + 0.38 * clamp(bY / max(bH, 3.0), 0.0, 1.0);
   bool bHist = bSt > 0.5 && bSt < 2.5;
   // per style: cell width, floor height, first window floor, window rect, lit share
@@ -785,16 +805,25 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
         float wl = hb < 0.5 ? dl + 0.95 : 0.3;
         float wr2 = hb < 0.5 ? 3.0 : dl;
         // the room: a lit floor, a dark ceiling
-        vec3 room = mix(vec3(0.1, 0.085, 0.07), vec3(0.02, 0.02, 0.022), smoothstep(0.2, 2.6, bY));
-        // goods on two shelves in the window
+        // It has depth (bPar): the back wall stands 2.2 m behind the glass,
+        // so it slides against the frame as the walker passes, and the
+        // floor, the ceiling and a side wall come into view from an angle.
+        vec2 rq = vec2(xm, bY) - 2.2 * bPar;
+        vec3 room = mix(vec3(0.15, 0.125, 0.1), vec3(0.06, 0.055, 0.05), smoothstep(0.6, 2.6, rq.y));
+        room *= 0.8 + 0.2 * step(0.5, fract(rq.x / 0.9 + hb * 3.0)); // shelving bays on the back wall
+        room = mix(room, vec3(0.19, 0.16, 0.12), step(rq.y, 0.5)); // the floor, lit from the street
+        room = mix(room, vec3(0.022, 0.022, 0.025), step(openTop - 0.1, rq.y)); // the ceiling
+        room = mix(room, vec3(0.08, 0.068, 0.058), clamp(step(rq.x, 0.3) + step(3.0, rq.x), 0.0, 1.0)); // a side wall
+        // goods on two shelves in the window, 0.3 m behind the glass
         // (the paving of the centre lies about 0.5 m above the wall's foot,
         // so the riser and the kick plate start higher than in a real shop)
-        float sy = (bY - 0.95) / 0.62;
+        vec2 gq = vec2(xm, bY) - 0.3 * bPar;
+        float sy = (gq.y - 0.95) / 0.62;
         float row = floor(sy);
-        float item = floor(xm / 0.22);
+        float item = floor(gq.x / 0.22);
         float ih = bHash(vec2(item + bi * 31.0, row + kind * 17.0));
-        float shelves = step(0.95, bY) * step(row, 1.5) * (1.0 - inDoor);
-        float goods = step(fract(sy), 0.25 + 0.6 * ih) * step(0.12, fract(xm / 0.22)) * step(0.3, ih) * shelves;
+        float shelves = step(0.95, gq.y) * step(row, 1.5) * (1.0 - inDoor);
+        float goods = step(fract(sy), 0.25 + 0.6 * ih) * step(0.12, fract(gq.x / 0.22)) * step(0.3, ih) * shelves;
         vec3 gcol = 0.5 + 0.5 * cos(6.2832 * (ih * 3.0 + kind + vec3(0.0, 0.33, 0.67)));
         room = mix(room, mix(vec3(0.25), gcol, 0.55) * 0.22, goods);
         room = mix(room, vec3(0.12, 0.09, 0.06), bBand(fract(sy), 0.0, 0.07, fwidth(sy)) * shelves);
@@ -889,6 +918,8 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
     float hw = bHash(id + vec2(bSd * 211.0, bSd * 97.0));
     vec3 glass = bSt == 4.0 ? vec3(0.045, 0.06, 0.075) : B_GLASS;
     float gk = win * aa;
+    vec3 wallCol = col;
+    float roughK = 1.0;
     #ifndef BRG_WIN_LITE
     if (bHist && bNear > 0.0) {
       // shutters: open beside the window, or closed over it
@@ -924,19 +955,28 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
       // depth without geometry: the glass sits back in the wall, so the
       // lintel and one jamb shade it; some rooms have a curtain; the pane
       // shows a little sky toward its top
-      vec2 wf = (f - wr.xy) / (wr.zw - wr.xy); // 0..1 in the window
+      // the pane lies 0.22 m back (0.32 m in a granite wall): from the side
+      // the near jamb covers part of it, from below the sill does
+      vec2 wsz = (wr.zw - wr.xy) * vec2(cw, fh); // the window, metres
+      vec2 wf = (f - wr.xy) / (wr.zw - wr.xy) - (bHist ? 0.32 : 0.22) * bPar / wsz; // 0..1 on the pane
+      vec2 wa = fwidth(wf) + 1e-4;
+      float onPane = smoothstep(-wa.x, wa.x, wf.x) * smoothstep(-wa.x, wa.x, 1.0 - wf.x) * smoothstep(-wa.y, wa.y, wf.y) * smoothstep(-wa.y, wa.y, 1.0 - wf.y);
       float curtain = step(hw, 0.45) * step(0.12, hw);
       float fold = 0.8 + 0.2 * sin(wf.x * (30.0 + 20.0 * hw));
       float drawn = curtain * (hw < 0.3 ? step(abs(wf.x - 0.5), 0.5) * step(wf.y, 0.55 + 0.4 * hw) : step(0.28, abs(wf.x - 0.5)));
       glass = mix(glass, vec3(0.34, 0.32, 0.27) * fold, drawn * 0.7 * bNear);
       glass += vec3(0.02, 0.026, 0.034) * wf.y * bNear;
-      float reveal = max(smoothstep(0.86, 0.97, wf.y), smoothstep(0.14, 0.03, wf.x) * 0.7);
-      glass *= 1.0 - 0.6 * reveal * bNear;
+      // the lintel shades the top of the pane
+      glass *= 1.0 - 0.45 * smoothstep(0.8, 1.0, wf.y) * bNear;
+      // the reveal: the wall's own colour, in shade (the jambs more than the sill)
+      vec3 jamb = (bHist ? B_STONE : wallCol) * (wf.y < 0.0 ? 0.8 : 0.5);
+      glass = mix(jamb, glass, onPane);
+      roughK = onPane;
     }
     #endif
     col = mix(col, glass, gk * 0.85);
     glassK = max(glassK, gk);
-    roughnessFactor = mix(roughnessFactor, mix(0.35, 0.16, bNear), gk);
+    roughnessFactor = mix(roughnessFactor, mix(0.35, 0.16, bNear), gk * roughK);
     #ifndef BRG_WIN_LITE
     // wrought-iron balconies: the first floor of most centre houses, some others
     if (bHist && bNear > 0.0) {
