@@ -122,7 +122,10 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   function laneNear(x, z) {
     const lanes = street()?.lanes;
     if (!lanes?.X?.length) return null;
-    let best = -1, bestD = (80 * M) ** 2;
+    // Up to 600 m: the opening view looks at a point that is often a park or
+    // a roof far from a pavement, and a walk that starts in a field is a bad
+    // first step. Farther out the visitor chose that place: start there.
+    let best = -1, bestD = (600 * M) ** 2;
     for (let k = 0; k < lanes.X.length; k++) {
       const d = (lanes.X[k] - x) ** 2 + (lanes.Z[k] - z) ** 2;
       if (d < bestD && !collider.blocked(lanes.X[k], lanes.Z[k], BODY)) { bestD = d; best = k; }

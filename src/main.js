@@ -2009,7 +2009,7 @@ async function start() {
     await step('nature', buildNatureLayer);
     await step('life', () => {
       // footprints, outlines: where the people of streetscape.js may not walk
-      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines, layers: { street: layers.on('street'), live: layers.on('live') } });
+      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines, roadGroup: roadLayer.group, layers: { street: layers.on('street'), live: layers.on('live') } });
       // the status pill follows the first load of the two life layers
       if (layers.on('street')) track('street', life.setStreet(true));
       if (layers.on('live')) track('live', life.setLive(true));

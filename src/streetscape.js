@@ -69,8 +69,9 @@ vec3 calcada(vec2 p, vec3 pat) {
     float w = p.y + 1.15 * sin(p.x * 0.6) + 0.3 * sin(p.x * 1.7 + 1.3);
     float d = abs(fract(w / P) - 0.5);
     float aa = 1.2 * px / P;
-    m = 1.0 - smoothstep(0.2 - aa, 0.2 + aa, d);
-    avg = 0.4;
+    // (a black band 0.9 m wide; at 1.3 m it swamped the square from eye height)
+    m = 1.0 - smoothstep(0.14 - aa, 0.14 + aa, d);
+    avg = 0.28;
   } else if (k < 2.5) {
     // a diagonal net of thin black lines: two rows of stones (16 cm)
     // every 3.2 m. Wider lines read as black bars from eye height.
@@ -696,6 +697,45 @@ function build(ctx, group, doc, pois, stats) {
     cz /= poly.length;
     if (cx * cx + cz * cz > SIDEWALK_R * SIDEWALK_R) continue;
     areas.push({ name: a.name || '', kind: a.k, poly, cx, cz, areaM: a.a || Math.abs(polyArea(poly)) / (S * S), pat: calcadaPatternOf(a.name, 'square') });
+  }
+  // A pedestrian street that crosses a patterned square takes the square's
+  // pattern. Its strip (roads.js) was paved by the street's own name, so it
+  // cut a plain band with straight edges through the waves. The pattern is
+  // drawn in world metres, so strip and square then join without a seam.
+  let repaved = 0;
+  if (ctx.roadGroup) {
+    const boxes = areas
+      .filter((a) => a.pat === CALCADA.waves || a.pat === CALCADA.net)
+      .map((a) => {
+        let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (const p of a.poly) {
+          x0 = Math.min(x0, p.x);
+          x1 = Math.max(x1, p.x);
+          z0 = Math.min(z0, p.z);
+          z1 = Math.max(z1, p.z);
+        }
+        return { a, x0, x1, z0, z1 };
+      })
+      .sort((p, q) => p.a.pat - q.a.pat); // waves win over the net
+    ctx.roadGroup.traverse((o) => {
+      const pat = o.geometry?.attributes?.aPat;
+      if (!o.isMesh || !pat) return;
+      const pos = o.geometry.attributes.position;
+      let changed = false;
+      for (let i = 0; i < pat.count; i++) {
+        const k = pat.getX(i);
+        if (k !== CALCADA.street && k !== CALCADA.sidewalk) continue;
+        const x = pos.getX(i), z = pos.getZ(i);
+        for (const b of boxes) {
+          if (x < b.x0 || x > b.x1 || z < b.z0 || z > b.z1 || !pip(b.a.poly, x, z)) continue;
+          pat.setX(i, b.a.pat);
+          changed = true;
+          repaved++;
+          break;
+        }
+      }
+      if (changed) pat.needsUpdate = true;
+    });
   }
   // calçada meshes: draped on the terrain, or laid on a landmark's paving
   const CT = { pos: [], pat: [], idx: [] };
