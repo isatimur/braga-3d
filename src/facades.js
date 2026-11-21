@@ -741,16 +741,73 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
     float bf = fract(bay);
     float hb = bHash(vec2(bi, bSd * 53.0));
     float openTop = min(3.0, g0 - 0.55);
+    // detail for the walker: only within some tens of metres
+    float bFine = bNear * (1.0 - smoothstep(0.02, 0.06, fwidth(bY)));
     if (bShop > 0.5) {
       float o = bRect(vec2(bf, bY), vec4(0.09, 0.0, 0.91, openTop));
       float frame = o - bRect(vec2(bf, bY), vec4(0.12, 0.0, 0.88, openTop - 0.1));
       vec3 fc = hb < 0.4 ? vec3(0.02, 0.05, 0.03) : hb < 0.7 ? vec3(0.08, 0.035, 0.015) : vec3(0.015);
       float oa = 1.0 - smoothstep(0.2, 0.45, fwidth(bay));
-      col = mix(col, B_GLASS * 1.3, o * oa);
+      float kind = bHash(vec2(bi * 7.0 + 3.0, bSd * 29.0)); // what the shop sells
+      vec3 shop = B_GLASS * 1.3; // far: a dark opening
+      float glassPart = 1.0;
+      #ifndef BRG_WIN_LITE
+      if (bFine > 0.0 && o > 0.0) {
+        // A shop front: a glazed door at one side, a display window with a
+        // stall riser on the rest, a transom over both, and the room behind.
+        float xm = bf * 3.3; // metres across the bay; the opening is 0.3..3.0
+        float dl = hb < 0.5 ? 0.3 : 2.05; // the door's left edge
+        float inDoor = step(dl, xm) * step(xm, dl + 0.95);
+        float wl = hb < 0.5 ? dl + 0.95 : 0.3;
+        float wr2 = hb < 0.5 ? 3.0 : dl;
+        // the room: a lit floor, a dark ceiling
+        vec3 room = mix(vec3(0.1, 0.085, 0.07), vec3(0.02, 0.02, 0.022), smoothstep(0.2, 2.6, bY));
+        // goods on two shelves in the window
+        // (the paving of the centre lies about 0.5 m above the wall's foot,
+        // so the riser and the kick plate start higher than in a real shop)
+        float sy = (bY - 0.95) / 0.62;
+        float row = floor(sy);
+        float item = floor(xm / 0.22);
+        float ih = bHash(vec2(item + bi * 31.0, row + kind * 17.0));
+        float shelves = step(0.95, bY) * step(row, 1.5) * (1.0 - inDoor);
+        float goods = step(fract(sy), 0.25 + 0.6 * ih) * step(0.12, fract(xm / 0.22)) * step(0.3, ih) * shelves;
+        vec3 gcol = 0.5 + 0.5 * cos(6.2832 * (ih * 3.0 + kind + vec3(0.0, 0.33, 0.67)));
+        room = mix(room, mix(vec3(0.25), gcol, 0.55) * 0.22, goods);
+        room = mix(room, vec3(0.12, 0.09, 0.06), bBand(fract(sy), 0.0, 0.07, fwidth(sy)) * shelves);
+        // the sky in the glass, brighter toward the top
+        room += vec3(0.05, 0.06, 0.075) * smoothstep(1.0, 3.0, bY);
+        // woodwork: the riser, the door's kick plate, posts, mullion, transom
+        float fw = 0.045;
+        float posts = 1.0 - step(fw, abs(xm - dl)) * step(fw, abs(xm - dl - 0.95));
+        float mull = (1.0 - step(fw * 0.8, abs(xm - 0.5 * (wl + wr2)))) * (1.0 - inDoor);
+        float transom = 1.0 - step(fw, abs(bY - 2.5));
+        float low = (1.0 - inDoor) * step(bY, 0.95) + inDoor * step(bY, 0.72);
+        float woodK = clamp(posts + mull + transom + low, 0.0, 1.0);
+        room = mix(room, fc * 1.5 + vec3(0.012), woodK);
+        float handle = inDoor * bRect(vec2(xm - dl, bY), vec4(0.78, 0.95, 0.83, 1.3));
+        room = mix(room, vec3(0.5, 0.42, 0.2), handle);
+        shop = mix(shop, room, bFine);
+        glassPart = 1.0 - bFine * clamp(woodK + handle, 0.0, 1.0);
+      }
+      #endif
+      col = mix(col, shop, o * oa);
       col = mix(col, fc, frame * oa * bNear);
+      // glass mirrors the street
+      roughnessFactor = mix(roughnessFactor, 0.14, o * oa * glassPart * bNear);
       // a fascia over the opening (near: the sign band)
-      float fascia = bBand(bY, openTop + 0.08, openTop + 0.45, fwidth(bY)) * step(0.06, bf) * step(bf, 0.94);
-      col = mix(col, fc * 1.5 + vec3(0.02), fascia * bNear * 0.8);
+      float fascia = bBand(bY, openTop + 0.08, openTop + 0.5, fwidth(bY)) * step(0.06, bf) * step(bf, 0.94);
+      vec3 sign = kind < 0.35 ? vec3(0.42, 0.39, 0.3) : fc * 1.5 + vec3(0.02);
+      col = mix(col, sign, fascia * bNear * 0.8);
+      #ifndef BRG_WIN_LITE
+      if (bFine > 0.0) {
+        // the shop's name: a row of letter-sized marks
+        float lx = bf * 3.3 / 0.11;
+        float lh = bHash(vec2(floor(lx) + bi * 13.0, kind * 91.0));
+        float span = 0.7 + 0.5 * kind; // half the name's length, metres
+        float letters = step(0.22, fract(lx)) * step(lh, 0.8) * step(abs(bf * 3.3 - 1.65), span) * bBand(bY, openTop + 0.2, openTop + 0.38, fwidth(bY));
+        col = mix(col, kind < 0.35 ? fc + vec3(0.01) : vec3(0.5, 0.44, 0.28), letters * fascia * bFine);
+      }
+      #endif
       shopK = o * step(hb, 0.72);
       glassK = max(glassK, o * oa);
     } else if (bSt != 4.0) {
@@ -758,8 +815,27 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
       float gw = bRect(vec2(bf, bY), vec4(0.33, 1.0, 0.67, 2.5)) * step(0.4, hb) * step(2.9, g0);
       vec3 wood = mix(vec3(0.06, 0.03, 0.015), vec3(0.03, 0.06, 0.04), step(0.5, bSd));
       float oa = 1.0 - smoothstep(0.2, 0.45, fwidth(bay));
+      #ifndef BRG_WIN_LITE
+      if (bFine > 0.0 && door + gw > 0.0) {
+        // the door: two leaves with sunk panels, a fanlight, a brass knob;
+        // the window: a sash with glazing bars
+        float dx = (bf - 0.32) / 0.36; // 0..1 across the opening
+        float panel = bRect(vec2(fract(dx * 2.0), fract(bY / 1.02)), vec4(0.2, 0.12, 0.8, 0.88)) * step(bY, 2.04);
+        float split = 1.0 - step(0.012, abs(dx - 0.5));
+        float fan = bRect(vec2(dx, bY), vec4(0.08, 2.12, 0.92, 2.42));
+        float knob = bRect(vec2(dx, bY), vec4(0.54, 1.0, 0.59, 1.08));
+        vec3 leaf = wood * (1.0 - 0.4 * panel) * (1.0 - 0.7 * split);
+        leaf = mix(leaf, B_GLASS + vec3(0.03, 0.035, 0.045), fan);
+        leaf = mix(leaf, vec3(0.5, 0.42, 0.2), knob);
+        wood = mix(wood, leaf, bFine);
+        float bars = 1.0 - step(0.025, abs(dx - 0.5)) * step(0.03, abs(bY - 1.75));
+        col = mix(col, B_FRAME, gw * bars * bFine * oa);
+        gw *= 1.0 - bars * bFine;
+      }
+      #endif
       col = mix(col, wood, door * oa);
       col = mix(col, B_GLASS, gw * oa);
+      roughnessFactor = mix(roughnessFactor, 0.2, gw * oa * bNear);
       // stone door frames up close
       float df = (bRect(vec2(bf, bY), vec4(0.28, 0.0, 0.72, 2.7)) - bRect(vec2(bf, bY), vec4(0.32, 0.0, 0.68, 2.5))) * step(hb, 0.4);
       col = mix(col, B_STONE, df * bNear * oa);
