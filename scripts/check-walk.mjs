@@ -149,6 +149,29 @@ async function run(profile) {
     if (r.none && kind === 'vehicle') console.log(`note ${profile}: ${r.none} (${kind})`);
     else ok(!r.none && r.m >= clearM, `${profile}: a ${kind} pushes the walker out${r.none ? ` (${r.none})` : ` (${r.m.toFixed(2)} m from its centre, ${r.drawn} drawn)`}`);
   }
+  // water: the middle of a lake or a pond is no place to stand (a bridge or
+  // a quay drawn over it is)
+  const wet = await page.evaluate(() => {
+    const P = window.__braga;
+    const rings = P.waterRings || [];
+    let tested = 0, blocked = 0;
+    for (const r of rings) {
+      let cx = 0, cz = 0;
+      for (const p of r) { cx += p.x; cz += p.z; }
+      cx /= r.length;
+      cz /= r.length;
+      let inside = false;
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+        if (r[i].z > cz !== r[j].z > cz && cx < ((r[j].x - r[i].x) * (cz - r[i].z)) / (r[j].z - r[i].z) + r[i].x) inside = !inside;
+      }
+      if (!inside) continue; // a bent outline: its centre is on the bank
+      tested++;
+      if (!P.walk.teleport(cx, cz)) blocked++;
+    }
+    return { rings: rings.length, tested, blocked };
+  });
+  if (!wet.tested) console.log(`  note ${profile}: no water area to test (${wet.rings} outlines)`);
+  else ok(wet.blocked >= wet.tested * 0.8, `${profile}: water blocks the walker (${wet.blocked} of ${wet.tested} water areas)`);
   await page.evaluate(({ lat, lon }) => {
     const P = window.__braga;
     const q = P.project(lat, lon);

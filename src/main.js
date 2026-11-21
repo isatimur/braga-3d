@@ -336,6 +336,7 @@ async function start() {
     scene.add(nature.group);
     if (nature.landcover) ground.userData.setLandcover(nature.landcover, nature.landRect);
     debug.nature = nature.stats;
+    debug.waterRings = nature.waterRings;
     // seek-safe water clock: cinema / story scrubbing and deterministic shots
     debug.water = { seek: seekWater, resume: resumeWater };
     nature.setNearRadius(perf.knobs.natureNearM);
@@ -1213,6 +1214,7 @@ async function start() {
           onPlace: (i) => select(i),
           reducedMotion,
           bounds: terrain.bounds,
+          water: () => nature?.waterRings ?? null,
           onEnter: () => {
             document.body.classList.add('is-walk');
             mapLines(false);
