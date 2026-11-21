@@ -211,6 +211,16 @@ async function start() {
   await nextFrame();
   const roadLayer = buildRoads(roads, project, heightAt, { waterRibbon: !loaded.nature, lite: LITE });
   scene.add(roadLayer.group);
+  // The glowing road lines and the gold outlines of the places belong to
+  // the map view. From the street they hang in the air, so walk mode hides
+  // them. The water line and the tunnel hint keep their own rule (roads.js:
+  // setWaterLine, setViewDistance).
+  const mapLines = (on) => {
+    marks.outlineMaterial.visible = on;
+    for (const o of roadLayer.group.children) {
+      if (o.isLineSegments2 && o.name !== 'road-water' && o.name !== 'road-tunnel-hint') o.visible = on;
+    }
+  };
   debug.roadSegments = roadLayer.counts;
   debug.roadCells = () => roadLayer.cellStats; // per object: cells, runs, drawn of total
   // The road layer's city-wide meshes draw only their cells in view
@@ -1203,9 +1213,13 @@ async function start() {
           onPlace: (i) => select(i),
           reducedMotion,
           bounds: terrain.bounds,
-          onEnter: () => document.body.classList.add('is-walk'),
+          onEnter: () => {
+            document.body.classList.add('is-walk');
+            mapLines(false);
+          },
           onExit: () => {
             document.body.classList.remove('is-walk');
+            mapLines(true);
             modeCtx.onExit();
           },
         });

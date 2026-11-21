@@ -72,21 +72,24 @@ vec3 calcada(vec2 p, vec3 pat) {
     m = 1.0 - smoothstep(0.2 - aa, 0.2 + aa, d);
     avg = 0.4;
   } else if (k < 2.5) {
-    // a diagonal net of thin black lines
-    P = 2.2;
+    // a diagonal net of thin black lines: two rows of stones (16 cm)
+    // every 3.2 m. Wider lines read as black bars from eye height.
+    P = 3.2;
     vec2 q = vec2(p.x + p.y, p.x - p.y) * 0.70710678;
     vec2 d = abs(fract(q / P) - 0.5);
     float aa = 1.2 * px / P;
-    float b = 0.43;
-    m = max(smoothstep(b - aa, b + aa, d.x), smoothstep(b - aa, b + aa, d.y));
-    avg = 0.26;
+    float b = 0.475;
+    m = 0.8 * max(smoothstep(b - aa, b + aa, d.x), smoothstep(b - aa, b + aa, d.y));
+    avg = 0.08;
   }
   m = mix(m, avg, smoothstep(P * 0.12, P * 0.35, px));
-  // the streets: a black band along both edges
+  // the streets: a slightly darker course of stone along both edges. It
+  // stays faint: where two streets meet their strips overlap, and a black
+  // band drew hard bars across the junction.
   if (k > 3.5) {
     float e = pat.z - abs(pat.y);
-    float band = 1.0 - smoothstep(0.4 - px, 0.4 + px, e);
-    m = max(m, mix(band, 0.4 / max(pat.z, 0.4) * 0.5, smoothstep(0.15, 0.5, px)));
+    float band = 1.0 - smoothstep(0.3 - px, 0.3 + px, e);
+    m = max(m, 0.16 * mix(band, 0.3 / max(pat.z, 0.3) * 0.5, smoothstep(0.15, 0.5, px)));
   }
   vec3 lime = vec3(0.56, 0.54, 0.48);
   vec3 bas = vec3(0.075, 0.075, 0.08);

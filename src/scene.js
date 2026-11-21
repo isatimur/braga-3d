@@ -447,6 +447,8 @@ function acesInPlace(c, exposure) {
 }
 
 // ------------------------------------------------------------ sky
+// how far the light in the shade is pulled from the sky's blue to neutral
+const SHADE_NEUTRAL = 0.55;
 const SKY_VERT = /* glsl */ `
   varying vec3 vDir;
   void main() {
@@ -487,7 +489,11 @@ const SKY_FRAG = /* glsl */ `
     }
     float disk = smoothstep(0.99965, 0.99985, dot(d, uSunDir));
     col += uDisk * (disk * uDiskI + pow(sd, 400.0) * uDiskI * 0.12) * sky * above;
-    // environment only: dark earth below the horizon, lit by the sky colour
+    // environment only: the light that fills the shade. A street is lit by
+    // the sky and by its own sunlit walls and paving, so the fill is far
+    // less blue than the sky; the pure sky colour painted every shadow
+    // cobalt. Then dark earth below the horizon, lit by the sky colour.
+    col = mix(col, vec3(dot(col, vec3(0.2126, 0.7152, 0.0722))) * vec3(1.05, 1.0, 0.93), ${SHADE_NEUTRAL.toFixed(2)} * uEnv);
     col = mix(col, uGround, smoothstep(0.02, -0.14, h) * uEnv);
     gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
@@ -712,6 +718,9 @@ export function createAtmosphere(renderer, scene, { reducedMotion = false, shado
     // upper sky and the ground term), normalised; brightness is hemiI
     const norm = (c) => c.multiplyScalar(1 / Math.max(c.r, c.g, c.b, 0.02));
     norm(hemi.color.copy(state.zenith).lerp(state.mid, 0.6));
+    // Shade in a street is lit by the sky and by the sunlit walls and
+    // paving, so it is much less blue than the sky itself.
+    hemi.color.lerp(_c.setScalar(1), SHADE_NEUTRAL);
     norm(hemi.groundColor.copy(skyU.uGround.value));
     hemi.intensity = state.hemiI;
     scene.environmentIntensity = state.env;
