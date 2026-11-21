@@ -64,9 +64,10 @@ export function createCollider(polys, cell = 8) {
     return false;
   }
 
-  // Move from (x, z) by (dx, dz). A blocked step slides: first along the
-  // wall (the step with its blocked axis removed), then stays. Long steps
+  // Move from (x, z) by (dx, dz). A blocked step slides along the wall, or
+  // stays when no direction within 85 degrees is free. Long steps
   // are cut into pieces no longer than the radius, so a thin wall holds.
+  const TURNS = [15, 30, 45, 60, 75, 85].map((d) => [Math.cos((d * Math.PI) / 180), Math.sin((d * Math.PI) / 180)]);
   function move(x, z, dx, dz, r = 0.1) {
     const len = Math.hypot(dx, dz);
     if (len === 0) return { x, z, hit: false };
@@ -76,9 +77,22 @@ export function createCollider(polys, cell = 8) {
     for (let i = 0; i < parts; i++) {
       if (!blocked(x + sx, z + sz, r)) { x += sx; z += sz; continue; }
       hit = true;
-      if (sx !== 0 && !blocked(x + sx, z, r)) x += sx;
-      else if (sz !== 0 && !blocked(x, z + sz, r)) z += sz;
-      else break;
+      // slide: the step turned away from the wall by the smallest angle that
+      // is free, shortened to its share along that direction (a wall at any
+      // angle, not only one along an axis)
+      let slid = false;
+      for (const [c, s] of TURNS) {
+        for (const sg of [1, -1]) {
+          const tx = (sx * c - sz * s * sg) * c, tz = (sz * c + sx * s * sg) * c;
+          if (blocked(x + tx, z + tz, r)) continue;
+          x += tx;
+          z += tz;
+          slid = true;
+          break;
+        }
+        if (slid) break;
+      }
+      if (!slid) break;
     }
     return { x, z, hit };
   }
