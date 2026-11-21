@@ -1133,8 +1133,9 @@ const GROUND_COLOR = /* glsl */ `
     col = mix(col, field, step(0.2, L.b) * 0.7);
     vec3 grass = vec3(0.085, 0.150, 0.035) * gMul * (0.85 + 0.3 * fine);
     col = mix(col, grass, L.g * 0.85);
-    vec3 urban = vec3(0.185, 0.175, 0.160) * (0.9 + 0.2 * n2);
-    col = mix(col, urban, L.a * 0.8 * (1.0 - L.g * 0.6));
+    // town ground: worn stone and packed earth, no meadow showing through
+    vec3 urban = vec3(0.235, 0.225, 0.205) * (0.86 + 0.2 * n2 + 0.1 * fine);
+    col = mix(col, urban, L.a * 0.93 * (1.0 - L.g * 0.6));
     // canopy: dark, mottled at crown scale so a wood reads as trees from afar
     float crowns = texture2D(tNoise, W.xz * 0.21).a;
     vec3 canopy = mix(vec3(0.022, 0.045, 0.018), vec3(0.060, 0.098, 0.034) * wMul, smoothstep(0.3, 0.75, crowns * 0.7 + n2 * 0.3));
