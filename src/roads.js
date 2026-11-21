@@ -85,6 +85,132 @@ function geometryOf(T) {
   return g;
 }
 
+// The carriageways of the streets with cars, as segments in a grid.
+// inside(x, z, way): the point lies on the carriageway of another way.
+function carriageways(net, CELL = 8) {
+  const { X, Z, Y, G } = net;
+  const seg = [];
+  const grid = new Map();
+  net.ways.forEach((w, wi) => {
+    if (!w.car || w.tunnel) return;
+    const half = (w.widthM / 2) * S;
+    for (let i = w.start; i < w.start + w.n - 1; i++) {
+      if (Y[i] - G[i] > 1 || Y[i + 1] - G[i + 1] > 1) continue; // a deck passes over
+      const k = seg.length / 6;
+      seg.push(X[i], Z[i], X[i + 1], Z[i + 1], half, wi);
+      for (let gx = Math.floor((Math.min(X[i], X[i + 1]) - half) / CELL); gx <= Math.floor((Math.max(X[i], X[i + 1]) + half) / CELL); gx++) {
+        for (let gz = Math.floor((Math.min(Z[i], Z[i + 1]) - half) / CELL); gz <= Math.floor((Math.max(Z[i], Z[i + 1]) + half) / CELL); gz++) {
+          const key = gx * 65536 + gz;
+          let c = grid.get(key);
+          if (!c) grid.set(key, (c = []));
+          c.push(k);
+        }
+      }
+    }
+  });
+  return {
+    inside(x, z, way) {
+      const c = grid.get(Math.floor(x / CELL) * 65536 + Math.floor(z / CELL));
+      if (!c) return false;
+      for (const k of c) {
+        const o = k * 6;
+        if (net.ways[seg[o + 5]] === way) continue;
+        const ax = seg[o];
+        const az = seg[o + 1];
+        const dx = seg[o + 2] - ax;
+        const dz = seg[o + 3] - az;
+        const u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1e-9)));
+        const ex = ax + dx * u - x;
+        const ez = az + dz * u - z;
+        if (ex * ex + ez * ez < seg[o + 4] * seg[o + 4]) return true;
+      }
+      return false;
+    },
+  };
+}
+
+// One sidewalk of a way (sgn: 1 left, -1 right of travel), built as a kerbed
+// body and not as a painted strip: a granite kerb stone and the calçada walk
+// 12 cm above the carriageway, the kerb's face down to the carriageway, and a
+// side wall from the outer edge down into the ground, so the walk never
+// hangs in the air on a slope. In steps of 3 m at most; a step that lies on
+// the carriageway of another street is left out, so at a junction the
+// sidewalk ends at the crossing street's kerb line.
+const KERB_UP = 0.03; // world units: 12 cm
+function sidewalk(T, net, heightAt, w, sgn, half, sw, swc, kerb, crossing) {
+  const { X, Z, HID } = net;
+  const kw = 0.25 * S; // the kerb stone
+  const o0 = half; // kerb line
+  const o1 = half + kw;
+  const o2 = half + kw + sw;
+  const top = RIBBON_LIFT + KERB_UP;
+  const wallCol = [kerb[0] * 0.7, kerb[1] * 0.7, kerb[2] * 0.7];
+  const quad = (a, b, c, d, n, col, pat) => {
+    const v = T.pos.length / 3;
+    for (const p of [a, b, c, d]) {
+      T.pos.push(p[0], p[1], p[2]);
+      T.nor.push(n[0], n[1], n[2]);
+      T.col.push(col[0], col[1], col[2]);
+    }
+    if (pat) T.pat.push(pat[0], pat[1], pat[2], pat[0], -pat[1], pat[2], pat[0], -pat[1], pat[2], pat[0], pat[1], pat[2]);
+    else T.pat.push(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    // wound so the face looks along n (the corner order depends on the side)
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const wx = d[0] - a[0], wy = d[1] - a[1], wz = d[2] - a[2];
+    const f = (uy * wz - uz * wy) * n[0] + (uz * wx - ux * wz) * n[1] + (ux * wy - uy * wx) * n[2];
+    if (f >= 0) T.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
+    else T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
+  };
+  for (let i = w.start; i < w.start + w.n - 1; i++) {
+    if (HID[i] && HID[i + 1]) continue;
+    const ax = X[i], az = Z[i];
+    let dx = X[i + 1] - ax, dz = Z[i + 1] - az;
+    const L = Math.hypot(dx, dz);
+    if (L < 1e-5) continue;
+    dx /= L;
+    dz /= L;
+    const lx = dz * sgn, lz = -dx * sgn; // away from the carriageway
+    const steps = Math.max(1, Math.ceil(L / (3 * S)));
+    // a little past each end, so the steps of two segments meet at a bend
+    const t0 = -Math.min(o2 - o0, L) * 0.5, t1 = L - t0;
+    const at = (t, o) => {
+      const u = Math.max(0, Math.min(1, t / L));
+      const y = net.surfaceY(i, sgn * o) * (1 - u) + net.surfaceY(i + 1, sgn * o) * u;
+      return [ax + dx * t + lx * o, y, az + dz * t + lz * o];
+    };
+    // which steps stay; a run of them becomes one piece (the surface is
+    // straight between the segment's ends, so nothing is lost)
+    const keep = [];
+    for (let s = 0; s < steps; s++) {
+      const tm = (L * (s + 0.5)) / steps;
+      const mid = at(tm, (o0 + o2) / 2);
+      keep.push(!(crossing.inside(mid[0], mid[2], w) || crossing.inside(ax + dx * tm + lx * o0, az + dz * tm + lz * o0, w) || crossing.inside(ax + dx * tm + lx * o2, az + dz * tm + lz * o2, w)));
+    }
+    for (let s = 0; s < steps; s++) {
+      if (!keep[s]) continue;
+      let e = s;
+      while (e + 1 < steps && keep[e + 1]) e++;
+      const ta = s === 0 ? t0 : (L * s) / steps;
+      const tb = e === steps - 1 ? t1 : (L * (e + 1)) / steps;
+      s = e;
+      const up = (p, d) => [p[0], p[1] + d, p[2]];
+      const a0 = at(ta, o0), b0 = at(tb, o0);
+      const a1 = at(ta, o1), b1 = at(tb, o1);
+      const a2 = at(ta, o2), b2 = at(tb, o2);
+      // the kerb's face, the kerb stone, the walk
+      quad(up(a0, RIBBON_LIFT), up(b0, RIBBON_LIFT), up(b0, top), up(a0, top), [-lx, 0, -lz], kerb, null);
+      quad(up(a0, top), up(a1, top), up(b1, top), up(b0, top), [0, 1, 0], kerb, null);
+      const hm = sw / S / 2;
+      quad(up(a2, top), up(a1, top), up(b1, top), up(b2, top), [0, 1, 0], swc, [CALCADA.sidewalk, hm, hm]);
+      // the side wall, into the ground
+      const ga = heightAt(a2[0], a2[2]) - 0.3 * S, gb = heightAt(b2[0], b2[2]) - 0.3 * S;
+      if (a2[1] + top - ga > 0.05 || b2[1] + top - gb > 0.05) {
+        quad(up(a2, top), up(b2, top), [b2[0], Math.min(gb, b2[1] + top), b2[2]], [a2[0], Math.min(ga, a2[1] + top), a2[2]], [lx, 0, lz], wallCol, null);
+      }
+    }
+  }
+}
+
 // A flat strip along points i0..i1 of the network, offset `off` (world,
 // left of travel positive) with half width h, at height Y + lift. One quad
 // per segment, lengthened by `ext` at both ends so consecutive quads overlap
@@ -509,18 +635,14 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
   const SW = newT(true);
   const swc = lin(SIDEWALK);
   const kerb = lin(KERB);
+  const crossing = carriageways(net);
   for (const w of net.ways) {
     if (!WALKED.has(w.hw) || w.tunnel || w.bridge) continue;
     const m = w.start + (w.n >> 1);
     if (X[m] * X[m] + Z[m] * Z[m] > SIDEWALK_R * SIDEWALK_R) continue;
     const half = (w.widthM / 2) * S;
     const sw = sidewalkM(w.hw) * S;
-    for (const sgn of [1, -1]) {
-      SW.cur = CALCADA.sidewalk;
-      strip(SW, net, w.start, w.start + w.n - 1, sgn * (half + sw / 2 + 0.15 * S), sw / 2, RIBBON_LIFT + 0.02, swc, 0);
-      SW.cur = 0;
-      strip(SW, net, w.start, w.start + w.n - 1, sgn * (half + 0.08 * S), 0.12 * S, RIBBON_LIFT + 0.03, kerb, 0);
-    }
+    for (const sgn of [1, -1]) sidewalk(SW, net, heightAt, w, sgn, half, sw, swc, kerb, crossing);
   }
   // roundabout islands: rings of roundabout ways (closed, or chained end to end)
   const IT = newT();
