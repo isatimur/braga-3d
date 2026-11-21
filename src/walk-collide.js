@@ -7,7 +7,8 @@
 const X = (p) => (Array.isArray(p) ? p[0] : p.x);
 const Z = (p) => (Array.isArray(p) ? p[1] : p.z);
 
-export function createCollider(polys, cell = 8) {
+// also(x, z): an extra rule that blocks a point (walk mode: open water).
+export function createCollider(polys, cell = 8, also = null) {
   const grid = new Map();
   const list = [];
   for (const src of polys || []) {
@@ -59,7 +60,7 @@ export function createCollider(polys, cell = 8) {
   // eight points on its rim
   const RIM = [[1, 0], [0.7071, 0.7071], [0, 1], [-0.7071, 0.7071], [-1, 0], [-0.7071, -0.7071], [0, -1], [0.7071, -0.7071]];
   function blocked(x, z, r = 0) {
-    if (inside(x, z)) return true;
+    if (inside(x, z) || (also && also(x, z))) return true;
     if (r > 0) for (const [cx, cz] of RIM) if (inside(x + cx * r, z + cz * r)) return true;
     return false;
   }

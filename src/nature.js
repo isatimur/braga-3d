@@ -1210,6 +1210,8 @@ export function buildNature(opts) {
     landcover,
     landRect,
     openAt,
+    // the outlines of the lakes, ponds and wide rivers (walk mode: no walking on water)
+    waterRings: areas.filter((a) => a.k === 'water').map((a) => a.rings[0]),
     uniforms,
     water,
     leafField,

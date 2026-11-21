@@ -54,8 +54,20 @@ const KEYS = {
 // places: () => [{ i, name, x, z, outline }] (world units), read at start;
 // onPlace(i): the visitor asked for that place's card (the mode has ended)
 // street: () => the built street layer ({ lanes, spots }) or null
-export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], street = () => null, reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
-  let collider = createCollider(polys);
+export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], street = () => null, water = () => null, reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
+  // Open water blocks the walker, but not where a street, a sidewalk or a
+  // paved square is drawn over it (a bridge, a quay).
+  let wet = null;
+  let wetRings = null;
+  const wetAt = (x, z) => {
+    const rings = water();
+    if (rings !== wetRings) {
+      wetRings = rings;
+      wet = rings?.length ? createCollider(rings) : null;
+    }
+    return !!wet && wet.inside(x, z) && !pavedAt(x, z);
+  };
+  let collider = createCollider(polys, 8, wetAt);
   let seatCount = 0;
   let solidCount = 0; // furniture obstacles in the collider
   // The street layer may arrive after this module, or be switched off. At
@@ -102,8 +114,10 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     const key = meshes.map((o) => o.geometry.uuid).join();
     if (surf && surf.key === key && Math.hypot(x - surf.x, z - surf.z) < SURF_R * 0.6) return;
     const tri = [];
+    const paved = [];
     const grid = new Map();
     for (const o of meshes) {
+      const hard = o.name !== 'ground' && o.name !== 'street-plate' ? 1 : 0;
       o.updateWorldMatrix(true, false);
       const e = o.matrixWorld.elements;
       const p = o.geometry.attributes.position.array, ix = o.geometry.index?.array;
@@ -129,6 +143,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         if (Math.abs((v[5] - v[8]) * (v[0] - v[6]) + (v[6] - v[3]) * (v[2] - v[8])) < 1e-9) continue;
         const at = tri.length;
         tri.push(...v);
+        paved.push(hard);
         for (let i = Math.floor(x0); i <= Math.floor(x1); i++) {
           for (let j = Math.floor(z0); j <= Math.floor(z1); j++) {
             const g = i * 65536 + j;
@@ -139,7 +154,22 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         }
       }
     }
-    surf = tri.length ? { tri: new Float32Array(tri), grid, x, z, key } : null;
+    surf = tri.length ? { tri: new Float32Array(tri), paved, grid, x, z, key } : null;
+  }
+  // a street, a sidewalk or a paved square is drawn at (x, z)
+  function pavedAt(x, z) {
+    const bucket = surf?.grid.get(Math.floor(x) * 65536 + Math.floor(z));
+    if (!bucket) return false;
+    const t = surf.tri;
+    for (const a of bucket) {
+      if (!surf.paved[a / 9]) continue;
+      const x1 = t[a], z1 = t[a + 2], x2 = t[a + 3], z2 = t[a + 5], x3 = t[a + 6], z3 = t[a + 8];
+      const den = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3);
+      const u = ((z2 - z3) * (x - x3) + (x3 - x2) * (z - z3)) / den;
+      const v = ((z3 - z1) * (x - x3) + (x1 - x3) * (z - z3)) / den;
+      if (u >= -1e-6 && v >= -1e-6 && u + v <= 1 + 1e-6) return true;
+    }
+    return false;
   }
   // the drawn surface under (x, z): the highest one the walker can step on
   // from `from`; with none in reach, the lowest one above
@@ -211,7 +241,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       }
     }
     solidCount = extra.length - before;
-    collider = createCollider([...polys, ...extra]);
+    collider = createCollider([...polys, ...extra], 8, wetAt);
   }
   // People and vehicles are bodies too: the walker cannot stand inside one.
   // Their places come from the instance matrices the crowd and the traffic
