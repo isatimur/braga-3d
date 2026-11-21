@@ -20,6 +20,7 @@ import { CITY } from './city.js';
 
 // ------------------------------------------------------------ tuning
 const LAND_PX = 0.5; // land-cover mask: pixels per world unit (8 m per pixel)
+const TOWN_STREET = { primary: 1, secondary: 1, minor: 1 };
 const NEAR = 360; // world units (1.4 km): nearer clumps are meshes, farther billboards
 const REPART_MOVE = 18; // re-split after the camera moved this far
 // relative tree density per square metre, by land-cover kind
@@ -663,12 +664,40 @@ export function buildNature(opts) {
   const f = rd(Lf);
   const g = rd(Lg);
   const b = rd(Lb);
-  const u = blur(rd(Lu), lw, lh, 3);
+  const built = rd(Lu);
+  const u = blur(built, lw, lh, 3);
+  // The town's open ground: a square, a yard or a gap between two streets is
+  // paved or bare, not meadow. Houses and streets, closed over gaps up to
+  // about 50 m, and only where the houses stand dense (a village road in the
+  // fields keeps its grass verge).
+  if (opts.roads?.features?.length) {
+    Lu.ctx.lineCap = 'round';
+    Lu.ctx.lineJoin = 'round';
+    Lu.ctx.lineWidth = 3 / LAND_PX;
+    for (const feat of opts.roads.features) {
+      if (!TOWN_STREET[feat.kind] || !Array.isArray(feat.pts) || feat.pts.length < 2) continue;
+      Lu.ctx.beginPath();
+      feat.pts.forEach((q, i) => {
+        const p = project(q[0], q[1]);
+        if (i) Lu.ctx.lineTo(p.x, p.z);
+        else Lu.ctx.moveTo(p.x, p.z);
+      });
+      Lu.ctx.stroke();
+    }
+  }
+  const fabric = rd(Lu);
+  const grown = blur(fabric, lw, lh, 3);
+  for (let i = 0; i < px; i++) grown[i] = grown[i] > 10 ? 255 : 0;
+  const closed = blur(grown, lw, lh, 3, 1);
+  for (let i = 0; i < px; i++) closed[i] = closed[i] > 250 ? 255 : 0;
+  const soft = blur(closed, lw, lh, 1, 1);
+  const dense = blur(built, lw, lh, 12);
   for (let i = 0; i < px; i++) {
     mask[i * 4] = f[i * 4];
     mask[i * 4 + 1] = g[i * 4];
     mask[i * 4 + 2] = b[i * 4];
-    mask[i * 4 + 3] = Math.min(255, u[i] * 1.6);
+    const town = soft[i] * Math.min(1, Math.max(0, (dense[i] - 30) / 30));
+    mask[i * 4 + 3] = Math.min(255, Math.max(u[i] * 1.6, town));
   }
   // canvas rows run north to south, as do world z; no flip needed
   const landcover = new THREE.DataTexture(mask, lw, lh, THREE.RGBAFormat);
@@ -1251,9 +1280,9 @@ function buildLeafField(trees, rect, heightAt) {
 }
 
 // separable box blur of the red channel of RGBA data; returns one channel
-function blur(rgba, w, h, r) {
+function blur(rgba, w, h, r, stride = 4) {
   const a = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) a[i] = rgba[i * 4];
+  for (let i = 0; i < w * h; i++) a[i] = rgba[i * stride];
   const tmp = new Float32Array(w * h);
   const k = 1 / (2 * r + 1);
   for (let y = 0; y < h; y++) {
