@@ -46,6 +46,43 @@ export const SURFACE = { primary: 0x5b5753, secondary: 0x66615a, minor: 0x777066
 
 export const LIFT = 0.35; // line: world units (1.4 m) above the road surface
 export const RIBBON_LIFT = 0.12; // ribbon: 0.5 m
+
+// A worn road surface for a flat-coloured material: aggregate a few
+// centimetres wide, patches of older and newer surface some metres wide.
+// Each scale fades out once it is smaller than a pixel, so the view from
+// above keeps its flat colour.
+export function asphaltGrain(m) {
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vGrainP;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvGrainP = position * ${(1 / S).toFixed(1)};`);
+    sh.fragmentShader = sh.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+varying vec3 vGrainP;
+float grH(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float grN(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(grH(i), grH(i + vec2(1.0, 0.0)), f.x), mix(grH(i + vec2(0.0, 1.0)), grH(i + vec2(1.0, 1.0)), f.x), f.y);
+}`,
+      )
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+{
+  vec2 gp = vGrainP.xz;
+  float px = length(fwidth(gp));
+  float fine = (grN(gp * 28.0) - 0.5) * (1.0 - smoothstep(0.01, 0.05, px));
+  float mid = (grN(gp * 3.1) - 0.5) * (1.0 - smoothstep(0.1, 0.5, px));
+  float wear = (grN(gp * 0.23 + 7.0) - 0.5) * (1.0 - smoothstep(1.0, 5.0, px));
+  diffuseColor.rgb *= 1.0 + fine * 0.22 + mid * 0.12 + wear * 0.14;
+}`,
+      );
+  };
+  return m;
+}
 export const MAX_SEG = 6; // subdivide longer segments so they follow the terrain
 
 const CONCRETE = 0xbab5ab;
@@ -420,7 +457,7 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
     if (!T.idx.length) return;
     const rm = T.pat
       ? calcadaMaterial({ polygonOffsetUnits: -3 - k, roughness: 0.92, lite })
-      : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 - k });
+      : asphaltGrain(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -3 - k }));
     materials.push(rm);
     const mesh = new THREE.Mesh(geometryOf(T), rm);
     mesh.name = `street-${kind}`;
