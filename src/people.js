@@ -19,6 +19,7 @@
 //     3 am, the São João night fuller still. Only within about 600 m of the
 //     point the camera looks at.
 import * as THREE from 'three';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { S } from './geo.js';
 
 // ------------------------------------------------------------ the hour
@@ -42,9 +43,11 @@ export function pedestrianDemand(hour, weekend, ymd = 0) {
 export const DEMAND_MAX = 1.5;
 
 // ------------------------------------------------------------ the figures
-// metres, standing on y = 0, facing +z; aPart: 0 shirt, 1 / 2 legs, 3 / 4
-// arms, 5 skin, 6 hair, 7 both legs (light mode). The build bakes the
-// proportions; the material's hip / shoulder pivots must match them.
+// metres, standing on y = 0, facing +z; rounded, in the style of the
+// visitor's figure (walk-figure.js). aPart: 0 shirt, 1 / 2 legs, 3 / 4
+// arms, 5 skin, 6 hair, 7 hips, 8 / 9 shoes, 10 / 11 hands. The build bakes
+// the proportions; the material's hip / shoulder pivots must match them.
+// Light mode draws every person as the adult.
 const BUILDS = ['adult', 'child', 'elderly', 'shopper', 'cyclist'];
 const PIVOTS = { adult: [0.86, 1.4], child: [0.5, 0.92], elderly: [0.76, 1.2], shopper: [0.86, 1.4], cyclist: [0.8, 1.4] };
 
@@ -73,28 +76,89 @@ function buildGeometry(build, lite) {
       }
     }
   };
-  if (lite) {
-    // one cheap figure for every build (light mode)
-    box(-0.17, 0, -0.08, 0.17, 0.84, 0.08, 7, ['bottom', 'top']);
-    box(-0.19, 0.84, -0.11, 0.19, 1.44, 0.11, 0, ['bottom']);
-    box(-0.1, 1.44, -0.1, 0.1, 1.7, 0.11, 5, ['bottom']);
-  } else if (build === 'child') {
-    box(-0.11, 0, -0.06, -0.015, 0.5, 0.06, 1, ['top']);
-    box(0.015, 0, -0.06, 0.11, 0.5, 0.06, 2, ['top']);
-    box(-0.145, 0.48, -0.09, 0.145, 0.92, 0.09, 0, ['bottom']);
-    box(-0.225, 0.5, -0.045, -0.15, 0.9, 0.045, 3);
-    box(0.15, 0.5, -0.045, 0.225, 0.9, 0.045, 4);
-    box(-0.12, 0.92, -0.12, 0.12, 1.2, 0.12, 5, ['bottom']);
-    box(-0.126, 1.14, -0.126, 0.126, 1.27, 0.1, 6, ['bottom']);
+  // A round body about a vertical axis. rings: [y, scale 0..1, normal y];
+  // the cross-section is an ellipse (rx, rz). The axis may lean: its z runs
+  // from z0 at the first ring to z1 at the last.
+  const lathe = (rings, x, z0, z1, rx, rz, part, radial) => {
+    const yA = rings[0][0], yB = rings[rings.length - 1][0];
+    const at = (ring, k) => {
+      const [y, s, ny] = ring;
+      const a = (k / radial) * Math.PI * 2;
+      const ca = Math.cos(a), sa = Math.sin(a);
+      const cz = z0 + ((z1 - z0) * (y - yA)) / (yB - yA || 1);
+      const nx = (ca * s) / rx, nz = (sa * s) / rz;
+      const len = Math.hypot(nx, ny, nz) || 1;
+      return [x + ca * s * rx, y, cz + sa * s * rz, nx / len, ny / len, nz / len];
+    };
+    const tri = (...vs) => {
+      for (const v of vs) {
+        P.push(v[0] * S, v[1] * S, v[2] * S);
+        N.push(v[3], v[4], v[5]);
+        A.push(part);
+      }
+    };
+    for (let i = 0; i < rings.length - 1; i++) {
+      for (let k = 0; k < radial; k++) {
+        const a = at(rings[i], k), b = at(rings[i], k + 1), c = at(rings[i + 1], k + 1), d = at(rings[i + 1], k);
+        if (rings[i + 1][1] > 0) tri(a, d, c); // d and c meet at a pole
+        if (rings[i][1] > 0) tri(a, c, b); // a and b meet at a pole
+      }
+    }
+  };
+  // the rings of a part of a sphere of height 2 * ry about cy, from the
+  // polar angle `to` up to `from` (0 is the top)
+  const arc = (cy, ry, from, to, n) => {
+    const out = [];
+    for (let i = 0; i <= n; i++) {
+      const phi = to + ((from - to) * i) / n;
+      const s = Math.sin(phi);
+      out.push([cy + ry * Math.cos(phi), s < 1e-6 ? 0 : s, Math.cos(phi) / ry]);
+    }
+    return out;
+  };
+  // a limb or a torso: round ends of height cap
+  const capsule = (x, y0, y1, rx, rz, part, { z0 = 0, z1 = z0, radial = 6, cap = Math.min(rx, rz) } = {}) => {
+    lathe([...arc(y0 + cap, cap, Math.PI / 2, Math.PI, 2), ...arc(y1 - cap, cap, 0, Math.PI / 2, 2)], x, z0, z1, rx, rz, part, radial);
+  };
+  const ball = (x, cy, z, rx, ry, rz, part, { to = Math.PI, radial = 8, n = 5 } = {}) => {
+    lathe(arc(cy, ry, 0, to, n), x, z, z, rx, rz, part, radial);
+  };
+  // a neck, a head, and hair over the top and the back of it
+  const head = (cy, z, k = 1) => {
+    lathe([[cy - 0.19 * k, 1, 0], [cy - 0.08 * k, 1, 0]], 0, z, z, 0.05 * k, 0.05 * k, 5, 6);
+    ball(0, cy, z, 0.105 * k, 0.125 * k, 0.115 * k, 5);
+    ball(0, cy + 0.012 * k, z - 0.014 * k, 0.113 * k, 0.131 * k, 0.122 * k, 6, { to: Math.PI * 0.56, n: 3 });
+  };
+  // a shoe under a leg, toes to +z (part 8 left, 9 right: it swings with
+  // the leg), and a hand at the end of a sleeve (10 left, 11 right)
+  const shoe = (x, part, k = 1) => box(x - 0.05 * k, 0, -0.08 * k, x + 0.05 * k, 0.07 * k, 0.17 * k, part, ['bottom']);
+  const hand = (x, y, z, part, k = 1) => ball(x, y, z, 0.052 * k, 0.062 * k, 0.052 * k, part, { radial: 6, n: 3 });
+  if (build === 'child') {
+    capsule(-0.062, 0.02, 0.53, 0.05, 0.055, 1);
+    capsule(0.062, 0.02, 0.53, 0.05, 0.055, 2);
+    shoe(-0.062, 8, 0.75);
+    shoe(0.062, 9, 0.75);
+    capsule(0, 0.4, 0.6, 0.125, 0.09, 7, { radial: 8 });
+    capsule(0, 0.48, 0.97, 0.14, 0.095, 0, { radial: 8, cap: 0.09 });
+    capsule(-0.185, 0.54, 0.94, 0.04, 0.04, 3);
+    capsule(0.185, 0.54, 0.94, 0.04, 0.04, 4);
+    hand(-0.185, 0.53, 0, 10, 0.8);
+    hand(0.185, 0.53, 0, 11, 0.8);
+    head(1.12, 0, 0.98);
   } else if (build === 'elderly') {
-    box(-0.15, 0, -0.07, -0.02, 0.76, 0.07, 1, ['top']);
-    box(0.02, 0, -0.07, 0.15, 0.76, 0.07, 2, ['top']);
-    box(-0.19, 0.74, -0.08, 0.19, 1.28, 0.14, 0, ['bottom']);
-    box(-0.27, 0.78, -0.02, -0.19, 1.2, 0.1, 3);
-    box(0.19, 0.78, -0.02, 0.27, 1.2, 0.1, 4);
-    box(-0.09, 1.26, -0.04, 0.09, 1.46, 0.16, 5, ['bottom']);
-    box(-0.1, 1.42, -0.05, 0.1, 1.52, 0.13, 6, ['bottom']);
-    box(0.27, 0, 0.1, 0.31, 0.9, 0.15, 6); // the cane
+    // stooped: the back and the head lean forward
+    capsule(-0.085, 0.02, 0.78, 0.068, 0.074, 1);
+    capsule(0.085, 0.02, 0.78, 0.068, 0.074, 2);
+    shoe(-0.085, 8);
+    shoe(0.085, 9);
+    capsule(0, 0.64, 0.88, 0.165, 0.11, 7, { radial: 8 });
+    capsule(0, 0.72, 1.3, 0.185, 0.12, 0, { radial: 8, cap: 0.1, z0: 0, z1: 0.07 });
+    capsule(-0.235, 0.7, 1.24, 0.05, 0.05, 3, { z0: 0.03, z1: 0.06 });
+    capsule(0.235, 0.7, 1.24, 0.05, 0.05, 4, { z0: 0.03, z1: 0.06 });
+    hand(-0.235, 0.69, 0.03, 10);
+    hand(0.235, 0.69, 0.03, 11);
+    head(1.42, 0.1, 0.94);
+    box(0.27, 0, 0.1, 0.3, 0.9, 0.13, 6); // the cane
   } else if (build === 'cyclist') {
     // the bike: frame, wheels and bars, dark (part 6)
     box(-0.035, 0, 0.5, 0.035, 0.34, 0.58, 6);
@@ -103,28 +167,33 @@ function buildGeometry(build, lite) {
     box(-0.24, 0.72, 0.5, 0.24, 0.78, 0.58, 6);
     box(-0.08, 0.78, -0.24, 0.08, 0.83, 0.02, 6);
     // the rider, leaning forward: torso, pedalling legs, arms to the bars, head
-    box(-0.16, 0.82, -0.02, 0.16, 1.34, 0.3, 0);
-    box(-0.16, 0.3, -0.05, -0.02, 0.82, 0.3, 1);
-    box(0.02, 0.3, -0.05, 0.16, 0.82, 0.3, 2);
-    box(-0.22, 0.76, 0.26, -0.16, 1.3, 0.54, 5);
-    box(0.16, 0.76, 0.26, 0.22, 1.3, 0.54, 5);
-    box(-0.09, 1.32, 0.28, 0.09, 1.52, 0.48, 5, ['bottom']);
-    box(-0.1, 1.48, 0.28, 0.1, 1.58, 0.44, 6, ['bottom']);
+    capsule(0, 0.78, 1.38, 0.165, 0.115, 0, { radial: 8, cap: 0.1, z0: 0.02, z1: 0.24 });
+    capsule(-0.09, 0.28, 0.88, 0.07, 0.075, 1, { z0: 0.16, z1: 0.06 });
+    capsule(0.09, 0.28, 0.88, 0.07, 0.075, 2, { z0: 0.16, z1: 0.06 });
+    capsule(-0.2, 0.76, 1.32, 0.045, 0.045, 5, { z0: 0.52, z1: 0.24 });
+    capsule(0.2, 0.76, 1.32, 0.045, 0.045, 5, { z0: 0.52, z1: 0.24 });
+    head(1.5, 0.32, 0.96);
   } else {
-    // adult (also the shopper, with a bag)
-    box(-0.155, 0, -0.075, -0.02, 0.86, 0.075, 1, ['top']);
-    box(0.02, 0, -0.075, 0.155, 0.86, 0.075, 2, ['top']);
-    box(-0.185, 0.84, -0.11, 0.185, 1.43, 0.11, 0, ['bottom']);
-    box(-0.28, 0.86, -0.05, -0.19, 1.42, 0.05, 3);
-    box(0.19, 0.86, -0.05, 0.28, 1.42, 0.05, 4);
-    box(-0.095, 1.43, -0.1, 0.095, 1.66, 0.11, 5, ['bottom']);
-    box(-0.105, 1.6, -0.115, 0.105, 1.71, 0.09, 6, ['bottom']);
-    if (build === 'shopper') box(0.24, 0.5, -0.13, 0.37, 0.92, 0.13, 6, ['bottom']); // a bag in the right hand
+    // adult (also the shopper, with a bag; the one figure of light mode)
+    capsule(-0.088, 0.02, 0.88, 0.072, 0.078, 1);
+    capsule(0.088, 0.02, 0.88, 0.072, 0.078, 2);
+    shoe(-0.088, 8);
+    shoe(0.088, 9);
+    capsule(0, 0.74, 0.99, 0.168, 0.108, 7, { radial: 8 });
+    capsule(0, 0.82, 1.47, 0.182, 0.115, 0, { radial: 8, cap: 0.1 });
+    capsule(-0.238, 0.84, 1.44, 0.05, 0.05, 3);
+    capsule(0.238, 0.84, 1.44, 0.05, 0.05, 4);
+    hand(-0.238, 0.83, 0, 10);
+    hand(0.238, 0.83, 0, 11);
+    head(1.63, 0);
+    if (build === 'shopper') box(0.2, 0.4, -0.13, 0.3, 0.78, 0.13, 6, ['bottom']); // a bag in the right hand
   }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
-  g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
-  g.setAttribute('aPart', new THREE.Float32BufferAttribute(A, 1));
+  const flat = new THREE.BufferGeometry();
+  flat.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  flat.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  flat.setAttribute('aPart', new THREE.Float32BufferAttribute(A, 1));
+  const g = mergeVertices(flat); // the round parts share their corners
+  flat.dispose();
   g.computeBoundingSphere();
   return g;
 }
@@ -161,10 +230,11 @@ vec3 rotX(vec3 p, float pivot, float a) {
   float sit = iAnim.z;
   float ph = uPTime * 6.4 * iAnim.w + iAnim.x;
   float sw = sin(ph) * 0.52 * walk;
-  float isL = 1.0 - step(0.5, abs(aPart - 1.0));
-  float isR = 1.0 - step(0.5, abs(aPart - 2.0));
-  float isAL = 1.0 - step(0.5, abs(aPart - 3.0));
-  float isAR = 1.0 - step(0.5, abs(aPart - 4.0));
+  // a shoe swings with its leg, a hand with its arm
+  float isL = 1.0 - step(0.5, abs(aPart - 1.0)) * step(0.5, abs(aPart - 8.0));
+  float isR = 1.0 - step(0.5, abs(aPart - 2.0)) * step(0.5, abs(aPart - 9.0));
+  float isAL = 1.0 - step(0.5, abs(aPart - 3.0)) * step(0.5, abs(aPart - 10.0));
+  float isAR = 1.0 - step(0.5, abs(aPart - 4.0)) * step(0.5, abs(aPart - 11.0));
   // standing: a slow gesture now and then
   float idle = (1.0 - walk) * (1.0 - sit) * 0.12 * max(0.0, sin(uPTime * 0.7 + iAnim.x * 3.0));
   // legs forward (-angle) about the hip; seated: thighs folded forward
@@ -187,7 +257,9 @@ vec3 rotX(vec3 p, float pivot, float a) {
 #ifdef USE_INSTANCING_COLOR
   shirt = instanceColor.rgb;
 #endif
-  vColor = vec4(pt < 0.5 || (pt > 2.5 && pt < 4.5) ? shirt : (pt < 2.5 || pt > 6.5) ? iLook.rgb : pt < 5.5 ? skin : hair, 1.0);
+  vec3 col = pt < 0.5 || (pt > 2.5 && pt < 4.5) ? shirt : (pt < 2.5 || pt > 6.5) ? iLook.rgb : pt < 5.5 ? skin : hair;
+  if (pt > 7.5) col = pt < 9.5 ? vec3(0.035, 0.03, 0.028) : skin; // shoes, hands
+  vColor = vec4(col, 1.0);
 }`,
       );
   };
@@ -838,7 +910,7 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
       marketSpots,
       dogs: ND,
       builds,
-      trianglesEach: pools[builds[0]].geo.attributes.position.count / 3,
+      trianglesEach: pools[builds[0]].geo.index.count / 3,
     },
     get active() {
       return active;
