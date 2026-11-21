@@ -85,7 +85,87 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     lifts.sort((a, b) => a - b);
     lift = Math.max(0, lifts[lifts.length >> 1] || 0);
   }
+  // What the walker stands on is what is drawn: the top triangle under the
+  // feet among the terrain, the town ground, the carriageways, the sidewalks
+  // and the paved squares. The triangles within 1.2 km are indexed in 4 m
+  // cells, and again when the walker nears the edge of that index. A surface
+  // more than 0.6 m over the feet is not a step (a deck overhead, a wall).
+  const WALKABLE = /^(ground|street-plate|sidewalks|street-(?!water|lamps)[a-z]+|calcada-squares|roundabout-islands)$/;
+  const SURF_R = 300; // world units
+  const STEP_UP = 0.6 * M;
+  let surf = null; // { tri: Float32Array, grid: Map, x, z, key }
+  function readSurface(x, z) {
+    const meshes = [];
+    scene.traverse((o) => {
+      if (o.isMesh && !o.isInstancedMesh && WALKABLE.test(o.name) && o.geometry?.attributes?.position) meshes.push(o);
+    });
+    const key = meshes.map((o) => o.geometry.uuid).join();
+    if (surf && surf.key === key && Math.hypot(x - surf.x, z - surf.z) < SURF_R * 0.6) return;
+    const tri = [];
+    const grid = new Map();
+    for (const o of meshes) {
+      o.updateWorldMatrix(true, false);
+      const e = o.matrixWorld.elements;
+      const p = o.geometry.attributes.position.array, ix = o.geometry.index?.array;
+      const n = ix ? ix.length : p.length / 3;
+      const v = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      for (let k = 0; k < n; k += 3) {
+        let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (let c = 0; c < 3; c++) {
+          const a = (ix ? ix[k + c] : k + c) * 3;
+          const px = p[a], py = p[a + 1], pz = p[a + 2];
+          const wx = e[0] * px + e[4] * py + e[8] * pz + e[12];
+          const wz = e[2] * px + e[6] * py + e[10] * pz + e[14];
+          v[c * 3] = wx;
+          v[c * 3 + 1] = e[1] * px + e[5] * py + e[9] * pz + e[13];
+          v[c * 3 + 2] = wz;
+          if (wx < x0) x0 = wx;
+          if (wx > x1) x1 = wx;
+          if (wz < z0) z0 = wz;
+          if (wz > z1) z1 = wz;
+        }
+        if (x1 < x - SURF_R || x0 > x + SURF_R || z1 < z - SURF_R || z0 > z + SURF_R) continue;
+        // a wall or a kerb face has no area from above
+        if (Math.abs((v[5] - v[8]) * (v[0] - v[6]) + (v[6] - v[3]) * (v[2] - v[8])) < 1e-9) continue;
+        const at = tri.length;
+        tri.push(...v);
+        for (let i = Math.floor(x0); i <= Math.floor(x1); i++) {
+          for (let j = Math.floor(z0); j <= Math.floor(z1); j++) {
+            const g = i * 65536 + j;
+            let bucket = grid.get(g);
+            if (!bucket) grid.set(g, (bucket = []));
+            bucket.push(at);
+          }
+        }
+      }
+    }
+    surf = tri.length ? { tri: new Float32Array(tri), grid, x, z, key } : null;
+  }
+  // the drawn surface under (x, z): the highest one the walker can step on
+  // from `from`; with none in reach, the lowest one above
+  function surfaceAt(x, z, from) {
+    const bucket = surf?.grid.get(Math.floor(x) * 65536 + Math.floor(z));
+    if (!bucket) return null;
+    const t = surf.tri;
+    let best = -Infinity, over = Infinity;
+    for (const a of bucket) {
+      const x1 = t[a], z1 = t[a + 2], x2 = t[a + 3], z2 = t[a + 5], x3 = t[a + 6], z3 = t[a + 8];
+      const den = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3);
+      const u = ((z2 - z3) * (x - x3) + (x3 - x2) * (z - z3)) / den;
+      const v = ((z3 - z1) * (x - x3) + (x1 - x3) * (z - z3)) / den;
+      if (u < -1e-6 || v < -1e-6 || u + v > 1 + 1e-6) continue;
+      const y = u * t[a + 1] + v * t[a + 4] + (1 - u - v) * t[a + 7];
+      if (y <= from + STEP_UP) { if (y > best) best = y; } else if (y < over) over = y;
+    }
+    return best > -Infinity ? best : over < Infinity ? over : null;
+  }
+  let feetY = null; // the surface the walker stood on last
+  let surfClock = 0;
   function ground(x, z) {
+    const s = surfaceAt(x, z, feetY ?? laneGround(x, z));
+    return s ?? laneGround(x, z);
+  }
+  function laneGround(x, z) {
     if (!laneGrid) return heightAt(x, z);
     const ci = Math.floor(x / CELL), cj = Math.floor(z / CELL);
     let sum = 0, weight = 0;
@@ -355,7 +435,11 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     walked = 0;
     held.clear();
     releaseStick();
-    eyeY = ground(pos.x, pos.z) + EYE;
+    readSurface(pos.x, pos.z);
+    surfClock = 2;
+    feetY = null;
+    feetY = ground(pos.x, pos.z);
+    eyeY = feetY + EYE;
     rig.cancelFlight?.();
     rig.controls.enabled = false;
     fov0 = camera.fov;
@@ -396,7 +480,8 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   }
 
   function place(dt) {
-    const want = ground(pos.x, pos.z) + EYE;
+    feetY = ground(pos.x, pos.z);
+    const want = feetY + EYE;
     // steps and kerbs ease in; a first frame snaps
     eyeY = dt > 0 ? eyeY + (want - eyeY) * Math.min(1, dt * 12) : want;
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
@@ -484,6 +569,12 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       faceYaw += d * Math.min(1, dt * 10);
     }
     figure.step(stepM, dt, speed === RUN);
+    // the surface index follows the walker and what the scene has loaded
+    surfClock -= dt;
+    if (surfClock <= 0) {
+      surfClock = 2;
+      readSurface(pos.x, pos.z);
+    }
     // a place within reach offers its card (checked three times a second)
     nearClock -= dt;
     if (nearClock <= 0) {
@@ -533,6 +624,8 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       pos.x = x;
       pos.z = z;
       nearClock = 0;
+      readSurface(x, z);
+      feetY = null;
       return true;
     },
     // tests: the drawn bodies of a kind ('people', 'traffic') as [x, z] pairs

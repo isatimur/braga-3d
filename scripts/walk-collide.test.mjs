@@ -53,6 +53,23 @@ test('a long step does not jump through a house', () => {
   assert.ok(r.x < 0, `x ${r.x}`);
 });
 
+test('a walker slides along a wall at any angle', () => {
+  // pushed at 45 degrees into a long wall: at least 90 % of the ideal
+  // progress along it, and never into it
+  for (const deg of [0, 20, 45, 60, 75, 90]) {
+    const a = (deg * Math.PI) / 180;
+    const ux = Math.cos(a), uz = Math.sin(a), nx = -uz, nz = ux;
+    const P = (s, d) => [ux * s + nx * d, uz * s + nz * d];
+    const w = createCollider([[P(-100, 0), P(100, 0), P(100, 10), P(-100, 10)]]);
+    let x = nx * -0.3, z = nz * -0.3;
+    const dx = (ux + nx) * Math.SQRT1_2 * 0.006, dz = (uz + nz) * Math.SQRT1_2 * 0.006;
+    for (let k = 0; k < 600; k++) ({ x, z } = w.move(x, z, dx, dz, 0.1125));
+    const along = (x * ux + z * uz) / (600 * 0.006 * Math.SQRT1_2);
+    assert.ok(along > 0.9, `${deg} degrees: ${along.toFixed(2)} of the ideal`);
+    assert.ok(x * nx + z * nz < -0.1, `${deg} degrees: inside the wall`);
+  }
+});
+
 test('freeNear leaves a house by the short way', () => {
   const p = c.freeNear(9, 5, 0.1);
   assert.ok(p);
