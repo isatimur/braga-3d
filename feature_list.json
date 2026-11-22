@@ -1,6 +1,6 @@
 {
   "project": "braga-3d",
-  "last_updated": "2026-11-18",
+  "last_updated": "2026-11-22",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -426,6 +426,24 @@
         "2026-11-21 (main ed509ca, Session 019): 79/79 unit tests; check-walk all passed on both profiles, locally and on braga-3d.com (water: 41 of 43 areas block on desktop, 43 of 43 on the phone profile); verify OK; feet 0 cm from the drawn surface at four of five measured streets"
       ],
       "notes": "The walker stands on the top drawn triangle (terrain, town ground, carriageways, sidewalks, squares), slides along walls at any angle, is pushed out by people and vehicles, and is stopped by buildings, furniture and open water. Streams drawn as lines, fountains, fences and landmark model parts do not block. Vehicles do not stop for the walker. No stairs or jumping. No draw distance of its own. The crowd is still box figures. Place names hide while walking. Not checked: a physical phone, Safari, Firefox. Deployed 2026-11-21."
+    },
+    {
+      "id": "braga-023",
+      "priority": 23,
+      "area": "discovery",
+      "title": "Era filter, route points and the analytics hook",
+      "user_visible_behavior": "The Places tab has a second row of chips: Roman era, Middle Ages, 16th–18th centuries, 19th century to today. One chip narrows the place list and the map pins to that era; a second click on it shows every place again. The buildings stay on the map. The result screen of a history route shows points: 100 for each solved stop and 200 once for a whole route.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (eras.test.mjs: date reading, the era of each of the 30 places, points, analytics switch)",
+        "npm run build && npx vite preview --port 5471, then a headless run: era chips, place count, route result screen, p3d:event names",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-22 (main 052b1d0, Session 021): 86/86 unit tests; check-walk all passed; verify OK; served build: 30 places, Roman era 2, Middle Ages 4, cleared 30; «Points: 300 of 700» with three seeded stamps; events city_opened and landmark_selected; no page errors",
+        "2026-11-22, braga-3d.com (bundle index-CgrUdiqF.js), iPhone 13 profile: era row visible in the Places tab, Roman era gives 2 places, no page errors"
+      ],
+      "notes": "Eras are date ranges read from each place's `year` text (src/eras.js), not styles; a new place must be added to the table in scripts/eras.test.mjs. Points are computed from the stamps and never stored. Analytics (src/analytics.js) is Vercel Web Analytics, off on local hosts; /_vercel/insights/script.js answered 404 on 2026-11-22 because Web Analytics is not enabled for the project, so nothing is counted yet. Custom events may need a paid Vercel plan. On a phone the two chip rows take six lines and leave little of the place list on the first screen; the chips are 26 px high. Deployed 2026-11-22."
     }
   ]
 }

@@ -11,7 +11,7 @@ updates it automatically.
 - Repository root: `~/Dev/braga-3d`
 - Standard startup path: `./init.sh`
 - Standard verification path: `npm run verify`
-- Current local work: none open. `main` is b6b2d8c: 431ff94 (walk look loop, Session 020) plus the EGM contract files (documentation only). Not pushed. Production serves 431ff94 since 2026-11-22 (bundle `index-CGyGUY9g.js`, `check-walk --base https://braga-3d.com` passed); the three lines below describe the state before Session 020.
+- Current local work: none open. `main` is 052b1d0 (era filter, route points, analytics hook, Session 021) plus one log commit; 052b1d0 is pushed. Production serves 052b1d0 since 2026-11-22 (bundle `index-CgrUdiqF.js`; era filter checked on braga-3d.com with a phone profile). Web Analytics is not enabled for the Vercel project yet, so nothing is counted. The three lines below describe the state before Session 020.
 - Latest check: 2026-11-21. `node --test scripts/*.test.mjs` (79/79), `npm run verify` and `scripts/check-walk.mjs` (desktop and Pixel 7 profile) passed on `main` ed509ca.
 - Production state: braga-3d.com serves `main` ed509ca (bundle `index-C8RfbSf7.js`), deployed by the owner with `vercel --prod` on 2026-11-21; `scripts/check-walk.mjs --base https://braga-3d.com` passed after the deploy.
 
