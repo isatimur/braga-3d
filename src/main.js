@@ -250,6 +250,7 @@ async function start() {
   });
   scene.add(city.group);
   debug.buildings = city.stats;
+  debug.footprints = city.footprints; // outlines in world units (checks measure how a house meets the ground)
   mark('buildings');
 
   // during a history route a label click is a find-on-map pick (quest.js)
