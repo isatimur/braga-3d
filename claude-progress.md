@@ -317,6 +317,18 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 020 (2026-11-22, walk look loop)
+
+A loop over five open items for the walking-height look. One item per iteration; each is merged into `main` locally, never pushed or deployed by the agent.
+
+- Before the loop, `0a18dcc` (merge `0ae6fb4`): rivers and streams drawn from a centreline block the walker (`lineRings()` in `src/nature.js` joins `waterRings`); the bank foam is ten times finer within about 50 m of the eye (`wNear` in `src/water.js`). Cause: the owner's screenshot showed white "cracks" on the water and the walker could stand chest deep in the Este.
+- Item 1, ground detail: DONE. `GROUND_COLOR` and `GROUND_NORMAL` in `src/scene.js` add three finer noise octaves (2 m, 0.5 m, 0.1 m) and small bumps within 20-65 world units of the camera. The view from the air is unchanged, because each octave fades out with distance. Viewed at 1.7 m on a lawn beside a pond, third and first person. Checks: 79/79 unit tests, `check-walk` all passed, `npm run verify` OK.
+- Item 2, houses sunk into slopes: open.
+- Item 3, road surface under water at bridges: open.
+- Item 4, rounded kerb corners and sidewalk steps at sloped junctions: open.
+- Item 5, default walk start on an empty dark square at night: open.
+- Also this session: `EGM.md` contract files for the root, `src/`, `src/models/`, `src/locales/`, `scripts/`, `api/`, `public/` (untracked); a review of `docs/plan-walk-social-events.md` in `docs/egm-review/` (the plan does not pass; see `consolidated_review_report.md`).
+
 ### Session 019
 
 - Date: 2026-11-21

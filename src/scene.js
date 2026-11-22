@@ -1143,6 +1143,29 @@ const GROUND_COLOR = /* glsl */ `
     canopy = mix(canopy, vec3(0.09, 0.06, 0.022), sW.z * 0.4 * smoothstep(0.55, 0.8, nB.b * 0.6 + crowns * 0.4));
     col = mix(col, canopy, L.r * 0.95);
   }
+  // Walking height: the tones above change over tens of metres, so from
+  // 1.7 m the ground was one smooth smear. Within about 250 m of the eye
+  // three finer octaves of the same noise give it grain: clumps (2 m),
+  // tufts and stones (0.5 m), grit (0.1 m). Each fades out before it would
+  // alias, and the mean stays the same, so the view from the air keeps its look.
+  {
+    float dCam = length(cameraPosition - W);
+    float nearK = 1.0 - smoothstep(20.0, 65.0, dCam);
+    if (nearK > 0.0) {
+      float g1 = texture2D(tNoise, W.xz * 1.9 + 0.37).b - 0.5;
+      float g2 = texture2D(tNoise, W.zx * 7.7 + 0.11).a - 0.5;
+      float g3 = texture2D(tNoise, W.xz * 37.0).b - 0.5;
+      float k2 = 1.0 - smoothstep(6.0, 22.0, dCam);
+      float k3 = 1.0 - smoothstep(1.5, 7.0, dCam);
+      float grain = g1 * 0.55 + g2 * 0.5 * k2 + g3 * 0.4 * k3;
+      col *= 1.0 + grain * 0.85 * nearK;
+      // dry flecks and bare specks: a second hue, not only light and dark
+      float fleck = smoothstep(0.12, 0.3, g2 + g1 * 0.4) * k2;
+      col = mix(col, col * vec3(1.32, 1.16, 0.74), fleck * 0.4 * nearK);
+      float bare = smoothstep(0.2, 0.34, -g1 + g3 * 0.5 * k3);
+      col = mix(col, col * vec3(0.78, 0.72, 0.7), bare * 0.45 * nearK);
+    }
+  }
   // faint contour hint every 50 m, gone where it would alias
   float hc = hm / 50.0;
   float fw = fwidth(hc);
@@ -1161,6 +1184,10 @@ const GROUND_NORMAL = /* glsl */ `
   vec2 dA = texture2D(tNoise, vTWorld.xz * 0.047).rg * 2.0 - 1.0;
   vec2 dB = texture2D(tNoise, vTWorld.xz * 0.19).rg * 2.0 - 1.0;
   vec2 dn = dA * 0.35 + dB * 0.25;
+  // close to the eye: small bumps, so a low sun rakes the ground
+  float dCamN = length(cameraPosition - vTWorld);
+  float nearN = 1.0 - smoothstep(5.0, 24.0, dCamN);
+  if (nearN > 0.0) dn += (texture2D(tNoise, vTWorld.xz * 2.9).rg * 2.0 - 1.0) * 0.3 * nearN + (texture2D(tNoise, vTWorld.zx * 11.0).rg * 2.0 - 1.0) * 0.22 * nearN * (1.0 - smoothstep(2.0, 9.0, dCamN));
   vec3 pw = vec3(dn.x, 0.0, dn.y);
   normal = normalize(normal + mat3(viewMatrix) * pw);
   // outside the DEM the relief is a guess: shade it nearly flat
