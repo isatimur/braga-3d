@@ -326,6 +326,13 @@ updates it automatically.
 - Proof: 86/86 unit tests, `scripts/check-walk.mjs` "all passed", `npm run verify` OK; headless run on the served build: 30 places, Roman era 2, Middle Ages 4, "Points: 300 of 700" with three seeded stamps, events `city_opened` and `landmark_selected`, no page errors.
 - Not done: custom events need a Vercel plan that includes them (page views do not); no era data beyond dates (styles such as Baroque need a source per place); phone layout of the era row not checked.
 
+### Session 021, part 2 (2026-11-22, walker under the terrain)
+
+- Fault, seen in the Barcelos fork: the walker stood waist-deep in a hillside. At that spot the drawn terrain was 0.87 m above the road surface under the feet, and `surfaceAt` (`src/walk.js`) treated anything more than 0.6 m up as overhead.
+- Fix: the terrain mesh (`ground`) is never overhead. When it is higher than the surface chosen, the walker stands on it. Bridges are not affected: there the terrain is below the deck.
+- Proof: Braga 86/86 unit tests, `check-walk` "all passed", `verify` OK. Barcelos (same file copied): feet moved from 0.93 m to 1.85 m over `heightAt`, 5 cm over the drawn terrain; screenshot viewed; 53 tests pass, 27 skipped, `verify` OK.
+- Not fixed: in Barcelos the path ribbons on that slope lie at four heights over one spot (4.55 m to 7.01 m below datum), so the paving looks tilted and part of it is under the grass. Roads follow `heightAt`; the drawn terrain is a smoother surface, and on a steep bank the two differ by up to 1.8 m.
+
 ### Session 020 (2026-11-22, walk look loop)
 
 A loop over five open items for the walking-height look. One item per iteration; each is merged into `main` locally, never pushed or deployed by the agent.
