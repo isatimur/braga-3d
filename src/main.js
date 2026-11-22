@@ -1335,7 +1335,12 @@ async function start() {
       ensureWalk().then((instance) => {
         if (request !== modeRequest) return;
         modeLoading = null;
-        if (!instance.start()) ui.toast(t('Здесь нет улицы рядом. Выберите другое место.'), 4000);
+        // From the city overview (a link straight to #walk, or the button
+        // before any zoom) the view target is no chosen place: it lay 1.2 km
+        // out of the centre, on a wide empty square. Then the walk starts at
+        // the map origin, which is the middle of the old town.
+        const overview = camera.position.distanceTo(rig.controls.target) > 250;
+        if (!instance.start(overview ? { x: 0, z: 0 } : null)) ui.toast(t('Здесь нет улицы рядом. Выберите другое место.'), 4000);
         setHash(currentHash());
       }).catch(() => {
         if (request === modeRequest) {
