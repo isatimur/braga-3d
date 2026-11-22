@@ -115,6 +115,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     if (surf && surf.key === key && Math.hypot(x - surf.x, z - surf.z) < SURF_R * 0.6) return;
     const tri = [];
     const paved = [];
+    const terrainTri = [];
     const grid = new Map();
     for (const o of meshes) {
       const hard = o.name !== 'ground' && o.name !== 'street-plate' ? 1 : 0;
@@ -144,6 +145,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         const at = tri.length;
         tri.push(...v);
         paved.push(hard);
+        terrainTri.push(o.name === 'ground' ? 1 : 0);
         for (let i = Math.floor(x0); i <= Math.floor(x1); i++) {
           for (let j = Math.floor(z0); j <= Math.floor(z1); j++) {
             const g = i * 65536 + j;
@@ -154,7 +156,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         }
       }
     }
-    surf = tri.length ? { tri: new Float32Array(tri), paved, grid, x, z, key } : null;
+    surf = tri.length ? { tri: new Float32Array(tri), paved, terrain: terrainTri, grid, x, z, key } : null;
   }
   // a street, a sidewalk or a paved square is drawn at (x, z)
   function pavedAt(x, z) {
@@ -172,12 +174,14 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     return false;
   }
   // the drawn surface under (x, z): the highest one the walker can step on
-  // from `from`; with none in reach, the lowest one above
+  // from `from`; with none in reach, the lowest one above. The terrain is
+  // never overhead: where a road was laid lower than the drawn hillside, the
+  // walker stands on the hillside, not under it.
   function surfaceAt(x, z, from) {
     const bucket = surf?.grid.get(Math.floor(x) * 65536 + Math.floor(z));
     if (!bucket) return null;
     const t = surf.tri;
-    let best = -Infinity, over = Infinity;
+    let best = -Infinity, over = Infinity, land = -Infinity;
     for (const a of bucket) {
       const x1 = t[a], z1 = t[a + 2], x2 = t[a + 3], z2 = t[a + 5], x3 = t[a + 6], z3 = t[a + 8];
       const den = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3);
@@ -185,9 +189,11 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       const v = ((z3 - z1) * (x - x3) + (x1 - x3) * (z - z3)) / den;
       if (u < -1e-6 || v < -1e-6 || u + v > 1 + 1e-6) continue;
       const y = u * t[a + 1] + v * t[a + 4] + (1 - u - v) * t[a + 7];
+      if (surf.terrain[a / 9] && y > land) land = y;
       if (y <= from + STEP_UP) { if (y > best) best = y; } else if (y < over) over = y;
     }
-    return best > -Infinity ? best : over < Infinity ? over : null;
+    const s = best > -Infinity ? best : over < Infinity ? over : null;
+    return s == null || land > s ? (land > -Infinity ? land : s) : s;
   }
   let feetY = null; // the surface the walker stood on last
   let surfClock = 0;
