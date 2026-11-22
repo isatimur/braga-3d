@@ -531,6 +531,32 @@ function waterSegments(data, project) {
   return segs;
 }
 
+// The drawn ribbon of each river and stream reach as a four-point outline
+// (src/water.js draws it with the same half width). Each outline runs half a
+// width past its ends, so two reaches leave no dry wedge at a bend.
+function lineRings(data, project) {
+  const rings = [];
+  for (const l of data.lines || []) {
+    if (!Array.isArray(l.p) || l.p.length < 2) continue;
+    const half = ((l.w || 3) * S) / 2;
+    for (let i = 1; i < l.p.length; i++) {
+      const a = project(l.p[i - 1][0], l.p[i - 1][1]);
+      const b = project(l.p[i][0], l.p[i][1]);
+      const L = Math.hypot(b.x - a.x, b.z - a.z);
+      if (L < 1e-6) continue;
+      const ux = ((b.x - a.x) / L) * half;
+      const uz = ((b.z - a.z) / L) * half;
+      rings.push([
+        { x: a.x - ux + uz, z: a.z - uz - ux },
+        { x: b.x + ux + uz, z: b.z + uz - ux },
+        { x: b.x + ux - uz, z: b.z + uz + ux },
+        { x: a.x - ux - uz, z: a.z - uz + ux },
+      ]);
+    }
+  }
+  return rings;
+}
+
 function segmentIndex(segs, cell = 32) {
   const map = new Map();
   const key = (i, j) => (i * 73856093) ^ (j * 19349663);
@@ -1211,7 +1237,8 @@ export function buildNature(opts) {
     landRect,
     openAt,
     // the outlines of the lakes, ponds and wide rivers (walk mode: no walking on water)
-    waterRings: areas.filter((a) => a.k === 'water').map((a) => a.rings[0]),
+    // and every reach of a river or stream drawn from a centreline
+    waterRings: [...areas.filter((a) => a.k === 'water').map((a) => a.rings[0]), ...lineRings(data, project)],
     uniforms,
     water,
     leafField,

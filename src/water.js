@@ -412,12 +412,19 @@ float wFoamK = 0.0;
   vec4 ft = texture2D(uWDetail, P.xz / 2.2 - vFlow * uWTime * 0.35);
   vec4 ft2 = texture2D(uWDetail, P.zx / 0.85 + uWTime * vec2(0.006, -0.004));
   float pattern = ft.b * 0.72 + ft2.b * 0.28;
-  // the mask stays below ~0.6 even at the bank: lace, never a solid rim
-  float m = (1.0 - smoothstep(0.0, 0.8, shore)) * 0.55;
-  // a little more foam where the river runs fast
-  m = max(m, (1.0 - smoothstep(0.0, 1.2, shore)) * clamp(length(vFlow) * 0.7, 0.0, 0.3));
-  float foam = smoothstep(1.0 - m, 1.2 - m, pattern * 0.88 + m * 0.22);
   float dist = length(cameraPosition - P);
+  // From the air the lace is 1-2 m cells in a 3 m band. A walker on the bank
+  // would read that as white cracks, so close up the lattice is ten times
+  // finer and the band is the first half metre of water.
+  float wNear = 1.0 - smoothstep(12.0, 45.0, dist);
+  vec4 fn = texture2D(uWDetail, P.xz / 0.21 - vFlow * uWTime * 0.6);
+  pattern = mix(pattern, fn.b * 0.6 + ft2.b * 0.4, wNear);
+  float band = mix(0.8, 0.14, wNear);
+  // the mask stays below ~0.6 even at the bank: lace, never a solid rim
+  float m = (1.0 - smoothstep(0.0, band, shore)) * mix(0.55, 0.42, wNear);
+  // a little more foam where the river runs fast
+  m = max(m, (1.0 - smoothstep(0.0, band * 1.5, shore)) * clamp(length(vFlow) * 0.7, 0.0, 0.3));
+  float foam = smoothstep(1.0 - m, 1.2 - m, pattern * 0.88 + m * 0.22);
   foam *= 1.0 - smoothstep(250.0, 700.0, dist);
   wFoamK = foam;
   diffuseColor.rgb = mix(diffuseColor.rgb, uWFoam * 0.6, foam * 0.85);
