@@ -30,6 +30,7 @@
   "nature": { "hills": [{ "lat": 41.5545, "lon": -8.3775, "r": 1500, "name": "Bom Jesus do Monte" }, { "lat": 41.542, "lon": -8.3695, "r": 1500, "name": "Sameiro" }] },
   "start_view": { "landmark": "se-braga", "narrow_landmark": "se-braga" },
   "ms_centre": [41.5498, -8.427],
+  "analytics": "vercel",
   "data_dir": "data",
   "landmarks_file": "data/landmarks.json",
   "og_image": "/og/braga.jpg",

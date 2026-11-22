@@ -218,3 +218,15 @@ export function questSummary(stops, rp) {
   });
   return { gold, done, visited, started, total: stops.length, next: next < 0 ? stops.length : next };
 }
+
+// Route points, read from a questSummary. A solved stop gives STOP_POINTS,
+// a route with every stop solved gives ROUTE_BONUS once. A wrong try costs
+// nothing. The figure is computed from the stamps each time and is never
+// stored, so a reload or a repeated answer cannot add to it.
+export const STOP_POINTS = 100;
+export const ROUTE_BONUS = 200;
+export function questPoints(sum) {
+  const max = sum.total * STOP_POINTS + (sum.total ? ROUTE_BONUS : 0);
+  const points = sum.done * STOP_POINTS + (sum.total && sum.done === sum.total ? ROUTE_BONUS : 0);
+  return { points, max };
+}

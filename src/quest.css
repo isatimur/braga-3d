@@ -150,6 +150,7 @@ body.is-quest-picking .map-label.is-quest-hint { color: #fff; background: var(--
   text-wrap: balance;
 }
 .quest-title-main { font-size: 28px; }
+.quest-points { margin: 0 0 10px; font: 700 15px/1.3 var(--sans); color: var(--gold); font-variant-numeric: tabular-nums; }
 .quest-lead { margin: 0 0 14px; font-size: 15px; line-height: 1.55; color: var(--text-2); }
 .quest-note { margin: 14px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-3); }
 .quest-plan { margin: 0; padding: 0; list-style: none; counter-reset: plan; border-top: 1px solid var(--line-c); }

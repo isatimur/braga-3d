@@ -317,6 +317,15 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 021 (2026-11-22, eras, route points, analytics hook)
+
+- Asked for: the three gaps against the owner's product specification (eras, analytics, points).
+- Era filter: `src/eras.js` reads the dates in each place's `year` text and gives date-range eras (roman, medieval, early-modern, modern). The names are date ranges, not styles. A second chip row in the Places tab (`src/ui.js`) filters the list; `marks.setEra` (`src/landmarks.js`) hides pins and names, never a model. The full assignment of the 30 places is written out in `scripts/eras.test.mjs`; a new place must be added there.
+- Route points: `questPoints` in `src/quest-progress.js` (100 a solved stop, 200 once for a whole route, max 700). Computed from the stamps, never stored. Shown on the route result screen (`points` string in `data/quest.json`).
+- Analytics: `src/analytics.js` attaches Vercel Web Analytics to the existing `p3d:event` bus when `cities/braga.json` says `"analytics": "vercel"`; off on local hosts. New events: `city_opened`, `landmark_selected`. Nothing is sent until the owner enables Web Analytics for the project in the Vercel dashboard; until then the script path answers 404 on the live site.
+- Proof: 86/86 unit tests, `scripts/check-walk.mjs` "all passed", `npm run verify` OK; headless run on the served build: 30 places, Roman era 2, Middle Ages 4, "Points: 300 of 700" with three seeded stamps, events `city_opened` and `landmark_selected`, no page errors.
+- Not done: custom events need a Vercel plan that includes them (page views do not); no era data beyond dates (styles such as Baroque need a source per place); phone layout of the era row not checked.
+
 ### Session 020 (2026-11-22, walk look loop)
 
 A loop over five open items for the walking-height look. One item per iteration; each is merged into `main` locally, never pushed or deployed by the agent.

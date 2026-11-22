@@ -35,7 +35,7 @@ import { S } from './geo.js';
 import { assetUrl } from './data.js';
 import { dataPath } from './city.js';
 import { creditNode } from './gallery.js';
-import { createQuestProgress, questSummary, stopResult } from './quest-progress.js';
+import { createQuestProgress, questSummary, questPoints, stopResult } from './quest-progress.js';
 import { answerKey, taskErrors } from './quest-tasks.js';
 import { emit } from './events.js';
 import './quest.css';
@@ -627,6 +627,7 @@ export function createQuest(ctx) {
     screen = 'end';
     current = -1;
     const sum = questSummary(stops, rp);
+    const pts = questPoints(sum);
     const title = el('h2', 'quest-title quest-title-main', s('summary', { v: sum.visited, g: sum.gold }));
     title.tabIndex = -1;
     const list = el('ol', 'quest-visits');
@@ -652,7 +653,7 @@ export function createQuest(ctx) {
       list.append(li);
     });
     show(
-      [el('p', 'quest-step', s('result')), title, el('p', 'quest-lead', pick(route.end_lead)), el('h3', 'quest-sub', s('visit')), list, backLink()],
+      [el('p', 'quest-step', s('result')), title, el('p', 'quest-points', s('points', { p: pts.points, m: pts.max })), el('p', 'quest-lead', pick(route.end_lead)), el('h3', 'quest-sub', s('visit')), list, backLink()],
       [button('quest-btn', s('restart'), () => restart()), button('quest-btn is-primary', s('explore'), () => stop())],
     );
     frameOverview();

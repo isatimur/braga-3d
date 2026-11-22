@@ -53,6 +53,7 @@ function withDefaults(cfg) {
     traffic: cfg.traffic || {},
     nature: cfg.nature || {},
     transit: cfg.transit || {},
+    analytics: cfg.analytics || null, // analytics.js: 'vercel' or nothing
     loaded: true,
   };
 }
