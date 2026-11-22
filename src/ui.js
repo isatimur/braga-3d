@@ -6,6 +6,7 @@ import { createLightbox, renderGallery, creditNode } from './gallery.js';
 import { renderVideos } from './video.js';
 import { panoramaThumbUrl } from './panorama.js';
 import { MODE_RU, MODE_STYLE } from './routes.js';
+import { ERAS } from './eras.js';
 
 const CATEGORY_RU = {
   religious: t('Храмы'),
@@ -135,6 +136,33 @@ export function createUI(landmarks, routes, h) {
     chipsEl.append(b);
   }
 
+  // Eras (eras.js): one may be on at a time; off shows every place. The row
+  // appears only when the places span at least two eras.
+  let era = null;
+  const eraIds = new Set(landmarks.flatMap((l) => l.eras || []));
+  const eraChips = [];
+  if (eraIds.size > 1) {
+    const erasEl = el('div', 'chips chips-eras');
+    erasEl.setAttribute('role', 'group');
+    erasEl.setAttribute('aria-label', t('Фильтр по эпохам'));
+    for (const e of ERAS.filter((x) => eraIds.has(x.id))) {
+      const b = el('button', 'chip chip-era', t(e.name));
+      b.type = 'button';
+      b.dataset.era = e.id;
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => {
+        era = era === e.id ? null : e.id;
+        for (const c of eraChips) c.setAttribute('aria-pressed', String(c.dataset.era === era));
+        refreshFilter();
+        h.onEra?.(era);
+      });
+      eraChips.push(b);
+      erasEl.append(b);
+    }
+    chipsEl.after(erasEl);
+  }
+  const filteredOut = (l) => hidden.has(l.category) || (!!era && !(l.eras || []).includes(era));
+
   const rows = landmarks.map((l, i) => {
     const li = el('li');
     const b = el('button', 'place');
@@ -149,7 +177,7 @@ export function createUI(landmarks, routes, h) {
   function refreshFilter() {
     let n = 0;
     for (const r of rows) {
-      const off = hidden.has(r.l.category);
+      const off = filteredOut(r.l);
       r.li.hidden = off;
       if (!off) n++;
     }
@@ -377,7 +405,7 @@ export function createUI(landmarks, routes, h) {
   }
 
   function visibleIndices() {
-    return landmarks.map((l, i) => (hidden.has(l.category) ? -1 : i)).filter((i) => i >= 0);
+    return landmarks.map((l, i) => (filteredOut(l) ? -1 : i)).filter((i) => i >= 0);
   }
 
   // ------------------------------------------------------------ route panel

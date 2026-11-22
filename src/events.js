@@ -1,12 +1,14 @@
 // Product events with no provider attached. emit() dispatches one
 // CustomEvent on window and does nothing else: no network call, no storage,
-// no identifier, no location. An analytics provider can be attached later
-// by listening to this one event:
+// no identifier, no location. analytics.js attaches the provider, when the
+// city config names one, by listening to this one event:
 //
 //   window.addEventListener('p3d:event', (e) => provider.track(e.detail.name, e.detail));
 //
 // e.detail, a frozen object with always these seven keys (null when unknown):
-//   name     'quest_started'           a route starts at its first stop (Start, Start again)
+//   name     'city_opened'             the map is interactive (once per page load)
+//            'landmark_selected'       a place card opens (stop = the place id)
+//            'quest_started'           a route starts at its first stop (Start, Start again)
 //            'quest_step_completed'    a stop's task solved
 //            'quest_completed'         the last open stop of a route solved
 //            'outbound_visit_clicked'  a place card opened from a route's end screen

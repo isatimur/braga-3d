@@ -121,6 +121,10 @@ export const messages = {
   'автобус': ['autocarro', 'bus'], 'такси': ['táxi', 'taxi'], 'фуникулёр': ['funicular', 'funicular'],
   'Места и маршруты': ['Locais e percursos', 'Places and routes'], 'Раздел': ['Secção', 'Section'], 'Места': ['Locais', 'Places'],
   'Фильтр по категориям': ['Filtrar por categoria', 'Filter by category'], 'Закрыть': ['Fechar', 'Close'],
+  // eras.js: date ranges, not styles
+  'Фильтр по эпохам': ['Filtrar por época', 'Filter by era'],
+  'Римская эпоха': ['Época romana', 'Roman era'], 'Средние века': ['Idade Média', 'Middle Ages'],
+  'XVI–XVIII века': ['Séculos XVI–XVIII', '16th–18th centuries'], 'XIX век и позже': ['Século XIX até hoje', '19th century to today'],
   'Разделы карточки': ['Secções do local', 'Place details'], 'Обзор': ['Visão geral', 'Overview'], 'История': ['História', 'History'],
   'Галерея': ['Galeria', 'Gallery'], 'Видео': ['Vídeo', 'Video'], 'Фото недоступно': ['Fotografia indisponível', 'Photo unavailable'],
   'Совет': ['Sugestão', 'Tip'], 'Источники': ['Fontes', 'Sources'], 'Открыть панораму 360°': ['Abrir panorama 360°', 'Open 360° panorama'],

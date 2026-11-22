@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import './style.css';
 import { loadData, loadStory } from './data.js';
+import { emit } from './events.js';
+import { attachAnalytics } from './analytics.js';
 import { createProjection, METRES_PER_UNIT } from './geo.js';
 import { installAtmosphereFog, createRenderer, createAtmosphere, createGround, FOG_UNIFORMS, TIMES, DEFAULT_TIME, DPR, deviceDpr } from './scene.js';
 import { setWaterLite, setWaterLiteLive, seekWater, resumeWater } from './water.js';
@@ -742,6 +744,7 @@ async function start() {
       marks.setHiddenCategories(hidden);
       if (active >= 0 && hidden.has(landmarks[active].category)) close();
     },
+    onEra: (era) => marks.setEra(era),
     onRouteSelect: (id) => openRoute(id),
     onRouteClose: () => exitRoute(),
     onStopClick: (k) => select(route.stopIdx[k]),
@@ -936,6 +939,7 @@ async function start() {
     if (i == null || i < 0) return;
     cancelModeLoad();
     if (tour) stopTour();
+    if (i !== active) emit('landmark_selected', { city: CITY.id, stop: landmarks[i].id, lang: language });
     active = i;
     discovery.select(i);
     marks.setActive(i);
@@ -1896,6 +1900,7 @@ async function start() {
       first = false;
       mark('interactive');
       debug.interactive = true;
+      emit('city_opened', { city: CITY.id, lang: language });
     }
     perf.frame(now, rawDt * 1000);
     if (debug.frames % 30 === 0) debug.frameMs = perf.stats().p50;
@@ -2161,6 +2166,7 @@ loadCity()
   .then(async (city) => {
     debug.city = city;
     mark('city');
+    attachAnalytics(city.analytics); // off on local hosts and for a city that names no provider
     applyCityShell();
     await loadCityModels(city.id);
     mark('models');

@@ -529,6 +529,10 @@ export function buildLandmarks(list, fits, heightAt, outlines, onLabelClick) {
   }
 
   const hidden = new Set();
+  // The era filter (eras.js) hides a place's pin and name, never its model:
+  // the building stands in the town whatever the visitor is reading about.
+  let era = null;
+  const offEra = (it) => !!era && !(it.data.eras || []).includes(era);
   let activeIndex = -1;
   const _m = new THREE.Matrix4();
   const _pos = new THREE.Vector3();
@@ -567,7 +571,7 @@ export function buildLandmarks(list, fits, heightAt, outlines, onLabelClick) {
   function updatePins(time, animate, camPos) {
     if (camPos) updateLod(camPos);
     for (const it of items) {
-      const off = hidden.has(it.data.category);
+      const off = hidden.has(it.data.category) || offEra(it);
       const active = it.index === activeIndex;
       const d = camPos ? camPos.distanceTo(_pos.set(it.center.x, it.top, it.center.z)) : 1500;
       const H = Math.max(PIN_MIN, d * PIN_ANGLE) * (active ? 1.35 : 1);
@@ -586,15 +590,22 @@ export function buildLandmarks(list, fits, heightAt, outlines, onLabelClick) {
   }
   updatePins(0, false);
 
-  function setHiddenCategories(set) {
-    hidden.clear();
-    for (const c of set) hidden.add(c);
+  function applyFilter() {
     for (const it of items) {
       const on = !hidden.has(it.data.category);
       for (const m of it.meshes) m.visible = on;
       if (it.outline) it.outline.visible = on;
-      it.label.visible = on;
+      it.label.visible = on && !offEra(it);
     }
+  }
+  function setHiddenCategories(set) {
+    hidden.clear();
+    for (const c of set) hidden.add(c);
+    applyFilter();
+  }
+  function setEra(id) {
+    era = id || null;
+    applyFilter();
   }
 
   function setActive(index) {
@@ -651,6 +662,7 @@ export function buildLandmarks(list, fits, heightAt, outlines, onLabelClick) {
     outlineMaterial: outlineMat,
     updatePins,
     setHiddenCategories,
+    setEra,
     setActive,
     pick,
     shrink,

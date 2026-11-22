@@ -34,6 +34,7 @@
     "finish": { "ru": "Посмотреть результат", "en": "See the result", "pt": "Ver o resultado" },
     "result": { "ru": "Ваш результат", "en": "Your result", "pt": "O seu resultado" },
     "summary": { "ru": "Пройдено мест: {v}. С первой попытки: {g}.", "en": "{v} places visited, {g} answered right first time", "pt": "{v} lugares visitados; acertou à primeira em {g}" },
+    "points": { "ru": "Очки: {p} из {m}", "en": "Points: {p} of {m}", "pt": "Pontos: {p} de {m}" },
     "stamps": { "ru": "Печати маршрута", "en": "Route stamps", "pt": "Selos da rota" },
     "stamp_gold": { "ru": "{name}: верно с первой попытки", "en": "{name}: right first time", "pt": "{name}: certo à primeira" },
     "stamp_plain": { "ru": "{name}: верный ответ", "en": "{name}: right answer", "pt": "{name}: resposta certa" },

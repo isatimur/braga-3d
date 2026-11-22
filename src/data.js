@@ -3,6 +3,7 @@ import { language, loadTranslations, localizeLandmark, localizeRoute } from './i
 import { CITY, dataPath } from './city.js';
 import { setDims } from './fit.js';
 import { unpackBuildings } from './buildings-pack.js';
+import { erasOf } from './eras.js';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -39,6 +40,7 @@ function cleanLandmarks(raw) {
       name_pt: l.name_pt || '',
       category: l.category ? String(l.category) : 'other',
       year: l.year == null ? '' : String(l.year),
+      eras: erasOf(l.year), // from the source text, before i18n replaces `year`
       lat,
       lon,
     });
