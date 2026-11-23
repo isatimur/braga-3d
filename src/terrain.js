@@ -4,14 +4,52 @@
 //
 // heightAt(x, z) is the one height function of the scene: world units,
 // 0 at the terrain height of the projection origin (the city centre).
-// It samples the grid bilinearly, then applies "pads": flat or profiled
-// patches under landmarks, so a stadium cut into a hillside or a church on
-// a terrace stands on level ground instead of sinking into the DEM slope.
-// Roads, routes, buildings and landmarks all read this same function.
+// It is the height of the drawn ground: the smoothed DEM with "pads" (flat
+// or profiled patches under landmarks, so a stadium cut into a hillside or a
+// church on a terrace stands on level ground), read on the triangles of the
+// ground mesh. Roads, routes, buildings and landmarks all read this same
+// function, so they lie on the ground you see. dataAt is the DEM read
+// bilinearly with pads: the data value, for elevation figures.
 
 export const VERTICAL_EXAGGERATION = 1.0;
 
 const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+
+// Half width of the ground mesh, world units.
+export const GROUND_HALF = 6000;
+
+// Grid lines along one axis: `subOf(cell)` lines per DEM cell over the DEM,
+// then coarser and coarser out to +-half, where the fog hides the edge.
+function axisLines(a0, a1, cells, subOf, half) {
+  const out = [];
+  const cell = (a1 - a0) / cells;
+  const first = cell / subOf(0);
+  const last = cell / subOf(cells - 1);
+  for (let s = first * 2, a = a0 - first * 2; a > -half; s *= 1.6, a -= s) out.unshift(a);
+  out.unshift(-half);
+  for (let c = 0; c < cells; c++) {
+    const n = subOf(c);
+    for (let k = 0; k < n; k++) out.push(a0 + (c + k / n) * cell);
+  }
+  out.push(a1);
+  for (let s = last * 2, a = a1 + last * 2; a < half; s *= 1.6, a += s) out.push(a);
+  out.push(half);
+  return out;
+}
+
+// Index of the grid interval that holds v (arr ascending).
+function interval(arr, v) {
+  let lo = 0;
+  let hi = arr.length - 2;
+  if (v <= arr[0]) return 0;
+  if (v >= arr[hi]) return hi;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (arr[mid] <= v) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
 
 // data: parsed terrain.json or null (flat fallback).
 // toMetres(lat, lon) -> {x, z} local metres (z = south); S: world units per metre.
@@ -143,6 +181,7 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
   function addPad(p) {
     const pad = { ...p, r: Math.hypot(p.hu, p.hv) + p.fall };
     pads.push(pad);
+    meshH = null; // heightAt reads the padded mesh again
     return pad;
   }
 
@@ -167,7 +206,8 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     return h;
   }
 
-  function heightAt(x, z) {
+  // The DEM read bilinearly, with pads: the data value, not the drawn ground.
+  function dataAt(x, z) {
     return applyPads(rawAt(x, z), x, z);
   }
 
@@ -286,9 +326,66 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     return base + (micro + scarpAt(mx, mz, slope)) * w * k;
   }
 
+  // The ground's grid lines (world units, both ascending): 4 x 4 quads per DEM
+  // cell over the core, where the city stands and the draped lines need them;
+  // one quad per cell over the rest of the DEM (the streamed surroundings,
+  // src/tiles.js); coarser beyond. The tile worker drapes the streamed tiles
+  // on exactly these triangles, so nothing floats or sinks.
+  let axes = null;
+  function groundAxes() {
+    if (axes) return axes;
+    const b = bounds;
+    const c = core;
+    const wide = c && c !== b && Number.isInteger(c.c0);
+    // columns west to east; rows: z runs north to south, the DEM rows south to north
+    const subX = wide ? (i) => (i >= c.c0 && i < c.c0 + c.cols - 1 ? 4 : 1) : () => 4;
+    const subZ = wide ? (j) => {
+      const r = b.rows - 2 - j; // the DEM cell row (its south node) of z cell j
+      return r >= c.r0 && r < c.r0 + c.rows - 1 ? 4 : 1;
+    } : () => 4;
+    axes = {
+      xs: axisLines(b.x0, b.x1, b.cols - 1, subX, GROUND_HALF),
+      zs: axisLines(b.zN, b.zS, b.rows - 1, subZ, GROUND_HALF),
+    };
+    return axes;
+  }
+
+  // heightAt: the height of the drawn ground, read on the same triangles the
+  // ground mesh draws (src/scene.js createGround: vertices at the grid lines,
+  // each quad split along its (x1, z0)-(x0, z1) diagonal). A road, a house or
+  // a walker placed at heightAt therefore lies on the ground you see, never
+  // under it and never in the air. Vertex heights are filled on first use and
+  // dropped when a pad is added.
+  let meshH = null;
+  function heightAt(x, z) {
+    const { xs, zs } = groundAxes();
+    const nx = xs.length;
+    if (!meshH) meshH = new Float32Array(nx * zs.length).fill(NaN);
+    const i = interval(xs, x);
+    const j = interval(zs, z);
+    const at = (ii, jj) => {
+      const n = jj * nx + ii;
+      let h = meshH[n];
+      if (h !== h) h = meshH[n] = groundMeshAt(xs[ii], zs[jj]);
+      return h;
+    };
+    let u = (x - xs[i]) / (xs[i + 1] - xs[i]);
+    let v = (z - zs[j]) / (zs[j + 1] - zs[j]);
+    u = u < 0 ? 0 : u > 1 ? 1 : u;
+    v = v < 0 ? 0 : v > 1 ? 1 : v;
+    const a = at(i, j);
+    const b = at(i + 1, j);
+    const c = at(i, j + 1);
+    const d = at(i + 1, j + 1);
+    if (u + v <= 1) return a + (b - a) * u + (c - a) * v;
+    return d + (c - d) * (1 - u) + (b - d) * (1 - v);
+  }
+
   return {
     ok,
     heightAt,
+    dataAt,
+    groundAxes,
     rawAt,
     rawSmoothAt,
     groundMeshAt,
@@ -303,7 +400,7 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     grid: ok ? { bbox: data.bbox, cols, rows, heights: H, core: data.core || null } : null,
     datum,
     // metres above sea level at a world point (with pads)
-    elevationAt: (x, z) => heightAt(x, z) / k + datum,
+    elevationAt: (x, z) => dataAt(x, z) / k + datum,
     minM: ok ? data.min_m : 0,
     maxM: ok ? data.max_m : 0,
     source: ok ? data.source : 'flat',
