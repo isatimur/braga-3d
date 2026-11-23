@@ -198,7 +198,7 @@ export function createTiles({ renderer, scene, camera, terrain, heightAt, proj, 
     const init = {
       type: 'init',
       origin: { lat: proj.lat0, lon: proj.lon0 },
-      grid: terrain.grid,
+      grid: { ...terrain.grid, walkDistricts: terrain.walkDistricts },
       axes: groundAxes(terrain),
       kinds: doc.kinds,
       facade: getFacadeConfig(), // buildings.js set it while building the core

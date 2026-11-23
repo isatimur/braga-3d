@@ -30,7 +30,7 @@ export function createProjection(origin, bbox, landmarks = [], terrainData = nul
     return { x: m.x * S, z: m.z * S };
   };
 
-  const terrain = createTerrain(terrainData, toMetres, S);
+  const terrain = createTerrain(terrainData, toMetres, S, { walkDistricts: terrainData?.walkDistricts || [] });
 
   let maxAbs = 1;
   const pts = [];

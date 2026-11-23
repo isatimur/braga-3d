@@ -461,6 +461,23 @@
         "2026-11-23 (Session 022): 89/89 unit tests; check-walk all passed; verify OK; served build against the ground mesh, share of vertices under the ground, live site -> new build: street-minor 19.7 % -> 0.6 %, calcada-squares 12.6 % -> 0 %, lane-markings 14.4 % -> 0 %"
       ],
       "notes": "heightAt (src/terrain.js) reads the triangles of the ground mesh; dataAt is the bilinear DEM read with pads, for elevation figures. About 1 % of road vertices stay under the ground because a road is graded along its length and the ground is not cut to it. Not deployed on 2026-11-23."
+    },
+    {
+      "id": "braga-025",
+      "priority": 25,
+      "area": "walk",
+      "title": "Walk district: one continuous paved street from Arco da Porta Nova to Rua do Souto",
+      "user_visible_behavior": "At eye height on Rua Dom Diogo de Sousa the paving runs as one surface from wall to wall. No raised slabs, no steps between overlapping street pieces, no saw-tooth strips along the house fronts.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (terrain-surface.test.mjs: a walk district keeps heightAt on the drawn triangles with a 2 m grid, and has no microrelief)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-23 (Session 023): 91/91 unit tests; check-walk all passed; verify OK; surface stack at the arch: street ribbons 0.46-0.54 m over the ground (before 0.44-0.76 m); frame time unchanged, triangles 2.22 M -> 2.51 M in the district view"
+      ],
+      "notes": "cities/braga.json walk_districts. Inside a district every paving layer drapes on heightAt (net.drapeY). Not deployed on 2026-11-23."
     }
   ]
 }

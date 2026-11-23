@@ -7,6 +7,9 @@
   "origin": { "lat": 41.5503, "lon": -8.42 },
   "core_bbox": { "s": 41.52, "w": -8.49, "n": 41.575, "e": -8.36 },
   "wide_bbox": { "s": 41.47, "w": -8.55, "n": 41.63, "e": -8.30 },
+  "walk_districts": [
+    { "id": "porta-nova-souto", "name": "Arco da Porta Nova to Rua do Souto", "s": 41.5496, "w": -8.4305, "n": 41.5511, "e": -8.4258, "stepM": 2 }
+  ],
   "tiles": { "core_nx": 11, "core_ny": 6, "ext": { "w": 5, "e": 5, "s": 6, "n": 6 } },
   "terrain": {
     "dataset": "eudem25m",

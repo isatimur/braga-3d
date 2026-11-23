@@ -127,7 +127,8 @@ async function start() {
   if (!landmarks.length) loader.set(0.4, `${CITY.name[language] || CITY.name.en}: ${t('пока без достопримечательностей')}`);
   await nextFrame();
 
-  const proj = createProjection(roads.origin, roads.bbox, landmarks, terrainData);
+  // walk districts (cities/<id>.json): a fine ground grid under their streets (terrain.js)
+  const proj = createProjection(roads.origin, roads.bbox, landmarks, terrainData && { ...terrainData, walkDistricts: CITY.walk_districts || [] });
   const { project, heightAt, terrain } = proj;
   debug.projection = { S: proj.S, metresPerUnit: METRES_PER_UNIT, terrain: terrain.source, datum: +terrain.datum.toFixed(1) };
   debug.heightAt = heightAt;

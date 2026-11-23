@@ -623,9 +623,15 @@ function build(roads, project, heightAt) {
     }
   }
 
+  const inDistrict = heightAt.inWalkDistrict;
   const net = {
     S,
     ways,
+    // in a walk district (terrain.js): the drawn ground under (x, z), the
+    // level every paving layer drapes on; NaN elsewhere
+    drapeY(x, z) {
+      return inDistrict && inDistrict(x, z) ? heightAt(x, z) : NaN;
+    },
     X: PX,
     Z: PZ,
     C: PC,
