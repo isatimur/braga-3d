@@ -63,6 +63,41 @@ test('heightAt follows the ground when a pad is added later', () => {
   assert.ok(worst * METRES_PER_UNIT < 0.001, `largest gap near the pad ${(worst * METRES_PER_UNIT).toFixed(4)} m`);
 });
 
+// A walk district (cities/braga.json walk_districts): dense grid lines there.
+const city = JSON.parse(readFileSync(new URL('../cities/braga.json', import.meta.url), 'utf8'));
+const makeD = () => createProjection(roads.origin, roads.bbox, [], { ...load('terrain.json'), walkDistricts: city.walk_districts }).terrain;
+
+test('a walk district: heightAt still lies on the drawn triangles, the grid is dense there', () => {
+  const T = makeD();
+  let worst = 0;
+  for (const p of points(T, 20000)) worst = Math.max(worst, Math.abs(T.heightAt(p.x, p.z) - meshAt(T, p.x, p.z)));
+  assert.ok(worst * METRES_PER_UNIT < 0.001, `largest gap ${(worst * METRES_PER_UNIT).toFixed(4)} m`);
+  const d = city.walk_districts[0];
+  const { xs } = T.groundAxes();
+  const P = createProjection(roads.origin, roads.bbox, []);
+  const a = P.project(d.s, d.w);
+  const b = P.project(d.n, d.e);
+  const inside = xs.filter((x) => x >= a.x && x <= b.x);
+  const gap = Math.max(...inside.slice(1).map((x, i) => x - inside[i]));
+  assert.ok(gap * METRES_PER_UNIT <= d.stepM + 1e-6, `widest gap ${(gap * METRES_PER_UNIT).toFixed(2)} m`);
+});
+
+test('a walk district: paved ground, no microrelief bumps', () => {
+  const T = makeD();
+  const d = city.walk_districts[0];
+  const P = createProjection(roads.origin, roads.bbox, []);
+  const a = P.project(d.s, d.w);
+  const b = P.project(d.n, d.e);
+  let worst = 0;
+  for (let k = 0; k < 400; k++) {
+    const x = a.x + ((b.x - a.x) * (k % 20 + 0.5)) / 20;
+    const z = b.z + ((a.z - b.z) * (Math.floor(k / 20) + 0.5)) / 20;
+    worst = Math.max(worst, Math.abs(T.groundMeshAt(x, z) - T.rawSmoothAt(x, z)));
+  }
+  assert.ok(worst * METRES_PER_UNIT < 0.01, `ground off the smooth surface by ${(worst * METRES_PER_UNIT).toFixed(3)} m`);
+  assert.ok(T.heightAt.inWalkDistrict((a.x + b.x) / 2, (a.z + b.z) / 2), 'the district centre is in the district');
+});
+
 test('heightAt keeps the DEM value at the DEM nodes', () => {
   const T = make();
   const b = T.bounds;

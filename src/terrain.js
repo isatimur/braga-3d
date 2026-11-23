@@ -37,6 +37,18 @@ function axisLines(a0, a1, cells, subOf, half) {
   return out;
 }
 
+// Grid lines plus dense lines every `step` over each [a, b] span (walk
+// districts): ascending, without near duplicates.
+function withDetail(lines, spans) {
+  if (!spans.length) return lines;
+  const all = lines.slice();
+  for (const [a, b, step] of spans) for (let v = a; v <= b + 1e-9; v += step) all.push(v);
+  all.sort((p, q) => p - q);
+  const out = [all[0]];
+  for (let i = 1; i < all.length; i++) if (all[i] - out[out.length - 1] > 1e-4) out.push(all[i]);
+  return out;
+}
+
 // Index of the grid interval that holds v (arr ascending).
 function interval(arr, v) {
   let lo = 0;
@@ -53,7 +65,27 @@ function interval(arr, v) {
 
 // data: parsed terrain.json or null (flat fallback).
 // toMetres(lat, lon) -> {x, z} local metres (z = south); S: world units per metre.
-export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGGERATION, scarp = null } = {}) {
+export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGGERATION, scarp = null, walkDistricts = [] } = {}) {
+  // Walk districts (cities/<id>.json walk_districts: s, w, n, e, stepM): the
+  // ground mesh gets a grid line every stepM there, so the drawn ground (and
+  // heightAt, which reads it) follows the smooth surface under each street
+  // instead of 30 m facets. A paved town has no microrelief: it fades out
+  // over FADE around each district.
+  const districts = (walkDistricts || []).map((d) => {
+    const a = toMetres(d.s, d.w);
+    const b = toMetres(d.n, d.e);
+    return { x0: Math.min(a.x, b.x) * S, x1: Math.max(a.x, b.x) * S, z0: Math.min(a.z, b.z) * S, z1: Math.max(a.z, b.z) * S, step: (d.stepM || 2) * S };
+  });
+  const FADE = 10; // world units (40 m)
+  const paved = (x, z) => {
+    let w = 1;
+    for (const d of districts) {
+      const dx = Math.max(d.x0 - x, 0, x - d.x1);
+      const dz = Math.max(d.z0 - z, 0, z - d.z1);
+      w = Math.min(w, Math.hypot(dx, dz) / FADE);
+    }
+    return smooth(w);
+  };
   const ok = data && Array.isArray(data.heights) && data.cols > 1 && data.rows > 1 && data.heights.length === data.cols * data.rows;
   if (data && !ok) console.warn('[braga] terrain.json is malformed; using flat ground');
 
@@ -303,7 +335,7 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     const base = applyPads(rawSmoothAt(x, z), x, z);
     const mx = x / S;
     const mz = z / S;
-    const w = latticeWeight(mx, mz) * coreMask(x, z);
+    const w = latticeWeight(mx, mz) * coreMask(x, z) * paved(x, z);
     if (w <= 0) return base;
     const slope = slopeOf((px, pz) => applyPads(rawSmoothAt(px, pz), px, pz), x, z);
     const sf = smooth((slope - 0.05) / 0.17);
@@ -317,7 +349,7 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     const base = rawSmoothAt(x, z);
     const mx = x / S;
     const mz = z / S;
-    const w = latticeWeight(mx, mz) * coreMask(x, z);
+    const w = latticeWeight(mx, mz) * coreMask(x, z) * paved(x, z);
     if (w <= 0) return base;
     const slope = slopeOf(rawSmoothAt, x, z);
     const sf = smooth((slope - 0.05) / 0.17);
@@ -344,8 +376,8 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
       return r >= c.r0 && r < c.r0 + c.rows - 1 ? 4 : 1;
     } : () => 4;
     axes = {
-      xs: axisLines(b.x0, b.x1, b.cols - 1, subX, GROUND_HALF),
-      zs: axisLines(b.zN, b.zS, b.rows - 1, subZ, GROUND_HALF),
+      xs: withDetail(axisLines(b.x0, b.x1, b.cols - 1, subX, GROUND_HALF), districts.map((d) => [d.x0, d.x1, d.step])),
+      zs: withDetail(axisLines(b.zN, b.zS, b.rows - 1, subZ, GROUND_HALF), districts.map((d) => [d.z0, d.z1, d.step])),
     };
     return axes;
   }
@@ -381,6 +413,12 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     return d + (c - d) * (1 - u) + (b - d) * (1 - v);
   }
 
+  // Inside a walk district every paving layer (street ribbons, squares,
+  // frontage, the town plate) drapes on heightAt at each vertex, at one shared
+  // lift, so overlapping layers coincide instead of stepping. The test rides
+  // on heightAt, which every builder already receives.
+  heightAt.inWalkDistrict = (x, z) => districts.some((d) => x >= d.x0 && x <= d.x1 && z >= d.z0 && z <= d.z1);
+
   return {
     ok,
     heightAt,
@@ -398,6 +436,7 @@ export function createTerrain(data, toMetres, S, { exaggeration = VERTICAL_EXAGG
     // the raw grid, for the tile worker (src/tile-worker.js), which drapes
     // the streamed tiles on the same ground
     grid: ok ? { bbox: data.bbox, cols, rows, heights: H, core: data.core || null } : null,
+    walkDistricts: walkDistricts || [],
     datum,
     // metres above sea level at a world point (with pads)
     elevationAt: (x, z) => dataAt(x, z) / k + datum,

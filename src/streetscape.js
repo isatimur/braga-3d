@@ -900,7 +900,9 @@ function build(ctx, group, doc, pois, stats) {
           };
           const at = (t, o) => {
             const u = t / L;
-            return { x: ax + dx * t + lx * o, z: az + dz * t + lz * o, y: net.surfaceY(i, sgn * o2) * (1 - u) + net.surfaceY(i + 1, sgn * o2) * u + top };
+            const x = ax + dx * t + lx * o, z = az + dz * t + lz * o;
+            const g = net.drapeY(x, z); // a walk district: on the drawn ground
+            return { x, z, y: (g === g ? g : net.surfaceY(i, sgn * o2) * (1 - u) + net.surfaceY(i + 1, sgn * o2) * u) + top };
           };
           let ra = reach(0);
           for (let s = 0; s < steps; s++) {
@@ -911,6 +913,7 @@ function build(ctx, group, doc, pois, stats) {
             if (r0 < 0 || rb < 0) continue;
             const mid = at((ta + tb) / 2, o2 + Math.min(r0, rb) / 2);
             if (onAnyFloor(mid.x, mid.z) || inArea(mid.x, mid.z)) continue;
+            if (!lite && net.drapeY(mid.x, mid.z) === net.drapeY(mid.x, mid.z)) continue; // a walk district: the plate paves it
             const a0 = at(ta, o2), b0 = at(tb, o2), a1 = at(ta, o2 + r0), b1 = at(tb, o2 + rb);
             tri(CT, a0, b0, b1, CALCADA.sidewalk);
             tri(CT, a0, b1, a1, CALCADA.sidewalk);
@@ -993,7 +996,8 @@ function build(ctx, group, doc, pois, stats) {
           if (nk < 0 || open(x, z) || onAnyFloor(x, z)) continue;
           const g = heightAt(x, z);
           let y;
-          if (near < smp[nk * 5 + 3] + 0.1) y = g + RIBBON_LIFT + smp[nk * 5 + 2] - 0.075; // under the street itself
+          if (net.drapeY(x, z) === net.drapeY(x, z)) y = g + RIBBON_LIFT - 0.016; // a walk district: just under the squares and streets
+          else if (near < smp[nk * 5 + 3] + 0.1) y = g + RIBBON_LIFT + smp[nk * 5 + 2] - 0.075; // under the street itself
           else {
             const f = 1 - smooth01((near - 3.5) / (RP - 3.5)); // 1 near a street, 0 at its reach
             y = g + f * (RIBBON_LIFT - 0.03 + sd / Math.max(sw, 0.02)) - (1 - f) * 0.1;
@@ -1018,6 +1022,15 @@ function build(ctx, group, doc, pois, stats) {
         for (let i = 0; i < nx - 1; i++) {
           const k = j * nx + i;
           if (Number.isNaN(PY[k] + PY[k + 1] + PY[k + nx] + PY[k + nx + 1])) continue;
+          const x0 = (gx0 + i) * CELLP, z0 = (gz0 + j) * CELLP;
+          if (net.drapeY(x0 + CELLP / 2, z0 + CELLP / 2) === net.drapeY(x0 + CELLP / 2, z0 + CELLP / 2)) {
+            // a walk district: the plate is the calçada itself, wall to wall
+            // (under the houses it is hidden), so no frontage teeth
+            const q = (ii, jj) => ({ x: (gx0 + ii) * CELLP, y: PY[jj * nx + ii], z: (gz0 + jj) * CELLP });
+            tri(CT, q(i, j), q(i, j + 1), q(i + 1, j), CALCADA.sidewalk);
+            tri(CT, q(i + 1, j), q(i, j + 1), q(i + 1, j + 1), CALCADA.sidewalk);
+            continue;
+          }
           const a = vert(i, j), b = vert(i + 1, j), c = vert(i, j + 1), d = vert(i + 1, j + 1);
           P.idx.push(a, c, b, b, c, d);
         }

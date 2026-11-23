@@ -269,28 +269,45 @@ function strip(T, net, i0, i1, off, h, lift, col, ext = h) {
     const lx = dz; // left of travel (x east, z south)
     const lz = -dx;
     const e = Math.min(ext, L);
-    // each edge on the surface: level with the way, or up the hillside
+    // each edge on the surface: level with the way, or up the hillside; in a
+    // walk district on the drawn ground itself, the narrower way a few mm
+    // over the wider one where they overlap (no steps, no z-fighting)
     const sy = net.surfaceY;
-    const c = [
-      [ax - dx * e + lx * (off + h), sy(i, off + h) + lift, az - dz * e + lz * (off + h)],
-      [ax - dx * e + lx * (off - h), sy(i, off - h) + lift, az - dz * e + lz * (off - h)],
-      [bx + dx * e + lx * (off - h), sy(i + 1, off - h) + lift, bz + dz * e + lz * (off - h)],
-      [bx + dx * e + lx * (off + h), sy(i + 1, off + h) + lift, bz + dz * e + lz * (off + h)],
-    ];
-    const v = T.pos.length / 3;
-    for (const p of c) {
-      T.pos.push(p[0], p[1], p[2]);
-      T.nor.push(0, 1, 0);
-      T.col.push(col[0], col[1], col[2]);
+    const rank = 0.004 * (1 - Math.min(1, h / 2.5));
+    const drape = net.drapeY && (net.drapeY(ax, az) === net.drapeY(ax, az) || net.drapeY(bx, bz) === net.drapeY(bx, bz));
+    // in a walk district: pieces of at most 2 m, so the ribbon bends with the ground
+    const n = drape ? Math.max(1, Math.ceil((L + 2 * e) / (0.5 * S))) : 1;
+    for (let k = 0; k < n; k++) {
+      const t0 = -e + ((L + 2 * e) * k) / n;
+      const t1 = -e + ((L + 2 * e) * (k + 1)) / n;
+      const u0 = Math.min(1, Math.max(0, t0 / L));
+      const u1 = Math.min(1, Math.max(0, t1 / L));
+      const syAt = (u, o) => sy(i, o) * (1 - u) + sy(i + 1, o) * u;
+      const c = [
+        [ax + dx * t0 + lx * (off + h), syAt(u0, off + h) + lift, az + dz * t0 + lz * (off + h)],
+        [ax + dx * t0 + lx * (off - h), syAt(u0, off - h) + lift, az + dz * t0 + lz * (off - h)],
+        [ax + dx * t1 + lx * (off - h), syAt(u1, off - h) + lift, az + dz * t1 + lz * (off - h)],
+        [ax + dx * t1 + lx * (off + h), syAt(u1, off + h) + lift, az + dz * t1 + lz * (off + h)],
+      ];
+      for (const p of c) {
+        const g = net.drapeY ? net.drapeY(p[0], p[2]) : NaN;
+        if (g === g) p[1] = g + lift + rank;
+      }
+      const v = T.pos.length / 3;
+      for (const p of c) {
+        T.pos.push(p[0], p[1], p[2]);
+        T.nor.push(0, 1, 0);
+        T.col.push(col[0], col[1], col[2]);
+      }
+      if (T.pat) {
+        const hm = h / S;
+        T.pat.push(T.cur, hm, hm, T.cur, -hm, hm, T.cur, -hm, hm, T.cur, hm, hm);
+      }
+      // counter-clockwise from above
+      const up = (c[1][2] - c[0][2]) * (c[2][0] - c[0][0]) - (c[1][0] - c[0][0]) * (c[2][2] - c[0][2]);
+      if (up >= 0) T.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
+      else T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
     }
-    if (T.pat) {
-      const hm = h / S;
-      T.pat.push(T.cur, hm, hm, T.cur, -hm, hm, T.cur, -hm, hm, T.cur, hm, hm);
-    }
-    // counter-clockwise from above
-    const up = (c[1][2] - c[0][2]) * (c[2][0] - c[0][0]) - (c[1][0] - c[0][0]) * (c[2][2] - c[0][2]);
-    if (up >= 0) T.idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
-    else T.idx.push(v, v + 2, v + 1, v, v + 3, v + 2);
   }
 }
 
