@@ -444,6 +444,23 @@
         "2026-11-22, braga-3d.com (bundle index-CgrUdiqF.js), iPhone 13 profile: era row visible in the Places tab, Roman era gives 2 places, no page errors"
       ],
       "notes": "Eras are date ranges read from each place's `year` text (src/eras.js), not styles; a new place must be added to the table in scripts/eras.test.mjs. Points are computed from the stamps and never stored. Analytics (src/analytics.js) is Vercel Web Analytics, off on local hosts; /_vercel/insights/script.js answered 404 on 2026-11-22 because Web Analytics is not enabled for the project, so nothing is counted yet. Custom events may need a paid Vercel plan. On a phone the two chip rows take six lines and leave little of the place list on the first screen; the chips are 26 px high. Deployed 2026-11-22."
+    },
+    {
+      "id": "braga-024",
+      "priority": 24,
+      "area": "terrain",
+      "title": "heightAt is the drawn ground",
+      "user_visible_behavior": "Roads, paved squares, lane markings and houses lie on the ground you see. The grass no longer covers parts of a road on a slope, and paving no longer tilts against the ground.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/*.test.mjs (terrain-surface.test.mjs: heightAt lies on the ground mesh triangles, follows a pad added later, keeps the DEM value at the DEM nodes)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-23 (Session 022): 89/89 unit tests; check-walk all passed; verify OK; served build against the ground mesh, share of vertices under the ground, live site -> new build: street-minor 19.7 % -> 0.6 %, calcada-squares 12.6 % -> 0 %, lane-markings 14.4 % -> 0 %"
+      ],
+      "notes": "heightAt (src/terrain.js) reads the triangles of the ground mesh; dataAt is the bilinear DEM read with pads, for elevation figures. About 1 % of road vertices stay under the ground because a road is graded along its length and the ground is not cut to it. Not deployed on 2026-11-23."
     }
   ]
 }

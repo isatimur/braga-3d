@@ -16,6 +16,7 @@
 // line material shares it, including the landmark stone shader, so the far
 // hills fade into exactly the colour the sky has at the horizon.
 import * as THREE from 'three';
+import { GROUND_HALF } from './terrain.js';
 
 // ------------------------------------------------------------ shared fog uniforms
 // Plain objects (not Vector3) on purpose: UniformsUtils.clone copies three.js
@@ -1013,47 +1014,11 @@ function detailNoise(size = 256) {
   return tex;
 }
 
-// Grid lines along one axis: fine steps (`sub` per DEM cell) over the DEM,
-// then steps that double outward to +-HALF, where the fog hides the edge.
-// Grid lines along one axis: `subOf(cell)` lines per DEM cell over the DEM,
-// then coarser and coarser out to +-half.
-function axisLines(a0, a1, cells, subOf, half) {
-  const out = [];
-  const cell = (a1 - a0) / cells;
-  const first = cell / subOf(0);
-  const last = cell / subOf(cells - 1);
-  for (let s = first * 2, a = a0 - first * 2; a > -half; s *= 1.6, a -= s) out.unshift(a);
-  out.unshift(-half);
-  for (let c = 0; c < cells; c++) {
-    const n = subOf(c);
-    for (let k = 0; k < n; k++) out.push(a0 + (c + k / n) * cell);
-  }
-  out.push(a1);
-  for (let s = last * 2, a = a1 + last * 2; a < half; s *= 1.6, a += s) out.push(a);
-  out.push(half);
-  return out;
-}
-
-export const GROUND_HALF = 6000;
-// The ground's grid lines (world units, both ascending): 4 x 4 quads per DEM
-// cell over the core, where the city stands and the draped lines need them;
-// one quad per cell over the rest of the DEM (the streamed surroundings,
-// src/tiles.js); coarser beyond. The tile worker drapes the streamed tiles
-// on exactly these triangles, so nothing floats or sinks.
+// The grid lines live in src/terrain.js (terrain.groundAxes), because
+// heightAt reads the same triangles the ground mesh draws.
+export { GROUND_HALF };
 export function groundAxes(terrain) {
-  const b = terrain.bounds;
-  const c = terrain.core;
-  const wide = c && c !== b && Number.isInteger(c.c0);
-  // columns west to east; rows: z runs north to south, the DEM rows south to north
-  const subX = wide ? (i) => (i >= c.c0 && i < c.c0 + c.cols - 1 ? 4 : 1) : () => 4;
-  const subZ = wide ? (j) => {
-    const r = b.rows - 2 - j; // the DEM cell row (its south node) of z cell j
-    return r >= c.r0 && r < c.r0 + c.rows - 1 ? 4 : 1;
-  } : () => 4;
-  return {
-    xs: axisLines(b.x0, b.x1, b.cols - 1, subX, GROUND_HALF),
-    zs: axisLines(b.zN, b.zS, b.rows - 1, subZ, GROUND_HALF),
-  };
+  return terrain.groundAxes();
 }
 
 // Terrain shading, in the fragment shader:

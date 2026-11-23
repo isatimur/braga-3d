@@ -317,6 +317,15 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 022 (2026-11-23, heightAt is the drawn ground)
+
+- Goal (owner): fix paving that looks tilted and roads that lie under the grass (seen in barcelos-3d; the cause is in the shared engine).
+- Root cause: since `db41d79` (2026-10-06) the ground mesh is drawn from the smoothed DEM (`groundMeshAt`, Catmull-Rom), while `heightAt`, the datum of roads, paving, houses and landmarks, stayed bilinear. The DEM cell is about 120 x 100 m, so the two surfaces part by metres inside a cell. Measured over the core on a 2 m grid: drawn ground more than 0.48 m (`RIBBON_LIFT`) above `heightAt` on 22.7 % of the area, more than 0.5 m below on 23.4 %; extremes -9.9 m and +6.3 m.
+- Change: `heightAt` in `src/terrain.js` now reads the triangles of the ground mesh (grid lines from `terrain.groundAxes()`, vertex heights `groundMeshAt`, the same diagonal as `createGround`). Vertex heights are filled on first use and dropped by `addPad`. `dataAt` is the old bilinear read with pads; `elevationAt` uses it. `axisLines`, `GROUND_HALF` and `groundAxes` moved from `src/scene.js` to `src/terrain.js`; `scene.js` re-exports them.
+- Measured in the served app against the ground mesh (share of vertices under the ground, live site -> new build): `street-minor` 19.7 % -> 0.6 %, `street-secondary` 16.7 % -> 0.7 %, `street-primary` 7.3 % -> 1.2 %, `calcada-squares` 12.6 % -> 0 %, `lane-markings` 14.4 % -> 0 %.
+- Checks: `node --test scripts/*.test.mjs` 89/89 (new `scripts/terrain-surface.test.mjs`, 3 tests); `scripts/check-walk.mjs` all passed on both profiles; `npm run verify` OK. Screenshots viewed: walk start and street at eye height, the overhead view of the centre, Bom Jesus hillside (the road the ground used to cut into pieces is whole).
+- Known limits: about 1 % of road vertices are still under the ground (a road is graded along its length and level across; the ground is not cut to it). `street-plate` and `sidewalks` show 12 % below the ground by design (side walls). `scripts/verify.mjs` does not run `check-walk.mjs`. The forks other than barcelos-3d do not have this change.
+
 ### Session 021 (2026-11-22, eras, route points, analytics hook)
 
 - Asked for: the three gaps against the owner's product specification (eras, analytics, points).
