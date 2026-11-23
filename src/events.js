@@ -12,6 +12,8 @@
 //            'quest_step_completed'    a stop's task solved
 //            'quest_completed'         the last open stop of a route solved
 //            'outbound_visit_clicked'  a place card opened from a route's end screen
+//            'mission_start', 'mission_pass', 'mission_fail'
+//                                      a street mission (street-missions.js; route = mission id)
 //   city     city id, e.g. 'braga'
 //   route    route id, e.g. 'two-thousand-years'
 //   stop     landmark id of the stop, e.g. 'se-braga'

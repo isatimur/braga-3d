@@ -238,3 +238,7 @@ We take only facts (numbers and counts) from these pages and cite each one; we r
 ## Microsoft building footprints
 
 `data/buildings-ms.json` and `data/tiles-ms/`: Microsoft Global ML Building Footprints, © Microsoft, Open Database License (ODbL 1.0), https://github.com/microsoft/GlobalMLBuildingFootprints. We fetched them with `scripts/fetch-ms-buildings.mjs`, simplified the outlines, dropped every outline that overlaps an OpenStreetMap building or a landmark, and estimated the missing heights from the footprint area and the nearby OSM buildings.
+
+## Street mission characters
+
+`assets/characters/*.webp`: eight fictional characters (Dona Rosa, Sr. Joaquim, Inês, Sr. Armando, Tiago, Amélia, Rúben, Avó Conceição), generated for this project on 2026-11-23 with Higgsfield (model `gpt_image_2_6`) from text prompts only, no reference photos. None of them depicts a real person; prompts asked for original characters with no logos.
