@@ -1,7 +1,7 @@
 // Walk mode collision (src/walk-collide.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCollider } from '../src/walk-collide.js';
+import { createCollider, gatePiers } from '../src/walk-collide.js';
 
 // two houses with a 4-unit street between them, and one far house
 const A = [{ x: 0, z: 0 }, { x: 10, z: 0 }, { x: 10, z: 10 }, { x: 0, z: 10 }];
@@ -76,4 +76,20 @@ test('freeNear leaves a house by the short way', () => {
   assert.equal(c.blocked(p.x, p.z, 0.1), false);
   assert.ok(Math.hypot(p.x - 9, p.z - 5) < 2, JSON.stringify(p));
   assert.deepEqual(c.freeNear(12, 5, 0.1), { x: 12, z: 5 });
+});
+
+test('a gate blocks at its piers and lets the walker through the middle', () => {
+  // an arch 8 long (across the street, along z) and 3 deep (along x), turned 20 degrees
+  const t = (20 * Math.PI) / 180, rot = ([x, z]) => [x * Math.cos(t) - z * Math.sin(t), x * Math.sin(t) + z * Math.cos(t)];
+  const gate = [[0, 0], [3, 0], [3, 8], [0, 8]].map(rot);
+  const piers = gatePiers(gate, 0.5);
+  assert.equal(piers.length, 2);
+  const g = createCollider(piers, 8);
+  assert.equal(g.inside(...rot([1.5, 1])), true); // a pier
+  assert.equal(g.inside(...rot([1.5, 7])), true); // the other pier
+  assert.equal(g.blocked(...rot([1.5, 4]), 0.3), false); // the passage
+  // walk through the arch, along x
+  const [sx, sz] = rot([-2, 4]), [ex, ez] = rot([5, 4]);
+  const end = g.move(sx, sz, ex - sx, ez - sz, 0.3);
+  assert.ok(Math.hypot(end.x - ex, end.z - ez) < 1e-6 && !end.hit, JSON.stringify(end));
 });

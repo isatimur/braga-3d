@@ -7,6 +7,28 @@
 const X = (p) => (Array.isArray(p) ? p[0] : p.x);
 const Z = (p) => (Array.isArray(p) ? p[1] : p.z);
 
+// A gate (an arch over a street) blocks only at its two piers. outline: the
+// gate's outline; open: the share of its long side that is the passage. The
+// long side is the one across the street; returns two rectangles [[x, z], ...].
+export function gatePiers(outline, open = 0.5) {
+  // the direction of the longest edge, and the one across it
+  let ux = 1, uz = 0, best = -1;
+  for (let i = 0; i < outline.length; i++) {
+    const a = outline[i], b = outline[(i + 1) % outline.length];
+    const dx = X(b) - X(a), dz = Z(b) - Z(a), d = Math.hypot(dx, dz);
+    if (d > best) { best = d; ux = dx / d; uz = dz / d; }
+  }
+  const vx = -uz, vz = ux;
+  let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+  for (const p of outline) {
+    const a = X(p) * ux + Z(p) * uz, b = X(p) * vx + Z(p) * vz;
+    a0 = Math.min(a0, a); a1 = Math.max(a1, a); b0 = Math.min(b0, b); b1 = Math.max(b1, b);
+  }
+  const pier = ((a1 - a0) * (1 - open)) / 2;
+  const rect = (s0, s1) => [[s0, b0], [s1, b0], [s1, b1], [s0, b1]].map(([a, b]) => [a * ux + b * vx, a * uz + b * vz]);
+  return [rect(a0, a0 + pier), rect(a1 - pier, a1)];
+}
+
 // also(x, z): an extra rule that blocks a point (walk mode: open water).
 export function createCollider(polys, cell = 8, also = null) {
   const grid = new Map();

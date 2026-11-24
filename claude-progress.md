@@ -317,6 +317,11 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 023, part 6 (2026-11-24, walk through the Arco da Porta Nova)
+
+- Owner (screenshot at the arch): "I cannot pass through". The arch's landmark outline (8 x 3 m across the street) was one solid block in the walk collider. Now `gatePiers()` (`src/walk-collide.js`) keeps only the two piers (the outer quarters of the long side) for ids in `GATES` (`src/main.js`, only `arco-porta-nova`); the middle half is the passage.
+- Proof: `/tmp/arch.mjs` on braga-3d.com before: the middle is blocked, the walker stops 1.8 m short in both directions; on the served build after: the middle is free, the walker passes it westward and eastward; screenshot viewed (the walker between the piers). New unit test (a turned gate: piers block, the passage is free, a walk through it does not hit); 92/92 unit tests; `check-walk` all passed; `verify` OK.
+
 ### Session 023, part 5 (2026-11-24, the crowd as models; missions that can be won)
 
 - Owner: "make the crowd models like the mission characters" and "work the obstacles so we can pass; now the missions are nearly impossible"; then "I cannot reach Amélia".
