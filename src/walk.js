@@ -241,11 +241,16 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   // half sizes (metres) of the furniture a walker cannot pass through; an
   // umbrella is only its pole
   const SOLID = { tall: 0.2, lantern: 0.2, bench: 0.45, bollard: 0.15, table: 0.4, umbrella: 0.08, tree: 0.3 };
+  // The street layer often arrives after the walk started (/play opens in
+  // walk mode at once), so update() reads it again until it is in.
+  let streetSeen = null;
   function readStreet() {
     readLanes();
-    const sp = street()?.spots;
+    const built = street();
+    if (built === streetSeen) return;
+    streetSeen = built;
+    const sp = built?.spots;
     const n = sp ? sp.x.length : 0;
-    if (n === seatCount) return;
     seatCount = n;
     const extra = [];
     const r = 0.3 * M; // the seated person and the chair; the gaps between tables stay open
@@ -266,6 +271,11 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     }
     solidCount = extra.length - before;
     collider = createCollider([...polys, ...extra], 8, wetAt);
+    // a walker who now stands in a new obstacle steps out of it
+    if (active && collider.blocked(pos.x, pos.z, BODY)) {
+      const free = collider.freeNear(pos.x, pos.z, BODY, 4 * M, 0.1 * M);
+      if (free) { pos.x = free.x; pos.z = free.z; }
+    }
   }
   // People and vehicles are bodies too: the walker cannot stand inside one.
   // Their places come from the instance matrices the crowd and the traffic
@@ -622,6 +632,12 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     ride = { mesh, speed: 0, heading: -mesh.rotation.y };
     pos.x = mesh.position.x;
     pos.z = mesh.position.z;
+    // parked before the street furniture arrived, it may stand in a table:
+    // the ride starts from the nearest free ground
+    if (collider.blocked(pos.x, pos.z, RIDE_BODY)) {
+      const free = collider.freeNear(pos.x, pos.z, RIDE_BODY, 4 * M, 0.1 * M);
+      if (free) { pos.x = free.x; pos.z = free.z; }
+    }
     yaw = ride.heading;
     faceYaw = yaw;
     vel.x = vel.z = 0;
@@ -686,6 +702,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       surfClock -= dt;
       if (surfClock <= 0) {
         surfClock = 1;
+        readStreet();
         readSurface(pos.x, pos.z);
       }
       place(dt);
@@ -725,6 +742,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     surfClock -= dt;
     if (surfClock <= 0) {
       surfClock = 2;
+      readStreet();
       readSurface(pos.x, pos.z);
     }
     // a place within reach offers its card (checked three times a second)

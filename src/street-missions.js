@@ -204,17 +204,40 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
   }
   const byId = Object.fromEntries(people.map((p) => [p.id, p]));
   // a scooter parked a couple of metres from its person, on free ground
+  // free metres from (x, z) along heading h (forward is sin h, -cos h), up to 8
+  const clear = (x, z, h) => {
+    let d = 0;
+    while (d < 8 && walk.free(x + Math.sin(h) * (d + 0.5) * M, z - Math.cos(h) * (d + 0.5) * M)) d += 0.5;
+    return d;
+  };
+  // the heading of the longest open line through a point: along the street,
+  // not into a café table or a wall
+  const along = (x, z) => {
+    let best = heading, bestRun = -1;
+    for (let k = 0; k < 12; k++) {
+      const h = (k * Math.PI) / 12;
+      const a = clear(x, z, h), b = clear(x, z, h + Math.PI);
+      const r = Math.min(a, 4) + Math.min(b, 4) + 0.1 * Math.max(a, b);
+      if (r > bestRun) { bestRun = r; best = h; }
+    }
+    // ride off the long way
+    return clear(x, z, best) >= clear(x, z, best + Math.PI) ? best : best + Math.PI;
+  };
   const scooters = SCOOTERS.map((id) => {
     const p = byId[id];
     let x = p.x, z = p.z;
-    for (let a = 0; a < 16; a++) {
-      const tx = p.x + Math.cos(a * 0.39) * 2.2 * M, tz = p.z + Math.sin(a * 0.39) * 2.2 * M;
-      if (walk.free(tx, tz)) { x = tx; z = tz; break; }
+    search: for (const ok of [open, walk.free]) {
+      for (const r of [2.2, 3, 4]) {
+        for (let a = 0; a < 16; a++) {
+          const tx = p.x + Math.cos(a * 0.39) * r * M, tz = p.z + Math.sin(a * 0.39) * r * M;
+          if (ok(tx, tz)) { x = tx; z = tz; break search; }
+        }
+      }
     }
     const mesh = scooterMesh();
     mesh.scale.setScalar(M);
     mesh.position.set(x, heightAt(x, z) + RIBBON_LIFT, z);
-    mesh.rotation.y = -heading; // parked along the street (rotation.y is minus the heading)
+    mesh.rotation.y = -along(x, z); // parked along the street (rotation.y is minus the heading)
     group.add(mesh);
     return mesh;
   });

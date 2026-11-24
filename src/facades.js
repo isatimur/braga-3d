@@ -732,6 +732,7 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
   float bNearK = bNear * aa;
   float glassK = 0.0; // how much of this pixel is window glass (lit at night)
   float shopK = 0.0; // ... shop window
+  float shopLum = 1.0; // how bright the room behind it is (near: dark ceiling, woodwork)
 
   // ---- the wall's surface up close: no wall is one flat colour
   #ifndef BRG_WIN_LITE
@@ -840,6 +841,9 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
         float handle = inDoor * bRect(vec2(xm - dl, bY), vec4(0.78, 0.95, 0.83, 1.3));
         room = mix(room, vec3(0.5, 0.42, 0.2), handle);
         shop = mix(shop, room, bFine);
+        // at night the room's own light follows its shape (floor, shelves,
+        // goods bright; ceiling and woodwork dark), not one flat glow
+        shopLum = mix(1.0, clamp(dot(room, vec3(1.7)), 0.08, 1.0), bFine);
         glassPart = 1.0 - bFine * clamp(woodK + handle, 0.0, 1.0);
       }
       #endif
@@ -1021,9 +1025,14 @@ if (vWall.y >= 0.0 && vWall.w >= 0.0) {
     #endif
     float exact = win * lit * step(g0, bY);
     float average = 0.26 * litK * inside;
-    // 2.6: a lit window (~1.6 in linear HDR) passes the 1.5 bloom threshold
-    totalEmissiveRadiance += warm * mix(average, exact, aa) * uNight * 2.6;
-    totalEmissiveRadiance += vec3(1.0, 0.72, 0.42) * shopK * uNight * 2.2;
+    // 2.6: a lit window (~1.6 in linear HDR) passes the 1.5 bloom threshold.
+    // From the street (under ~40 m) a window fills many pixels: there it is
+    // a warm room, not a white glow.
+    float closeDim = mix(0.16, 1.0, smoothstep(3.0, 15.0, bDist));
+    totalEmissiveRadiance += warm * mix(average, exact, aa) * uNight * 2.6 * closeDim;
+    // a shop window: warm, and under the bloom threshold, so a close display
+    // window shows its room and does not burn white
+    totalEmissiveRadiance += vec3(1.0, 0.68, 0.36) * shopK * shopLum * uNight * 1.1 * mix(0.4, 1.0, closeDim);
   }
 } else if (vWall.y >= 0.0) {
   // churches: floodlit stone at night

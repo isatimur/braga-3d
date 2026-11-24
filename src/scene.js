@@ -345,6 +345,11 @@ export function createRenderer(canvas, { antialias = true } = {}) {
   // main.js resets the counters once per frame, so post-processing passes
   // do not wipe the scene's draw calls from the stats
   renderer.info.autoReset = false;
+  // The shader error check reads each new program's link status at once,
+  // which makes the frame wait for the whole compile (a hitch each time a
+  // new material, the crowd or a mission person, comes into view). The
+  // shipped build skips it; the dev server keeps it for the error text.
+  renderer.debug.checkShaderErrors = !!import.meta.env?.DEV;
   return renderer;
 }
 

@@ -317,6 +317,15 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 024 (2026-11-24, walk polish and a lighter street level; braga-029)
+
+- Branch `fix/walk-polish`. Owner asked: "continue improving the whole experience", then "really slow on my laptop".
+- Solid furniture on /play: `walk.start()` read the street layer once, before it arrived, so seats and furniture never joined the collider (solids 0). `readStreet()` now runs with the surface re-read until the street object is in, and a walker or a scooter rider inside a new obstacle steps to free ground. Measured: solids 0 -> 4235, seats 0 -> 2159 within 4 s.
+- Night haze: it came from the bloom over shop windows that filled the street frame (gone with `?fx=0`). At street level the bloom is weaker, tighter and has a higher threshold (`effects.update(..., street)`); lit windows within ~40 m are dimmed and a shop window's light follows its room (shelves, ceiling, woodwork). The overview at night is unchanged (beyond 60 m the dim factor is 1).
+- Scooters: each one is parked along the longest open line through its spot, not along the district heading.
+- Frame cost at the walk start (1440x900, DPR 2): 4.01 M -> 3.35 M triangles. The instanced crowd drew ~1100 people (each twice with the shadow) within 600 m although houses hide all but the near streets; at street level (camera under 15 m) the crowd now lives within 300 m with 30 % of the walkers (same density). With the CPU slowed 4x, frames were ~33-50 ms and mostly CPU (three.js render loop, matrix updates); the build skips the shader error check (sync wait on each new program). The real cause on the owner's laptop is not measured.
+- Checks: 92/92 unit tests; `check-walk` all passed; `npm run verify` OK; mission bot won guitarra 60/110 s, pasteis 92/130 s, corrida 180/240 s with the furniture solid; day and night screenshots viewed.
+
 ### Session 023, part 6 (2026-11-24, walk through the Arco da Porta Nova)
 
 - Owner (screenshot at the arch): "I cannot pass through". The arch's landmark outline (8 x 3 m across the street) was one solid block in the walk collider. Now `gatePiers()` (`src/walk-collide.js`) keeps only the two piers (the outer quarters of the long side) for ids in `GATES` (`src/main.js`, only `arco-porta-nova`); the middle half is the passage.
