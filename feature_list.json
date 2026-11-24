@@ -460,7 +460,7 @@
       "evidence": [
         "2026-11-23 (Session 022): 89/89 unit tests; check-walk all passed; verify OK; served build against the ground mesh, share of vertices under the ground, live site -> new build: street-minor 19.7 % -> 0.6 %, calcada-squares 12.6 % -> 0 %, lane-markings 14.4 % -> 0 %"
       ],
-      "notes": "heightAt (src/terrain.js) reads the triangles of the ground mesh; dataAt is the bilinear DEM read with pads, for elevation figures. About 1 % of road vertices stay under the ground because a road is graded along its length and the ground is not cut to it. Not deployed on 2026-11-23."
+      "notes": "heightAt (src/terrain.js) reads the triangles of the ground mesh; dataAt is the bilinear DEM read with pads, for elevation figures. About 1 % of road vertices stay under the ground because a road is graded along its length and the ground is not cut to it. Deployed to braga-3d.com on 2026-11-23."
     },
     {
       "id": "braga-025",
@@ -477,7 +477,24 @@
       "evidence": [
         "2026-11-23 (Session 023): 91/91 unit tests; check-walk all passed; verify OK; surface stack at the arch: street ribbons 0.46-0.54 m over the ground (before 0.44-0.76 m); frame time unchanged, triangles 2.22 M -> 2.51 M in the district view"
       ],
-      "notes": "cities/braga.json walk_districts. Inside a district every paving layer drapes on heightAt (net.drapeY). Not deployed on 2026-11-23."
+      "notes": "cities/braga.json walk_districts. Inside a district every paving layer drapes on heightAt (net.drapeY). Deployed to braga-3d.com on 2026-11-23."
+    },
+    {
+      "id": "braga-026",
+      "priority": 26,
+      "area": "walk",
+      "title": "Street missions with people of Braga",
+      "user_visible_behavior": "In walk mode, eight people of Braga stand in the Porta Nova district under columns of light. Press E (or Talk) to hear them; three give timed errands with a goal bar, an arrow, a clock, and a passed or failed banner with points.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/mission-all.mjs (volatile e2e: all three missions pass, a timed-out run fails)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-23 (Session 023 part 2): three missions passed and one failed in the served build, no page errors; 91/91 unit tests; check-walk all passed; verify OK; frame time unchanged"
+      ],
+      "notes": "src/street-missions.js. The characters are fictional (assets/characters, data/CREDITS.md). Not deployed on 2026-11-23."
     }
   ]
 }

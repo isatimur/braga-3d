@@ -705,6 +705,8 @@ async function start() {
   let gameLoad = null;
   let walk = null; // walk mode: the street at eye height (walk.js)
   let walkLoad = null;
+  let missions = null; // street missions in the walk districts (street-missions.js)
+  let missionsLoad = null;
   // (quest, questLoad, hasQuest: at the top of start())
   // startMode() numbers each request; a mode whose chunk arrives after a
   // newer request (or after the visitor left, cancelModeLoad) does not start
@@ -1224,6 +1226,13 @@ async function start() {
           onEnter: () => {
             document.body.classList.add('is-walk');
             mapLines(false);
+            // street missions: people of the walk district give timed errands
+            if (CITY.walk_districts?.length && !missionsLoad) {
+              missionsLoad = import('./street-missions.js').then(({ createStreetMissions }) => {
+                missions = createStreetMissions({ scene, walk, project, heightAt, onEvent: (name, data) => emit(name, { city: CITY.id, route: data.id, lang: language }) });
+                debug.missions = missions;
+              }).catch(() => { missionsLoad = null; });
+            }
           },
           onExit: () => {
             document.body.classList.remove('is-walk');
@@ -1814,6 +1823,7 @@ async function start() {
     // the intro owns the camera while it plays; then the rig does
     // (walk mode owns it while it is on, and stands lower than the orbit floor)
     if (!intro?.update(rawDt) && !walk?.update(dt)) rig.update(dt, now, rawDt);
+    missions?.update(dt);
     // never below the ground, whoever moved the camera (parallax included)
     const floorY = heightAt(camera.position.x, camera.position.z) + (walk?.active ? 0.38 : 2);
     if (camera.position.y < floorY) camera.position.y = floorY;

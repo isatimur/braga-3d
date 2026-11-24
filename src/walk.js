@@ -654,6 +654,15 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       };
     },
     setView,
+    // cheap, every frame (street-missions.js): where the walker is and faces
+    // (forward is sin(yaw), -cos(yaw))
+    get position() {
+      return { x: pos.x, z: pos.z, yaw };
+    },
+    // can a body stand at (x, z), world units
+    free(x, z) {
+      return !collider.blocked(x, z, BODY);
+    },
     // tests: put the walker at a point (world units); false when it is blocked
     teleport(x, z) {
       if (collider.blocked(x, z, BODY)) return false;
