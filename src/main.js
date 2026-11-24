@@ -70,8 +70,14 @@ if (LITE || perf.cfg.waterLite) {
   setBuildingsLite(LITE);
 }
 
+// The game page (/play, vercel.json rewrite): the same map, but it opens in
+// walk mode in the first walk district, with the street missions and the
+// e-scooters (street-missions.js). The map at / has none of them.
+const PLAY = /^\/play\/?$/.test(location.pathname);
+if (PLAY && !/(^|[#&])walk(&|$)/.test(location.hash.slice(1))) history.replaceState(null, '', `${location.pathname}${location.search}#walk`);
+
 // Exposed for tests and debugging: renderer.info, ready flags, flight count.
-const debug = (window.__braga = { ready: false, flights: 0, dataStatus: null });
+const debug = (window.__braga = { ready: false, flights: 0, dataStatus: null, play: PLAY });
 debug.tier = { ...TIER, dprCap: DPR.cap };
 // Load phases in ms since navigation (docs/perf, /tmp/perf/measure.mjs)
 debug.timing = {};
@@ -510,7 +516,7 @@ async function start() {
   // starts with the boot view, before the city is built.
   function makeIntro() {
     const param = new URLSearchParams(location.search).get('intro');
-    const deep = /(^|[#&])((place|route|quest)=|(cinema|story|quest)(&|$))/.test(location.hash);
+    const deep = PLAY || /(^|[#&])((place|route|quest)=|(cinema|story|quest)(&|$))/.test(location.hash);
     let seen = false;
     try {
       seen = sessionStorage.getItem('braga-intro') === '1';
@@ -1227,9 +1233,9 @@ async function start() {
             document.body.classList.add('is-walk');
             mapLines(false);
             // street missions: people of the walk district give timed errands
-            if (CITY.walk_districts?.length && !missionsLoad) {
+            if (PLAY && CITY.walk_districts?.length && !missionsLoad) {
               missionsLoad = import('./street-missions.js').then(({ createStreetMissions }) => {
-                missions = createStreetMissions({ scene, walk, project, heightAt, onEvent: (name, data) => emit(name, { city: CITY.id, route: data.id, lang: language }) });
+                missions = createStreetMissions({ scene, walk, project, heightAt, heading: (CITY.walk_districts[0].headingDeg ?? 90) * (Math.PI / 180), onEvent: (name, data) => emit(name, { city: CITY.id, route: data.id, lang: language }) });
                 debug.missions = missions;
               }).catch(() => { missionsLoad = null; });
             }
@@ -1354,7 +1360,10 @@ async function start() {
         // out of the centre, on a wide empty square. Then the walk starts at
         // the map origin, which is the middle of the old town.
         const overview = camera.position.distanceTo(rig.controls.target) > 250;
-        if (!instance.start(overview ? { x: 0, z: 0 } : null)) ui.toast(t('Здесь нет улицы рядом. Выберите другое место.'), 4000);
+        // the game page starts where its first walk district says
+        const d = PLAY && overview ? CITY.walk_districts?.[0] : null;
+        const at = d?.start ? project(d.start[0], d.start[1]) : overview ? { x: 0, z: 0 } : null;
+        if (!instance.start(at, d?.start ? d.headingDeg * (Math.PI / 180) : null)) ui.toast(t('Здесь нет улицы рядом. Выберите другое место.'), 4000);
         setHash(currentHash());
       }).catch(() => {
         if (request === modeRequest) {

@@ -1,7 +1,9 @@
-// Street missions (walk mode): people of Braga stand in the Porta Nova walk
-// district, each under a column of light with their portrait. Walk up to
-// one and press E (or tap "Talk"): they say a line, and three of them give a
-// timed errand: run a delivery, a race, a fetch-and-carry. A mission shows
+// Street missions (walk mode on the /play page): people of Braga stand in the
+// Porta Nova walk district, each under a column of light with their portrait.
+// Walk up to one and press E (or tap "Talk"): they say a line, and four of
+// them give a timed errand: a delivery, a race, a fetch-and-carry, and one
+// too far to run, made for the e-scooters parked beside some of them (F to
+// ride and to get off; walk.js does the riding). A mission shows
 // its next stop as a coloured column, the objective, the distance and the
 // clock at the top of the screen; at the last stop it is passed (points,
 // saved on this device) or, when the clock runs out, failed.
@@ -72,7 +74,39 @@ export const MISSIONS = [
     ask: { pt: 'A Amélia deixou a guitarra no meu táxi e canta já a seguir na Sé. O Tiago tem-na guardada. Vai buscá-la e leva-lha!', en: 'Amélia left her guitar in my taxi and she sings at the cathedral soon. Tiago is keeping it. Fetch it and take it to her!', ru: 'Амелия забыла гитару в моём такси, а скоро ей петь у собора. Гитара у Тиагу. Забери и отнеси ей!' },
     goal: { pt: 'Busca a guitarra ao Tiago e leva-a à Amélia', en: 'Get the guitar from Tiago and take it to Amélia', ru: 'Забери гитару у Тиагу и отнеси Амелии' },
     done: { pt: 'Chegou mesmo a tempo. Esta canção é para ti.', en: 'Just in time. This song is for you.', ru: 'Как раз вовремя. Эта песня — для тебя.' } },
+  { id: 'chave', giver: 'avo-minhota', stops: ['futebolista', 'avo-minhota'], seconds: 120, points: 600,
+    title: { pt: 'A chave da avó', en: 'Grandma\'s key', ru: 'Бабушкин ключ' },
+    ask: { pt: 'O meu neto Rúben levou a chave de casa e está lá no fundo da Rua do Souto. A pé não chegas a tempo — apanha uma trotinete!', en: 'My grandson Rúben took the house key and he is at the far end of Rua do Souto. On foot you will never make it — grab a scooter!', ru: 'Мой внук Рубен унёс ключ от дома, он в самом конце Руа-ду-Соуту. Пешком не успеешь — бери самокат!' },
+    goal: { pt: 'Busca a chave ao Rúben e volta à avó', en: 'Get the key from Rúben and bring it back to grandma', ru: 'Забери ключ у Рубена и вернись к бабушке' },
+    done: { pt: 'Ai, que rapaz tão rápido! Toma, um beijinho.', en: 'Oh, what a quick lad! Here, a little kiss.', ru: 'Ох, какой быстрый! Держи, поцелуйчик.' } },
 ];
+
+// parked e-scooters: [lat, lon] next to these people
+const SCOOTERS = ['pasteleira', 'estudante', 'taxista', 'avo-minhota'];
+const MOUNT_M = 2.5;
+
+// an e-scooter in metres (scaled to world units by the caller); forward is -z
+function scooterMesh() {
+  const g = new THREE.Group();
+  g.name = 'mission-scooter';
+  const m = (c, r = 0.5, me = 0.2) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: me });
+  const body = m(0x13a89e, 0.4, 0.3), dark = m(0x1c1f24, 0.8, 0.1), steel = m(0x9aa3ad, 0.35, 0.8);
+  const add = (geo, mat, x, y, z, rx = 0, rz = 0) => {
+    const o = new THREE.Mesh(geo, mat);
+    o.position.set(x, y, z);
+    o.rotation.set(rx, 0, rz);
+    o.castShadow = true;
+    g.add(o);
+    return o;
+  };
+  add(new THREE.BoxGeometry(0.2, 0.06, 0.95), body, 0, 0.13, 0); // deck
+  for (const z of [-0.5, 0.48]) add(new THREE.CylinderGeometry(0.11, 0.11, 0.06, 18), dark, 0, 0.11, z, 0, Math.PI / 2); // wheels
+  add(new THREE.CylinderGeometry(0.022, 0.022, 1.0, 10), steel, 0, 0.62, -0.53, -0.12); // stem
+  add(new THREE.CylinderGeometry(0.018, 0.018, 0.52, 10), steel, 0, 1.11, -0.59, 0, Math.PI / 2); // bar
+  for (const x of [-0.23, 0.23]) add(new THREE.CylinderGeometry(0.024, 0.024, 0.09, 10), dark, x, 1.11, -0.59, 0, Math.PI / 2); // grips
+  add(new THREE.BoxGeometry(0.08, 0.05, 0.03), m(0xfff3c4, 0.3, 0), 0, 0.98, -0.6); // lamp
+  return g;
+}
 
 const UI = {
   talk: { pt: 'Falar', en: 'Talk', ru: 'Говорить' },
@@ -85,6 +119,8 @@ const UI = {
   next: { pt: 'Próximo', en: 'Next', ru: 'Дальше' },
   points: { pt: 'pontos', en: 'points', ru: 'очков' },
   again: { pt: 'Já cumprida. Outra vez?', en: 'Already passed. Again?', ru: 'Уже выполнена. Ещё раз?' },
+  ride: { pt: 'Andar de trotinete', en: 'Ride the scooter', ru: 'Сесть на самокат' },
+  off: { pt: 'sair', en: 'get off', ru: 'сойти' },
 };
 
 const portraitUrl = (id) => `assets/characters/${id}.webp`;
@@ -108,7 +144,7 @@ function beam(color, radiusM, heightM) {
   return mesh;
 }
 
-export function createStreetMissions({ scene, walk, project, heightAt, onEvent = () => {} }) {
+export function createStreetMissions({ scene, walk, project, heightAt, heading = Math.PI / 2, onEvent = () => {} }) {
   const group = new THREE.Group();
   group.name = 'street-missions';
   scene.add(group);
@@ -135,6 +171,21 @@ export function createStreetMissions({ scene, walk, project, heightAt, onEvent =
     return { ...p, x, z, y, col, fig, face: Math.random() * Math.PI * 2 };
   });
   const byId = Object.fromEntries(people.map((p) => [p.id, p]));
+  // a scooter parked a couple of metres from its person, on free ground
+  const scooters = SCOOTERS.map((id) => {
+    const p = byId[id];
+    let x = p.x, z = p.z;
+    for (let a = 0; a < 16; a++) {
+      const tx = p.x + Math.cos(a * 0.39) * 2.2 * M, tz = p.z + Math.sin(a * 0.39) * 2.2 * M;
+      if (walk.free(tx, tz)) { x = tx; z = tz; break; }
+    }
+    const mesh = scooterMesh();
+    mesh.scale.setScalar(M);
+    mesh.position.set(x, heightAt(x, z) + RIBBON_LIFT, z);
+    mesh.rotation.y = -heading; // parked along the street (rotation.y is minus the heading)
+    group.add(mesh);
+    return mesh;
+  });
   const stopBeam = beam(0x4ad8ff, 1.6, 22);
   stopBeam.visible = false;
   group.add(stopBeam);
@@ -240,12 +291,30 @@ export function createStreetMissions({ scene, walk, project, heightAt, onEvent =
     bannerT = s;
   }
 
-  promptEl.addEventListener('click', () => near && talk(near));
+  // the scooter within reach (on foot), or the one being ridden
+  let nearScooter = null;
+  function toggleRide() {
+    if (walk.riding) {
+      walk.dismount();
+      return;
+    }
+    if (nearScooter) {
+      hush();
+      walk.mount(nearScooter);
+    }
+  }
+  promptEl.addEventListener('click', () => {
+    if (walk.riding || (nearScooter && !near)) toggleRide();
+    else if (near) talk(near);
+  });
   const onKey = (e) => {
     if (!walk.active || e.repeat || e.target?.closest?.('input, textarea')) return;
-    if (e.code === 'KeyE' && near && !talking) {
+    if (e.code === 'KeyE' && near && !talking && !walk.riding) {
       e.preventDefault();
       talk(near);
+    } else if (e.code === 'KeyF') {
+      e.preventDefault();
+      toggleRide();
     } else if (e.code === 'Escape' && talking) {
       hush();
     }
@@ -283,10 +352,27 @@ export function createStreetMissions({ scene, walk, project, heightAt, onEvent =
       const d = Math.hypot(p.x - w.x, p.z - w.z);
       if (d < bd) { bd = d; best = p; }
     }
-    near = best;
-    if (talking && (!near || near.id !== talking.id)) hush();
-    promptEl.hidden = !near || !!talking;
-    if (near && !talking) promptEl.textContent = `E · ${L(UI.talk)}: ${near.name}`;
+    const riding = walk.riding;
+    near = riding ? null : best;
+    nearScooter = null;
+    if (!riding) {
+      let sd = MOUNT_M * M;
+      for (const s of scooters) {
+        const d = Math.hypot(s.position.x - w.x, s.position.z - w.z);
+        if (d < sd) { sd = d; nearScooter = s; }
+      }
+    }
+    if (talking && !riding && (!near || near.id !== talking.id)) hush();
+    if (riding) {
+      promptEl.hidden = false;
+      promptEl.textContent = `${Math.max(0, Math.round(riding.speedKmh))} km/h · F · ${L(UI.off)}`;
+    } else if (near && !talking) {
+      promptEl.hidden = false;
+      promptEl.textContent = `E · ${L(UI.talk)}: ${near.name}`;
+    } else if (nearScooter && !talking) {
+      promptEl.hidden = false;
+      promptEl.textContent = `F · ${L(UI.ride)}`;
+    } else promptEl.hidden = true;
 
     if (run) {
       run.left -= dt;
@@ -322,7 +408,7 @@ export function createStreetMissions({ scene, walk, project, heightAt, onEvent =
     update,
     // tests and debugging
     get state() {
-      return { near: near?.id ?? null, talking: talking?.id ?? null, run: run ? { id: run.m.id, stop: run.stop, left: +run.left.toFixed(1) } : null, saved: { ...saved }, people: people.map((p) => ({ id: p.id, x: +p.x.toFixed(2), z: +p.z.toFixed(2) })) };
+      return { near: near?.id ?? null, talking: talking?.id ?? null, riding: walk.riding, scooters: scooters.map((s) => ({ x: +s.position.x.toFixed(2), z: +s.position.z.toFixed(2) })), run: run ? { id: run.m.id, stop: run.stop, left: +run.left.toFixed(1) } : null, saved: { ...saved }, people: people.map((p) => ({ id: p.id, x: +p.x.toFixed(2), z: +p.z.toFixed(2) })) };
     },
     talk: (id) => byId[id] && talk(byId[id]),
     accept: () => dialog.querySelector('.sm-primary')?.click(),

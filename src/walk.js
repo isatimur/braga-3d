@@ -32,6 +32,17 @@ const HEAD = 1.62 * M; // third person: the point the camera turns about
 const TILT = 0.3; // third person: the camera sits this far above level, radians
 const CLOSE = 1.6 * M; // third person: with less room than this the camera looks from the eyes
 const PLACE_M = 25; // a place this near offers its card
+// riding an e-scooter (mount / dismount): arcade handling, metres and seconds
+const RIDE_MAX = 8.5 * M; // about 30 km/h
+const RIDE_BOOST = 11 * M; // Shift: about 40 km/h
+const RIDE_BACK = 3 * M; // reverse
+const RIDE_ACC = 6 * M; // per second
+const RIDE_BRAKE = 12 * M;
+const RIDE_DRAG = 0.9; // per second, rolling with no throttle
+const RIDE_TURN = 2.2; // radians per second at full speed
+const RIDE_BODY = 0.6 * M;
+const RIDE_DECK = 0.18 * M; // the rider stands on the deck
+const RIDE_CAM = 6.5 * M; // the chase camera's distance
 
 // distance from a point to an outline ([{x, z}]), world units
 function outlineDistance(pts, x, z) {
@@ -496,6 +507,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
 
   function stop() {
     if (!active) return;
+    dismount(); // the scooter stays parked where it stopped
     active = false;
     root.hidden = true;
     figure.root.visible = false;
@@ -522,9 +534,13 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     eyeY = dt > 0 ? eyeY + (want - eyeY) * Math.min(1, dt * 12) : want;
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
     camera.up.set(0, 1, 0);
-    const feet = eyeY - EYE;
+    const feet = eyeY - EYE + (ride ? RIDE_DECK : 0);
     figure.root.position.set(pos.x, feet, pos.z);
     figure.root.rotation.y = -faceYaw;
+    if (ride) {
+      ride.mesh.position.set(pos.x, feet - RIDE_DECK, pos.z);
+      ride.mesh.rotation.y = -ride.heading;
+    }
     if (view === 'first') {
       const c = Math.cos(pitch);
       camera.position.set(pos.x, eyeY, pos.z);
@@ -534,11 +550,12 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       // level; it comes closer when a house stands in the way
       const e = THREE.MathUtils.clamp(TILT - pitch, 0.02, 1.3);
       const ce = Math.cos(e), se = Math.sin(e);
-      let reach = BACK;
+      const far = ride ? RIDE_CAM : BACK;
+      let reach = far;
       for (let k = 1; k <= 12; k++) {
-        const d = (BACK * k) / 12;
+        const d = (far * k) / 12;
         if (collider.blocked(pos.x - fx * ce * d, pos.z - fz * ce * d, BODY * 0.6)) {
-          reach = Math.max(BODY, (BACK * (k - 1)) / 12);
+          reach = Math.max(BODY, (far * (k - 1)) / 12);
           break;
         }
       }
@@ -564,6 +581,64 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     rig.controls.target.set(ax, heightAt(ax, az), az);
   }
 
+  // ------------------------------------------------------------ ride
+  // An e-scooter (street-missions.js hands over its mesh): W / S throttle and
+  // brake, A / D steer, Shift boost. The camera chases from behind and turns
+  // with the scooter. A wall stops it with a small bounce.
+  let ride = null; // { mesh, speed, heading }
+  function mount(mesh) {
+    if (!active || ride) return false;
+    ride = { mesh, speed: 0, heading: -mesh.rotation.y };
+    pos.x = mesh.position.x;
+    pos.z = mesh.position.z;
+    yaw = ride.heading;
+    faceYaw = yaw;
+    vel.x = vel.z = 0;
+    setView('third');
+    return true;
+  }
+  function dismount() {
+    if (!ride) return null;
+    const mesh = ride.mesh;
+    ride = null;
+    // step off to the right, or anywhere free
+    const fx = Math.sin(yaw), fz = -Math.cos(yaw);
+    const side = collider.freeNear(pos.x - fz * 0.9 * M, pos.z + fx * 0.9 * M, BODY) || collider.freeNear(pos.x, pos.z, BODY);
+    if (side) { pos.x = side.x; pos.z = side.z; }
+    return mesh;
+  }
+  function rideStep(dt, ix, iz) {
+    const boost = held.has('ShiftLeft') || held.has('ShiftRight');
+    const max = boost ? RIDE_BOOST : RIDE_MAX;
+    let s = ride.speed;
+    if (iz > 0.1) s += RIDE_ACC * iz * dt * (s < 0 ? 3 : 1);
+    else if (iz < -0.1) s += (s > 0 ? -RIDE_BRAKE : -RIDE_ACC * 0.5) * -iz * dt;
+    else s -= s * Math.min(1, RIDE_DRAG * dt);
+    s = THREE.MathUtils.clamp(s, -RIDE_BACK, max);
+    // steering bites with speed; reversing turns the other way
+    ride.heading += ix * RIDE_TURN * dt * THREE.MathUtils.clamp(Math.abs(s) / RIDE_MAX, 0, 1) * Math.sign(s || 1);
+    const fx = Math.sin(ride.heading), fz = -Math.cos(ride.heading);
+    const next = collider.move(pos.x, pos.z, fx * s * dt, fz * s * dt, RIDE_BODY);
+    if (bounds) {
+      next.x = THREE.MathUtils.clamp(next.x, bounds.x0, bounds.x1);
+      next.z = THREE.MathUtils.clamp(next.z, Math.min(bounds.zN, bounds.zS), Math.max(bounds.zN, bounds.zS));
+    }
+    if (next.hit && Math.abs(s) > 2 * M) s *= -0.25; // a bump
+    const stepM = Math.hypot(next.x - pos.x, next.z - pos.z) * METRES_PER_UNIT;
+    walked += stepM;
+    pos.x = next.x;
+    pos.z = next.z;
+    ride.speed = s;
+    // the chase camera swings in behind the scooter; a drag still looks around
+    if (lookPointer == null) {
+      const d = Math.atan2(Math.sin(ride.heading - yaw), Math.cos(ride.heading - yaw));
+      yaw += d * Math.min(1, dt * 3);
+      pitch += (-0.12 - pitch) * Math.min(1, dt * 2);
+    }
+    faceYaw = ride.heading;
+    figure.step(0, dt);
+  }
+
   function update(dt) {
     if (!active) return false;
     let ix = stick.x, iz = stick.z;
@@ -575,6 +650,16 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     }
     const n = Math.hypot(ix, iz);
     if (n > 1) { ix /= n; iz /= n; }
+    if (ride) {
+      rideStep(dt, ix, iz);
+      surfClock -= dt;
+      if (surfClock <= 0) {
+        surfClock = 1;
+        readSurface(pos.x, pos.z);
+      }
+      place(dt);
+      return true;
+    }
     const speed = held.has('ShiftLeft') || held.has('ShiftRight') ? RUN : SPEED;
     const fx = Math.sin(yaw), fz = -Math.cos(yaw);
     // forward (fx, fz); right (-fz, fx)
@@ -662,6 +747,12 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     // can a body stand at (x, z), world units
     free(x, z) {
       return !collider.blocked(x, z, BODY);
+    },
+    // an e-scooter (street-missions.js): ride it, step off it
+    mount,
+    dismount,
+    get riding() {
+      return ride ? { speedKmh: +((ride.speed / M) * 3.6).toFixed(1), heading: +ride.heading.toFixed(3) } : null;
     },
     // tests: put the walker at a point (world units); false when it is blocked
     teleport(x, z) {
