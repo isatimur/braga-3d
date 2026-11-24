@@ -414,7 +414,10 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false, 
       haze = k;
     },
     // night: 0..1; bloom a little stronger so lamps and windows glow
-    update(dt, sunDir, night) {
+    // street: 0..1, the walker's eye height (walk.js). Lit shop windows fill
+    // much of that frame, and a wide glow from them reads as a white haze:
+    // there the bloom is weaker, tighter, and only for the brightest light.
+    update(dt, sunDir, night, street = 0) {
       build();
       if (!reducedMotion) finish.uniforms.uTime.value += dt;
       if (!reducedMotion) rays.compMat.uniforms.uTime.value += dt;
@@ -425,9 +428,9 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false, 
       // threshold keeps the city crisp and the pins small (close-ups and
       // the night keep the full glow)
       const far = overviewK() * (1 - night);
-      bloom.threshold = BLOOM_THRESHOLD + 0.08 * far;
-      bloom.strength = (0.32 + 0.12 * night) * (1 - 0.35 * far);
-      bloom.radius = 0.45 + 0.1 * night - 0.2 * far;
+      bloom.threshold = BLOOM_THRESHOLD + 0.08 * far + 0.5 * street;
+      bloom.strength = (0.32 + 0.12 * night) * (1 - 0.35 * far) * (1 - 0.55 * street);
+      bloom.radius = 0.45 + 0.1 * night - 0.2 * far - 0.3 * street;
     },
     render() {
       build();

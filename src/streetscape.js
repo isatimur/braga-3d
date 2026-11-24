@@ -1754,7 +1754,11 @@ function build(ctx, group, doc, pois, stats) {
     live.hour = +clk.hour.toFixed(2);
     if (people) {
       const on = camDist < (lite ? 220 : 360);
-      people.update(dt, camera, frustum, { fx: fxp, fz: fzp, R: lite ? 100 : 150, on, demand, spotOk, camDist });
+      // at street level (walk mode, the camera under ~15 m) the houses hide
+      // all but the nearest streets: the crowd lives within 300 m, at the
+      // same density, so a third of the people are drawn (twice: the shadow)
+      const low = camera.position.y - heightAt(camera.position.x, camera.position.z) < 15 * S;
+      people.update(dt, camera, frustum, { fx: fxp, fz: fzp, R: low ? 75 : lite ? 100 : 150, part: low ? 0.3 : 1, on, demand, spotOk, camDist });
       live.people = people.shown;
       live.walkers = people.shownWalkers;
       live.staying = people.shownStaying;

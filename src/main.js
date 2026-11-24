@@ -1898,7 +1898,7 @@ async function start() {
     }
     cullCells();
     if (fx.enabled) {
-      fx.update(rawDt, atmosphere.sunDir, night);
+      fx.update(rawDt, atmosphere.sunDir, night, walk?.active ? 1 : 0);
       fx.render();
     } else {
       renderer.render(scene, camera);

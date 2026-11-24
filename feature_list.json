@@ -528,7 +528,25 @@
       "evidence": [
         "2026-11-24 (Session 023 part 5): 4-11 skinned passers-by near the walker, screenshots viewed; bot won guitarra 61/110 s, pasteis ~96/130 s, corrida 173/240 s; check-walk all passed; 91/91 unit tests; verify OK"
       ],
-      "notes": "src/crowd-models.js, src/people.js, src/walk.js (BODY 0.3 m, pedestrians give way), src/street-missions.js (timers, open ground). Street furniture and seats are not in the collider on /play (solids 0)."
+      "notes": "src/crowd-models.js, src/people.js, src/walk.js (BODY 0.3 m, pedestrians give way), src/street-missions.js (timers, open ground). Since braga-029 the street furniture and seats are in the collider on /play too."
+    },
+    {
+      "id": "braga-029",
+      "priority": 29,
+      "area": "walk",
+      "title": "Walk polish: solid furniture on /play, no night haze, scooters along the street, a lighter crowd at street level",
+      "user_visible_behavior": "On /play the café tables, benches, posts and seated people stop the walker (they did not: the walk started before the street layer arrived). At night the street has no white haze; lit shop windows show their room and shelves. Mission scooters stand along the street. At street level fewer distant, hidden people are drawn.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/polish.mjs (volatile: seats and solids over 16 s on /play, day and night screenshots)",
+        "node /tmp/mission-bot.mjs (volatile: guitarra, pasteis, corrida won on foot with the furniture solid)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-24 (Session 024): solids 0 -> 4235, seats 0 -> 2159 within 4 s; night screenshots viewed (haze gone with post-processing on); bot won guitarra 60/110 s, pasteis 92/130 s, corrida 180/240 s; triangles at the walk start 4.01 M -> 3.35 M; 92/92 unit tests; check-walk all passed; verify OK"
+      ],
+      "notes": "src/walk.js (readStreet re-reads the street layer, steps out of a new obstacle, mount from free ground), src/effects.js (street-level bloom), src/facades.js (close windows dimmed, shop light follows the room), src/street-missions.js (scooter heading along the open line), src/people.js + src/streetscape.js (R 75 and 30 % of the walkers when the camera is under 15 m), src/scene.js (no shader error check in the build)."
     }
   ]
 }

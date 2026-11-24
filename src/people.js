@@ -753,7 +753,10 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
   let onFrame = false;
   // focus: where the camera looks (world); R: the radius (world) people
   // live in; demand 0..DEMAND_MAX; spotOk(i) -> may spot i be taken now
-  function update(dt, camera, frustum, { fx, fz, R, on, demand, spotOk, camDist }) {
+  // part: the part of the walking crowd placed (a smaller circle at street
+  // level keeps the same density with fewer people)
+  let lastR = 0;
+  function update(dt, camera, frustum, { fx, fz, R, on, demand, spotOk, camDist, part = 1 }) {
     time += dt;
     uniforms.uPTime.value = time;
     onFrame = on;
@@ -768,10 +771,12 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
     }
     // re-gather the spawn samples when the focus moved
     const moved = (fx - candX) ** 2 + (fz - candZ) ** 2;
-    if (moved > 12 * 12) gather(fx, fz, R);
-    const want = Math.min(NW, Math.round((NW * demand) / DEMAND_MAX));
-    // after a jump (or the first time) everyone is placed anew
-    if (!wasOn || moved > R * R * 0.25) {
+    const newR = R !== lastR;
+    if (moved > 12 * 12 || newR) gather(fx, fz, R);
+    lastR = R;
+    const want = Math.min(NW, Math.round((NW * demand * part) / DEMAND_MAX));
+    // after a jump (or the first time, or a new circle) everyone is placed anew
+    if (!wasOn || newR || moved > R * R * 0.25) {
       for (let i = 0; i < want; i++) place(i);
     } else for (let i = active; i < want; i++) place(i);
     active = want;
