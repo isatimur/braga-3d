@@ -484,7 +484,7 @@
       "priority": 26,
       "area": "walk",
       "title": "Street missions with people of Braga",
-      "user_visible_behavior": "In walk mode, eight people of Braga stand in the Porta Nova district under columns of light. Press E (or Talk) to hear them; three give timed errands with a goal bar, an arrow, a clock, and a passed or failed banner with points.",
+      "user_visible_behavior": "On braga-3d.com/play the city opens in walk mode at the Arco da Porta Nova. Eight people of Braga stand in the district under columns of light. Press E (or Talk) to hear them; four give timed errands with a goal bar, an arrow, a clock, and a passed or failed banner with points. E-scooters stand beside some of them: F to ride (W/S throttle and brake, A/D steer, Shift boost) and to get off. The map at / has none of this.",
       "status": "passing",
       "verification": [
         "node /tmp/mission-all.mjs (volatile e2e: all three missions pass, a timed-out run fails)",
@@ -494,7 +494,7 @@
       "evidence": [
         "2026-11-23 (Session 023 part 2): three missions passed and one failed in the served build, no page errors; 91/91 unit tests; check-walk all passed; verify OK; frame time unchanged"
       ],
-      "notes": "src/street-missions.js. The characters are fictional (assets/characters, data/CREDITS.md). Not deployed on 2026-11-23."
+      "notes": "src/street-missions.js; riding in src/walk.js (mount, dismount, riding); the page is PLAY in src/main.js with the /play rewrite in vercel.json. The characters are fictional (assets/characters, data/CREDITS.md). Missions deployed on the map 2026-11-23; /play and the scooters not deployed on 2026-11-24."
     }
   ]
 }

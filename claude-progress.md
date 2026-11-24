@@ -317,6 +317,15 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 023, part 3 (2026-11-24, the /play page and e-scooters)
+
+- Owner: keep the game apart from the map ("maybe under a different domain... you decide"). Decision: not a second repo or domain (it would fork the engine), but its own page on the same build: `braga-3d.com/play` (vercel.json rewrite to index.html; `PLAY` in `src/main.js`). It opens in walk mode at the district's `start` (cities/braga.json: start, headingDeg), skips the intro, and only it loads the street missions. The map at `/` has no missions again. A separate domain can later point at /play without code.
+- E-scooters: four parked along the street beside Dona Rosa, Inês, Sr. Armando and Avó Conceição (`scooterMesh()` in `src/street-missions.js`). F rides and gets off; the riding is in `src/walk.js` (`mount`, `dismount`, `riding`; `rideStep`: throttle and brake, steering that bites with speed, reverse, Shift boost, max 30 km/h or 40 with boost, a bump off walls, a chase camera at 6.5 m). Escape or "Go up" while riding leaves the scooter parked. The prompt shows the speed.
+- Fourth mission, Grandma's key (Avó Conceição to Rúben and back, 120 s): too far to run, made for the scooter.
+- Proof (served build): `/` has no missions; `/play` starts at the arch facing east with missions; mount, 2.5 s of throttle reaches 30.6 km/h, then the scooter hits café tables on Rua do Souto and bounces (steering needed); Grandma's key passed on the scooter (+1175); all four missions pass and a timed-out run fails on /play; no page errors; screenshots viewed. `node --test` 91/91, `check-walk` all passed, `verify` OK.
+- Found and fixed: parked scooters faced north into a wall (heading 0); they now park along the street (district headingDeg).
+- Not done: cars, chases, wanted levels, a minimap; the walk hint still names the walking keys while riding; one frame shot at the live time of day (no time=day) right after a bump looked washed out in fog, not examined.
+
 ### Session 023, part 2 (2026-11-23, street missions)
 
 - Asked for (owner): game action in the street "like GTA VI", and generated Portuguese faces, including Cristiano Ronaldo, a former president and the mayor of Braga. Declined: a copy of GTA VI (only the genre's mechanics), and the likeness of any real person (personality rights and defamation risk on a public site). Built original characters instead.

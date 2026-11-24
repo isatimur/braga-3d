@@ -24,6 +24,9 @@
       "permanent": true
     }
   ],
+  "rewrites": [
+    { "source": "/play", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
