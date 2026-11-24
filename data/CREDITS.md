@@ -242,3 +242,7 @@ We take only facts (numbers and counts) from these pages and cite each one; we r
 ## Street mission characters
 
 `assets/characters/*.webp`: eight fictional characters (Dona Rosa, Sr. Joaquim, Inês, Sr. Armando, Tiago, Amélia, Rúben, Avó Conceição), generated for this project on 2026-11-23 with Higgsfield (model `gpt_image_2_6`) from text prompts only, no reference photos. None of them depicts a real person; prompts asked for original characters with no logos.
+
+`assets/characters/3d/*.glb`: the same eight characters as rigged, textured 3D models with an idle animation, made for this project on 2026-11-24 with Higgsfield. First `gpt_image_2_6` drew each character full length in an A-pose from its own portrait above; then `meshy_v7_image_to_3d` (Meshy 7, with rigging and the "Idle" clip) turned that drawing into the model. Textures were resized and re-encoded with glTF-Transform. The back of each model is inferred by the generator.
+
+`assets/characters/3d/heroi*.glb`: the walker, an original fictional traveller, made the same way on 2026-11-24 from a text prompt only (no reference image). `heroi.glb` carries the "Casual_Walk" clip; `heroi-run.glb` holds only the "Run_02" clip from a second Meshy job on the same drawing; `heroi-idle.glb` holds only the "Idle" clip taken from `musico.glb`. All the Meshy rigs share bone names, so the clips play on the walker.
