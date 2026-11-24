@@ -1214,14 +1214,17 @@ async function start() {
   async function ensureWalk() {
     if (walk) return walk;
     if (!walkLoad) {
-      walkLoad = import('./walk.js').then(({ createWalk }) => {
+      walkLoad = Promise.all([import('./walk.js'), import('./walk-collide.js')]).then(([{ createWalk }, { gatePiers }]) => {
+        // a gate over a street blocks only at its piers: the walker goes through
+        const GATES = { 'arco-porta-nova': 0.5 }; // id -> share of the long side open
+        const walkPolys = landmarks.flatMap((l, i) => (!outlines[i] ? [] : GATES[l.id] ? gatePiers(outlines[i], GATES[l.id]) : [outlines[i]]));
         walk = createWalk({
           camera,
           rig,
           heightAt,
           dom: canvas,
           scene,
-          polys: [...city.footprints, ...outlines.filter(Boolean)],
+          polys: [...city.footprints, ...walkPolys],
           places: () => marks.items.map((it, i) => ({ i, name: it.labelEl.textContent, x: it.center.x, z: it.center.z, outline: outlines[i] })),
           street: () => life?.street?.built ?? null,
           // the card belongs to the map view: the walk ends, then the place opens
