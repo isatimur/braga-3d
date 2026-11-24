@@ -21,6 +21,11 @@
 import * as THREE from 'three';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { S } from './geo.js';
+import { createCrowdModels } from './crowd-models.js';
+
+// a person nearer the camera than this is a rigged model (crowd-models.js)
+const MODEL_NEAR = 35 * S;
+const MODEL_CAM = 40; // the models load once the view comes this close (camDist, world units)
 
 // ------------------------------------------------------------ the hour
 // share of the peak, hour by hour (value at hh:30)
@@ -386,6 +391,7 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
     pools[b] = pool;
     group.add(pool.mesh);
   }
+  const models = lite ? null : createCrowdModels(group);
   // every human kind routes to a build (all to the one cheap build in lite)
   const POOL_OF_KIND = ['adult', 'child', 'elderly', 'shopper', 'cyclist'].map((b) => (lite ? 'adult' : b));
   const STATURE = { adult: [0.96, 1.05], child: [0.94, 1.06], elderly: [0.97, 1.03], shopper: [0.96, 1.05], cyclist: [1, 1] };
@@ -755,6 +761,7 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
     if (!on) {
       wasOn = false;
       shown = 0;
+      models?.hide();
       for (const b of builds) pools[b].count = 0;
       if (dogPool) dogPool.count = 0;
       return;
@@ -777,6 +784,11 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
     const RV2 = (R * 1.05) ** 2;
     let n = 0;
     shownWalkers = 0;
+    // the close ones: rigged models when they are loaded and a clone is free
+    const close = !!models && camDist < MODEL_CAM;
+    if (close) models.want();
+    models?.begin();
+    const NEAR2 = MODEL_NEAR * MODEL_NEAR;
     for (let i = 0; i < active; i++) {
       if (dt > 0) step(i, dt);
       const p = locate(i);
@@ -787,9 +799,15 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
         continue;
       }
       if (n >= max || (p.x - cx) ** 2 + (p.z - cz) ** 2 > RV2 * 1.6 || !inView(frustum, p.x, p.y + 0.2, p.z, 0.6)) continue;
+      shownWalkers++;
+      if (close && wkind[i] !== 4 && (p.x - cx) ** 2 + (p.z - cz) ** 2 < NEAR2) {
+        if (models.show(i, wkind[i], i, p.x, p.y, p.z, p.hx, p.hz, wsc[i], (wv[i] * STEP) / S, dt)) {
+          n++;
+          continue;
+        }
+      }
       const b = POOL_OF_KIND[wkind[i]];
       write(pools[b], p.x, p.y, p.z, p.hx, p.hz, wsc[i], wst[i], wshirt[i], wpants[i], wskin[i], wph[i], 1, 0, wcad[i]);
-      shownWalkers++;
       n++;
     }
     // the people who stay, nearest cells first is not needed: the cap is high
@@ -808,6 +826,14 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
           if (spots.t[i] > share * 1.25 || !spotOk(i)) continue;
           if (!inView(frustum, x, spots.y[i] + 0.2, z, 0.6)) continue;
           const yaw = spots.yaw[i];
+          // a person who stands (not one who sits) may be a model too
+          if (close && !spots.sit[i] && sBuild[i] !== 4 && (x - cx) ** 2 + (z - cz) ** 2 < NEAR2) {
+            if (models.show(100000 + i, sBuild[i], i, x, spots.y[i], z, Math.sin(yaw), Math.cos(yaw), sSc[i], 0, dt)) {
+              shownStaying++;
+              n++;
+              continue;
+            }
+          }
           const b = POOL_OF_KIND[sBuild[i]];
           write(pools[b], x, spots.y[i], z, Math.sin(yaw), Math.cos(yaw), sSc[i], sStature[i], sShirt[i], sPants[i], sSkin[i], sPh[i], 0, spots.sit[i], 1);
           shownStaying++;
@@ -815,6 +841,7 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
         }
       }
     }
+    models?.end();
     // dogs: each follows a walker, at the walker's side and a little ahead
     shownDogs = 0;
     if (dogPool) {
@@ -926,6 +953,10 @@ export function createPeople({ lanes, spots, max, lite, shadows = false }) {
     },
     get shownDogs() {
       return shownDogs;
+    },
+    // the close people drawn as rigged models this frame
+    get shownModels() {
+      return models?.shown ?? 0;
     },
   };
 }

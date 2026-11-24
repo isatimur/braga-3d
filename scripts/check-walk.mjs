@@ -126,9 +126,11 @@ async function run(profile) {
   ok(Math.abs(s.eyeM - 1.7) < 0.3, `${profile}: eye height after the walk ${s.eyeM} m`);
 
   // bodies: put the walker on a drawn pedestrian, then on a drawn vehicle;
-  // each time the walker must end outside the body
-  for (const [kind, name, clearM] of [['pedestrian', 'people', 0.6], ['vehicle', 'traffic', 1.2]]) {
-    const r = await page.evaluate(async ([name]) => {
+  // each time the walker must end outside the body. A vehicle pushes at once
+  // (two frames); a pedestrian gives way, so the walker squeezes out over
+  // about half a second (30 frames), measured from that body where it is then
+  for (const [kind, name, clearM, frames] of [['pedestrian', 'people', 0.4, 30], ['vehicle', 'traffic', 1.2, 2]]) {
+    const r = await page.evaluate(async ([name, frames]) => {
       const P = window.__braga;
       const w = P.walk;
       for (let tries = 0; tries < 40; tries++) {
@@ -137,15 +139,32 @@ async function run(profile) {
           const bumps0 = w.state.bumps;
           if (!w.teleport(x, z)) continue;
           await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
+          if (w.state.bumps === bumps0) continue; // that body left the view this frame
+          if (frames <= 2) {
+            // from where that body stood two frames ago (it moves a few cm)
+            const s = w.state;
+            return { m: Math.hypot(s.x - x, s.z - z) * 4, drawn: c.length };
+          }
+          // follow that body frame by frame (it moves a few cm a frame)
+          let bx = x, bz = z, lost = false;
+          for (let f = 2; f < frames && !lost; f++) {
+            await new Promise((res) => requestAnimationFrame(res));
+            let best = Infinity;
+            for (const [px, pz] of w.bodies(name)) {
+              const d = Math.hypot(px - bx, pz - bz);
+              if (d < best) { best = d; var nx = px, nz = pz; }
+            }
+            if (best > 0.3 / 4) lost = true;
+            else { bx = nx; bz = nz; }
+          }
+          if (lost) continue;
           const s = w.state;
-          if (s.bumps === bumps0) continue; // that body left the view this frame
-          // from where that body stood two frames ago (it moves a few cm)
-          return { m: Math.hypot(s.x - x, s.z - z) * 4, drawn: c.length };
+          return { m: Math.hypot(s.x - bx, s.z - bz) * 4, drawn: c.length };
         }
         await new Promise((res) => setTimeout(res, 500));
       }
       return { none: 'no body the walker could reach' };
-    }, [name]);
+    }, [name, frames]);
     if (r.none && kind === 'vehicle') console.log(`note ${profile}: ${r.none} (${kind})`);
     else ok(!r.none && r.m >= clearM, `${profile}: a ${kind} pushes the walker out${r.none ? ` (${r.none})` : ` (${r.m.toFixed(2)} m from its centre, ${r.drawn} drawn)`}`);
   }

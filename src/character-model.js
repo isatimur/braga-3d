@@ -16,7 +16,7 @@ const loader = new GLTFLoader();
 const clipCache = new Map(); // url -> Promise<AnimationClip>
 
 // keep a clip in place: the hips may sway up and down, not travel
-function inPlace(clip) {
+export function inPlace(clip) {
   for (const t of clip.tracks) {
     if (!t.name.endsWith('.position') || !/hips/i.test(t.name)) continue;
     const v = t.values;
@@ -36,17 +36,15 @@ function loadClip(url) {
 const WALK_MS = 1.4; // metres per second the walk clip shows
 const RUN_MS = 3.8;
 
-// url: the .glb; heightM: how tall the person stands, in metres
-export async function loadCharacter(url, heightM, clips = null) {
-  const gltf = await loader.loadAsync(url);
-  const model = gltf.scene;
+// fit a loaded model in place: feet on the origin, centred, heightM tall (in
+// metres, the skinned box in the model's parent frame); it still faces +z
+export function fitToHeight(model, heightM) {
   model.traverse((o) => {
     if (o.isMesh) {
       o.castShadow = true;
       o.frustumCulled = false; // a skinned mesh moves outside its bind-pose box
     }
   });
-  // fit: feet on the origin, centred, heightM tall (the skinned box, in the root's frame)
   model.updateMatrixWorld(true);
   const box = new THREE.Box3();
   model.traverse((o) => {
@@ -59,6 +57,13 @@ export async function loadCharacter(url, heightM, clips = null) {
   const k = heightM / Math.max(size.y, 1e-6);
   model.scale.multiplyScalar(k);
   model.position.set(-((box.min.x + box.max.x) / 2) * k, -box.min.y * k, -((box.min.z + box.max.z) / 2) * k);
+  return model;
+}
+
+// url: the .glb; heightM: how tall the person stands, in metres
+export async function loadCharacter(url, heightM, clips = null) {
+  const gltf = await loader.loadAsync(url);
+  const model = fitToHeight(gltf.scene, heightM);
   // glTF characters face +z; ours look along -z
   const turn = new THREE.Group();
   turn.rotation.y = Math.PI;

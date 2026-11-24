@@ -511,7 +511,24 @@
       "evidence": [
         "2026-11-24 (Session 023 part 4): 8/8 mission people skinned, walker blends idle/walk/run, screenshots viewed, check-walk all passed, 91/91 unit tests, verify OK"
       ],
-      "notes": "src/character-model.js; models in assets/characters/3d (data/CREDITS.md). The street crowd in src/people.js is still the simple instanced figure. Not deployed on 2026-11-24."
+      "notes": "src/character-model.js; models in assets/characters/3d (data/CREDITS.md). Deployed on 2026-11-24."
+    },
+    {
+      "id": "braga-028",
+      "priority": 28,
+      "area": "walk",
+      "title": "The close crowd as textured models; street missions that can be won on foot",
+      "user_visible_behavior": "In walk mode the passers-by within about 35 m are textured, animated people of eight kinds (the farther crowd stays the simple figure). People give way when the walker pushes through. Every mission person stands in open ground, and the mission timers fit the real walking route.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/crowd-shots.mjs and /tmp/mission-bot.mjs (volatile e2e: skinned passers-by near the walker; a bot wins guitarra, pasteis, corrida on foot)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-24 (Session 023 part 5): 4-11 skinned passers-by near the walker, screenshots viewed; bot won guitarra 61/110 s, pasteis ~96/130 s, corrida 173/240 s; check-walk all passed; 91/91 unit tests; verify OK"
+      ],
+      "notes": "src/crowd-models.js, src/people.js, src/walk.js (BODY 0.3 m, pedestrians give way), src/street-missions.js (timers, open ground). Street furniture and seats are not in the collider on /play (solids 0)."
     }
   ]
 }

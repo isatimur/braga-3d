@@ -59,23 +59,26 @@ export const PEOPLE = [
 ];
 
 // A mission: who gives it, the stops in order (person ids or [lat, lon]), the time, the points.
+// The time fits the walkable route, not the straight line: about 3 m/s of
+// running with the turns and the crowd (pasteis 340 m, corrida 700 m, guitarra
+// 230 m), and about 6 m/s on a scooter for chave (860 m).
 export const MISSIONS = [
-  { id: 'pasteis', giver: 'pasteleira', stops: ['pescador'], seconds: 80, points: 300,
+  { id: 'pasteis', giver: 'pasteleira', stops: ['pescador'], seconds: 130, points: 300,
     title: { pt: 'Pastéis quentes', en: 'Hot pastéis', ru: 'Горячие паштейш' },
     ask: { pt: 'O Sr. Joaquim encomendou uma caixa de pastéis e está no Arco da Porta Nova. Leva-lhos antes que arrefeçam!', en: 'Sr. Joaquim ordered a box of pastéis and he is at the Arco da Porta Nova. Take them before they go cold!', ru: 'Сеньор Жоаким заказал коробку паштейш и ждёт у Арки Порта-Нова. Отнеси, пока не остыли!' },
     goal: { pt: 'Leva os pastéis ao Sr. Joaquim', en: 'Take the pastéis to Sr. Joaquim', ru: 'Отнеси паштейш сеньору Жоакиму' },
     done: { pt: 'Ainda quentinhos! Obrigado.', en: 'Still warm! Thank you.', ru: 'Ещё тёплые! Спасибо.' } },
-  { id: 'corrida', giver: 'estudante', stops: ['futebolista', 'estudante'], seconds: 75, points: 400,
+  { id: 'corrida', giver: 'estudante', stops: ['futebolista', 'estudante'], seconds: 240, points: 400,
     title: { pt: 'Corrida académica', en: 'The academic race', ru: 'Студенческий забег' },
     ask: { pt: 'Aposto que não tocas no Rúben, ao fundo da Rua do Souto, e voltas aqui antes de eu acabar o café!', en: 'Bet you can\'t tag Rúben at the far end of Rua do Souto and get back before I finish my coffee!', ru: 'Спорим, не успеешь добежать до Рубена в конце Руа-ду-Соуту и вернуться, пока я пью кофе!' },
     goal: { pt: 'Toca no Rúben e volta à Inês', en: 'Tag Rúben and run back to Inês', ru: 'Добеги до Рубена и вернись к Инеш' },
     done: { pt: 'Não acredito! Pago eu o próximo café.', en: 'No way! The next coffee is on me.', ru: 'Не может быть! Следующий кофе за мной.' } },
-  { id: 'guitarra', giver: 'taxista', stops: ['musico', 'fadista'], seconds: 95, points: 500,
+  { id: 'guitarra', giver: 'taxista', stops: ['musico', 'fadista'], seconds: 110, points: 500,
     title: { pt: 'A guitarra esquecida', en: 'The forgotten guitar', ru: 'Забытая гитара' },
     ask: { pt: 'A Amélia deixou a guitarra no meu táxi e canta já a seguir na Sé. O Tiago tem-na guardada. Vai buscá-la e leva-lha!', en: 'Amélia left her guitar in my taxi and she sings at the cathedral soon. Tiago is keeping it. Fetch it and take it to her!', ru: 'Амелия забыла гитару в моём такси, а скоро ей петь у собора. Гитара у Тиагу. Забери и отнеси ей!' },
     goal: { pt: 'Busca a guitarra ao Tiago e leva-a à Amélia', en: 'Get the guitar from Tiago and take it to Amélia', ru: 'Забери гитару у Тиагу и отнеси Амелии' },
     done: { pt: 'Chegou mesmo a tempo. Esta canção é para ti.', en: 'Just in time. This song is for you.', ru: 'Как раз вовремя. Эта песня — для тебя.' } },
-  { id: 'chave', giver: 'avo-minhota', stops: ['futebolista', 'avo-minhota'], seconds: 120, points: 600,
+  { id: 'chave', giver: 'avo-minhota', stops: ['futebolista', 'avo-minhota'], seconds: 180, points: 600,
     title: { pt: 'A chave da avó', en: 'Grandma\'s key', ru: 'Бабушкин ключ' },
     ask: { pt: 'O meu neto Rúben levou a chave de casa e está lá no fundo da Rua do Souto. A pé não chegas a tempo — apanha uma trotinete!', en: 'My grandson Rúben took the house key and he is at the far end of Rua do Souto. On foot you will never make it — grab a scooter!', ru: 'Мой внук Рубен унёс ключ от дома, он в самом конце Руа-ду-Соуту. Пешком не успеешь — бери самокат!' },
     goal: { pt: 'Busca a chave ao Rúben e volta à avó', en: 'Get the key from Rúben and bring it back to grandma', ru: 'Забери ключ у Рубена и вернись к бабушке' },
@@ -153,14 +156,23 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
   group.name = 'street-missions';
   scene.add(group);
 
-  // where each person stands: the spot, nudged to the nearest free ground
+  // where each person stands: the spot, nudged to the nearest open ground. Open:
+  // free all round within 1.5 m, so a person never waits in a niche of a wall
+  // that the walker cannot get into (Amélia at the Sé did)
+  const open = (x, z) => {
+    if (!walk.free(x, z)) return false;
+    for (let a = 0; a < 8; a++) if (!walk.free(x + Math.cos((a * Math.PI) / 4) * 1.5 * M, z + Math.sin((a * Math.PI) / 4) * 1.5 * M)) return false;
+    return true;
+  };
   const people = PEOPLE.map((p) => {
     const c = project(p.at[0], p.at[1]);
     let x = c.x, z = c.z;
-    search: for (let d = 0; d < 30 * M; d += 0.5 * M) {
-      for (let a = 0; a < 12; a++) {
-        const tx = c.x + Math.cos((a * Math.PI) / 6) * d, tz = c.z + Math.sin((a * Math.PI) / 6) * d;
-        if (walk.free(tx, tz)) { x = tx; z = tz; break search; }
+    search: for (const ok of [open, walk.free]) {
+      for (let d = 0; d < 30 * M; d += 0.5 * M) {
+        for (let a = 0; a < 12; a++) {
+          const tx = c.x + Math.cos((a * Math.PI) / 6) * d, tz = c.z + Math.sin((a * Math.PI) / 6) * d;
+          if (ok(tx, tz)) { x = tx; z = tz; break search; }
+        }
       }
     }
     const y = heightAt(x, z) + RIBBON_LIFT;

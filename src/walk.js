@@ -29,7 +29,7 @@ export const EYE = 1.7 * M; // eye height above the ground
 export const NEAR = 0.3 * M; // near plane while walking
 const SPEED = 1.4 * M; // walk, units per second
 const RUN = 4.2 * M;
-const BODY = 0.45 * M; // body radius
+const BODY = 0.3 * M; // body radius: a slim person fits between a bollard and a table
 const FOV = 62; // the orbit camera's 38 degrees is a telephoto at eye level
 const LOOK = 0.0042; // radians per pixel
 const PITCH = 1.25; // look up and down limit, radians
@@ -47,7 +47,7 @@ const RIDE_ACC = 6 * M; // per second
 const RIDE_BRAKE = 12 * M;
 const RIDE_DRAG = 0.9; // per second, rolling with no throttle
 const RIDE_TURN = 2.2; // radians per second at full speed
-const RIDE_BODY = 0.6 * M;
+const RIDE_BODY = 0.4 * M;
 const RIDE_DECK = 0.18 * M; // the rider stands on the deck
 const RIDE_CAM = 6.5 * M; // the chase camera's distance
 
@@ -248,7 +248,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     if (n === seatCount) return;
     seatCount = n;
     const extra = [];
-    const r = 0.55 * M; // a chair and a share of its table
+    const r = 0.3 * M; // the seated person and the chair; the gaps between tables stay open
     for (let k = 0; k < n; k++) {
       if (!sp.sit[k]) continue;
       const x = sp.x[k], z = sp.z[k];
@@ -272,9 +272,11 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   // draw this frame (the drawn ones, so what the walker sees is what stops
   // them). A person is a circle, a vehicle a capsule along its heading. The
   // walker is pushed out, but never into a wall.
+  // give: the share of the overlap undone each frame. People give way (the
+  // walker squeezes through a crowd, slowed a little); a vehicle does not.
   const MOVERS = [
-    { name: 'people', half: 0, rad: 0.28 * M },
-    { name: 'traffic', half: 1.5 * M, rad: 1.0 * M },
+    { name: 'people', half: 0, rad: 0.22 * M, give: 0.25 },
+    { name: 'traffic', half: 1.5 * M, rad: 1.0 * M, give: 1 },
   ];
   let bumps = 0;
   let touching = false;
@@ -287,10 +289,13 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       if (!root || !root.visible) continue;
       const reach = mv.half + mv.rad + BODY;
       root.traverse((o) => {
-        if (!o.isInstancedMesh || !o.visible || o.name === 'traffic-lights') return;
-        const e = o.instanceMatrix.array;
-        for (let k = 0, b = 0; k < o.count; k++, b += 16) {
-          let cx = e[b + 12], cz = e[b + 14];
+        // a close passer-by drawn as a rigged model (crowd-models.js): one body
+        const one = o.userData.crowdBody && o.visible;
+        if (!one && (!o.isInstancedMesh || !o.visible || o.name === 'traffic-lights')) return;
+        const e = one ? null : o.instanceMatrix.array;
+        const count = one ? 1 : o.count;
+        for (let k = 0, b = 0; k < count; k++, b += 16) {
+          let cx = one ? o.position.x : e[b + 12], cz = one ? o.position.z : e[b + 14];
           if (Math.abs(cx - px) > reach || Math.abs(cz - pz) > reach) continue;
           if (mv.half > 0) {
             // +z of the vehicle is its travel direction
@@ -307,8 +312,8 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
           const min = mv.rad + BODY;
           if (d >= min) continue;
           if (d < 1e-4) { dx = Math.sin(yaw + 1.57); dz = -Math.cos(yaw + 1.57); d = 1; }
-          px += (dx / d) * (min - d);
-          pz += (dz / d) * (min - d);
+          px += (dx / d) * (min - d) * mv.give;
+          pz += (dz / d) * (min - d) * mv.give;
           hit = true;
         }
       });
@@ -319,8 +324,9 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     pos.x = px;
     pos.z = pz;
   }
-  // the free walk-lane point nearest to (x, z), within 600 m; null without lanes
-  function laneNear(x, z) {
+  // the free walk-lane point nearest to (x, z), within 600 m; null without lanes.
+  // r: the room it needs all round (the start wants room for the camera behind)
+  function laneNear(x, z, r = BODY) {
     const lanes = street()?.lanes;
     if (!lanes?.X?.length) return null;
     // Up to 600 m: the opening view looks at a point that is often a park or
@@ -329,7 +335,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     let best = -1, bestD = (600 * M) ** 2;
     for (let k = 0; k < lanes.X.length; k++) {
       const d = (lanes.X[k] - x) ** 2 + (lanes.Z[k] - z) ** 2;
-      if (d < bestD && !collider.blocked(lanes.X[k], lanes.Z[k], BODY)) { bestD = d; best = k; }
+      if (d < bestD && !collider.blocked(lanes.X[k], lanes.Z[k], r)) { bestD = d; best = k; }
     }
     return best < 0 ? null : { x: lanes.X[best], z: lanes.Z[best] };
   }
@@ -490,8 +496,9 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     const from = at || rig.controls.target;
     loadHero();
     readStreet();
-    // a pavement or a pedestrian street first; any free ground otherwise
-    const free = laneNear(from.x, from.z) || collider.freeNear(from.x, from.z, BODY);
+    // a pavement or a pedestrian street first, 2 m from any wall; any free
+    // ground otherwise
+    const free = laneNear(from.x, from.z, 2 * M) || laneNear(from.x, from.z) || collider.freeNear(from.x, from.z, BODY);
     if (!free) return false; // no street within reach
     pos.x = free.x;
     pos.z = free.z;
@@ -792,6 +799,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     bodies(name) {
       const out = [];
       scene.getObjectByName(name)?.traverse((o) => {
+        if (o.userData.crowdBody && o.visible) out.push([o.position.x, o.position.z]);
         if (!o.isInstancedMesh || !o.visible || o.name === 'traffic-lights') return;
         const e = o.instanceMatrix.array;
         for (let k = 0; k < o.count; k++) out.push([e[k * 16 + 12], e[k * 16 + 14]]);
