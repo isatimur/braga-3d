@@ -494,7 +494,24 @@
       "evidence": [
         "2026-11-23 (Session 023 part 2): three missions passed and one failed in the served build, no page errors; 91/91 unit tests; check-walk all passed; verify OK; frame time unchanged"
       ],
-      "notes": "src/street-missions.js; riding in src/walk.js (mount, dismount, riding); the page is PLAY in src/main.js with the /play rewrite in vercel.json. The characters are fictional (assets/characters, data/CREDITS.md). Missions deployed on the map 2026-11-23; /play and the scooters not deployed on 2026-11-24."
+      "notes": "src/street-missions.js; riding in src/walk.js (mount, dismount, riding); the page is PLAY in src/main.js with the /play rewrite in vercel.json. The characters are fictional (assets/characters, data/CREDITS.md). Missions deployed on the map 2026-11-23; /play and the scooters deployed on 2026-11-24."
+    },
+    {
+      "id": "braga-027",
+      "priority": 27,
+      "area": "walk",
+      "title": "Textured, animated people: the eight mission characters and the walker",
+      "user_visible_behavior": "On /play the eight mission people are textured 3D characters that match their portraits and breathe in an idle loop; their light column fades as the walker comes near. In walk mode (on / and /play) the walker is a textured traveller with a backpack who stands, walks and runs with matching animations.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/npc-shots.mjs and /tmp/hero-shots.mjs (volatile e2e: skinned models present, clip weights idle -> walk -> run)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-24 (Session 023 part 4): 8/8 mission people skinned, walker blends idle/walk/run, screenshots viewed, check-walk all passed, 91/91 unit tests, verify OK"
+      ],
+      "notes": "src/character-model.js; models in assets/characters/3d (data/CREDITS.md). The street crowd in src/people.js is still the simple instanced figure. Not deployed on 2026-11-24."
     }
   ]
 }

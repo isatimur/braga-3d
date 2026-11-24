@@ -17,6 +17,7 @@ import { language } from './i18n.js';
 import { METRES_PER_UNIT } from './geo.js';
 import { RIBBON_LIFT } from './roads.js';
 import { createFigure } from './walk-figure.js';
+import { loadCharacter } from './character-model.js';
 
 // clothes of each figure, after the portrait
 const LOOK = {
@@ -124,6 +125,9 @@ const UI = {
 };
 
 const portraitUrl = (id) => `assets/characters/${id}.webp`;
+const modelUrl = (id) => `assets/characters/3d/${id}.glb`;
+// how tall each person stands, metres
+const HEIGHT_M = { 'avo-minhota': 1.55, estudante: 1.65, fadista: 1.65, futebolista: 1.78, musico: 1.78, pasteleira: 1.6, pescador: 1.7, taxista: 1.72 };
 
 // a column of light: an open cylinder that fades upward, additive
 function beam(color, radiusM, heightM) {
@@ -170,6 +174,22 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
     group.add(fig.root);
     return { ...p, x, z, y, col, fig, face: Math.random() * Math.PI * 2 };
   });
+  // the textured model replaces the simple figure once it has loaded
+  let disposed = false;
+  for (const p of people) {
+    loadCharacter(modelUrl(p.id), HEIGHT_M[p.id] ?? 1.7)
+      .then((model) => {
+        if (disposed) return model.dispose();
+        model.root.name = `mission-${p.id}`;
+        model.root.position.copy(p.fig.root.position);
+        model.root.rotation.y = p.face;
+        group.remove(p.fig.root);
+        p.fig.dispose();
+        group.add(model.root);
+        p.fig = model;
+      })
+      .catch(() => { /* keep the simple figure */ });
+  }
   const byId = Object.fromEntries(people.map((p) => [p.id, p]));
   // a scooter parked a couple of metres from its person, on free ground
   const scooters = SCOOTERS.map((id) => {
@@ -335,7 +355,10 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
       p.col.material.uniforms.uTime.value = clock;
       // a person turns to the walker within 15 m (the figure looks along -z at yaw 0)
       const dx = w.x - p.x, dz = w.z - p.z;
-      if (Math.hypot(dx, dz) < 15 * M) {
+      const dist = Math.hypot(dx, dz);
+      // the beam marks the person from afar and fades as the walker comes near (it would tint the person)
+      p.col.material.uniforms.uAlpha.value = 0.55 * THREE.MathUtils.smoothstep(dist, 6 * M, 16 * M);
+      if (dist < 15 * M) {
         const want = Math.atan2(-dx, -dz);
         let d = want - p.face;
         d = Math.atan2(Math.sin(d), Math.cos(d));
@@ -416,6 +439,7 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
     dispose() {
       window.removeEventListener('keydown', onKey);
       root.remove();
+      disposed = true;
       for (const p of people) p.fig.dispose();
       scene.remove(group);
     },

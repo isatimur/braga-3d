@@ -16,6 +16,13 @@ import { t } from './i18n.js';
 import { METRES_PER_UNIT } from './geo.js';
 import { createCollider } from './walk-collide.js';
 import { createFigure } from './walk-figure.js';
+import { loadCharacter } from './character-model.js';
+
+// the walker: a textured model with idle, walk and run (assets/characters/3d/)
+const HERO = {
+  url: 'assets/characters/3d/heroi.glb',
+  clips: { idle: 'assets/characters/3d/heroi-idle.glb', walk: 'own', run: 'assets/characters/3d/heroi-run.glb' },
+};
 
 const M = 1 / METRES_PER_UNIT; // world units per metre
 export const EYE = 1.7 * M; // eye height above the ground
@@ -326,9 +333,25 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     }
     return best < 0 ? null : { x: lanes.X[best], z: lanes.Z[best] };
   }
-  const figure = createFigure();
+  let figure = createFigure();
   figure.root.visible = false;
   scene.add(figure.root);
+  // the textured walker replaces the simple figure once it has loaded
+  let heroLoad = null;
+  function loadHero() {
+    heroLoad ??= loadCharacter(HERO.url, 1.75, HERO.clips)
+      .then((hero) => {
+        hero.root.name = 'walk-figure';
+        hero.root.visible = figure.root.visible;
+        hero.root.position.copy(figure.root.position);
+        hero.root.rotation.copy(figure.root.rotation);
+        scene.remove(figure.root);
+        figure.dispose();
+        scene.add(hero.root);
+        figure = hero;
+      })
+      .catch(() => { /* keep the simple figure */ });
+  }
   let view = 'third'; // 'third' | 'first'
   let back = BACK; // the camera's current distance, eased
   let faceYaw = 0; // where the figure faces
@@ -465,6 +488,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   function start(at = null, heading = null) {
     if (active) return true;
     const from = at || rig.controls.target;
+    loadHero();
     readStreet();
     // a pavement or a pedestrian street first; any free ground otherwise
     const free = laneNear(from.x, from.z) || collider.freeNear(from.x, from.z, BODY);
