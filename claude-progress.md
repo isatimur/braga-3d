@@ -317,6 +317,14 @@ updates it automatically.
 - Open decision (owner): Light on phones drops the MS buildings, which Braga's suburbs depend on, and the calçada of the central squares. Street level is 42 KB. Options: keep the Lisbon rule; or make the phone default Light plus street level, or plus MS; each needs a frame-time check on a weak phone, not only bytes.
 - Known limits: the pill is hidden during a route, so a visitor whose ring tiles fail mid-route sees no Retry until the route ends (the tiles retry three times on their own). The measurements count transfer; the profile's competing GPU load was not applied; ring tiles come through a worker the throttle does not reach. Not checked: a physical phone, Safari, Firefox.
 
+### Session 025 (2026-11-25, walk shadows at half rate; braga-030)
+
+- Port of porto-033. `renderer.shadowMap.autoUpdate` is off; `atmosphere.update` fits the shadow camera and sets `needsUpdate` every `shadowEvery` frames (walk 2, else 1); `share.js` asks for a shadow update before each postcard draw.
+- /play, 4 s walking, governor level 0 (`/tmp/porto-live/gpu-b.mjs`): average main-pass triangles 3,303,499 live → 2,873,235 on the branch; draw calls 265.1 → 223.3. The map at /: 241 shadow passes in 242 frames.
+- Screenshots viewed: `/tmp/porto-live/braga-walk-local.png` against `braga-walk-live.png` (same shadows at the Arco da Porta Nova start), `braga-map.png`.
+- `npm test` 92/92, `npm run verify` OK, `scripts/check-walk.mjs` all passed.
+- Plan for the next steps (walk-mode LOD, far plane, shadow casters by walker distance): `concepts_brief.md` in the repo root (not committed; reviewed by seven reviewers).
+
 ### Session 024 (2026-11-24, walk polish and a lighter street level; braga-029)
 
 - Branch `fix/walk-polish`. Owner asked: "continue improving the whole experience", then "really slow on my laptop".
