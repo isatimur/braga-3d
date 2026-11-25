@@ -547,6 +547,25 @@
         "2026-11-24 (Session 024): solids 0 -> 4235, seats 0 -> 2159 within 4 s; night screenshots viewed (haze gone with post-processing on); bot won guitarra 60/110 s, pasteis 92/130 s, corrida 180/240 s; triangles at the walk start 4.01 M -> 3.35 M; 92/92 unit tests; check-walk all passed; verify OK"
       ],
       "notes": "src/walk.js (readStreet re-reads the street layer, steps out of a new obstacle, mount from free ground), src/effects.js (street-level bloom), src/facades.js (close windows dimmed, shop light follows the room), src/street-missions.js (scooter heading along the open line), src/people.js + src/streetscape.js (R 75 and 30 % of the walkers when the camera is under 15 m), src/scene.js (no shader error check in the build)."
+    },
+    {
+      "id": "braga-030",
+      "priority": 30,
+      "area": "walk",
+      "title": "Walk mode draws the shadow map every other frame",
+      "user_visible_behavior": "On /play the frame costs less: the sun's shadow map is drawn every second frame. The walker, the passers-by and the cars cast their shadows at half the frame rate, which a walk's pace does not show. The map at / is unchanged.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/porto-live/gpu-b.mjs <origin>/play#time=day (volatile: average triangles and draw calls while walking, governor level 0)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-25: average main-pass triangles 3,303,499 live, 2,873,235 on the branch; draw calls 265.1 live, 223.3 on the branch",
+        "2026-11-25: the map at /: 241 shadow passes in 242 frames",
+        "2026-11-25: npm test 92/92, npm run verify OK, check-walk all passed"
+      ],
+      "notes": "Port of porto-033. renderer.shadowMap.autoUpdate is off for good: atmosphere.update sets needsUpdate (with the shadow camera fit on the same frame), share.js sets it before a postcard draw. A new render path that skips atmosphere.update must set renderer.shadowMap.needsUpdate itself."
     }
   ]
 }
