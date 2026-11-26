@@ -32,6 +32,9 @@
 .bc-you { color: #a8a49b; }
 .bc-you .bc-mark { color: #8b877e; }
 .bc-him .bc-mark { color: #e6e1d6; }
+/* ⏺ (U+23FA) drawn as a shape: few monospace fonts have the glyph */
+.bc-rec { display: inline-flex; align-items: center; justify-content: center; height: 1.5em; }
+.bc-rec::before { content: ''; width: 0.62em; height: 0.62em; border-radius: 50%; background: currentColor; }
 .bc-think { color: #d97757; font-style: italic; }
 .bc-cursor { display: inline-block; width: 0.6em; height: 1.1em; vertical-align: text-bottom; background: #e6e1d6; animation: bc-blink 1.05s steps(1) infinite; }
 @keyframes bc-blink { 50% { opacity: 0; } }

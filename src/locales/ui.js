@@ -266,9 +266,9 @@ export const messages = {
   'Основа карты (рельеф, улицы, здания центра, достопримечательности, парки и река) загружается всегда. Выключенный слой не скачивается.': ['A base do mapa (relevo, ruas, edifícios do centro, monumentos, parques e rio) carrega sempre. Uma camada desligada não é descarregada.', 'The map base (terrain, streets, central buildings, landmarks, parks and the river) always loads. A layer that is off is not downloaded.'],
   'Загружаем этот район…': ['A carregar esta zona…', 'Loading this area…'], 'Загружаем': ['A carregar', 'Loading'],
   'Не загрузились участки карты:': ['Zonas do mapa que falharam:', 'Map areas that failed to load:'], 'Район загружен': ['Zona carregada', 'Area loaded'],
-  // the easter egg: the coder on a balcony (balcony-coder.js)
+  // the easter egg: the coder behind a tower window (balcony-coder.js)
   'Поговорить с кодером': ['Falar com o programador', 'Talk to the coder'],
-  'Кодер на балконе': ['Programador na varanda', 'Coder on the balcony'],
+  'Кодер у окна': ['Programador à janela', 'Coder at the window'],
   'Пасхалка: ответы написаны заранее, без сервера и без ИИ.': ['Easter egg: respostas escritas de antemão, sem servidor e sem IA.', 'Easter egg: the replies are written ahead of time, no server and no AI.'],
   'Напишите ему…': ['Escreva-lhe…', 'Write to him…'],
   'Сообщение кодеру': ['Mensagem para o programador', 'Message to the coder'],

@@ -721,7 +721,7 @@ async function start() {
   let walkLoad = null;
   let missions = null; // street missions in the walk districts (street-missions.js)
   let missionsLoad = null;
-  let coder = null; // easter egg: the coder on a balcony (balcony-coder.js), cities with "balcony_coder"
+  let coder = null; // easter egg: the coder behind a tower window (balcony-coder.js), cities with "balcony_coder"
   // (quest, questLoad, hasQuest: at the top of start())
   // startMode() numbers each request; a mode whose chunk arrives after a
   // newer request (or after the visitor left, cancelModeLoad) does not start
@@ -2159,7 +2159,7 @@ async function start() {
     mark('life');
     if (CITY.balcony_coder) {
       import('./balcony-coder.js').then(({ createBalconyCoder }) => {
-        coder = createBalconyCoder({ scene, camera, project, heightAt, footprints: city.footprints, config: CITY.balcony_coder, getWalk: () => walk, isHidden: () => !!(game?.active || intro?.active) });
+        coder = createBalconyCoder({ scene, camera, project, heightAt, footprints: city.footprints, config: CITY.balcony_coder, getWalk: () => walk, getNight: () => atmosphere.night, isHidden: () => !!(game?.active || intro?.active) });
         debug.coder = coder;
       }).catch((e) => console.warn('[braga] balcony coder failed', e));
     }
