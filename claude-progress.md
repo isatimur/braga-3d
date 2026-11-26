@@ -448,3 +448,11 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Port of porto-038: `readSurface(x, z, now)` in `src/walk.js` starts a generator (`buildSurface`) and `pumpSurface()` runs it 3 ms per frame while the old index still covers the walker; meshes out of `SURF_R` are skipped.
 - Measured: the CPU profile no longer shows `readSurface` in long tasks. The long tasks left (7 in 40 s, live and branch alike) are in the load phase: shader compile and one update function.
 - Checks: npm test 92/92, check-walk all passed, npm run verify OK.
+
+### 2026-11-26 — the coder on a balcony (branch feat/balcony-coder, feature braga-034)
+
+- Easter egg: the site's builder sits on a 5th-floor corner balcony of the 20-sided tower by the roundabout (41.55309, -8.40728), coding on a laptop. Click him on the map, or press T within 25 m in walk mode, and a Claude Code style chat opens.
+- Files: `src/balcony-coder.js` (balcony, posed figure, chair, laptop, panel, prompt), `src/balcony-coder.css`, `src/balcony-coder-replies.js` (pure reply engine: 17 intents, 54 lines per language in en, pt, ru), `scripts/balcony-coder.test.mjs`, UI strings in `src/locales/ui.js`, `balcony_coder` in `cities/braga.json`. `src/main.js`: four small hooks (state var, lazy import after the life layer, `coder?.update(dt)`, `coder?.pick(raycaster)` before the landmark pick).
+- Placement: world (267.42, -74.64) corner, floor y 1.51 units; seat at (267.63, -74.42). Hidden in the game and the intro.
+- Checks: npm test 97/97, check-walk all passed, npm run verify OK. Screenshots of the tower, close-ups, walk mode with the prompt and the chat in three languages (desktop and Pixel 7) viewed.
+- Known limits: from below the slab hides most of him; the laptop's glowing screen faces him, so from the street you see the lid; a click through the tower from the far side can still hit his pick box; the forks do not have it (they have no config).
