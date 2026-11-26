@@ -1,4 +1,4 @@
-// The balcony coder's scripted replies (src/balcony-coder.js draws him and
+// The window coder's scripted replies (src/balcony-coder.js draws him and
 // the chat panel). No server and no AI: a message is matched to an intent by
 // keywords in every language, and a reply is picked from that intent's
 // variants in the visitor's language, never the same line twice in a row.
@@ -104,14 +104,14 @@ export const REPLIES = {
     ru: ['о, гости. пиши', 'привет. садись. а, стул один. ну стой тогда', 'секунду, коммит дописываю. давай, пиши'],
   },
   greeting: {
-    en: ['hey!', 'hi. go on', 'oh hi. you found the balcony', 'hey. ask me anything. I will pretend to know'],
-    pt: ['olá!', 'oi. diz lá', 'olá. encontraste a varanda', 'boas. pergunta o que quiseres, eu finjo que sei'],
-    ru: ['привет!', 'хай. давай', 'о, нашёл балкон', 'привет. спрашивай, сделаю вид что знаю'],
+    en: ['hey!', 'hi. go on', 'oh hi. you found my window', 'hey. ask me anything. I will pretend to know'],
+    pt: ['olá!', 'oi. diz lá', 'olá. encontraste a minha janela', 'boas. pergunta o que quiseres, eu finjo que sei'],
+    ru: ['привет!', 'хай. давай', 'о, нашёл моё окно', 'привет. спрашивай, сделаю вид что знаю'],
   },
   who: {
-    en: ['the one who builds this map. well, a scripted copy. the real one is fixing shadows somewhere', 'I build these city maps with Claude Code. you found the easter egg', 'a builder on a balcony. that is the whole bio'],
-    pt: ['quem constrói este mapa. bem, uma cópia com falas escritas. o verdadeiro está algures a corrigir sombras', 'faço estes mapas de cidades com o Claude Code. encontraste o easter egg', 'um construtor numa varanda. é a biografia toda'],
-    ru: ['тот, кто строит эту карту. ну, его заскриптованная копия. настоящий где-то тени чинит', 'делаю эти карты городов вместе с Claude Code. ты нашёл пасхалку', 'строитель на балконе. вся биография'],
+    en: ['the one who builds this map. well, a scripted copy. the real one is fixing shadows somewhere', 'I build these city maps with Claude Code. you found the easter egg', 'a builder behind a window. that is the whole bio'],
+    pt: ['quem constrói este mapa. bem, uma cópia com falas escritas. o verdadeiro está algures a corrigir sombras', 'faço estes mapas de cidades com o Claude Code. encontraste o easter egg', 'um construtor atrás de uma janela. é a biografia toda'],
+    ru: ['тот, кто строит эту карту. ну, его заскриптованная копия. настоящий где-то тени чинит', 'делаю эти карты городов вместе с Claude Code. ты нашёл пасхалку', 'строитель за окном. вся биография'],
   },
   doing: {
     en: ['fixing layers. there were layers sticking out everywhere', 'one more fix and I am done (not really)', 'telling Claude Code "давай делай не спрашивай". it works', 'porting a fix from Porto back to Braga'],
@@ -179,9 +179,9 @@ export const REPLIES = {
     ru: ['всегда пожалуйста!', 'спасибо, что гуляешь по городу', 'рад, что нравится. расскажи другу'],
   },
   bye: {
-    en: ['bye! watch the cars', 'see you. I will be on this balcony', 'go on, explore. I will keep fixing'],
-    pt: ['adeus! cuidado com os carros', 'até já. estou nesta varanda', 'vai, explora. eu continuo a corrigir'],
-    ru: ['пока! осторожно, машины', 'до встречи. я на этом балконе', 'давай, гуляй. я дальше чинить'],
+    en: ['bye! watch the cars', 'see you. I will be at this window', 'go on, explore. I will keep fixing'],
+    pt: ['adeus! cuidado com os carros', 'até já. estou a esta janela', 'vai, explora. eu continuo a corrigir'],
+    ru: ['пока! осторожно, машины', 'до встречи. я тут, у окна', 'давай, гуляй. я дальше чинить'],
   },
   fallback: {
     en: ['hm. did not get that. ask me about the map, bugs or coffee', 'go on', 'not sure. try: what are you doing?', 'а это также действует и на движок города? ...sorry, that was for Claude. what did you say?'],

@@ -607,7 +607,32 @@
         "2026-11-26: npm test 97/97, check-walk all passed, npm run verify OK",
         "2026-11-26: /play opens the walk at Porta Nova with no page errors; the coder stays unloaded there (load idle, panel closed)"
       ],
-      "notes": "Config: cities/braga.json balcony_coder { tower, corner, floor }; a city without it has no coder. Placement: the footprint vertex nearest `corner` in city.footprints, the floor by the extrudeBuilding rule (mean ground, STREET_UP) plus floor x 3.2 m. Figure: crowd/passante-5.glb posed seated once by aiming bones (no mixer); hands and head turn a little within 120 m. The map orbit stays 120 m away, so on the map he is small; the pick box is 3.2 m."
+      "notes": "Config: cities/braga.json balcony_coder { tower, corner, floor }; a city without it has no coder. Placement: the footprint vertex nearest `corner` in city.footprints, the floor by the extrudeBuilding rule (mean ground, STREET_UP) plus floor x 3.2 m. Figure: crowd/passante-5.glb posed seated once by aiming bones (no mixer); hands and head turn a little within 120 m. The map orbit stays 120 m away, so on the map he is small; the pick box is 3.2 m. Superseded by braga-035 (the balcony is gone; he sits behind a window on the opposite facade)."
+    },
+    {
+      "id": "braga-035",
+      "priority": 35,
+      "area": "easter-egg",
+      "title": "The coder behind a lit window: a room seen through the tower's facade",
+      "user_visible_behavior": "The balcony is gone. On the same tower, a 5th-floor window on the west facade (opposite the old corner) is lit from inside at all times: warm by day, stronger at night, with a soft glow on the wall around it at night. Through it a small dark room shows: a curtain lit from behind on the right wall, a fern, a desk with two laptops side by side and a monitor with code on his right, a white mug, an office chair. The owner sits at the desk in a navy top with white piping, black over-ear headphones, a dark beard and dark hair with grey; he types, nods a little and every 11 s glances at the window. From the map (over ~110 m) the pane shows the room's warm light, like the facade's lit windows. A click on the window from its side opens the Claude Code style chat; a click through the tower from the far side does nothing. In walk mode the 'Talk to the coder' pill shows within 25 m on the window's side only. The chat title reads 'Coder at the window'; reply lines start with a round record mark drawn in CSS (no font fallback).",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/balcony-coder.test.mjs",
+        "npm test",
+        "node /tmp/egg/w/shot.mjs /tmp/egg/w/s-probe.mjs with TIME=day|night, FOV and VIEWS (volatile: close-ups through the window, mid-distance, map views)",
+        "node /tmp/egg/w/shot.mjs /tmp/egg/w/s-chat.mjs (volatile: far-side click stays closed, window-side click opens, three languages, the CSS record mark)",
+        "node /tmp/egg/w/shot.mjs /tmp/egg/w/s-walk.mjs with TIME=day|night (volatile: prompt 18 m out on the window side; none 16 m along and 4 m behind the wall)",
+        "PLAYWRIGHT_CORE=... node scripts/check-walk.mjs --base http://localhost:5485/",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-26: window centre at world (261.80, 1.81, -77.42), wall normal (-1, 0): the west facade; room floor at y 1.41 units (ground floor 3.6 m + 4 x 3.0 m over the footprint's floor level)",
+        "2026-11-26: screenshots viewed: close-ups day and night (him, two laptops, monitor with code, fern, mug, curtain), the window at 24 m day and night, walk mode at 18 m day and night with the prompt, the map at ~110 m day (warm pane) and night (lit pane), the chat with the record marks",
+        "2026-11-26: map click from behind the tower at the window's screen point: panel stays closed; from the window's side: opens",
+        "2026-11-26: walk mode: prompt at 18 m out; teleported 16 m along the wall and 4 m behind its plane: no prompt",
+        "2026-11-26: node --test scripts/balcony-coder.test.mjs 5/5, npm test 97/97, check-walk all passed, npm run verify OK"
+      ],
+      "notes": "How the room shows through a flat wall (the facade's windows are painted by the building shader): the room meshes draw first (renderOrder -2), then an invisible quad 4 cm in front of the wall writes depth over the opening (renderOrder -1, colorWrite off, no polygon offset: at a slant an offset pulls it ~30 cm forward and hides the glass), so the wall loses the depth test there. The room is a closed box, so every ray through the opening ends on it. No stencil: the canvas and the composer target have none. The room's materials (MeshStandardMaterial patched in onBeforeCompile, one program key) drop the scene's sun, sky and environment light and take three lamps in view space (screens, curtain, window daylight); intensities depend on atmosphere.night. Placement (pickFacade): the edge whose outward normal best follows the line from `corner` through the footprint centre, at least 6.4 m long; the window sits on the facade shader's 1.6 m mullion grid (aWall.x runs from vertex 0) and on the modern style's floor grid (3.6 m ground floor, 3.0 m floors). Figure: crowd passante-5 recoloured by bone weights (skin, navy top, dark trousers), hair, beard, headphones and eyes merged on the Head bone, piping on Spine. The bone chain is Hips > Spine02 > Spine01 > Spine > neck > Head (the braga-034 pose aimed Spine at its parent and folded the torso). Camera near plane is 2 m on the map: close-ups need a long lens."
     },
     {
       "id": "braga-032",
