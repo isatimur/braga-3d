@@ -608,6 +608,27 @@
         "2026-11-26: /play opens the walk at Porta Nova with no page errors; the coder stays unloaded there (load idle, panel closed)"
       ],
       "notes": "Config: cities/braga.json balcony_coder { tower, corner, floor }; a city without it has no coder. Placement: the footprint vertex nearest `corner` in city.footprints, the floor by the extrudeBuilding rule (mean ground, STREET_UP) plus floor x 3.2 m. Figure: crowd/passante-5.glb posed seated once by aiming bones (no mixer); hands and head turn a little within 120 m. The map orbit stays 120 m away, so on the map he is small; the pick box is 3.2 m."
+    },
+    {
+      "id": "braga-032",
+      "priority": 32,
+      "area": "walk",
+      "title": "Walk mode level of detail, stage 1a: one walk profile (far plane 5 km with a far fade, 1.5 km tiers, a ground window, shadows near the walker)",
+      "user_visible_behavior": "On /play the frame draws less of the far city. The camera sees 5 km instead of 64 km, and the city fades into the haze from 3 km to 4.75 km, so there is no hard edge and the sky is not cut. The streamed ring and the MS buildings load within 1.5 km of the walker; far boxes start at 1 km and roof-only houses at 1.5 km (the OSM core too). The ground draws the full grid within 1.5 km of the walker and coarser squares outward. Only meshes within 400 m of the walker cast shadows. Near the walker the views look the same. Leaving the walk by any path puts the map's settings back. ?walklod=0 keeps the old walk. The map at / is unchanged.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/porto-live/gpu-b.mjs <origin>/play#time=day (volatile: average triangles and draw calls while walking, governor level 0)",
+        "node /tmp/braga-lod2/shots.mjs <origin> <tag> (volatile: walk-height screenshots at five places)",
+        "node /tmp/braga-lod2/mapfly.mjs <origin> <tag> (volatile: the map at / from a fixed view)",
+        "PLAYWRIGHT_CORE=... node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-26: /play, 4 s walking, governor level 0, 1440x900 at DPR 2 (gpu-b.mjs, two runs each): average main-pass triangles 2,768,929 and 2,876,561 on main, 2,273,563 and 2,274,065 on the branch; draw calls 209.6 / 221.4 on main, 215.4 / 215.5 on the branch",
+        "2026-11-26: the map at /: overview 2,050,800 -> 2,054,821 triangles, 232 -> 235 calls; fixed view over the centre 3,727,142 -> 3,707,738 triangles, 276 -> 268 calls; camera far 16000 on both",
+        "2026-11-26: screenshots viewed, main against the branch: Avenida da Liberdade, Rua Dom Paio Mendes by the Sé, Praça da República/Arcada, a residential street, a street toward the hills, Parque da Ponte and the Bom Jesus terrace; only the passers-by differ; the map at / overview and the centre view look the same"
+      ],
+      "notes": "Port of porto-034, plus a ground window (scene.js setWalkWindow: the 34 km ground grid is one draw call, so the far plane alone saves nothing on it; the walker's surface still reads the whole grid through geometry.userData.fullIndex). src/walk-lod.js holds the shared state and the one shadow rule (walkCasts). Setters: tiles.setWalkProfile, ms.setWalkProfile, core group.userData.setFarTier, ground.userData.setWalkWindow. The far fade is FOG_UNIFORMS.fogFarFade; the cloud deck is pinned to the far plane (weather.js); effects.js reads the open sky from the live near/far. The governor ignores 2 s after the switch (perf.holdGovernor). Draw calls did not drop: at the start most of the frame is near the walker (street plate, ground window, crowds, road run cells that are never frustum-culled). Not done (later stages): occlusion, HLOD, cutting the road run cells, frame time on a slow laptop."
     }
   ]
 }

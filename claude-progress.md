@@ -456,3 +456,12 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Placement: world (267.42, -74.64) corner, floor y 1.51 units; seat at (267.63, -74.42). Hidden in the game and the intro.
 - Checks: npm test 97/97, check-walk all passed, npm run verify OK. Screenshots of the tower, close-ups, walk mode with the prompt and the chat in three languages (desktop and Pixel 7) viewed.
 - Known limits: from below the slab hides most of him; the laptop's glowing screen faces him, so from the street you see the lid; a click through the tower from the far side can still hit his pick box; the forks do not have it (they have no config).
+
+### 2026-11-26 — walk mode level of detail, stage 1a (branch feat/walk-lod, feature braga-032)
+
+- Port of porto-034: one walk profile, applied in walk mode's onEnter and reverted on every exit (`walkProfile` in `src/main.js`, shared state and the shadow rule `walkCasts` in `src/walk-lod.js`). Camera far 5 km with a fade into the fog colour (`FOG_UNIFORMS.fogFarFade`); ring, MS buildings and OSM core within 1.5 km, far boxes from 1 km, roofs only from 1.5 km; shadows only from meshes within 400 m; the governor ignores 2 s after the switch. `?walklod=0` keeps the old walk.
+- Braga only: a ground window (`setWalkWindow` in `src/scene.js`). The 34 km ground grid is one draw call, so it draws the full grid within 1.5 km of the walker and coarser squares outward; `src/walk.js` reads the whole grid.
+- Measured (gpu-b.mjs, governor 0, DPR 2): main-pass triangles 2.77-2.88 M on main -> 2.27 M on the branch; draw calls 210-221 -> 215 (no change). 40 s walk (hitch-b.mjs, two runs each): p50 8.4 ms both, long tasks in the load phase on both. The map at /: overview 2.051 M -> 2.055 M triangles, centre view 3.73 M -> 3.71 M.
+- Screenshots viewed at walk height (Avenida, Sé, Arcada, a residential street, Parque da Ponte, Bom Jesus terrace) and the map at /: the same apart from the passers-by.
+- Checks: npm test 92/92, check-walk all passed (incl. the profile on, the revert and walklod=0), npm run verify OK.
+- Left: draw calls. At the start most of the frame is near the walker: street plate, ground window, crowds and the road run cells (never frustum-culled). Next stages: cut the road run cells, occlusion, HLOD.

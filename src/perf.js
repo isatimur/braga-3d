@@ -384,6 +384,12 @@ export function initPerf() {
   let lastSecond = 0;
   let longSeen = 0;
   let wasPaused = false;
+  // the governor ignores the next `ms` (walk mode on or off: the tile refetch
+  // burst is not load); before `ready` warmUntil is Infinity and stays so
+  perf.holdGovernor = (ms, now = performance.now()) => {
+    perf.warmUntil = Math.max(perf.warmUntil, now + ms);
+    perf.gov?.hold(now + ms);
+  };
   perf.frame = (now, dtMs) => {
     perf.ring[perf.ringN++ % perf.ring.length] = dtMs;
     // a scripted camera (intro, tour, cinema, story, game) is not load: hold the loop
