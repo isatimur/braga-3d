@@ -466,6 +466,14 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Checks: node --test scripts/balcony-coder.test.mjs 5/5, npm test 97/97, check-walk all passed, npm run verify OK. Screenshots viewed: close-ups day and night, the window at 24 m, walk mode with the prompt day and night, the map day and night, the chat.
 - Known limits: from straight in front of him the laptops show their lids (their screens face him); the face is stylised (no photo texture) and small from the street; from the street below the sill hides the desk and you see mostly the lit ceiling; the forks have no config, so no coder.
 
+### 2026-11-26 — the coder chat on Telegram (branch feat/coder-telegram, feature braga-037)
+
+- `api/coder.js` (pure part in `api/_coder-core.js`): `GET /api/coder` -> `{ on }`; `POST { sid, text, lang, city }` -> sendMessage to `TELEGRAM_CHAT_ID` as `🏙 Braga · #<sid> · <lang>\n<text>`; `GET ?sid=&after=` -> the owner's Telegram replies to that #sid from getUpdates (no offset, so nothing is consumed; cached 3 s). No env -> `off`, and the site is unchanged.
+- Client (`src/balcony-coder.js`): one probe on the first open; when on, the note warns that messages go to Telegram, each message is POSTed, a dim sent line shows, polls every 4 s while open (3 min after the last message), scripted reply after 12 s without a live one, live replies get a LIVE badge. `src/main.js` passes `city: CITY.id`.
+- Owner setup: `TELEGRAM_BOT_TOKEN=… node scripts/telegram-whoami.mjs` prints the chat ids; then `vercel env add TELEGRAM_BOT_TOKEN production` and `vercel env add TELEGRAM_CHAT_ID production`, and redeploy.
+- Checks: npm test 110/110 (coder-api 13), check-walk all passed, npm run verify OK. Screenshots viewed (fake API via page.route): scripted fallback, live reply with badge, off, no API.
+- Limits: getUpdates keeps 100 updates / 24 h; the bot must have no webhook; rate limits are per instance; visitors' text goes to Telegram (the note says so).
+
 ### 2026-11-26 — walk mode level of detail, stage 1a (branch feat/walk-lod, feature braga-032)
 
 - Port of porto-034: one walk profile, applied in walk mode's onEnter and reverted on every exit (`walkProfile` in `src/main.js`, shared state and the shadow rule `walkCasts` in `src/walk-lod.js`). Camera far 5 km with a fade into the fog colour (`FOG_UNIFORMS.fogFarFade`); ring, MS buildings and OSM core within 1.5 km, far boxes from 1 km, roofs only from 1.5 km; shadows only from meshes within 400 m; the governor ignores 2 s after the switch. `?walklod=0` keeps the old walk.

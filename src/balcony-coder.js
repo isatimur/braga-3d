@@ -1,9 +1,11 @@
 // Easter egg: the site's builder sits at a desk behind a 5th-floor window of
 // one tower, coding on two laptops and a monitor. Click the window on the
 // map, or come near it in walk mode, and a chat panel styled like a Claude
-// Code terminal opens; his replies are scripted (balcony-coder-replies.js),
-// no server and no AI. (The file names keep the first version's name: he sat
-// on a balcony then.)
+// Code terminal opens. When /api/coder is set up (api/coder.js), each message
+// also goes to the owner on Telegram and his answers come back live; when he
+// has not answered within LIVE_WAIT_MS, or the API is off, the scripted
+// replies answer (balcony-coder-replies.js, no AI). (The file names keep the
+// first version's name: he sat on a balcony then.)
 //
 // The place comes from the city config (cities/<id>.json "balcony_coder"):
 // tower: a point inside the footprint; corner: a footprint corner, and the
@@ -288,7 +290,7 @@ function paint(geo, hex, jitter = 0, seed = 1) {
 // a box from its min and max corners
 const box = (x0, y0, z0, x1, y1, z1) => new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0).translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
 
-export function createBalconyCoder({ scene, camera, project, heightAt, footprints, config, getWalk = () => null, getNight = () => 0, isHidden = () => false }) {
+export function createBalconyCoder({ scene, camera, project, heightAt, footprints, config, city = null, getWalk = () => null, getNight = () => 0, isHidden = () => false }) {
   if (!config?.tower || !config?.corner || !Array.isArray(footprints)) return null;
   const tower = project(config.tower[0], config.tower[1]);
   const poly = footprints.find((p) => inPoly(tower.x, tower.z, p));
@@ -817,6 +819,99 @@ export function createBalconyCoder({ scene, camera, project, heightAt, footprint
     }, 300 + Math.random() * 600);
   }
 
+  // ---- the live bridge (api/coder.js). One question on the first open: is
+  // it set up? If not (or the site has no /api), nothing more is sent and the
+  // chat is scripted as before. If so, each message is POSTed, the panel
+  // polls for his replies while it is open (POLL_FOR_MS after the last
+  // message), and the scripted reply comes after LIVE_WAIT_MS without one.
+  const API = '/api/coder';
+  const NOTE_OFF = 'Пасхалка: ответы написаны заранее, без сервера и без ИИ.';
+  const NOTE_LIVE = 'Сообщения уходят ему в Telegram, не пишите личных данных. Если он не ответит, ответят заготовки.';
+  const LIVE_WAIT_MS = 12e3;
+  const POLL_MS = 4e3;
+  const POLL_FOR_MS = 180e3;
+  let live = null; // null: not asked yet, false: off, true: on
+  let sid = '';
+  let pollAfter = 0; // unix s: replies newer than the first message of this visit
+  let pollUntil = 0;
+  let pollTimer = 0;
+  let polling = false;
+  let lastLiveAt = 0;
+  const seenLive = new Set();
+
+  function sessionId() {
+    const fresh = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join('');
+    try {
+      let s = localStorage.getItem('bc-sid');
+      if (!/^[a-z0-9]{8,16}$/.test(s || '')) localStorage.setItem('bc-sid', (s = fresh()));
+      return s;
+    } catch {
+      return fresh(); // no storage: one id for this page
+    }
+  }
+  async function api(query = '', init = {}) {
+    const r = await fetch(API + query, { ...init, signal: AbortSignal.timeout(8000) });
+    return r.json();
+  }
+  function probe() {
+    live = false;
+    api()
+      .then((j) => {
+        live = j?.on === true;
+        if (live && panel) panel.querySelector('.bc-note').textContent = t(NOTE_LIVE);
+      })
+      .catch(() => {});
+  }
+  function showLive(text) {
+    const el = line('bc-him bc-live', '', text);
+    el.firstChild.classList.add('bc-rec');
+    const badge = document.createElement('span');
+    badge.className = 'bc-badge';
+    badge.textContent = t('вживую');
+    el.insertBefore(badge, el.lastChild);
+    addLine(el);
+  }
+  async function poll() {
+    if (!isOpen() || Date.now() > pollUntil) return stopPolling();
+    if (polling) return;
+    polling = true;
+    const j = await api(`?sid=${sid}&after=${pollAfter}`).catch(() => null);
+    polling = false;
+    for (const r of j?.replies || []) {
+      const key = `${r.date}|${r.text}`;
+      if (seenLive.has(key) || typeof r.text !== 'string') continue;
+      seenLive.add(key);
+      lastLiveAt = Date.now();
+      pollUntil = Math.max(pollUntil, lastLiveAt + 60e3); // he is there: listen a while longer
+      if (panel) showLive(r.text);
+    }
+  }
+  function startPolling() {
+    if (pollTimer || !isOpen() || Date.now() > pollUntil) return;
+    pollTimer = setInterval(poll, POLL_MS);
+  }
+  function stopPolling() {
+    clearInterval(pollTimer);
+    pollTimer = 0;
+  }
+  function sendLive(text) {
+    thinking = true; // one message at a time while it posts
+    api('', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sid, text, lang: language, city }) })
+      .catch(() => null)
+      .then((j) => {
+        thinking = false;
+        if (!j?.ok) return say(replier.reply(text)); // off, refused, or down: as before
+        addLine(line('bc-sys', '⎿', t('отправлено ему в Telegram — он может ответить вживую')));
+        const sentAt = Date.now();
+        if (!pollAfter) pollAfter = Math.max(0, Math.floor(Number(j.date) || sentAt / 1000) - 2);
+        pollUntil = sentAt + POLL_FOR_MS;
+        startPolling();
+        setTimeout(() => {
+          if (lastLiveAt < sentAt) say(replier.reply(text));
+        }, LIVE_WAIT_MS);
+      });
+  }
+
   function build() {
     panel = document.createElement('section');
     panel.className = 'bc-panel';
@@ -838,7 +933,7 @@ export function createBalconyCoder({ scene, camera, project, heightAt, footprint
         <button type="submit" class="bc-send"></button>
       </form>`;
     panel.querySelector('.bc-title').textContent = `✻ ${t('Кодер у окна')}`;
-    panel.querySelector('.bc-note').textContent = t('Пасхалка: ответы написаны заранее, без сервера и без ИИ.');
+    panel.querySelector('.bc-note').textContent = t(live ? NOTE_LIVE : NOTE_OFF);
     panel.querySelector('.bc-log').setAttribute('aria-label', t('Переписка'));
     const close = panel.querySelector('.bc-close');
     close.setAttribute('aria-label', t('Закрыть (Esc)'));
@@ -854,7 +949,8 @@ export function createBalconyCoder({ scene, camera, project, heightAt, footprint
       if (!text || thinking) return;
       input.value = '';
       addLine(line('bc-you', '>', text));
-      say(replier.reply(text));
+      if (live) sendLive(text);
+      else say(replier.reply(text));
     });
     // Esc closes; Tab stays inside the panel
     panel.addEventListener('keydown', (e) => {
@@ -872,6 +968,8 @@ export function createBalconyCoder({ scene, camera, project, heightAt, footprint
     });
     document.body.appendChild(panel);
     replier = createReplier({ siteLang: language });
+    sid = sessionId();
+    probe();
   }
 
   function open() {
@@ -883,9 +981,11 @@ export function createBalconyCoder({ scene, camera, project, heightAt, footprint
     prompt(false);
     if (!panel.querySelector('.bc-him')) say(replier.open());
     panel.querySelector('.bc-input').focus({ preventScroll: true });
+    startPolling(); // back within the window: listen again
   }
   function hide() {
     if (!isOpen()) return;
+    stopPolling();
     panel.hidden = true;
     document.body.classList.remove('bc-open');
     if (lastFocus?.focus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });

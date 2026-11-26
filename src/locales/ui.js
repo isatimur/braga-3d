@@ -274,4 +274,7 @@ export const messages = {
   'Сообщение кодеру': ['Mensagem para o programador', 'Message to the coder'],
   'Переписка': ['Conversa', 'Conversation'],
   'думает…': ['a pensar…', 'thinking…'],
+  'Сообщения уходят ему в Telegram, не пишите личных данных. Если он не ответит, ответят заготовки.': ['As mensagens vão para ele no Telegram; não escreva dados pessoais. Se ele não responder, respondem frases escritas de antemão.', 'Your messages go to him on Telegram; do not share personal data. If he does not answer, prewritten replies do.'],
+  'отправлено ему в Telegram — он может ответить вживую': ['enviado para ele no Telegram — pode responder ao vivo', 'sent to him on Telegram — he may answer live'],
+  'вживую': ['ao vivo', 'live'],
 };
