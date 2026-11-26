@@ -482,3 +482,8 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Measured: governor log, main: long tasks start at the same ms as three governor steps; branch: none at eight steps. 40 s walks, long tasks over 50 ms after 15 s: main 3, 0, 3, 0; branch 1 (819 ms during host contention), 0, 0, 2. Profile after: no `setSize`, last long task at 18 s.
 - Checks: npm test 92/92, check-walk all passed (desktop and phone), npm run verify OK; walk-height screenshot viewed.
 - Left: shader compiles (`getProgramParameter`, up to 198 ms) and the character load (`loadCharacter`/`fitToHeight`) in the first 10 s; with the effects off a governor step still resizes the canvas.
+
+
+### 2026-11-26 — walk camera zoom (branch feat/walk-zoom, feature braga-036)
+
+- The mouse wheel scales the third-person camera distance (0.4x-1.6x), start 0.8x. Measured: 3.52 m start, 1.76 m in, 7.03 m out. Checks: npm test, check-walk.
