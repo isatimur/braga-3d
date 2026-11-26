@@ -2159,7 +2159,7 @@ async function start() {
     mark('life');
     if (CITY.balcony_coder) {
       import('./balcony-coder.js').then(({ createBalconyCoder }) => {
-        coder = createBalconyCoder({ scene, camera, project, heightAt, footprints: city.footprints, config: CITY.balcony_coder, getWalk: () => walk, getNight: () => atmosphere.night, isHidden: () => !!(game?.active || intro?.active) });
+        coder = createBalconyCoder({ scene, camera, project, heightAt, footprints: city.footprints, config: CITY.balcony_coder, city: CITY.id, getWalk: () => walk, getNight: () => atmosphere.night, isHidden: () => !!(game?.active || intro?.active) });
         debug.coder = coder;
       }).catch((e) => console.warn('[braga] balcony coder failed', e));
     }

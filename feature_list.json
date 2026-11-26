@@ -635,6 +635,29 @@
       "notes": "How the room shows through a flat wall (the facade's windows are painted by the building shader): the room meshes draw first (renderOrder -2), then an invisible quad 4 cm in front of the wall writes depth over the opening (renderOrder -1, colorWrite off, no polygon offset: at a slant an offset pulls it ~30 cm forward and hides the glass), so the wall loses the depth test there. The room is a closed box, so every ray through the opening ends on it. No stencil: the canvas and the composer target have none. The room's materials (MeshStandardMaterial patched in onBeforeCompile, one program key) drop the scene's sun, sky and environment light and take three lamps in view space (screens, curtain, window daylight); intensities depend on atmosphere.night. Placement (pickFacade): the edge whose outward normal best follows the line from `corner` through the footprint centre, at least 6.4 m long; the window sits on the facade shader's 1.6 m mullion grid (aWall.x runs from vertex 0) and on the modern style's floor grid (3.6 m ground floor, 3.0 m floors). Figure: crowd passante-5 recoloured by bone weights (skin, navy top, dark trousers), hair, beard, headphones and eyes merged on the Head bone, piping on Spine. The bone chain is Hips > Spine02 > Spine01 > Spine > neck > Head (the braga-034 pose aimed Spine at its parent and folded the torso). Camera near plane is 2 m on the map: close-ups need a long lens."
     },
     {
+      "id": "braga-037",
+      "priority": 37,
+      "area": "easter-egg",
+      "title": "The window coder's chat reaches the owner on Telegram",
+      "user_visible_behavior": "When TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set, the coder chat's note says the messages go to him on Telegram (no personal data, prewritten replies if he does not answer). Each message goes to the owner's Telegram as '🏙 Braga · #<sid> · <lang>' plus the text; the panel shows a dim 'sent to him on Telegram — he may answer live' line and polls every 4 s while open, for 3 min after the last message (longer after a live reply), resuming on reopen. With no live reply within 12 s the scripted reply comes as before. The owner answers with Telegram's Reply to the bot's message; the answer shows in the panel with a LIVE badge, even after the scripted one. Without the env, or with no /api, nothing is sent and the chat is exactly as before (scripted, old note).",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/coder-api.test.mjs (sid/text checks, link and @mention refusal, rate limit, reply filter by chat id + #sid + date; the handler with a mocked fetch: sendMessage payload, getUpdates without offset and cached, missing env -> off, Telegram failure)",
+        "npm test",
+        "MODE=live|off|none node /tmp/egg/tg/shot.mjs /tmp/egg/tg/s-live.mjs (volatile: vite preview on :5497, /api/coder faked with page.route)",
+        "PLAYWRIGHT_CORE=... node scripts/check-walk.mjs --base http://localhost:5497/",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-26: node --test scripts/coder-api.test.mjs 13/13, npm test 110/110",
+        "2026-11-26: live (fake API): one probe, one POST {sid, text, lang: en, city: braga}, the sent line, the scripted reply after 12 s with no live reply, 0 polls during 9 s closed, the live reply with the LIVE badge 5 s after reopening, shown once",
+        "2026-11-26: off ({on:false}) and none (no route, the preview's own answer): the old note, no POST, no polls, scripted reply at once",
+        "2026-11-26: screenshots viewed: tg-fallback, tg-live, tg-off, tg-none",
+        "2026-11-26: check-walk all passed, npm run verify OK"
+      ],
+      "notes": "Storage-free: api/coder.js sends with sendMessage (plain text, no parse_mode, link previews off) and reads with getUpdates WITHOUT an offset, so nothing is confirmed and Telegram keeps each update 24 h; at most 100 pending updates (past 100 messages to the bot in a day the newest are not returned until old ones expire); the bot must have no webhook and no other consumer. getUpdates is cached 3 s per instance. Rate limits in instance memory: 5 POST/min per IP and per sid, 40/min in total, 40 polls/min per IP. Text: 1-300 characters, control and format characters stripped, links (scheme, www., t.me, word.tld for common TLDs) and @mentions refused. The sid is 12 random [a-z0-9] in localStorage 'bc-sid'. The owner finds his chat id with scripts/telegram-whoami.mjs. The pure part is api/_coder-core.js."
+    },
+    {
       "id": "braga-032",
       "priority": 32,
       "area": "walk",
