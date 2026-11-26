@@ -177,7 +177,9 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       const hard = o.name !== 'ground' && o.name !== 'street-plate' ? 1 : 0;
       o.updateWorldMatrix(true, false);
       const e = o.matrixWorld.elements;
-      const p = o.geometry.attributes.position.array, ix = o.geometry.index?.array;
+      // the ground's whole grid: walk mode draws only a window of it, coarser
+      // outward (scene.js setWalkWindow), and the walker may land anywhere
+      const p = o.geometry.attributes.position.array, ix = (o.geometry.userData.fullIndex ?? o.geometry.index)?.array;
       const n = ix ? ix.length : p.length / 3;
       const v = [0, 0, 0, 0, 0, 0, 0, 0, 0];
       for (let k = 0; k < n; k += 3) {

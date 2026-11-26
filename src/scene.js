@@ -32,6 +32,11 @@ export const FOG_UNIFORMS = {
   fogParams: { value: { x: 0, y: 4, z: 0.003, w: 3000 } },
   // the data rectangle (x0, z0, x1, z1): outside it the land fades into haze
   fogRect: { value: { x: 0, y: 0, z: 0, w: 0 } },
+  // Walk mode's far fade (main.js walkProfile, walk-lod.js): x, y the view
+  // distances (world units) where everything fades into the fog colour
+  // (smoothstep); z = 1 pins the cloud deck to the far plane (weather.js).
+  // All 0 on the map: no fade. atmosphere apply() never writes it.
+  fogFarFade: { value: { x: 0, y: 0, z: 0, w: 0 } },
 };
 
 // ------------------------------------------------------------ weather uniforms
@@ -264,6 +269,7 @@ if (cloudShape.z > 0.001) {
   uniform vec3 fogSunColor;
   uniform vec4 fogParams;
   uniform vec4 fogRect;
+  uniform vec4 fogFarFade;
   uniform sampler2D tShroud;
   uniform vec4 shroudRect;
   uniform vec4 shroudParams;
@@ -305,6 +311,11 @@ if (cloudShape.z > 0.001) {
     float fRamp = smoothstep( 0.0, fEdge, fOut );
     fTau += 5.0 * fRamp * fRamp * ( 3.0 - 2.0 * fRamp ) + 1.2 * fRamp;
     float fogFactor = 1.0 - exp( - max( fTau, 0.0 ) );
+    // walk mode: the short far plane hides behind a fade into the fog colour
+    // (fogFarFade.xy; 0 on the map, and for materials that lack it)
+    #ifndef BRG_NO_FAR_FADE
+    if ( fogFarFade.y > fogFarFade.x ) fogFactor = max( fogFactor, smoothstep( fogFarFade.x, fogFarFade.y, fDist ) );
+    #endif
     vec3 fDir = fRel / max( fDist, 1e-3 );
     float fSun = pow( max( dot( fDir, fogSunDir ), 0.0 ), max( fogParams.y, 1.0 ) ) * fogParams.x;
     vec3 fCol = mix( fogColor, fogSunColor, clamp( fSun, 0.0, 1.0 ) );
@@ -330,9 +341,16 @@ if (cloudShape.z > 0.001) {
 // light mode, 1.25 on a low-end device (main.js sets it before the renderer
 // exists). createRenderer, main.js resize() and effects.js read it here.
 // `scale` is the governor's dynamic resolution (0.5 .. 1): it multiplies the
-// capped ratio, so it also bites on a 1x screen.
-export const DPR = { cap: 2, scale: 1 };
-export const deviceDpr = () => Math.max(0.5, Math.min(window.devicePixelRatio || 1, DPR.cap) * DPR.scale);
+// capped ratio, so it also bites on a 1x screen. With the effects on, main.js
+// applies `scale` to the effect targets and keeps the canvas at the full
+// ratio; `draw` is then the scene's pixels per canvas pixel (1 otherwise).
+export const DPR = { cap: 2, scale: 1, draw: 1 };
+export const deviceDpr = (scale = DPR.scale) => Math.max(0.5, Math.min(window.devicePixelRatio || 1, DPR.cap) * scale);
+// The buffer the scene is drawn into, in pixels: the canvas, or the smaller
+// effect targets. Pixel sizes (gl_PointSize) follow this, not the canvas.
+export function sceneBufferSize(renderer, v) {
+  return renderer.getDrawingBufferSize(v).multiplyScalar(DPR.draw);
+}
 
 export function createRenderer(canvas, { antialias = true } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias, powerPreference: 'high-performance', stencil: false });
@@ -1356,7 +1374,11 @@ export function createGround(terrain) {
     for (let k = 0; k < nx * nz; k++) if (touched[k]) aoAt(k);
     geo.attributes.position.needsUpdate = true;
     geo.attributes.color.needsUpdate = true;
+    // normals from the whole grid, also while walk mode draws a window of it
+    const drawn = geo.index;
+    geo.setIndex(fullIndex);
     geo.computeVertexNormals();
+    geo.setIndex(drawn);
     geo.computeBoundingSphere();
     // the shadow proxy follows (one node per DEM cell)
     const pp = proxy.geometry.attributes.position;
@@ -1377,6 +1399,95 @@ export function createGround(terrain) {
     uniforms.uLandRectW.value.set(rect.x0, rect.z0, 1 / rect.w, 1 / rect.d);
     uniforms.uHasLandW.value = 1;
   };
+  // Walk mode (braga-032, walk-lod.js): the grid is 34 km across and one draw
+  // call, so the camera's short far plane alone saves nothing, and its dense
+  // 4 x 4 part covers the core, where the walker is. setWalkWindow(x, z,
+  // levels) draws nested squares around the walker instead: levels is
+  // [{ halfU, step }] from the inside out; level k draws quads of `step`
+  // grid lines inside its square and outside the one before it (the first
+  // is the full grid, so the walker stands on the very triangles heightAt
+  // reads). Every square is aligned to 4 grid lines, so each coarser level
+  // tiles the ring around a finer one exactly (T-junctions on the seams are
+  // centimetres, 1.5 km and more away). The index is rebuilt when the walker
+  // has gone a quarter of the first half-size. null draws the whole grid.
+  // three.js cannot resize an index buffer, so one of the largest size is
+  // filled with a draw range. walk.js builds its surface from the whole grid
+  // (geometry.userData.fullIndex): the walker may land outside the window.
+  const fullIndex = geo.index;
+  geo.userData.fullIndex = fullIndex;
+  const ALIGN = 4;
+  let win = null; // { x, z, key }
+  let buf = null; // { key, attr }
+  // the most grid lines a span of w world units covers on an axis
+  const maxSpan = (arr, w) => {
+    let best = 0;
+    for (let a = 0, b = 0; a < arr.length; a++) {
+      while (b < arr.length - 1 && arr[b] - arr[a] < w) b++;
+      best = Math.max(best, b - a + 1);
+    }
+    return best;
+  };
+  // the square [i0, i1) x [j0, j1) of grid lines, aligned to ALIGN
+  const lastI = Math.floor((nx - 1) / ALIGN) * ALIGN;
+  const lastJ = Math.floor((nz - 1) / ALIGN) * ALIGN;
+  const box = (x, z, h) => [
+    Math.max(0, Math.floor((lowerIndex(xs, x - h) - 1) / ALIGN) * ALIGN),
+    Math.min(lastI, Math.ceil(lowerIndex(xs, x + h) / ALIGN) * ALIGN),
+    Math.max(0, Math.floor((lowerIndex(zs, z - h) - 1) / ALIGN) * ALIGN),
+    Math.min(lastJ, Math.ceil(lowerIndex(zs, z + h) / ALIGN) * ALIGN),
+  ];
+  mesh.userData.setWalkWindow = (x, z, levels) => {
+    if (x == null) {
+      win = null;
+      if (geo.index !== fullIndex) geo.setIndex(fullIndex);
+      geo.setDrawRange(0, Infinity);
+      return;
+    }
+    const key = levels.map((l) => `${l.halfU}/${l.step}`).join(',');
+    if (win && win.key === key && Math.hypot(x - win.x, z - win.z) < levels[0].halfU * 0.25) return;
+    win = { x, z, key };
+    if (buf?.key !== key) {
+      let cap = 0;
+      for (const l of levels) cap += (Math.ceil(maxSpan(xs, 2 * l.halfU) / l.step) + 3) * (Math.ceil(maxSpan(zs, 2 * l.halfU) / l.step) + 3) * 6;
+      cap = Math.min(fullIndex.count, cap);
+      buf = { key, attr: new THREE.BufferAttribute(new fullIndex.array.constructor(cap), 1) };
+    }
+    const attr = buf.attr;
+    const out = attr.array;
+    let o = 0;
+    let inner = null;
+    for (const { halfU, step } of levels) {
+      const [i0, i1, j0, j1] = box(x, z, halfU);
+      for (let j = j0; j < j1; j += step) {
+        const jn = Math.min(j + step, j1);
+        for (let i = i0; i < i1; i += step) {
+          if (inner && i >= inner[0] && i < inner[1] && j >= inner[2] && j < inner[3]) {
+            i = inner[1] - step; // skip across the finer square
+            continue;
+          }
+          if (o + 6 > out.length) break;
+          const a = j * nx + i;
+          const bb = j * nx + Math.min(i + step, i1);
+          const c = jn * nx + i;
+          const d = jn * nx + Math.min(i + step, i1);
+          out[o++] = a;
+          out[o++] = c;
+          out[o++] = bb;
+          out[o++] = bb;
+          out[o++] = c;
+          out[o++] = d;
+        }
+      }
+      inner = [i0, i1, j0, j1];
+    }
+    attr.clearUpdateRanges();
+    attr.addUpdateRange(0, Math.max(o, 3));
+    attr.needsUpdate = true;
+    if (geo.index !== attr) geo.setIndex(attr);
+    geo.setDrawRange(0, o);
+  };
+  // tests: the triangles of the ground drawn now
+  mesh.userData.drawnTris = () => Math.min(geo.index.count, geo.drawRange.count) / 3;
   return mesh;
 }
 
