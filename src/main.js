@@ -713,6 +713,7 @@ async function start() {
   let walkLoad = null;
   let missions = null; // street missions in the walk districts (street-missions.js)
   let missionsLoad = null;
+  let coder = null; // easter egg: the coder on a balcony (balcony-coder.js), cities with "balcony_coder"
   // (quest, questLoad, hasQuest: at the top of start())
   // startMode() numbers each request; a mode whose chunk arrives after a
   // newer request (or after the visitor left, cancelModeLoad) does not start
@@ -1487,6 +1488,7 @@ async function start() {
     raycaster.setFromCamera(ndc, camera);
     // the route owns it too: only a find-on-map task's candidates pick
     if (quest?.active) return void quest.mapPick(marks.pick(raycaster, quest.pickable));
+    if (coder?.pick(raycaster)) return;
     const hit = marks.pick(raycaster);
     if (hit != null) select(hit);
   });
@@ -1839,6 +1841,7 @@ async function start() {
     // (walk mode owns it while it is on, and stands lower than the orbit floor)
     if (!intro?.update(rawDt) && !walk?.update(dt)) rig.update(dt, now, rawDt);
     missions?.update(dt);
+    coder?.update(dt);
     // never below the ground, whoever moved the camera (parallax included)
     const floorY = heightAt(camera.position.x, camera.position.z) + (walk?.active ? 0.38 : 2);
     if (camera.position.y < floorY) camera.position.y = floorY;
@@ -2058,6 +2061,12 @@ async function start() {
       seasons = createSeasons({ renderer, scene, camera, atmosphere, nature, fx, weather: life?.weather, terrain, ui, reducedMotion, mobile: LITE, lite: LITE, debug });
     });
     mark('life');
+    if (CITY.balcony_coder) {
+      import('./balcony-coder.js').then(({ createBalconyCoder }) => {
+        coder = createBalconyCoder({ scene, camera, project, heightAt, footprints: city.footprints, config: CITY.balcony_coder, getWalk: () => walk, isHidden: () => !!(game?.active || intro?.active) });
+        debug.coder = coder;
+      }).catch((e) => console.warn('[braga] balcony coder failed', e));
+    }
     await nextFrame();
     mark('ready');
     debug.ready = true;

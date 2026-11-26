@@ -585,6 +585,29 @@
         "2026-11-26: npm test 92/92, check-walk all passed, npm run verify OK"
       ],
       "notes": "Port of porto-038. Meshes whose bounding sphere is out of SURF_R are not read. The gain shows on a slow laptop; this desktop reads Braga's surface in about 110 ms."
+    },
+    {
+      "id": "braga-034",
+      "priority": 34,
+      "area": "easter-egg",
+      "title": "The coder on a balcony: an easter egg with a scripted chat",
+      "user_visible_behavior": "On the 20-sided residential tower by the roundabout (41.55309, -8.40728) a corner balcony on the 5th floor holds a seated figure with a laptop, typing. A click or tap on him in map mode, or T / the 'Talk to the coder' pill within 25 m in walk mode, opens a terminal-style chat (Esc or x closes). His replies are scripted, in English, Portuguese and Russian: the site language, or the language the visitor writes in. Nothing loads or draws beyond 400 m / 300 m of the camera.",
+      "status": "passing",
+      "verification": [
+        "node --test scripts/balcony-coder.test.mjs (intents, language pick, no immediate repeat)",
+        "node /tmp/egg/shot.mjs s-chat.mjs (volatile: clicks the figure on the map, three languages, Tab cycle, Esc)",
+        "node /tmp/egg/shot.mjs s-walk.mjs (volatile: walk mode prompt, T opens the panel, Esc closes it and the walk stays on)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-26: a map click at the figure's screen point opened the panel with focus in the input; Tab cycles send, close, input; Esc closes",
+        "2026-11-26: walk mode 24 m from the seat: prompt shown; T opened the panel; typing did not move the walker; Esc closed only the panel",
+        "2026-11-26: Pixel 7 profile, ?lang=pt: a tap on the figure opened the panel in Portuguese",
+        "2026-11-26: npm test 97/97, check-walk all passed, npm run verify OK",
+        "2026-11-26: /play opens the walk at Porta Nova with no page errors; the coder stays unloaded there (load idle, panel closed)"
+      ],
+      "notes": "Config: cities/braga.json balcony_coder { tower, corner, floor }; a city without it has no coder. Placement: the footprint vertex nearest `corner` in city.footprints, the floor by the extrudeBuilding rule (mean ground, STREET_UP) plus floor x 3.2 m. Figure: crowd/passante-5.glb posed seated once by aiming bones (no mixer); hands and head turn a little within 120 m. The map orbit stays 120 m away, so on the map he is small; the pick box is 3.2 m."
     }
   ]
 }

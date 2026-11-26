@@ -10,6 +10,7 @@
   "walk_districts": [
     { "id": "porta-nova-souto", "name": "Arco da Porta Nova to Rua do Souto", "s": 41.5496, "w": -8.4305, "n": 41.5511, "e": -8.4258, "stepM": 2, "start": [41.55024, -8.42935], "headingDeg": 90 }
   ],
+  "balcony_coder": { "tower": [41.55309, -8.40728], "corner": [41.553, -8.40716], "floor": 5 },
   "tiles": { "core_nx": 11, "core_ny": 6, "ext": { "w": 5, "e": 5, "s": 6, "n": 6 } },
   "terrain": {
     "dataset": "eudem25m",
