@@ -566,6 +566,25 @@
         "2026-11-25: npm test 92/92, npm run verify OK, check-walk all passed"
       ],
       "notes": "Port of porto-033. renderer.shadowMap.autoUpdate is off for good: atmosphere.update sets needsUpdate (with the shadow camera fit on the same frame), share.js sets it before a postcard draw. A new render path that skips atmosphere.update must set renderer.shadowMap.needsUpdate itself."
+    },
+    {
+      "id": "braga-031",
+      "priority": 31,
+      "area": "walk",
+      "title": "Walk mode builds the surface index in slices",
+      "user_visible_behavior": "On /play the walker no longer waits for a full read of the walkable triangles every few seconds. While the old index still covers the walker, the new one is built 3 ms per frame. The first read, a teleport and a walker near the edge of the old index still read it at once.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/porto-live/prof-b.mjs <origin>/play#walk&time=15:00 (volatile: CPU profile inside long tasks)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-26: CPU profile on the branch: readSurface does not appear in long tasks; what is left there is shader compile (getProgramParameter, 57 ms) and one update function (44 ms) in the first 20 s",
+        "2026-11-26: 40 s walk, long tasks: 7 live, 7 on the branch, all in the load phase (6-20 s); the frame-time numbers did not change on this desktop",
+        "2026-11-26: npm test 92/92, check-walk all passed, npm run verify OK"
+      ],
+      "notes": "Port of porto-038. Meshes whose bounding sphere is out of SURF_R are not read. The gain shows on a slow laptop; this desktop reads Braga's surface in about 110 ms."
     }
   ]
 }

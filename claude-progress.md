@@ -441,3 +441,10 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Measured: feet against the top drawn triangle, 41 points across each of five streets: before 20-80 cm over the town ground, up to 30 cm over a carriageway, up to 57 cm sunk; after 0 cm at four of five spots. Slide along a wall at 45 degrees: 7 % of the speed before, 100 % after (unit test). Triangles near the ground on desktop: 1.85 M -> 2.11 M with the town ground; phone profile 732k -> 784k. Surface index rebuild: about 110 ms on desktop.
 - Checks: `node --test scripts/*.test.mjs` 79/79; `scripts/check-walk.mjs` all passed on both profiles, locally and on braga-3d.com; `npm run verify` OK. Screenshots at 1.7 m eye height at Avenida da Liberdade, a residential street and a ring-road junction, and the overhead views of the centre, viewed before each merge.
 - Known limits: kerb corners are square; on a sloped junction the sidewalk corners meet as small steps; beside a park the sidewalk drops to the lawn; a zebra has no dropped kerb; on a steep street the uphill end of a long house still sinks; streams drawn as lines, fountains, fences and landmark model parts do not block; vehicles do not stop for the walker; no stairs or jumping; one spot near a roundabout (41.5455, -8.4268) shows a ramp with a 29-54 cm gap under the feet, not examined. Not checked: a physical phone, Safari, Firefox, frame time on a real device. The forks (guimaraes-3d, porto-3d) do not have these changes.
+
+
+### 2026-11-26 — walk surface index built in slices (branch fix/walk-surface-hitch, feature braga-031)
+
+- Port of porto-038: `readSurface(x, z, now)` in `src/walk.js` starts a generator (`buildSurface`) and `pumpSurface()` runs it 3 ms per frame while the old index still covers the walker; meshes out of `SURF_R` are skipped.
+- Measured: the CPU profile no longer shows `readSurface` in long tasks. The long tasks left (7 in 40 s, live and branch alike) are in the load phase: shader compile and one update function.
+- Checks: npm test 92/92, check-walk all passed, npm run verify OK.
