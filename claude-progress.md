@@ -448,3 +448,12 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Port of porto-038: `readSurface(x, z, now)` in `src/walk.js` starts a generator (`buildSurface`) and `pumpSurface()` runs it 3 ms per frame while the old index still covers the walker; meshes out of `SURF_R` are skipped.
 - Measured: the CPU profile no longer shows `readSurface` in long tasks. The long tasks left (7 in 40 s, live and branch alike) are in the load phase: shader compile and one update function.
 - Checks: npm test 92/92, check-walk all passed, npm run verify OK.
+
+### 2026-11-26 — walk mode level of detail, stage 1a (branch feat/walk-lod, feature braga-032)
+
+- Port of porto-034: one walk profile, applied in walk mode's onEnter and reverted on every exit (`walkProfile` in `src/main.js`, shared state and the shadow rule `walkCasts` in `src/walk-lod.js`). Camera far 5 km with a fade into the fog colour (`FOG_UNIFORMS.fogFarFade`); ring, MS buildings and OSM core within 1.5 km, far boxes from 1 km, roofs only from 1.5 km; shadows only from meshes within 400 m; the governor ignores 2 s after the switch. `?walklod=0` keeps the old walk.
+- Braga only: a ground window (`setWalkWindow` in `src/scene.js`). The 34 km ground grid is one draw call, so it draws the full grid within 1.5 km of the walker and coarser squares outward; `src/walk.js` reads the whole grid.
+- Measured (gpu-b.mjs, governor 0, DPR 2): main-pass triangles 2.77-2.88 M on main -> 2.27 M on the branch; draw calls 210-221 -> 215 (no change). 40 s walk (hitch-b.mjs, two runs each): p50 8.4 ms both, long tasks in the load phase on both. The map at /: overview 2.051 M -> 2.055 M triangles, centre view 3.73 M -> 3.71 M.
+- Screenshots viewed at walk height (Avenida, Sé, Arcada, a residential street, Parque da Ponte, Bom Jesus terrace) and the map at /: the same apart from the passers-by.
+- Checks: npm test 92/92, check-walk all passed (incl. the profile on, the revert and walklod=0), npm run verify OK.
+- Left: draw calls. At the start most of the frame is near the walker: street plate, ground window, crowds and the road run cells (never frustum-culled). Next stages: cut the road run cells, occlusion, HLOD.

@@ -6,7 +6,10 @@
 // For each profile: start on a street by the cathedral with #walk, check the
 // eye height, walk and run in eight directions and never stand inside a
 // building, look around by drag, leave with Esc (desktop) or the button
-// (phone) and check that the orbit camera is back. Needs a served build
+// (phone) and check that the orbit camera is back. The walk profile
+// (braga-032, src/walk-lod.js) is on in the walk (far plane 5 km, 1.5 km
+// tiers), and after the walk the far plane, fog, sky and tile tiers match the
+// map again. walklod=0: /play keeps the map's far plane. Needs a served build
 // (npm run build, npx vite preview) and playwright-core with a Chromium;
 // without them it exits 77 (skip). Env: PLAYWRIGHT_CORE.
 import { existsSync, mkdirSync } from 'node:fs';
@@ -59,6 +62,10 @@ async function run(profile) {
   await page.waitForFunction(() => window.__braga?.ready === true, null, { timeout: 240000 });
   await page.waitForTimeout(3000);
   const fov0 = await page.evaluate(() => window.__braga.camera.fov);
+  // the walk profile (src/walk-lod.js): what the map had before. The radius
+  // follows the governor, so it is left out of the before/after compare.
+  const lod = () => page.evaluate(() => JSON.stringify(window.__braga.lodSnapshot(), (k, v) => (k === 'radiusM' ? undefined : v)));
+  const lodMap = await lod();
 
   // look at the start street, then ask for the mode the way a link does
   await page.evaluate(({ lat, lon }) => {
@@ -88,6 +95,9 @@ async function run(profile) {
   ok(s.view === 'third' && s.figure, `${profile}: third person, the figure shows`);
   ok(s.camM > 1.5 && s.camM < 5 && !s.camInside, `${profile}: the camera is ${s.camM} m behind, in the street`);
   if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-start.png` });
+  const w = await page.evaluate(() => window.__braga.lodSnapshot());
+  ok(w.far === 1250 && w.farFade.y > w.farFade.x && w.sky < w.far && w.walkLod, `${profile}: the walk profile is on (far ${w.far}, fade ${w.farFade.x}-${w.farFade.y}, sky ${w.sky})`);
+  ok((!w.tiles || w.tiles.radiusM <= 1500) && (!w.ms || w.ms.radiusM <= 1500) && w.core?.vfarM === 1500, `${profile}: walk tiers (ring ${w.tiles?.radiusM} m, ms ${w.ms?.radiusM} m, core roofs from ${w.core?.vfarM} m)`);
 
   // eight headings: walk, and on the desktop run, never inside a building
   let insideSeen = 0;
@@ -274,11 +284,31 @@ async function run(profile) {
   ok(!/walk/.test(s.hash), `${profile}: the link no longer says walk (${s.hash || 'empty'})`);
   ok(s.figure === false, `${profile}: the figure is gone`);
   ok(s.near >= 0.5, `${profile}: the orbit near plane is back`);
+  const lodBack = await lod();
+  ok(lodBack === lodMap, `${profile}: after the walk far, fog, sky and tile tiers match the map${lodBack === lodMap ? '' : `: ${lodMap} -> ${lodBack}`}`);
   if (OUT) await page.screenshot({ path: `${OUT}/walk-${profile}-after.png` });
   ok(errors.length === 0, `${profile}: no page errors${errors.length ? ': ' + errors[0] : ''}`);
   await browser.close();
 }
 
+// ------------------------------------------------------------ ?walklod=0
+// the kill switch: walk mode keeps the map's far plane and tile tiers
+async function killSwitch() {
+  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=metal', '--ignore-gpu-blocklist'] });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
+  await page.goto(`${BASE}play?lang=en&walklod=0#time=day&weather=clear&live=0`, { waitUntil: 'load' });
+  await page.waitForFunction(() => window.__braga?.ready === true, null, { timeout: 240000 });
+  await page.waitForFunction(() => window.__braga.walk?.active === true, null, { timeout: 40000 });
+  await page.waitForTimeout(1500);
+  const s = await page.evaluate(() => window.__braga.lodSnapshot());
+  ok(s.far === 16000 && !s.walkLod && s.farFade.y === 0 && !s.core?.walk, `walklod=0: walk keeps the map's far plane and tiers (far ${s.far}, ring ${s.tiles?.radiusM} m)`);
+  ok(errors.length === 0, `walklod=0: no page errors${errors.length ? ': ' + errors[0] : ''}`);
+  await browser.close();
+}
+
+await killSwitch();
 for (const profile of ['desktop', 'phone']) await run(profile);
 console.log(fails.length ? `\n${fails.length} FAILED` : '\nall passed');
 process.exit(fails.length ? 1 : 0);

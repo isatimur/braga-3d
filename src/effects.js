@@ -59,8 +59,13 @@ class SunRaysPass extends Pass {
     this.nearK = { value: 14 };
     this.fore = { value: 0.36 };
     this.gain = 1.9;
+    // the depth from which a pixel counts as open sky: 0.99999 on the map;
+    // walk mode's short far plane (5 km) needs a value from the live
+    // near/far (set every frame in update), or the whole far fade would read
+    // as sky
+    this.skyDepth = { value: 0.99999 };
     this.maskMat = new THREE.ShaderMaterial({
-      uniforms: { tDiffuse: { value: null }, tDepth: { value: null }, uSun: { value: this.sun }, uAspect: { value: 1 }, uThreshold: this.threshold, uNearK: this.nearK },
+      uniforms: { tDiffuse: { value: null }, tDepth: { value: null }, uSun: { value: this.sun }, uAspect: { value: 1 }, uThreshold: this.threshold, uNearK: this.nearK, uSkyDepth: this.skyDepth },
       vertexShader: QUAD_VERT,
       fragmentShader: /* glsl */ `
         uniform sampler2D tDiffuse;
@@ -69,11 +74,12 @@ class SunRaysPass extends Pass {
         uniform float uAspect;
         uniform float uThreshold;
         uniform float uNearK;
+        uniform float uSkyDepth;
         varying vec2 vUv;
         void main() {
           // the sky is never written to the depth buffer: depth 1 is open
           // sky, anything nearer an occluder (hills, crowns, towers)
-          float sky = step(0.99999, texture2D(tDepth, vUv).x);
+          float sky = step(uSkyDepth, texture2D(tDepth, vUv).x);
           vec3 c = texture2D(tDiffuse, vUv).rgb;
           float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
           // energy of the bright sky only, capped (no single-pixel suns);
@@ -125,9 +131,10 @@ class SunRaysPass extends Pass {
         uTint: { value: this.tint },
         uHaze: { value: 0 },
         uTime: { value: 0 },
-        uNearFar: { value: new THREE.Vector2(1, 16000) },
+        uNearFar: { value: new THREE.Vector2(1, 16000) }, // the live camera's, every frame (update)
         uTexel: { value: new THREE.Vector2(1, 1) },
         uFore: this.fore,
+        uSkyDepth: this.skyDepth,
       },
       vertexShader: QUAD_VERT,
       fragmentShader: /* glsl */ `
@@ -141,11 +148,12 @@ class SunRaysPass extends Pass {
         uniform vec2 uNearFar;
         uniform vec2 uTexel;
         uniform float uFore;
+        uniform float uSkyDepth;
         varying vec2 vUv;
         void main() {
           vec2 uv = vUv;
           float dz = texture2D(tDepth, vUv).x;
-          float sky = step(0.99999, dz);
+          float sky = step(uSkyDepth, dz);
           if (uHaze > 0.001 && sky < 0.5) {
             // view distance from the perspective depth
             float n = uNearFar.x, f = uNearFar.y;
@@ -308,7 +316,9 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false, 
   function aim(sunDir, night) {
     _v.copy(sunSource || sunDir);
     const facing = camera.getWorldDirection(_p).dot(_v);
-    _p.copy(camera.position).addScaledVector(_v, 5000).project(camera);
+    // a point toward the sun inside the far plane (walk mode's is 1250
+    // units, walk-lod.js), or it projects behind it (z > 1) and the rays go off
+    _p.copy(camera.position).addScaledVector(_v, Math.min(5000, 0.9 * camera.far)).project(camera);
     const inFront = facing > 0.05 && _p.z < 1;
     const off = Math.max(Math.abs(_p.x), Math.abs(_p.y));
     const fade = inFront ? 1 - THREE.MathUtils.smoothstep(off, 1.0, 1.45) : 0;
@@ -422,6 +432,13 @@ export function createEffects(renderer, scene, camera, { reducedMotion = false, 
       if (!reducedMotion) finish.uniforms.uTime.value += dt;
       if (!reducedMotion) rays.compMat.uniforms.uTime.value += dt;
       rays.compMat.uniforms.uNearFar.value.set(camera.near, camera.far);
+      // open sky: on the map (far 16000 units) depth >= 0.99999 as before;
+      // with a shorter far plane (walk mode) the perspective depth of 97 %
+      // of the live far plane, so the faded far city is not read as sky
+      {
+        const n = camera.near, f = camera.far;
+        rays.skyDepth.value = f >= 16000 ? 0.99999 : (f / (f - n)) * (1 - n / (0.97 * f));
+      }
       aim(sunDir, night);
       // at the overview the glowing roads cover much of the frame and the
       // pins are a few pixels: a lower, tighter bloom with a slightly higher
