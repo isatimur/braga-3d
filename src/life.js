@@ -34,6 +34,7 @@ import { createLive } from './live.js';
 import { createTrafficModel } from './traffic-model.js';
 import { buildNetwork, createFlow } from './road-network.js';
 import { createStreetscape } from './streetscape.js';
+import { sceneBufferSize } from './scene.js';
 
 // shared by the materials here: night 0..1 and the emissive boost (above
 // the bloom threshold when post-processing is on)
@@ -1273,7 +1274,7 @@ export function createLife(ctx) {
     LIFE_UNIFORMS.uLifeGlow.value = fx?.enabled ? 2.6 : 1;
     camera.updateMatrixWorld();
     frustum.setFromProjectionMatrix(_pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
-    renderer.getDrawingBufferSize(_size);
+    sceneBufferSize(renderer, _size);
 
     live.update();
     weather.update(dt, camera, camDist);

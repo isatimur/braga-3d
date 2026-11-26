@@ -585,6 +585,27 @@
         "2026-11-26: npm test 92/92, check-walk all passed, npm run verify OK"
       ],
       "notes": "Port of porto-038. Meshes whose bounding sphere is out of SURF_R are not read. The gain shows on a slow laptop; this desktop reads Braga's surface in about 110 ms."
+    },
+    {
+      "id": "braga-033",
+      "priority": 33,
+      "area": "walk",
+      "title": "A governor resolution step no longer resizes the canvas",
+      "user_visible_behavior": "On /play the walk no longer stalls for 50-100 ms every 3.5 s while the perf governor lowers or raises the resolution. With the effects on, the canvas keeps the full pixel ratio and only the effect targets follow the governor's scale; the picture looks the same.",
+      "status": "passing",
+      "verification": [
+        "node /tmp/hitch-w/hitch-c.mjs <origin>/play#walk&time=15:00 40 (volatile: long tasks over 50 ms after 15 s)",
+        "node /tmp/hitch-w/gov.mjs <origin>/play#walk&time=15:00 40 (governor steps against long tasks)",
+        "node scripts/check-walk.mjs",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-26: CPU profile on main: the periodic 54-62 ms long tasks are perf.frame -> feed -> commit -> applyKnobs -> resize -> WebGLRenderer.setPixelRatio/setSize (9-28 ms self, the rest GPU wait); on the branch setSize does not appear and the last long task is at 18 s (52 ms, render)",
+        "2026-11-26: governor log: on main three long tasks start at the same ms as a governor step (4186, 7873, 16529); on the branch none of eight steps (6-38.6 s) has one",
+        "2026-11-26: 40 s walks back to back, long tasks over 50 ms after 15 s: main 3, 0, 3, 0; branch 1 (819 ms, host contention), 0, 0, 2 (72, 93 ms at 51 s)",
+        "2026-11-26: npm test 92/92, check-walk all passed (desktop and phone), npm run verify OK"
+      ],
+      "notes": "scene.js DPR.draw is the scene's pixels per canvas pixel; sceneBufferSize() gives the buffer the scene is drawn into, and life.js, liveair.js and seasons.js size gl_PointSize from it. effects.js setSize(w, h, dpr, scale) applies scale to the composer only; the 2x mode still draws at 2. With the effects off the canvas still resizes on a governor step."
     }
   ]
 }

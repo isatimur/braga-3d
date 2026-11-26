@@ -448,3 +448,11 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Port of porto-038: `readSurface(x, z, now)` in `src/walk.js` starts a generator (`buildSurface`) and `pumpSurface()` runs it 3 ms per frame while the old index still covers the walker; meshes out of `SURF_R` are skipped.
 - Measured: the CPU profile no longer shows `readSurface` in long tasks. The long tasks left (7 in 40 s, live and branch alike) are in the load phase: shader compile and one update function.
 - Checks: npm test 92/92, check-walk all passed, npm run verify OK.
+
+### 2026-11-26 — governor resolution steps no longer resize the canvas (branch fix/walk-periodic-hitch, feature braga-033)
+
+- Cause: the perf governor steps every ~3.5 s (3 s cool-down plus its evaluation window, `src/governor.js`). Each step set `DPR.scale`, and `resize()` in `src/main.js` then called `renderer.setPixelRatio`/`setSize`. A canvas resize waits for the GPU to finish the frames in flight: 54-62 ms long tasks, 9-28 ms of them in `WebGLRenderer.setSize`.
+- Fix: with the effects on, the canvas keeps the full ratio (`deviceDpr(1)`) and `fx.setSize(w, h, dpr, scale)` applies the governor's scale to the composer targets only (`src/effects.js`). `DPR.draw` and `sceneBufferSize()` (`src/scene.js`) give the real scene buffer, so point sizes in `life.js`, `liveair.js` and `seasons.js` stay the same. Toggling the effects re-runs `resize()`.
+- Measured: governor log, main: long tasks start at the same ms as three governor steps; branch: none at eight steps. 40 s walks, long tasks over 50 ms after 15 s: main 3, 0, 3, 0; branch 1 (819 ms during host contention), 0, 0, 2. Profile after: no `setSize`, last long task at 18 s.
+- Checks: npm test 92/92, check-walk all passed (desktop and phone), npm run verify OK; walk-height screenshot viewed.
+- Left: shader compiles (`getProgramParameter`, up to 198 ms) and the character load (`loadCharacter`/`fitToHeight`) in the first 10 s; with the effects off a governor step still resizes the canvas.
