@@ -82,7 +82,8 @@ function fountain(k, x, z, r, h) {
   k.cyl(r * 0.36, r * 0.36, 0.08, 10, 'water', x, h * 0.55 + 0.55, z);
   k.lathe(PROFILES.urn, 8, G, x, h + 0.6, z, { sr: 0.5, sh: 0.9, smooth: true });
   k.cyl(0.05, 0.08, 0.9, 5, 'water', x, h + 1.4, z, { emit: 0.5 });
-  k.marker('fountain', x, 0.7, z, { kind: 'tiered', r: r - 0.2, jet: h + 2.3 });
+  // nozzle: the jet leaves the urn at h + 1.4 (the water cone's foot)
+  k.marker('fountain', x, 0.7, z, { kind: 'tiered', r: r - 0.2, jet: h + 2.3, nozzle: h + 0.7 });
 }
 
 function tibaes(k, { footprint, dims }) {

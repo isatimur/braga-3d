@@ -974,6 +974,34 @@ function buildFountains({ project, heightAt, items, mobile }) {
   // down the Bom Jesus stair (bearing 261): where the riser spouts throw
   const down = { x: Math.sin((261 * Math.PI) / 180), z: -Math.cos((261 * Math.PI) / 180) };
   const emitters = [];
+  // the models' named fountain points (landmarks.js fountain-<n>): the water
+  // surface or basin top at the basin centre; data.nozzle (metres) is how
+  // far above that the jet leaves its nozzle
+  const marks = [];
+  const at = new THREE.Vector3();
+  for (const it of items) {
+    for (const o of it.meshes?.[0]?.children || []) {
+      if (!/^fountain-/.test(o.name)) continue;
+      o.updateWorldMatrix(true, false);
+      at.setFromMatrixPosition(o.matrixWorld);
+      marks.push({ site: o.userData.landmark, x: at.x, y: at.y, z: at.z, r: (o.userData.r ?? 1) * S, nozzle: (o.userData.nozzle ?? 0) * S });
+    }
+  }
+  // the nearest point of the fountain's own landmark within its basin
+  // (plus 1.5 m: OSM puts a fountain node anywhere in the water)
+  const markNear = (site, x, z) => {
+    let best = null;
+    let bd = Infinity;
+    for (const m of marks) {
+      if (m.site !== site) continue;
+      const d = Math.hypot(m.x - x, m.z - z);
+      if (d < m.r + 1.5 * S && d < bd) {
+        best = m;
+        bd = d;
+      }
+    }
+    return best;
+  };
   for (const f of list) {
     const c = project(f.lat, f.lon);
     const site = SITES.includes(f.site) ? f.site : 'largo';
@@ -983,10 +1011,19 @@ function buildFountains({ project, heightAt, items, mobile }) {
     // spouts: the basin 1.3 m in front of the riser
     const qx = spout ? c.x + down.x * 1.3 * S : c.x;
     const qz = spout ? c.z + down.z * 1.3 * S : c.z;
+    const m = markNear(f.site, qx, qz);
+    if (m) {
+      // the model's nozzle (a spout: 0.9 m over its basin, at the riser)
+      if (spout) emitters.push({ ...f, site, x: qx, z: qz, y: m.y + 0.9 * S, spout, h: f.h ?? 1.6, r: f.r ?? 1.1, src: 'marker' });
+      else emitters.push({ ...f, site, x: m.x, z: m.z, y: m.y + m.nozzle, spout, h: f.h ?? 1.6, r: f.r ?? 1.1, src: 'marker' });
+      continue;
+    }
+    // no model fountain here: a low basin rim at most (not 12 m up, where
+    // the search found a roof over the Tibães cloister point)
     const g = heightAt(qx, qz);
-    const hit = surfaceHeights(mesh, [qx], [qz], [g - 2], [g + (spout ? 1.2 : 3)])[0];
+    const hit = surfaceHeights(mesh, [qx], [qz], [g - 2], [g + (spout ? 1.2 : 1.5 * S)])[0];
     const top = Number.isFinite(hit) ? hit : g + 0.15;
-    emitters.push({ ...f, site, x: qx, z: qz, y: top + (spout ? 0.9 * S : 0.05), spout, h: f.h ?? 1.6, r: f.r ?? 1.1 });
+    emitters.push({ ...f, site, x: qx, z: qz, y: top + (spout ? 0.9 * S : 0.05), spout, h: f.h ?? 1.6, r: f.r ?? 1.1, src: 'surface' });
   }
   // particles per emitter (Braga's fountains: Praça 4.5 m, Avenida 3 m, the
   // Santa Bárbara ones 1.5 m, so the thresholds follow the Guimarães wave 7

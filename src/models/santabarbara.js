@@ -107,7 +107,9 @@ function santaBarbara(k, { footprint, dims }) {
   k.cyl(1.85, 1.85, 0.1, 16, 'water', fx, 1.5, fz, { smooth: true, emit: 0.3 });
   k.lathe([[0, 0], [0.35, 0], [0.25, 0.6], [1.0, 0.8], [1.05, 1.05], [0.25, 1.1], [0.2, 1.9], [0.45, 2.0], [0.45, 2.2], [0, 2.2]], 12, 'granite', fx, 1.6, fz, { smooth: true });
   k.cyl(0.9, 0.9, 0.06, 12, 'water', fx, 2.55, fz, { smooth: true, emit: 0.3 });
-  k.marker('fountain', fx, 1.6, fz, { kind: 'tiered', r: 1.85, upper: 2.61, upperR: 0.9 });
+  // nozzle: the spray rises from the upper bowl's top (2.7 m) round the
+  // column, not from the saint's head (4.9 m)
+  k.marker('fountain', fx, 1.6, fz, { kind: 'tiered', r: 1.85, upper: 2.61, upperR: 0.9, nozzle: 1.12 });
   k.statue(hFount - 3.8, 'graniteLight', fx, 3.8, fz, { seg: 7 });
   // --- twisted iron lamps where the paths meet the ring
   for (let i = 0; i < 8; i += 2) {
