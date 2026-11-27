@@ -255,6 +255,9 @@ async function start() {
   loader.set(0.72, t('Возводим здания'));
   await nextFrame();
   const outlines = landmarks.map((l) => footprints?.[l.id]?.outline?.map((q) => project(q[0], q[1])) ?? null);
+  // the pools of a landmark (its OSM water parts, a fountain basin): the
+  // walker and the crowd keep out of them, also on an open square
+  const pools = landmarks.map((l) => (footprints?.[l.id]?.parts || []).filter((p) => p.tag === 'water' && p.pts?.length > 2).map((p) => p.pts.map((q) => project(q[0], q[1]))));
   const city = buildBuildings(buildings, project, heightAt, {
     outlines: outlines.filter(Boolean),
     plans: fits.filter((f) => !f.fallback).map((f) => f.plan),
@@ -1295,7 +1298,8 @@ async function start() {
         // stairway) is not solid: its outline was a wall round the whole
         // Praça da República and Avenida Central (cities/braga.json)
         const WALK_OPEN = new Set(CITY.walk_open_landmarks || []);
-        const walkPolys = landmarks.flatMap((l, i) => (!outlines[i] || WALK_OPEN.has(l.id) ? [] : GATES[l.id] ? gatePiers(outlines[i], GATES[l.id]) : [outlines[i]]));
+        // ... but its fountain basin is (issue #2: walkers stood in the Praça's pool)
+        const walkPolys = landmarks.flatMap((l, i) => (!outlines[i] ? [] : WALK_OPEN.has(l.id) ? pools[i] : GATES[l.id] ? gatePiers(outlines[i], GATES[l.id]) : [outlines[i]]));
         walk = createWalk({
           camera,
           rig,
@@ -2156,7 +2160,7 @@ async function start() {
     await step('nature', buildNatureLayer);
     await step('life', () => {
       // footprints, outlines: where the people of streetscape.js may not walk
-      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines, roadGroup: roadLayer.group, layers: { street: layers.on('street'), live: layers.on('live') } });
+      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines, pools, roadGroup: roadLayer.group, layers: { street: layers.on('street'), live: layers.on('live') } });
       // the status pill follows the first load of the two life layers
       if (layers.on('street')) track('street', life.setStreet(true));
       if (layers.on('live')) track('live', life.setLive(true));

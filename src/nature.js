@@ -634,7 +634,7 @@ export function buildNature(opts) {
     const rings = a.r.map((ring) => ring.map((q) => project(q[0], q[1]))).filter((r) => r.length >= 3);
     if (!rings.length) continue;
     const area = Math.max(0, ringArea(rings[0]) - rings.slice(1).reduce((s, r) => s + ringArea(r), 0));
-    areas.push({ k: a.k, rings, area });
+    areas.push({ k: a.k, id: a.id, rings, area });
   }
   stats.areas = areas.length;
 
@@ -1205,7 +1205,11 @@ export function buildNature(opts) {
   }
 
   // ---- water: river ribbons and pond / reservoir polygons (src/water.js)
-  const water = createWater({ data, areas, project, heightAt });
+  // a basin a landmark model draws itself (cities/<id>.json model_water,
+  // OSM ids) is not drawn again: the flat pond floated over the Praça
+  // fountain's rim as a white slab (issue #2)
+  const modelWater = new Set(CITY.model_water || []);
+  const water = createWater({ data, areas: areas.filter((a) => !modelWater.has(a.id)), project, heightAt });
   if (water) {
     group.add(water.mesh);
     stats.water = water.triangles;
