@@ -504,3 +504,8 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Braga's walk always starts with `walk.state.lanes` 0 (the street is not built yet), so the start is `collider.freeNear()`, not a lane point. It is the same place in every run, so the check holds; the "start moved" fault text adds the lane note every time in Braga.
 - Proof: default check-walk exit 0, both budget lines at 83 %, 1:55 wall time (1:25 with `--budget off`, which prints the same 78 lines as main's check-walk). Negative tests, each exit 1: limits at 0.9 x baseline (`FAIL budget desktop: calls p95 274 > limit 246`), `minCalls` = `calls` (`scene is broken (calls p50 272 < floor 329)`), start moved 2.5 units (`start moved 10.0 m`). npm test 125/125, npm run verify OK. Load average 12-14 during the runs.
 - Porto: the same files (porto-044); `scripts/sync-engine.sh` there excludes `scripts/check-walk.mjs`.
+
+### 2026-11-28 — verify runs the unit tests (branch chore/verify-runs-tests, feature braga-039)
+
+- Roadmap item 2a. `scripts/verify.mjs` runs `npm test` as its first step. Before, CI ran only verify, so a failing unit test never failed a build.
+- Proof: `npm run verify` OK, 13 steps PASS. With a temporary failing `scripts/zz-fail.test.mjs`: `FAIL unit tests (exit 1)`, the other 12 PASS, `verify: FAILED`, exit 1. The temporary test was deleted.
