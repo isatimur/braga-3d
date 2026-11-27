@@ -796,6 +796,29 @@
         "2026-11-27: npm run verify OK; check-walk --budget only: desktop 272/274 calls, 2.78/2.79 M triangles; phone 159 calls, 1.32 M (unchanged)"
       ],
       "notes": "Roadmap item 11, spec docs/specs/public-reports.md (rev. 5, EGM rounds 1-5). Phase 5 (live test) and the privacy controller name (owner decision 1) are the owner's."
+    },
+    {
+      "id": "braga-042",
+      "priority": 42,
+      "area": "walk",
+      "title": "Praça da República fountain: rim, water and jets read clearly; nobody stands in the pool (issue #2)",
+      "user_visible_behavior": "From walk height and from the map the Chafariz da Praça da República reads as a granite rim 0.45 m over the wave calçada, a blue pool and thin white jets with moving spray from a bronze nozzle. The calçada no longer runs over the pool, no flat white slab floats over the rim, and the walker, the walking crowd and the standing groups keep out of the pool while the rest of the square stays open.",
+      "status": "passing",
+      "verification": [
+        "probe: vertical ray through the pool lists every surface (calçada, water, rim) and walk.free() inside and 3 m outside the rim",
+        "probe: lane samples and standing spots inside the pool; people drawn inside it over 20 s",
+        "screenshots: three walk positions and one map view, before and after",
+        "npm test",
+        "npm run verify",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs (new check: the Praça pool blocks the walker) and --budget only"
+      ],
+      "evidence": [
+        "2026-11-27 before (main 7e26a71): calcada-squares at +0.43 m over the terrain covered the pool from 5 m to the rim (the model's water at +0.02 m and the rim top at +0.42 m lay under or in the plane of the paving); water.js drew the OSM pond w132951673 as a flat octagon at +0.78 m, over the rim; the particle emitter sat at +6.72 m, on top of the opaque central jet; walk.free() true at the pool centre; 15 lane samples and 2 standing spots inside the pool; up to 1 person drawn in it",
+        "2026-11-27 after: water at +0.64 m, calçada at +0.43 m under it, rim top +0.87 m; no water.js pond; emitter at +0.98 m (nozzle); walk.free() false at the centre, 2 m and 6 m in, true 3 m outside the rim on four sides; 0 lane samples, 0 spots, 0 people in the pool over 40 samples",
+        "2026-11-27: Santa Bárbara fountain screenshot unchanged; its basin now blocks the walker too",
+        "2026-11-27: npm test 148/148; npm run verify OK (praca-republica 28512 tris, total 514106); check-walk all passed incl. the new pool check; --budget only: desktop 274/278 calls, 2.77/2.80 M triangles; phone 159 calls, 1.32 M"
+      ],
+      "notes": "Roadmap item 3 expected braga-042; this issue took the id. The model lifts the fountain by STREET = 0.6 m (the calçada level over the model's zero at this site, measured). landmarkFloors gets the landmarks' OSM water parts (pools): at() is NaN there, and under a basin that stands above the paving the carpet runs on, so its edge is the rim. cities/braga.json model_water lists OSM water areas a model draws itself (water.js skips them)."
     }
   ]
 }
