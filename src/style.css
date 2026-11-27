@@ -815,7 +815,7 @@ dialog { color: var(--text); font: 400 14px/1.5 var(--sans); }
 .hint {
   position: absolute;
   right: 22px;
-  bottom: 16px;
+  bottom: 22px; /* over the data credit line (.attribution) */
   margin: 0;
   padding: 5px 10px;
   font-size: 12px;
@@ -826,6 +826,42 @@ dialog { color: var(--text); font: 400 14px/1.5 var(--sans); }
   transition: opacity 0.2s;
 }
 .detail.is-open ~ .hint { opacity: 0; }
+
+/* ------------------------------------------------------------ data credit */
+/* ODbL asks for a visible credit: one small line in the bottom-right
+   corner, under the hints, in every mode */
+.attribution {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  margin: 0;
+  padding: 1px 6px;
+  max-width: calc(100vw - 12px);
+  font: 400 10.5px/1.35 var(--sans);
+  color: rgba(241, 232, 218, 0.86);
+  background: rgba(22, 17, 12, 0.42);
+  border-top-left-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.attribution a { color: inherit; text-decoration: none; }
+.attribution a:hover, .attribution a:focus-visible { text-decoration: underline; color: #fbf3e4; }
+/* phone: the credit rides on the top edge of the bottom sheet (the place
+   list 36vh, a place or a route 64vh), under the compass and scale; the
+   Microsoft credit stays in data/CREDITS.md (no room) */
+@media (max-width: 900px) {
+  .attribution { font-size: 10px; padding: 0 5px; }
+  .attribution .credit-wide { display: none; }
+  body:not(.is-walk):not(.is-cinema):not(.is-story):not(.is-game):not(.is-callout) .attribution { bottom: 36vh; }
+  body:not(.is-walk):not(.is-cinema):not(.is-story):not(.is-game) .detail.is-open ~ .attribution { bottom: 64vh; }
+  body:not(.is-walk):not(.is-cinema):not(.is-story):not(.is-game):not(.is-callout) .instruments { bottom: calc(36vh + 18px); }
+  /* a docked place card: the credit stays at the bottom, the card and the
+     instruments step up 6 px over it */
+  body.is-callout .callout { bottom: calc(16px + env(safe-area-inset-bottom)); }
+  body.is-callout .instruments { bottom: 192px; }
+}
 
 /* ------------------------------------------------------------ loader */
 .loader { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 60%, #2a2016, var(--ink-0) 70%); z-index: 10; transition: opacity 0.6s; }
@@ -1303,7 +1339,7 @@ body.is-story .map-label:not(.is-story-focus) { opacity: 0 !important; }
 /* ------------------------------------------------------------ fly mode keys (fly.js) */
 /* the second hint sits above the first; both share the .hint rules
    (hidden with the detail panel, the intro, cinema, story, embed, <= 900 px) */
-.hint-fly { bottom: 46px; }
+.hint-fly { bottom: 52px; }
 @media (hover: none) { .hint-fly { display: none; } }
 /* key cluster above the compass: shown on use, lit while pressed */
 .fly-keys {
