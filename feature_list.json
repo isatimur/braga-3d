@@ -796,6 +796,28 @@
         "2026-11-27: npm run verify OK; check-walk --budget only: desktop 272/274 calls, 2.78/2.79 M triangles; phone 159 calls, 1.32 M (unchanged)"
       ],
       "notes": "Roadmap item 11, spec docs/specs/public-reports.md (rev. 5, EGM rounds 1-5). Phase 5 (live test) and the privacy controller name (owner decision 1) are the owner's."
+    },
+    {
+      "id": "braga-043",
+      "priority": 43,
+      "area": "data",
+      "title": "OSM roads audit: footways, steps, alleys and service ways in the centre; 1 m geometry",
+      "user_visible_behavior": "Within 2.1 km of the origin the map draws every OSM footway, path, cycleway, steps, track and service way (sidewalks, crossings and alleys included; not indoor, underground, raised or private ones), not only footbridges. Street and footway geometry there is simplified to 1 m with 6 decimals, so the drawn centre lines lie within about 1 m of OSM (was up to 6 m).",
+      "status": "passing",
+      "verification": [
+        "node scripts/fetch-roads.mjs (one Overpass request)",
+        "npm test",
+        "npm run verify",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs --base <served build> --budget only",
+        "docs/osm-audit-2026-11-27.md (numbers and before/after/OSM images)"
+      ],
+      "evidence": [
+        "2026-11-27: audit vs fresh OSM (osm3s 2026-11-27T15:11Z), 1.5 km around the Sé: missing 4932 ways / 218.3 km before, 417 / 40.8 km after (the rest dropped on purpose or area:highway polygons); no named car street was missing before",
+        "2026-11-27: accuracy ours-to-OSM in the centre: mean 0.70-0.78 m, max 5.3 m on streets before; mean 0.07-0.11 m, max 1.04 m after",
+        "2026-11-27: data/roads.json 6150 -> 14034 features, gzip 226 -> 514 KB",
+        "2026-11-27: npm test 148/148; npm run verify OK; check-walk --budget only: desktop 274 calls, 2.89 M triangles (limits 329, 3.36 M); phone 160 calls, 1.40 M (191, 1.59 M); old data on the same build 274/2.79 M and 159/1.32 M; check-walk --budget off all passed"
+      ],
+      "notes": "Root cause: fetch-roads.mjs asked for footway classes only with a bridge tag and roads.js skipped non-bridge foot ways. Geometry error was the 5 m Douglas-Peucker tolerance plus r5 rounding. braga-042 left free for the parallel fix/praca-fountain branch. Follow-ups in the audit doc: area:highway polygons, OSM crossings for zebras, width tags on car streets."
     }
   ]
 }

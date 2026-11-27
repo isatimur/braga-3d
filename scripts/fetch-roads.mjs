@@ -8,9 +8,14 @@
 // data/roads.json (Braga; another city: its data dir), v2:
 //   { v: 2, origin, bbox, nodes: n, features: [{ kind, pts, t?, j? }] }
 //   kind  primary | secondary | minor | foot | rail | water (the draw buckets)
-//   pts   [[lat, lon], ...] simplified to 5 m (roundabouts and links 1.5 m)
+//   pts   [[lat, lon], ...] simplified to 5 m (roundabouts and links 1.5 m);
+//         within FOOT_R of the origin to 1 m, with 6 decimals
+//   kind foot: every footway, path, cycleway, steps and service way within
+//         FOOT_R of the origin; outside it only their bridges
 //   t     the tags that matter for drawing and traffic (only those present):
 //           hw  highway class (motorway, trunk_link, residential ...)
+//           sub footway / path / cycleway / service kind (sidewalk, crossing,
+//               alley, driveway, parking_aisle ...), wd mapped width (m)
 //           name, ref
 //           ow  1 = one way along pts, -1 = one way against pts (OSM oneway,
 //               implied for motorway, motorway_link and roundabouts)
@@ -24,7 +29,7 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { dirname } from 'node:path';
-import { CITY, BBOX, ORIGIN, overpass, simplify, r5, dataPath, cachePath, dataRel } from './geo-lib.mjs';
+import { CITY, BBOX, ORIGIN, overpass, simplify, r5, r6, dataPath, cachePath, dataRel } from './geo-lib.mjs';
 
 const OUT = dataPath('roads.json');
 const RAW = cachePath('roads-raw.json.gz');
@@ -39,14 +44,39 @@ if (process.argv.includes('--dry-run')) {
 const ROADS = 'motorway|trunk|primary|secondary|tertiary|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|unclassified|residential|living_street|pedestrian';
 const FOOT = 'footway|path|cycleway|steps|service|track|bridleway';
 const b = `${BBOX.s},${BBOX.w},${BBOX.n},${BBOX.e}`;
+// The walkable centre: every footway, path, cycleway, steps, alley and other
+// service way within FOOT_R metres of the origin (the street-level detail
+// radius of the renderer, src/roads.js SIDEWALK_R, plus a margin). Outside
+// it only their bridges. Inside it the geometry keeps more points (CENTRE_TOL,
+// 6 decimals). docs/osm-audit-2026-11-27.md has the numbers behind this.
+const FOOT_R = CITY.roads?.foot_radius_m ?? 2100;
+const CENTRE_TOL = 1;
 const QUERY = `[out:json][timeout:240];
 (
   way["highway"~"^(${ROADS})$"](${b});
   way["highway"~"^(${FOOT})$"]["bridge"]["bridge"!="no"](${b});
+  way["highway"~"^(${FOOT})$"](around:${FOOT_R},${ORIGIN.lat},${ORIGIN.lon});
   way["waterway"~"^(river|stream)$"](${b});
   way["railway"="rail"](${b});
 );
 out body geom;`;
+// a footway or service way the centre draws: not an area outline (the
+// pedestrian areas come from streetscape.json), not indoors or on an upper
+// floor, not underground or on a raised deck (a tunnel or a layer: the
+// network would hide it or stand it on piers), not a private driveway. A
+// building passage stays: the houses above cover it. Bridges stay as before.
+const isBridge = (t) => !!t.bridge && t.bridge !== 'no';
+const footKept = (t) => {
+  if (isBridge(t)) return true;
+  if (t.area === 'yes' || t.indoor === 'yes') return false;
+  if (t.level != null && t.level !== '0') return false;
+  if (t.tunnel && t.tunnel !== 'no' && t.tunnel !== 'building_passage') return false;
+  if (t.layer != null && t.layer !== '0') return false;
+  return t.access !== 'private';
+};
+const M_LAT0 = 111320;
+const M_LON0 = 111320 * Math.cos((ORIGIN.lat * Math.PI) / 180);
+const inCentre = ([lat, lon]) => Math.hypot((lat - ORIGIN.lat) * M_LAT0, (lon - ORIGIN.lon) * M_LON0) <= FOOT_R;
 
 // draw bucket per highway class
 const KIND = {
@@ -103,6 +133,12 @@ function tagsOf(t) {
     if (t.surface) o.sf = t.surface;
     if (t.junction) o.jn = t.junction;
     if (t.access === 'no' || t.motor_vehicle === 'no' || t.motorcar === 'no') o.nocar = 1;
+    // the kind of footway or service way (sidewalk, crossing, alley ...)
+    const sub = t.footway || t.path || t.cycleway || t.service;
+    if (sub && KIND[t.highway] == null && /^[a-z_]{2,24}$/.test(sub)) o.sub = sub;
+    // a mapped width (m), kept for the footways
+    const wd = parseFloat(String(t.width ?? '').replace(',', '.'));
+    if (KIND[t.highway] == null && wd >= 0.5 && wd <= 20) o.wd = Math.round(wd * 10) / 10;
   }
   if (t.bridge && t.bridge !== 'no') o.br = t.bridge;
   if (t['bridge:structure']) o.bs = t['bridge:structure'];
@@ -146,17 +182,23 @@ function clipRuns(pts) {
 }
 
 const elements = await load();
-const ways = elements.filter((e) => e.type === 'way' && e.geometry?.length >= 2 && e.nodes?.length === e.geometry.length && kindOf(e.tags || {}));
+const ways = elements.filter((e) => e.type === 'way' && e.geometry?.length >= 2 && e.nodes?.length === e.geometry.length && kindOf(e.tags || {}) && (kindOf(e.tags) !== 'foot' || footKept(e.tags)));
 
-// how many street ways use each OSM node: 2+ is a junction
+// how many street ways use each OSM node: 2+ is a junction. `use` counts the
+// streets and the footway bridges (the traffic graph, as before the centre's
+// footways came in); `meet` counts every way, so a footway's meeting point
+// with a street or another footway survives simplification in both.
+const net = (t) => KIND[t.highway] != null || isBridge(t);
 const use = new Map();
+const meet = new Map();
 for (const w of ways) {
   if (!w.tags.highway) continue;
   const seen = new Set();
   for (const id of w.nodes) {
     if (seen.has(id)) continue; // a closed way touches its first node twice
     seen.add(id);
-    use.set(id, (use.get(id) || 0) + 1);
+    meet.set(id, (meet.get(id) || 0) + 1);
+    if (net(w.tags)) use.set(id, (use.get(id) || 0) + 1);
   }
 }
 const dense = new Map();
@@ -181,7 +223,7 @@ for (const w of ways) {
     // simplify piecewise between the points that must stay: the run's ends
     // and every junction node, so shared nodes survive in both ways
     const keep = [0];
-    for (let k = 1; k < run.length - 1; k++) if (isStreet && (use.get(w.nodes[run[k]]) || 0) > 1) keep.push(k);
+    for (let k = 1; k < run.length - 1; k++) if (isStreet && (meet.get(w.nodes[run[k]]) || 0) > 1) keep.push(k);
     keep.push(run.length - 1);
     const outPts = [];
     const outIds = [];
@@ -190,7 +232,8 @@ for (const w of ways) {
       const bb = keep[s + 1];
       const piece = [];
       for (let k = a; k <= bb; k++) piece.push(k);
-      const sub = simplify(piece.map((k) => pts[run[k]]), tol);
+      const ll = piece.map((k) => pts[run[k]]);
+      const sub = simplify(ll, ll.some(inCentre) ? Math.min(tol, CENTRE_TOL) : tol);
       // map simplified points back to their run indices (simplify keeps order)
       let q = 0;
       const idx = [];
@@ -208,7 +251,9 @@ for (const w of ways) {
     const P = [];
     const J = [];
     for (let k = 0; k < outPts.length; k++) {
-      const p = [r5(outPts[k][0]), r5(outPts[k][1])];
+      // 5 decimals is up to 0.7 m off; the centre keeps 6 (0.07 m)
+      const rd = inCentre(outPts[k]) ? r6 : r5;
+      const p = [rd(outPts[k][0]), rd(outPts[k][1])];
       const osm = outIds[k];
       const end = k === 0 || k === outPts.length - 1;
       const junction = isStreet && (end || (use.get(osm) || 0) > 1);

@@ -527,3 +527,11 @@ A loop over five open items for the walking-height look. One item per iteration;
 - Focus after close: the menu button sits in the tools sheet, which closes on the click and takes no focus; focus then goes to the menu toggle (`#tools-toggle`). The walk HUD button gets focus back directly.
 - Proof: npm test 148/148; `npm run check:report` all passed (map pt, walk en + Escape, phone ru 503 fallback, gate off), screenshots viewed; npm run verify OK; check-walk `--budget only` unchanged (desktop 272/274 calls, 2.78/2.79 M; phone 159, 1.32 M).
 - Left for the owner: phase 5 (one live report with `?report=1` and `REPORTS_ON=1`, then delete it), owner decision 1, and the pt-PT review of the strings with item 4's `check:pt`.
+
+### 2026-11-27 — OSM roads audit (branch fix/osm-roads-audit, feature braga-043)
+
+- Owner report: the map misses many ways and roads do not match OSM. Audit in `docs/osm-audit-2026-11-27.md` (one fresh Overpass request, per-class table, accuracy, before/after/OSM images).
+- Causes: `fetch-roads.mjs` kept footway classes only on bridges and `roads.js` drew only those, so 218 km of the centre's 350 km of OSM ways never reached the map; the 5 m simplify tolerance and r5 rounding put street lines up to 6 m off. The car network itself was complete and two months of OSM edits moved almost nothing.
+- Fix: every footway, path, cycleway, steps, track and service way within 2.1 km of the origin (not indoor, underground, raised or private); 1 m tolerance and 6 decimals there; `sub` and `wd` tags; `footWidthM()` in `road-network.js`; `roads.js` draws the foot ways. Junction ids and the traffic graph are counted as before.
+- Proof: npm test 148/148; npm run verify OK; check-walk `--budget only` desktop 274 calls / 2.89 M (was 274 / 2.79 M), phone 160 / 1.40 M (was 159 / 1.32 M), no limit raised; `--budget off` all passed. roads.json gzip 226 -> 514 KB.
+- braga-042 left free for the parallel fix/praca-fountain branch.

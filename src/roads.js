@@ -521,9 +521,10 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
   for (const w of net.ways) {
     const T = surf[w.kind];
     if (!T) continue;
-    // footways: only their bridges (the paths themselves are not in the core)
-    // (and not the crossings on a road deck: the deck is their surface)
-    if (w.kind === 'foot' && (!w.bridge || w.onDeck)) continue;
+    // footways, steps, cycleways and service ways: the data has them in the
+    // centre (scripts/fetch-roads.mjs FOOT_R) and their bridges everywhere;
+    // not the crossings on a road deck: the deck is their surface
+    if (w.kind === 'foot' && w.onDeck) continue;
     const h = (w.widthM / 2) * S;
     if (T.pat) {
       // pedestrian streets of the centre: calçada (by name: waves on the

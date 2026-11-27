@@ -43,6 +43,21 @@ export const CLASS = {
   path: { laneM: 1.2, lanes: 2, oneWay: 2, extraM: 0.4, kmh: 0, slope: 0.12, noCar: true },
   rail: { laneM: 2.4, lanes: 1, oneWay: 1, extraM: 1.2, kmh: 0, slope: 0.025, noCar: true },
 };
+// The width (m) of a footway, path, steps or service way of the centre
+// (scripts/fetch-roads.mjs keeps them within FOOT_R): the mapped width, else
+// a typical one for its kind. Footway bridges keep their deck widths.
+const SERVICE_M = { alley: 2.5, driveway: 3, parking_aisle: 5, 'drive-through': 3 };
+export function footWidthM(t = {}) {
+  if (t.wd) return t.wd;
+  switch (t.hw) {
+    case 'steps': return 2;
+    case 'path': case 'bridleway': return 1.5;
+    case 'cycleway': return 2;
+    case 'track': return 3;
+    case 'service': return SERVICE_M[t.sub] ?? 4;
+    default: return t.sub === 'sidewalk' ? 2 : t.sub === 'crossing' ? 3 : 2.5;
+  }
+}
 const classOf = (t = {}, kind) => CLASS[t.hw] || (kind === 'rail' ? CLASS.rail : kind === 'foot' ? CLASS.path : kind === 'minor' ? CLASS.residential : kind === 'secondary' ? CLASS.secondary : CLASS.primary);
 
 // street surfaces (sRGB): OSM `surface`, else the class default
@@ -156,7 +171,7 @@ function build(roads, project, heightAt) {
     }
     let widthM = total * cls.laneM + cls.extraM;
     if (t.hw === 'pedestrian') widthM = 6;
-    if (f.kind === 'foot') widthM = t.hw === 'steps' ? 2 : 3;
+    if (f.kind === 'foot') widthM = t.br ? (t.hw === 'steps' ? 2 : 3) : footWidthM(t);
     if (f.kind === 'rail') widthM = 4.2;
     const tu = t.tu;
     const roadTunnel = !!tu && ROAD_TUNNELS.has(tu) && f.kind !== 'water';
