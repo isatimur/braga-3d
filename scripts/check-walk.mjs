@@ -232,11 +232,15 @@ async function run(profile) {
   // Praça da República (the fountain square) and on Avenida Central
   const open = await page.evaluate(() => {
     const P = window.__braga, free = (lat, lon) => { const c = P.project(lat, lon); return P.walk.free(c.x, c.z); };
-    return { praca: free(41.55126, -8.42298), avenida: free(41.5514, -8.42), pool: free(41.551395, -8.42309) };
+    // a monument (cities/<id>.json monuments): its centre, and 8 m out on the square
+    const m = (P.monuments || [])[0];
+    const mon = m ? { id: m.id, centre: P.walk.free(m.mesh.position.x, m.mesh.position.z), out: P.walk.free(m.mesh.position.x + 2, m.mesh.position.z) } : null;
+    return { praca: free(41.55126, -8.42298), avenida: free(41.5514, -8.42), pool: free(41.551395, -8.42309), mon };
   });
   ok(open.praca && open.avenida, `${profile}: the walker may enter Praça da República (${open.praca}) and Avenida Central (${open.avenida})`);
   // ... but not the Praça fountain's pool (issue #2, its OSM water part)
   ok(!open.pool, `${profile}: the Praça fountain's pool blocks the walker (free ${open.pool})`);
+  if (open.mon) ok(!open.mon.centre && open.mon.out, `${profile}: the ${open.mon.id} tank blocks the walker, its square does not (centre free ${open.mon.centre}, 8 m out free ${open.mon.out})`);
   await page.evaluate(({ lat, lon }) => {
     const P = window.__braga;
     const q = P.project(lat, lon);

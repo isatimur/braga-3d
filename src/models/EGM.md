@@ -91,6 +91,7 @@ into `k`. Each builder function also carries `builder.metric = true` and
 | `parque.js` | `parque-ponte` | no |
 | `populo.js` | `populo` | no |
 | `praca.js` | `praca-republica` | yes |
+| `pelicano.js` | `fonte-pelicano` (a monument, not a landmark: `buildMonument`) | no |
 | `raio.js` | `palacio-raio` | yes |
 | `sameiro.js` | `sameiro` | yes |
 | `santabarbara.js` | `santa-barbara` | yes |
@@ -176,7 +177,9 @@ into `k`. Each builder function also carries `builder.metric = true` and
 - `k.marker('fountain', ...)` is called by `[parts.js:wallFountain]`,
   `[avenida.js:avenida]`, `[biscainhos.js:biscainhos]`,
   `[bomjesus.js:stairFountain]`, `[praca.js:praca]`, `[se.js:seBraga]` and
-  `[tibaes.js:fountain]`.
+  `[tibaes.js:fountain]`. `../life.js` starts a fountain's spray at the
+  nearest marker of its landmark within the marker's `r` + 1.5 m, raised by
+  `data.nozzle` metres (praca, santabarbara and tibaes set it).
 - `[parque.js:parque]` Sets `k.treeCount`.
 - `[populo.js:populo]` Calls `console.warn` when garden details throw.
 - Each landmark module sets `.metric` and `.rule` on its builder function at

@@ -298,10 +298,10 @@ function praca(k, { footprint, dims }) {
     const at = (t) => [fx + Math.cos(a) * (0.35 + (R - 0.35) * t), wy + 0.12 + 4.3 * (1 - t * t), fz + Math.sin(a) * (0.35 + (R - 0.35) * t)];
     for (let s = 0; s < SEG; s++) k.segment(at(s / SEG), at((s + 1) / SEG), 0.05, 0.05, SPRAY, { emit: 0.6, mat: MAT.water });
   }
-  // No solid central jet: life.js finds the nozzle as the highest surface
-  // over the fountain point and throws the tall jet from there as spray.
-  // named point for the app: the water surface at the basin centre
-  k.marker('fountain', fx, wy, fz, { kind: 'jet', r: +fr.toFixed(2), jet: 4.5 });
+  // No solid central jet: life.js throws the tall jet as spray from the
+  // nozzle's top. Named point for the app: the water surface at the basin
+  // centre; nozzle = metres from there to the jet's outlet (the boss top)
+  k.marker('fountain', fx, wy, fz, { kind: 'jet', r: +fr.toFixed(2), jet: 4.5, nozzle: 0.14 });
   // the ring of small jets inside the rim
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * TAU;

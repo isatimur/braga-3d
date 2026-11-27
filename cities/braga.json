@@ -23,6 +23,22 @@
   "default_live": true,
   "walk_open_landmarks": ["praca-republica", "avenida-central", "santa-barbara", "parque-ponte", "bom-jesus", "termas-romanas"],
   "model_water": ["w132951673"],
+  "not_water": ["w132951676"],
+  "monuments": [
+    {
+      "id": "fonte-pelicano",
+      "model": "fonte-pelicano",
+      "name": "Fonte do Pelicano",
+      "lat": 41.5510993,
+      "lon": -8.427836,
+      "osm": "w471758019",
+      "sources": [
+        { "fact": "position and basin outline (fitted to the 53 points: circle 4.55 m + four 1.4 m lobes 4.6 m out, turned 11 deg; mean 0.04 m, max 0.22 m off)", "url": "https://www.openstreetmap.org/way/471758019" },
+        { "fact": "five bowls, sculpture group, quatrefoil tank on a circular base of two steps; Marceliano de Araújo; moved here in 1967", "url": "https://pt.wikipedia.org/wiki/Fonte_do_Pelicano" },
+        { "fact": "form and heights (estimates from photos)", "url": "https://commons.wikimedia.org/wiki/Category:Fonte_do_Pelicano_(Braga)" }
+      ]
+    }
+  ],
   "locale_default": "ru",
   "season_default": "auto",
   "transit": { "gtfs_url": "https://www.tub.pt/developer/gtfs/feed/tub.zip", "operator": "TUB", "operator_long": "Transportes Urbanos de Braga", "catalogue": "https://dados.gov.pt/pt/datasets/gtfs-transportes-urbanos-de-braga/", "gtfs_rt": null },

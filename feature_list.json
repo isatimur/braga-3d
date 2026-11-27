@@ -842,6 +842,28 @@
         "2026-11-27 (foot ribbons off the paving, on main + fix/praca-fountain + this branch): roads.js cuts 18002 quads (pedestrian streets, carriageway + kerbed sidewalk), streetscape.js 4984 more (squares, landmark paving, walk district); lawn cells: avenida-central 3295, santa-barbara 489. Walker close-ups at the Praça fountain and map views at Praça da República, Avenida Central, the Sé and Avenida da Liberdade: no grey strip on the waves, the garden and park paths stay. npm test 148/148; npm run verify OK; check-walk full: all passed (one run failed 'phone: a vehicle pushes the walker out' at 0.78 m, a random-traffic check; the rerun passed at 2.70 m), desktop 272 calls / 2.88 M (329 / 3.36 M), phone 160 / 1.40 M (191 / 1.59 M), no limit raised"
       ],
       "notes": "Root cause: fetch-roads.mjs asked for footway classes only with a bridge tag and roads.js skipped non-bridge foot ways. Geometry error was the 5 m Douglas-Peucker tolerance plus r5 rounding. braga-042 left free for the parallel fix/praca-fountain branch. Follow-ups in the audit doc: area:highway polygons, OSM crossings for zebras, width tags on car streets."
+    },
+    {
+      "id": "braga-044",
+      "priority": 44,
+      "area": "map",
+      "title": "Fountains polish: the Fonte do Pelicano, sprays from the real nozzles, no false pond, the OSM credit on screen",
+      "user_visible_behavior": "The Fonte do Pelicano stands in the Praça do Município on its OSM outline: two round steps, the quatrefoil tank with water, the central bowl with the carved group, the armillary sphere and the crowned pelican, four cherubs on globes throwing arcs of water. The walker and the crowd keep out of the tank. Fountain sprays start at the model's nozzle or basin (a named marker), not at the highest surface within 12 m: Santa Bárbara from its upper bowl (2.7 m, was the saint's head 4.9 m), Tibães from the cloister fountain the model draws (was 10 m up on a roof). The square OSM 'pond' east of the Praça da República fountain (a lawn) is no longer drawn as water. A small line '© OpenStreetMap contributors · EU-DEM © Copernicus · Microsoft Buildings' (OSM link to the copyright page; pt/ru translated; phone: the first two) is always on screen and covers no control.",
+      "status": "passing",
+      "verification": [
+        "npm test",
+        "npm run verify",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs --base <served build> (full; new check: the monument's tank blocks the walker)",
+        "probes in /tmp/pel: shots.mjs, close.mjs (before/after per fountain), crowd.mjs (tank vs walker, lanes, spots, people), attr.mjs (credit at 1280x800 and 390x844, ru/en/pt, map/walk/place card)"
+      ],
+      "evidence": [
+        "2026-11-27: emitters over the terrain, before -> after (walk mode): Santa Bárbara 4.93 -> 2.72 m (marker + nozzle 1.12), tibaes-claustro 10.0 m on a roof -> 3.6 m at the urn of the cloister fountain (life.json now n11236952966; n11236952965 lies under the model's roofed mass), tibaes-horta 1.81 -> 3.6 m (urn), Praça 0.98 -> 0.78 m (nozzle boss top), evangelistas 0.27 -> 0.07 m (basin marker), spouts unchanged (basin + 0.9 m); avenida-central, largo-santa-barbara, castelos, bom-jesus-lago have no model fountain near their OSM point and keep a ground-level start (search capped at 1.5 m, not 12 m)",
+        "2026-11-27: Pelicano tank fitted to OSM w471758019: mean 0.04 m, max 0.22 m off its 53 points; 7.7k triangles; walk.free false at the centre, 3 m and in a lobe, true 7 m out on four sides; 0 of 146338 lane samples, 0 of 2102 spots, 0 people (40 samples, 281 seen on average) in the tank",
+        "2026-11-27: w132951676: cached data had leisure=garden + water=reflecting_pool, OSM now leisure=garden only; drone photo (Commons, Joseolgon 2018) shows a lawn; cities/braga.json not_water drops it from the ponds and the walker's water rings",
+        "2026-11-27: credit line: no overlap with any control in 18 states (desktop/phone x ru/en/pt x map/walk/place card); OSM link https://www.openstreetmap.org/copyright",
+        "2026-11-27: npm test 148/148; npm run verify OK; check-walk full: run 1 failed only 'phone: a vehicle pushes the walker out' (0.93 m, random traffic), run 2 only the scooter taxi driver 'mission people stand on the paving' (sunk 0.23 m), run 3 all passed; budget desktop 273 calls / 2.89 M (limit 329 / 3.36 M), phone 160 / 1.39 M (191 / 1.59 M), no limit raised"
+      ],
+      "notes": "New engine piece: cities/<id>.json monuments + src/monuments.js + models.js buildMonument (small models that are not landmarks, no card). Fonte do Pelicano has no particle spray (life.json fountains belong to landmarks); its jets are static streams. STREET 0.43 m is measured at this site (the calçada carpet over the terrain): re-probe if the street layer's lift changes."
     }
   ]
 }

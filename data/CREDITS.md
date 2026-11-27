@@ -235,6 +235,20 @@ The school blocks of `dmaria-ii` and `leonardo-da-vinci` that OSM does not map c
 
 We take only facts (numbers and counts) from these pages and cite each one; we reproduce no article text.
 
+## On-screen credit
+
+The map and walk mode always show one small line in the bottom-right corner: "© OpenStreetMap contributors" (linked to https://www.openstreetmap.org/copyright, translated in pt and ru), "EU-DEM © Copernicus" and, on screens wider than 900 px, "Microsoft Buildings". The photo credits stay on each place card; this file lists every source.
+
+## Monuments (small models that are not landmarks)
+
+`cities/braga.json` `monuments` lists them with their sources; the models live in `src/models/`.
+
+| Id | Sources |
+|---|---|
+| fonte-pelicano | Basin outline and position: OSM way 471758019 (© OpenStreetMap contributors, ODbL 1.0), a quatrefoil fitted to its 53 points (mean 0.04 m off). Form: https://pt.wikipedia.org/wiki/Fonte_do_Pelicano (facts only). Heights: estimates from Wikimedia Commons photos "Braga Fonte do Pelicano.jpg" (Júlio Reis, CC BY-SA 3.0), "Braga-Fonte do Pelicano-06-2011-gje.jpg" (Gerd Eichmann, CC BY-SA 4.0) and "Câmara Municipal de Braga e Fonte do Pelicano.JPG" (Béria Lima de Rodríguez, CC BY-SA 3.0). We show none of these photos. |
+
+`cities/braga.json` `not_water` lists OSM areas that our data still holds as water but are not water on the ground. `w132951676` (east of the Praça da República fountain) was tagged `leisure=garden` + `water=reflecting_pool` when we fetched `data/nature.json`; OSM dropped the water tag by 2026-11-27, and the drone photos "Aerial photographs of Praça da República (3).jpg" (Joseolgon, CC BY-SA 4.0, Wikimedia Commons) show a lawn with a palm tree there.
+
 ## Microsoft building footprints
 
 `data/buildings-ms.json` and `data/tiles-ms/`: Microsoft Global ML Building Footprints, © Microsoft, Open Database License (ODbL 1.0), https://github.com/microsoft/GlobalMLBuildingFootprints. We fetched them with `scripts/fetch-ms-buildings.mjs`, simplified the outlines, dropped every outline that overlaps an OpenStreetMap building or a landmark, and estimated the missing heights from the footprint area and the nearby OSM buildings.

@@ -92,8 +92,12 @@ in `scripts/` import them.
   `extrudeRoofed(T, pts, plan, g)`, `FACADE_VERT_PARS`, `FACADE_VERT`,
   `FACADE_FRAG_PARS`, `FACADE_FRAG`.
 - `models.js` - re-exports `PALETTE`, `MAT`, `triangleCount`; `LANDMARK_SPECS`,
-  `MODEL_TYPES`, `registerModels({ builders, specs })`, `loadCityModels(id)`,
-  `specFor`, `isMetric`, `builderRule`, `buildModel(type, landmarkId, site)`.
+  `MODEL_TYPES`, `registerModels({ builders, specs, monuments })`, `loadCityModels(id)`,
+  `specFor`, `isMetric`, `builderRule`, `buildModel(type, landmarkId, site)`,
+  `buildMonument(id)` returns `{ geometry, outline }` or null.
+- `monuments.js` - `buildMonuments({ list, project, heightAt, material })`
+  returns `{ group, polys, items }`: small models that are not landmarks
+  (`cities/<id>.json` `monuments`); `polys` keep the walker and the crowd out.
 - `fit.js` (no DOM) - `setDims(dims)`, `DEVIATION_WARN`, `DEVIATION_FAIL`,
   `SHRINK_MIN`, `shrinkCheck(fit)`, `FIT_RULES`, `dimsFor`, `dirOf`,
   `bearingOf`, `siteFrame`, `fitLandmark(l, ctx)`, `padFor(fit)`.

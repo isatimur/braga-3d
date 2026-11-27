@@ -293,6 +293,7 @@ export const messages = {
   'Мы храним место, категорию, ваш текст и e-mail, если вы его дали. Их читает только автор карты в личном чате и использует только для исправления карты.': ['Guardamos o local, a categoria, o seu texto e, se o indicar, o seu e-mail. Só o autor do mapa os lê, num chat privado, e usa-os apenas para corrigir o mapa.', 'We keep the place, the category, your text and, if you give it, your e-mail. Only the map\'s author reads them, in a private chat, and uses them only to fix the map.'],
   'Отмена': ['Cancelar', 'Cancel'],
   'Исправить в OpenStreetMap': ['Corrigir no OpenStreetMap', 'Fix in OpenStreetMap'],
+  '© участники OpenStreetMap': ['© colaboradores do OpenStreetMap', '© OpenStreetMap contributors'],
   'OpenStreetMap — общая открытая карта; заметка там будет видна всем.': ['O OpenStreetMap é um mapa aberto e partilhado; a nota fica pública.', 'OpenStreetMap is a shared, open map; the note there is public.'],
   'Если это название улицы или магазина': ['Se for o nome de uma rua ou loja', 'If it is a street or shop name'],
   'Спасибо! Мы получили ваше сообщение.': ['Obrigado! Recebemos a sua mensagem.', 'Thank you! We got your report.'],

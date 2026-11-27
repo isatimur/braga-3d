@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-28",
+ "generated": "2026-11-27",
  "funicular": {
   "name": "Elevador do Bom Jesus do Monte (1882)",
   "source": "OSM Overpass railway=funicular (8 ways)",
@@ -143,12 +143,12 @@
    "id": "tibaes-claustro",
    "site": "tibaes",
    "name": "Mosteiro de Tibães",
-   "lat": 41.555619,
-   "lon": -8.478752,
+   "lat": 41.55568,
+   "lon": -8.478455,
    "kind": "jet",
    "h": 1.8,
    "r": 1.5,
-   "osm": "n11236952965",
+   "osm": "n11236952966",
    "source": "osm amenity=fountain"
   },
   {

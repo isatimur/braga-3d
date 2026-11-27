@@ -628,9 +628,13 @@ export function buildNature(opts) {
   const STREAM = opts.streamCap ?? (opts.mobile ? 2500 : 8000);
 
   // ---- project
+  // OSM areas our data still holds as water that are not water on the
+  // ground (cities/<id>.json not_water): no pond, no water ring for the walker
+  const notWater = new Set(CITY.not_water || []);
   const areas = [];
   for (const a of data.areas) {
     if (!Array.isArray(a.r) || !a.r.length) continue;
+    if (a.k === 'water' && notWater.has(a.id)) continue;
     const rings = a.r.map((ring) => ring.map((q) => project(q[0], q[1]))).filter((r) => r.length >= 3);
     if (!rings.length) continue;
     const area = Math.max(0, ringArea(rings[0]) - rings.slice(1).reduce((s, r) => s + ringArea(r), 0));

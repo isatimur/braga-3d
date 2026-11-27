@@ -47,6 +47,8 @@ import uminho from './models/uminho.js';
 import dmaria from './models/dmaria.js';
 import frutuoso from './models/frutuoso.js';
 import diogoSousa from './models/diogosousa.js';
+// small modelled objects that are not landmarks (src/monuments.js)
+import pelicano from './models/pelicano.js';
 
 const METRIC = { ...bomJesus, ...sameiro, ...se, ...santaCruz, ...tibaes, ...arco, ...torre, ...raio, ...theatro, ...biscainhos, ...praca, ...avenida, ...santaBarbara, ...estadio, ...termas, ...fonteIdolo, ...populo, ...ucp, ...maio, ...parque, ...forum, ...leonardo, ...coimbras, ...congregados, ...nogueira, ...saoMarcos, ...uminho, ...dmaria, ...frutuoso, ...diogoSousa };
 
@@ -102,8 +104,9 @@ export const MODEL_TYPES = Object.keys(TYPE_DEFAULT);
 // src/models/<city>/). main.js and the check scripts call
 // loadCityModels(CITY.id) before the first buildModel(). A landmark whose
 // id has no builder falls back by model type, then to 'santa-cruz'.
-export function registerModels({ builders = {}, specs = {} } = {}) {
+export function registerModels({ builders = {}, specs = {}, monuments = {} } = {}) {
   Object.assign(BUILDERS, builders);
+  Object.assign(MONUMENTS, monuments);
   Object.assign(LANDMARK_SPECS, specs);
   for (const [id, s] of Object.entries(specs)) {
     if (s?.type && !TYPE_DEFAULT[s.type] && builders[id]) {
@@ -169,4 +172,20 @@ export function buildModel(type, landmarkId, site = null) {
   g.userData.type = spec.type;
   g.userData.builder = id;
   return g;
+}
+
+// ------------------------------------------------------------ monuments
+// Small models that are not landmarks (cities/<id>.json monuments): a
+// metric builder (metres, origin at the object's centre on the ground, +x
+// east, +z south) with builder.outline(): the plan the walker and the
+// crowd keep out of, in the same frame. Returns { geometry, outline } or
+// null for an unknown id.
+const MONUMENTS = { ...pelicano };
+
+export function buildMonument(id) {
+  const fn = MONUMENTS[id];
+  if (!fn) return null;
+  const k = new Kit(hash(id));
+  fn(k);
+  return { geometry: k.build(), outline: fn.outline?.() ?? [] };
 }

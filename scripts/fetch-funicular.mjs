@@ -89,7 +89,10 @@ const FOUNTAINS = [
   { id: 'santa-barbara-castelos', site: 'santa-barbara', name: 'Fonte dos Castelos', pick: (p) => /Castelos/.test(p.name || ''), kind: 'jet', h: 1.2, r: 1 },
   { id: 'bom-jesus-lago', site: 'bom-jesus', name: 'Fonte do Lago', pick: (p) => /Lago/.test(p.name || ''), kind: 'jet', h: 2.2, r: 1.5 },
   { id: 'bom-jesus-evangelistas', site: 'bom-jesus', name: 'Terreiro dos Evangelistas', at: [41.556432, -8.376067], kind: 'jet', h: 2.4, r: 2.2 },
-  { id: 'tibaes-claustro', site: 'tibaes', name: 'Mosteiro de Tibães', pick: (p, i) => i === 1, kind: 'jet', h: 1.8, r: 1.5 },
+  // the cloister fountain the model draws (water point 2, n11236952966);
+  // point 1 lies under the model's roofed mass, where the spray rose from
+  // the roof 10 m up
+  { id: 'tibaes-claustro', site: 'tibaes', name: 'Mosteiro de Tibães', pick: (p, i) => i === 2, kind: 'jet', h: 1.8, r: 1.5 },
   { id: 'tibaes-horta', site: 'tibaes', name: 'Mosteiro de Tibães', pick: (p, i) => i === 3, kind: 'jet', h: 1.4, r: 1.2 },
 ];
 
