@@ -715,6 +715,27 @@
         "2026-11-26: camera distance 3.52 m at start (was 4.4 m), 1.76 m zoomed in, 7.03 m zoomed out; walk still active; no page errors; screenshots viewed"
       ],
       "notes": "ZOOM_MIN/ZOOM_MAX/ZOOM_START in src/walk.js; the wheel listener is on the canvas in the capture phase and stops propagation only while the walk is active in third person."
+    },
+    {
+      "id": "braga-038",
+      "priority": 38,
+      "area": "perf",
+      "title": "Walk budget: check-walk measures and limits the walk frame",
+      "user_visible_behavior": "No change for visitors. scripts/check-walk.mjs measures the draw calls and triangles of a walk frame at the /play start (fixed clock, pinned class, governor frozen at level 0, settled scene, 240 frames) and FAILs when p95 is above the walk limits in perf/budgets.json or p50 below their floors. --budget only runs the probe alone; --record prints proposed limits.",
+      "status": "passing",
+      "verification": [
+        "npm test (scripts/frame-budget.test.mjs)",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs [--budget only] (served build)",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs --record",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-27: --record 5 of 5 runs ok per profile, spread 0.0 %; desktop p50/p95 272/274 calls, 2.78/2.79 M triangles; phone 159 calls, 1.32 M; limits desktop 329 calls, 3.36 M, floors 136, 1.38 M; phone 191, 1.59 M, floors 79, 0.66 M",
+        "2026-11-27: default check-walk exit 0 (both budget lines at 83 %), 1:55; --budget off exit 0, same 78 lines as main, 1:25",
+        "2026-11-27: negative tests exit 1: tight calls (calls p95 274 > limit 246), floor (scene is broken), start +10 m (start moved 10.0 m)",
+        "2026-11-27: npm test 125/125"
+      ],
+      "notes": "Spec docs/specs/walk-budget.md. scripts/frame-budget.mjs is engine-shared (Porto holds a byte-identical copy). Desktop frames alternate 274 (shadow pass) and 200 calls; p50 lands on a shadow frame because exactly half are. Braga's walk starts before the street is built (walk.state.lanes 0), so the start is collider.freeNear(), the same place every run. Raise a walk limit only per spec §6 (phone JSON, before/after counts, a fresh --record block)."
     }
   ]
 }
