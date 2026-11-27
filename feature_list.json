@@ -819,6 +819,29 @@
         "2026-11-27: npm test 148/148; npm run verify OK (praca-republica 28512 tris, total 514106); check-walk all passed incl. the new pool check; --budget only: desktop 274/278 calls, 2.77/2.80 M triangles; phone 159 calls, 1.32 M"
       ],
       "notes": "Roadmap item 3 expected braga-042; this issue took the id. The model lifts the fountain by STREET = 0.6 m (the calçada level over the model's zero at this site, measured). landmarkFloors gets the landmarks' OSM water parts (pools): at() is NaN there, and under a basin that stands above the paving the carpet runs on, so its edge is the rim. cities/braga.json model_water lists OSM water areas a model draws itself (water.js skips them)."
+    },
+    {
+      "id": "braga-043",
+      "priority": 43,
+      "area": "data",
+      "title": "OSM roads audit: footways, steps, alleys and service ways in the centre; 1 m geometry",
+      "user_visible_behavior": "Within 2.1 km of the origin the map draws every OSM footway, path, cycleway, steps, track and service way (sidewalks, crossings and alleys included; not indoor, underground, raised or private ones), not only footbridges. A foot way shows only where nothing else paves its ground: not on the calçada squares, a landmark's paving, the walk district, the pedestrian streets or a street's kerbed sidewalk; it stays across lawns, gardens and open ground. Street and footway geometry there is simplified to 1 m with 6 decimals, so the drawn centre lines lie within about 1 m of OSM (was up to 6 m).",
+      "status": "passing",
+      "verification": [
+        "node scripts/fetch-roads.mjs (one Overpass request)",
+        "npm test",
+        "npm run verify",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs --base <served build> --budget only",
+        "docs/osm-audit-2026-11-27.md (numbers and before/after/OSM images)"
+      ],
+      "evidence": [
+        "2026-11-27: audit vs fresh OSM (osm3s 2026-11-27T15:11Z), 1.5 km around the Sé: missing 4932 ways / 218.3 km before, 417 / 40.8 km after (the rest dropped on purpose or area:highway polygons); no named car street was missing before",
+        "2026-11-27: accuracy ours-to-OSM in the centre: mean 0.70-0.78 m, max 5.3 m on streets before; mean 0.07-0.11 m, max 1.04 m after",
+        "2026-11-27: data/roads.json 6150 -> 14034 features, gzip 226 -> 514 KB",
+        "2026-11-27: npm test 148/148; npm run verify OK; check-walk --budget only: desktop 274 calls, 2.89 M triangles (limits 329, 3.36 M); phone 160 calls, 1.40 M (191, 1.59 M); old data on the same build 274/2.79 M and 159/1.32 M; check-walk --budget off all passed",
+        "2026-11-27 (foot ribbons off the paving, on main + fix/praca-fountain + this branch): roads.js cuts 18002 quads (pedestrian streets, carriageway + kerbed sidewalk), streetscape.js 4984 more (squares, landmark paving, walk district); lawn cells: avenida-central 3295, santa-barbara 489. Walker close-ups at the Praça fountain and map views at Praça da República, Avenida Central, the Sé and Avenida da Liberdade: no grey strip on the waves, the garden and park paths stay. npm test 148/148; npm run verify OK; check-walk full: all passed (one run failed 'phone: a vehicle pushes the walker out' at 0.78 m, a random-traffic check; the rerun passed at 2.70 m), desktop 272 calls / 2.88 M (329 / 3.36 M), phone 160 / 1.40 M (191 / 1.59 M), no limit raised"
+      ],
+      "notes": "Root cause: fetch-roads.mjs asked for footway classes only with a bridge tag and roads.js skipped non-bridge foot ways. Geometry error was the 5 m Douglas-Peucker tolerance plus r5 rounding. braga-042 left free for the parallel fix/praca-fountain branch. Follow-ups in the audit doc: area:highway polygons, OSM crossings for zebras, width tags on car streets."
     }
   ]
 }
