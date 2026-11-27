@@ -158,16 +158,22 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
 
   // where each person stands: the spot, nudged to the nearest open ground. Open:
   // free all round within 1.5 m, so a person never waits in a niche of a wall
-  // that the walker cannot get into (Amélia at the Sé did)
+  // that the walker cannot get into (Amélia at the Sé did), and never under a
+  // drawn roof (she then waited inside the Sé's porch, waist-deep in its floor)
+  const roofed = (x, z) => walk.standAt?.(x, z).roofed ?? false;
+  // the height a person, a scooter or a stop stands at: the drawn surface the
+  // walker stands on (a square's paving, a porch), not the terrain, where the
+  // paving hid the legs
+  const standY = (x, z) => (walk.standAt ? walk.standAt(x, z).y : heightAt(x, z) + RIBBON_LIFT);
   const open = (x, z) => {
-    if (!walk.free(x, z)) return false;
+    if (!walk.free(x, z) || roofed(x, z)) return false;
     for (let a = 0; a < 8; a++) if (!walk.free(x + Math.cos((a * Math.PI) / 4) * 1.5 * M, z + Math.sin((a * Math.PI) / 4) * 1.5 * M)) return false;
     return true;
   };
   const people = PEOPLE.map((p) => {
     const c = project(p.at[0], p.at[1]);
     let x = c.x, z = c.z;
-    search: for (const ok of [open, walk.free]) {
+    search: for (const ok of [open, (tx, tz) => walk.free(tx, tz) && !roofed(tx, tz), walk.free]) {
       for (let d = 0; d < 30 * M; d += 0.5 * M) {
         for (let a = 0; a < 12; a++) {
           const tx = c.x + Math.cos((a * Math.PI) / 6) * d, tz = c.z + Math.sin((a * Math.PI) / 6) * d;
@@ -175,7 +181,7 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
         }
       }
     }
-    const y = heightAt(x, z) + RIBBON_LIFT;
+    const y = standY(x, z);
     const col = beam(0xffc24a, 0.55, 7);
     col.position.set(x, y, z);
     group.add(col);
@@ -236,7 +242,7 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
     }
     const mesh = scooterMesh();
     mesh.scale.setScalar(M);
-    mesh.position.set(x, heightAt(x, z) + RIBBON_LIFT, z);
+    mesh.position.set(x, standY(x, z), z);
     mesh.rotation.y = -along(x, z); // parked along the street (rotation.y is minus the heading)
     group.add(mesh);
     return mesh;
@@ -311,7 +317,7 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
     const s = m.stops[k];
     if (typeof s === 'string') return byId[s];
     const c = project(s[0], s[1]);
-    return { x: c.x, z: c.z, y: heightAt(c.x, c.z) + RIBBON_LIFT };
+    return { x: c.x, z: c.z, y: standY(c.x, c.z) };
   }
   function start(m) {
     run = { m, stop: 0, left: m.seconds };

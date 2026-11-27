@@ -736,6 +736,27 @@
         "2026-11-27: npm test 125/125"
       ],
       "notes": "Spec docs/specs/walk-budget.md. scripts/frame-budget.mjs is engine-shared (Porto holds a byte-identical copy). Desktop frames alternate 274 (shadow pass) and 200 calls; p50 lands on a shadow frame because exactly half are. Braga's walk starts before the street is built (walk.state.lanes 0), so the start is collider.freeNear(), the same place every run. Raise a walk limit only per spec §6 (phone JSON, before/after counts, a fresh --record block)."
+    },
+    {
+      "id": "braga-040",
+      "priority": 40,
+      "area": "walk",
+      "title": "Walk into squares and gardens; stand on the landmark models' paving",
+      "user_visible_behavior": "In walk mode the walker can enter Praça da República, Avenida Central, the Santa Bárbara garden, Parque da Ponte, the Bom Jesus stairway and the Roman baths: their outlines are no longer walls. The walker and the /play mission people stand on a landmark model's floor (the Sé porch, a square's paving) instead of waist-deep in it. Amélia no longer waits under the Sé porch roof.",
+      "status": "passing",
+      "verification": [
+        "npm test",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs (served build)",
+        "npm run verify"
+      ],
+      "evidence": [
+        "2026-11-28 live site before: walk.free false at the centre of every open landmark (Praça da República 19/81 grid points free, Avenida Central 26/81, Parque da Ponte 26/81); under Amélia the Sé model drew a floor 0.5 m above her feet and a roof 9.5 m up, and she stood on calcada-squares",
+        "2026-11-28 branch: the walker walked from the street into Praça da República (insideSquare true) onto the wave paving; Amélia moved 7 m to open paving, roofed false, her height equals the drawn surface; flood fill from the /play start reaches all mission people and the scooter",
+        "2026-11-28: check-walk all passed, incl. new checks (/play: 8 mission people on the paving, none under a roof; desktop and phone may enter Praça da República and Avenida Central); budget unchanged (desktop 272 calls, 2.78 M triangles; phone 159, 1.32 M)",
+        "2026-11-28: full surface read on a teleport 165 ms before, 215 ms after (landmark meshes scanned); the walk builds it in 3 ms slices, so only the start and teleports pay it",
+        "2026-11-28: npm test 125/125, npm run verify OK"
+      ],
+      "notes": "Ported from Porto: WALKABLE includes landmark-*, CLIMB 1.8 m for landmark floors, cities/<city>.json walk_open_landmarks. New walk.standAt(x, z) -> { y, roofed } for street-missions.js. Open landmarks have no solid parts now: the walker passes through their fountains, kiosks and statues (as in Porto)."
     }
   ]
 }

@@ -1287,7 +1287,11 @@ async function start() {
       walkLoad = Promise.all([import('./walk.js'), import('./walk-collide.js')]).then(([{ createWalk }, { gatePiers }]) => {
         // a gate over a street blocks only at its piers: the walker goes through
         const GATES = { 'arco-porta-nova': 0.5 }; // id -> share of the long side open
-        const walkPolys = landmarks.flatMap((l, i) => (!outlines[i] ? [] : GATES[l.id] ? gatePiers(outlines[i], GATES[l.id]) : [outlines[i]]));
+        // a landmark people walk on (a square, an avenue, a garden, a park, a
+        // stairway) is not solid: its outline was a wall round the whole
+        // Praça da República and Avenida Central (cities/braga.json)
+        const WALK_OPEN = new Set(CITY.walk_open_landmarks || []);
+        const walkPolys = landmarks.flatMap((l, i) => (!outlines[i] || WALK_OPEN.has(l.id) ? [] : GATES[l.id] ? gatePiers(outlines[i], GATES[l.id]) : [outlines[i]]));
         walk = createWalk({
           camera,
           rig,
