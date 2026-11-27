@@ -75,7 +75,9 @@ const KEYS = {
 // places: () => [{ i, name, x, z, outline }] (world units), read at start;
 // onPlace(i): the visitor asked for that place's card (the mode has ended)
 // street: () => the built street layer ({ lanes, spots }) or null
-export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], street = () => null, water = () => null, reducedMotion = false, bounds = null, onEnter, onExit, onPlace }) {
+// onReport(): the "Fix the map" panel (src/report.js); with it the HUD shows
+// a report button, without it none
+export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = () => [], street = () => null, water = () => null, reducedMotion = false, bounds = null, onEnter, onExit, onPlace, onReport }) {
   // Open water blocks the walker, but not where a street, a sidewalk or a
   // paved square is drawn over it (a bridge, a quay).
   let wet = null;
@@ -459,11 +461,13 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     <button type="button" class="walk-exit">${t('Наверх')}</button>
     <button type="button" class="walk-view" aria-pressed="false">${t('От первого лица')}</button>
     <button type="button" class="walk-place" hidden></button>
+    ${onReport ? `<button type="button" class="walk-report">${t('Исправить карту')}</button>` : ''}
     <p class="walk-hint walk-hint-keys">${t('WASD — идти, мышь — смотреть, Shift — бегом, V — вид')}</p>
     <p class="walk-hint walk-hint-touch">${t('Стик — идти, проведите по экрану — смотреть')}</p>
     <div class="walk-stick" role="group" aria-label="${t('Направление шага')}"><span class="walk-stick-knob"></span></div>`;
   document.body.appendChild(root);
   root.querySelector('.walk-exit').addEventListener('click', () => stop());
+  root.querySelector('.walk-report')?.addEventListener('click', () => onReport());
   const viewBtn = root.querySelector('.walk-view');
   function setView(next) {
     view = next === 'first' ? 'first' : 'third';

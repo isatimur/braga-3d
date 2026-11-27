@@ -28,6 +28,7 @@ import { assetUrl } from './data.js';
 import { createRouteLayer, createFlyAlong } from './routes.js';
 import { createPanorama } from './panorama.js';
 import { installShare } from './share.js';
+import { installReport } from './report.js';
 import { createLife } from './life.js';
 import { createSeasons } from './seasons.js';
 import { createFlyKeys } from './fly.js';
@@ -752,6 +753,9 @@ async function start() {
   rig.controls.target.copy(home.target);
   rig.controls.update();
   debug.rig = rig; // scripted views for screenshots: __braga.rig.flyTo(pos, target, s)
+  // "Fix the map" (src/report.js): null unless the URL has ?report=1
+  const report = installReport({ cityId: CITY.id, proj, getTarget: () => rig.controls.target, getWalk: () => walk, language });
+  debug.report = report;
 
   const ui = createUI(landmarks, routes, {
     onSelect: (i) => select(i),
@@ -1303,6 +1307,7 @@ async function start() {
           street: () => life?.street?.built ?? null,
           // the card belongs to the map view: the walk ends, then the place opens
           onPlace: (i) => select(i),
+          onReport: report ? () => report.open() : undefined,
           reducedMotion,
           bounds: terrain.bounds,
           water: () => nature?.waterRings ?? null,

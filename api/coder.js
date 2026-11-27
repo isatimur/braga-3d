@@ -27,8 +27,8 @@
 // Rate limits live in this instance's memory (several instances each count
 // on their own): a brake on spam, not a guarantee.
 import { validSid, cleanText, createRateLimiter, formatMessage, filterReplies, clientIp } from './_coder-core.js';
+import { telegram } from './_telegram.js';
 
-const TIMEOUT_MS = 5000;
 const CACHE_MS = 3000;
 const MAX_BODY = 4096;
 
@@ -41,25 +41,6 @@ function env() {
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
   const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
   return token && chatId ? { token, chatId } : null;
-}
-
-async function telegram(token, method, body) {
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
-  try {
-    const r = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: ctl.signal,
-    });
-    const j = await r.json().catch(() => null);
-    // the error carries no token: Telegram's description, the status
-    if (!j?.ok) throw new Error(`telegram ${method}: ${r.status} ${j?.description || ''}`.trim());
-    return j.result;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 let updates = { at: 0, promise: null };

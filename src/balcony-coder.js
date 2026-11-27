@@ -761,6 +761,7 @@ export function createBalconyCoder({ scene, camera, project, heightAt, footprint
   }
   window.addEventListener('keydown', (e) => {
     if (e.code !== 'KeyT' || e.repeat || !promptEl || promptEl.hidden || isOpen()) return;
+    if (document.querySelector('dialog[open]')) return; // a dialog (the report panel) owns the keys
     if (e.target?.closest?.('input, textarea, select, [contenteditable]')) return;
     e.preventDefault();
     open();

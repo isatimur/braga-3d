@@ -38,6 +38,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { cityConfig } from './_city.js';
+import { crossOrigin, readBody } from './_http.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -412,42 +413,7 @@ export function resetLimits() {
 
 const clientIp = (req) => String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
 
-// Same origin only: a browser's Origin (or Sec-Fetch-Site) must match the
-// Host this function answers on (production, previews and localhost alike).
-function crossOrigin(req) {
-  const site = req.headers['sec-fetch-site'];
-  if (site && site !== 'same-origin' && site !== 'none') return true;
-  const origin = req.headers.origin;
-  if (!origin) return false;
-  try {
-    return new URL(origin).host !== String(req.headers['x-forwarded-host'] || req.headers.host || '');
-  } catch {
-    return true;
-  }
-}
-
-async function readBody(req) {
-  if (req.body != null && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return { json: req.body, size: JSON.stringify(req.body).length };
-  let text;
-  if (typeof req.body === 'string') text = req.body;
-  else if (Buffer.isBuffer(req.body)) text = req.body.toString('utf8');
-  else {
-    const chunks = [];
-    let size = 0;
-    for await (const ch of req) {
-      size += ch.length;
-      if (size > MAX_BODY) return { size };
-      chunks.push(ch);
-    }
-    text = Buffer.concat(chunks).toString('utf8');
-  }
-  if (Buffer.byteLength(text) > MAX_BODY) return { size: Buffer.byteLength(text) };
-  try {
-    return { json: JSON.parse(text), size: text.length };
-  } catch {
-    return { json: undefined, size: text.length };
-  }
-}
+// crossOrigin and readBody (the same-origin rule, the 4 KB read): api/_http.js
 
 // ---------------------------------------------------------------- handler
 export default async function handler(req, res) {
@@ -466,7 +432,7 @@ export default async function handler(req, res) {
   if (wait) return send(429, { error: 'rate_limited' }, { 'Retry-After': String(wait) });
   let body;
   try {
-    body = await readBody(req);
+    body = await readBody(req, MAX_BODY);
   } catch {
     return send(400, { error: 'bad_request', detail: 'unreadable body' });
   }

@@ -370,6 +370,7 @@ export function createStreetMissions({ scene, walk, project, heightAt, heading =
   });
   const onKey = (e) => {
     if (!walk.active || e.repeat || e.target?.closest?.('input, textarea')) return;
+    if (document.querySelector('dialog[open]')) return; // a dialog (the report panel) owns the keys
     if (e.code === 'KeyE' && near && !talking && !walk.riding) {
       e.preventDefault();
       talk(near);

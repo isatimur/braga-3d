@@ -20,6 +20,7 @@
     "check:fit": "node scripts/check-fit.mjs",
     "check:traffic": "node scripts/check-traffic.mjs",
     "check:models": "node scripts/count-tris.mjs",
+    "check:report": "node scripts/check-report.mjs",
     "city": "node scripts/city.mjs"
   },
   "dependencies": {
