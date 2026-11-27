@@ -27,6 +27,9 @@ const dataDir = CITY === 'braga' ? 'data' : `data/${CITY}`;
 const has = (...parts) => existsSync(join(ROOT, ...parts));
 
 const checks = [
+  // unit tests first: CI runs only verify, so without this step a failing
+  // unit test never fails a build
+  { name: 'unit tests', cmd: ['npm', 'test'], needs: [] },
   { name: 'build', cmd: ['npm', 'run', 'build'], needs: [] },
   // the Layers panel's sizes (<data dir>/layers.json) match the build just made
   { name: 'layers manifest', cmd: ['node', 'scripts/layers-manifest.mjs', '--check', '--city', CITY], needs: [`${dataDir}/layers.json`] },
