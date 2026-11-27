@@ -12,6 +12,7 @@ import { initPerf, showNotice } from './perf.js';
 import { CLASSES, MAX_PRESSURE, knobsFor, modeToClass } from './perf-classes.js';
 import { buildRoads } from './roads.js';
 import { buildLandmarks } from './landmarks.js';
+import { buildMonuments } from './monuments.js';
 import { buildBuildings, BUILDING_UNIFORMS, setBuildingsLite } from './buildings.js';
 import { WALK_LOD, WALK_FAR_U, WALK_GROUND, walkTiersU, walkCasts } from './walk-lod.js';
 import { buildNature } from './nature.js';
@@ -270,6 +271,12 @@ async function start() {
   // during a history route a label click is a find-on-map pick (quest.js)
   const marks = buildLandmarks(landmarks, fits, heightAt, outlines, (i) => (quest?.active ? quest.mapPick(i) : select(i)));
   scene.add(marks.group);
+  // small models that are not landmarks (the Fonte do Pelicano): the walker
+  // and the crowd keep out of their plans, as out of a house
+  const monuments = buildMonuments({ list: CITY.monuments || [], project, heightAt, material: marks.material });
+  scene.add(monuments.group);
+  debug.monuments = monuments.items;
+  const solidPolys = monuments.polys.length ? [...city.footprints, ...monuments.polys] : city.footprints;
   debug.landmarks = marks.items.map((it) => ({
     id: it.data.id,
     type: it.type,
@@ -1306,7 +1313,7 @@ async function start() {
           heightAt,
           dom: canvas,
           scene,
-          polys: [...city.footprints, ...walkPolys],
+          polys: [...solidPolys, ...walkPolys],
           places: () => marks.items.map((it, i) => ({ i, name: it.labelEl.textContent, x: it.center.x, z: it.center.z, outline: outlines[i] })),
           street: () => life?.street?.built ?? null,
           // the card belongs to the map view: the walk ends, then the place opens
@@ -2160,7 +2167,7 @@ async function start() {
     await step('nature', buildNatureLayer);
     await step('life', () => {
       // footprints, outlines: where the people of streetscape.js may not walk
-      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: city.footprints, outlines, pools, roadGroup: roadLayer.group, layers: { street: layers.on('street'), live: layers.on('live') } });
+      life = createLife({ renderer, scene, camera, atmosphere, project, heightAt, roads, items: marks.items, nature, fx, reducedMotion, mobile: LITE, lite: LITE, debug, setHash: () => setHash(currentHash()), footprints: solidPolys, outlines, pools, roadGroup: roadLayer.group, layers: { street: layers.on('street'), live: layers.on('live') } });
       // the status pill follows the first load of the two life layers
       if (layers.on('street')) track('street', life.setStreet(true));
       if (layers.on('live')) track('live', life.setLive(true));
