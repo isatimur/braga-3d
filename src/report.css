@@ -1,0 +1,94 @@
+/* "Fix the map" panel (src/report.js): the HUD tokens of src/style.css */
+.report {
+  width: min(460px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  overflow: auto;
+  color: var(--text);
+  background: var(--glass-strong);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+.report::backdrop { background: rgba(10, 8, 6, 0.55); }
+.report-form { display: grid; gap: 10px; padding: 18px 18px 16px; }
+.report-head { display: flex; gap: 12px; align-items: center; }
+.report-head h2 { margin: 0; font: 600 18px/1.2 var(--sans); color: var(--text); }
+.report-place { margin: 2px 0 0; font-size: 12.5px; color: var(--text-2); }
+/* a small crosshair: "the centre of the screen" */
+.report-cross {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+}
+.report-cross::before, .report-cross::after { content: ''; position: absolute; background: var(--gold); }
+.report-cross::before { left: 50%; top: -5px; bottom: -5px; width: 1.5px; transform: translateX(-50%); }
+.report-cross::after { top: 50%; left: -5px; right: -5px; height: 1.5px; transform: translateY(-50%); }
+.report-cross[hidden] { display: none; }
+.report-cats { display: grid; gap: 2px; margin: 0; padding: 0; border: 0; }
+.report-cats legend { padding: 0 0 4px; font-weight: 600; color: var(--text); }
+.report-cats[aria-invalid='true'] legend { color: var(--gold); }
+.report-cat { display: flex; gap: 8px; align-items: center; min-height: 32px; padding: 2px 6px; border-radius: 6px; cursor: pointer; }
+.report-cat:hover { background: var(--gold-soft); }
+.report-cat input { accent-color: var(--gold); margin: 0; }
+.report-hint { margin: -4px 0 0 30px; font-size: 12.5px; color: var(--text-2); }
+.report-field { display: grid; gap: 4px; font-size: 13px; color: var(--text-2); }
+.report-field textarea, .report-field input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  font: 400 14px/1.4 var(--sans);
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.report-field textarea { resize: vertical; min-height: 84px; }
+.report-field :focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.report-field [aria-invalid='true'] { border-color: #e2725b; }
+.report-err { margin: -6px 0 0; font-size: 12.5px; color: #f0a08f; }
+/* the honeypot: out of sight and out of the tab order */
+.report-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.report-osm, .report-fallback { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.report-fallback { border-color: rgba(224, 169, 72, 0.5); }
+.report-fallback p { margin: 0; }
+.report-osm small, .report-fallback small { font-size: 12px; color: var(--text-3); }
+.report a { color: var(--gold); font-weight: 600; }
+.report-status { margin: 0; min-height: 0; font-weight: 600; color: var(--gold); }
+.report-status:empty { display: none; }
+.report-privacy { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-3); }
+.report-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.report-actions button {
+  min-height: 40px;
+  padding: 0 18px;
+  font: 600 14px/1 var(--sans);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.report-actions .report-send { color: var(--ink-0); background: var(--gold); border-color: var(--gold); }
+.report-actions button:disabled { opacity: 0.55; cursor: default; }
+.report-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.report [hidden] { display: none !important; }
+/* the walk HUD's button (src/walk.js), under the view switch */
+.walk-report {
+  position: absolute;
+  top: calc(68px + env(safe-area-inset-top, 0px));
+  right: 16px;
+  min-height: 44px;
+  padding: 0 16px;
+  font: 600 14px/1 var(--sans);
+  color: var(--text);
+  background: var(--glass-strong);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.walk-report:hover { border-color: var(--gold); }
+.walk-report:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
