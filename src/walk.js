@@ -123,9 +123,17 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
   // and the paved squares. The triangles within 1.2 km are indexed in 4 m
   // cells, and again when the walker nears the edge of that index. A surface
   // more than 0.6 m over the feet is not a step (a deck overhead, a wall).
-  const WALKABLE = /^(ground|street-plate|sidewalks|street-(?!water|lamps)[a-z]+|calcada-squares|roundabout-islands)$/;
+  // The landmark models are surfaces too (a cathedral's porch and steps, a
+  // square's paving, a garden's paths): without them the walker stood
+  // waist-deep in the model's paving (the Sé porch, as in Porto).
+  const WALKABLE = /^(ground|street-plate|sidewalks|street-(?!water|lamps)[a-z]+|calcada-squares|roundabout-islands|landmark-[a-z0-9-]+)$/;
   const SURF_R = 300; // world units
   const STEP_UP = 0.6 * M;
+  // a model's floor may stand higher than a step over the street beside it
+  // (the Sé porch: 0.5 m, its edge a plain plinth); the walker climbs it. A
+  // roof or a vault overhead is higher than this.
+  const CLIMB = 1.8 * M;
+  const CLIMBS = /^landmark-/;
   let surf = null; // { tri: Float32Array, grid: Map, x, z, key }
   // Reading the surface walks every walkable triangle in the town (about
   // 0.3 s on a laptop). On the way, while the old index still covers the
@@ -174,10 +182,12 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     let nt = 0; // floats used in tri
     const paved = [];
     const terrainTri = [];
+    const climb = [];
     const grid = new Map();
     let since = 0;
     for (const o of meshes) {
       const hard = o.name !== 'ground' && o.name !== 'street-plate' ? 1 : 0;
+      const up = CLIMBS.test(o.name) ? 1 : 0;
       o.updateWorldMatrix(true, false);
       const e = o.matrixWorld.elements;
       // the ground's whole grid: walk mode draws only a window of it, coarser
@@ -217,6 +227,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         nt += 9;
         paved.push(hard);
         terrainTri.push(o.name === 'ground' ? 1 : 0);
+        climb.push(up);
         for (let i = Math.floor(x0); i <= Math.floor(x1); i++) {
           for (let j = Math.floor(z0); j <= Math.floor(z1); j++) {
             const g = i * 65536 + j;
@@ -227,7 +238,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
         }
       }
     }
-    return nt ? { tri: tri.subarray(0, nt), paved, terrain: terrainTri, grid, x, z, key } : null;
+    return nt ? { tri: tri.subarray(0, nt), paved, terrain: terrainTri, climb, grid, x, z, key } : null;
   }
   // a street, a sidewalk or a paved square is drawn at (x, z)
   function pavedAt(x, z) {
@@ -261,7 +272,7 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
       if (u < -1e-6 || v < -1e-6 || u + v > 1 + 1e-6) continue;
       const y = u * t[a + 1] + v * t[a + 4] + (1 - u - v) * t[a + 7];
       if (surf.terrain[a / 9] && y > land) land = y;
-      if (y <= from + STEP_UP) { if (y > best) best = y; } else if (y < over) over = y;
+      if (y <= from + (surf.climb[a / 9] ? CLIMB : STEP_UP)) { if (y > best) best = y; } else if (y < over) over = y;
     }
     const s = best > -Infinity ? best : over < Infinity ? over : null;
     return s == null || land > s ? (land > -Infinity ? land : s) : s;
@@ -857,6 +868,28 @@ export function createWalk({ camera, scene, rig, heightAt, dom, polys, places = 
     // can a body stand at (x, z), world units
     free(x, z) {
       return !collider.blocked(x, z, BODY);
+    },
+    // where a person stands at (x, z) (street-missions.js): the drawn surface
+    // a walker from the street reaches, and whether a drawn surface hangs
+    // over it (a porch roof, a vault, an arch): a person under a roof waits
+    // inside a building
+    standAt(x, z) {
+      const from = laneGround(x, z);
+      const y = surfaceAt(x, z, from) ?? from;
+      const bucket = surf?.grid.get(Math.floor(x) * 65536 + Math.floor(z));
+      let roofed = false;
+      if (bucket) {
+        const t = surf.tri;
+        for (const a of bucket) {
+          const x1 = t[a], z1 = t[a + 2], x2 = t[a + 3], z2 = t[a + 5], x3 = t[a + 6], z3 = t[a + 8];
+          const den = (z2 - z3) * (x1 - x3) + (x3 - x2) * (z1 - z3);
+          const u = ((z2 - z3) * (x - x3) + (x3 - x2) * (z - z3)) / den;
+          const v = ((z3 - z1) * (x - x3) + (x1 - x3) * (z - z3)) / den;
+          if (u < -1e-6 || v < -1e-6 || u + v > 1 + 1e-6) continue;
+          if (u * t[a + 1] + v * t[a + 4] + (1 - u - v) * t[a + 7] > y + 2 * M) { roofed = true; break; }
+        }
+      }
+      return { y, roofed };
     },
     // an e-scooter (street-missions.js): ride it, step off it
     mount,

@@ -228,6 +228,13 @@ async function run(profile) {
   });
   if (!wet.tested) console.log(`  note ${profile}: no water area to test (${wet.rings} outlines)`);
   else ok(wet.blocked >= wet.tested * 0.8, `${profile}: water blocks the walker (${wet.blocked} of ${wet.tested} water areas)`);
+  // open places are not walls (cities/braga.json walk_open_landmarks): inside
+  // Praça da República (the fountain square) and on Avenida Central
+  const open = await page.evaluate(() => {
+    const P = window.__braga, free = (lat, lon) => { const c = P.project(lat, lon); return P.walk.free(c.x, c.z); };
+    return { praca: free(41.55126, -8.42298), avenida: free(41.5514, -8.42) };
+  });
+  ok(open.praca && open.avenida, `${profile}: the walker may enter Praça da República (${open.praca}) and Avenida Central (${open.avenida})`);
   await page.evaluate(({ lat, lon }) => {
     const P = window.__braga;
     const q = P.project(lat, lon);
@@ -331,6 +338,20 @@ async function killSwitch() {
   await page.waitForTimeout(1500);
   const s = await page.evaluate(() => window.__braga.lodSnapshot());
   ok(s.far === 16000 && !s.walkLod && s.farFade.y === 0 && !s.core?.walk, `walklod=0: walk keeps the map's far plane and tiers (far ${s.far}, ring ${s.tiles?.radiusM} m)`);
+  // /play's mission people stand on the drawn paving, never under a roof
+  // (Amélia once waited inside the Sé porch, waist-deep in its floor)
+  await page.waitForFunction(() => { let n = 0; window.__braga.scene.traverse((o) => { if (/^mission-(?!scooter)/.test(o.name)) n++; }); return n > 0; }, null, { timeout: 30000 }).catch(() => {});
+  const people = await page.evaluate(() => {
+    const P = window.__braga, out = [];
+    P.scene.traverse((o) => {
+      if (!/^mission-(?!scooter)/.test(o.name)) return;
+      const st = P.walk.standAt(o.position.x, o.position.z);
+      out.push({ id: o.name, roofed: st.roofed, sunkM: +((st.y - o.position.y) * 4).toFixed(2) });
+    });
+    return out;
+  });
+  const bad = people.filter((q) => q.roofed || Math.abs(q.sunkM) > 0.1);
+  ok(people.length > 0 && !bad.length, `/play: ${people.length} mission people stand on the paving, none under a roof${bad.length ? ` (${JSON.stringify(bad)})` : ''}`);
   ok(errors.length === 0, `walklod=0: no page errors${errors.length ? ': ' + errors[0] : ''}`);
   await browser.close();
 }

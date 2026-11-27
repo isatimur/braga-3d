@@ -509,3 +509,11 @@ A loop over five open items for the walking-height look. One item per iteration;
 
 - Roadmap item 2a. `scripts/verify.mjs` runs `npm test` as its first step. Before, CI ran only verify, so a failing unit test never failed a build.
 - Proof: `npm run verify` OK, 13 steps PASS. With a temporary failing `scripts/zz-fail.test.mjs`: `FAIL unit tests (exit 1)`, the other 12 PASS, `verify: FAILED`, exit 1. The temporary test was deleted.
+
+### 2026-11-28 — walk into squares; stand on landmark paving (branch fix/walk-open-landmarks, feature braga-040)
+
+- Owner report (screenshots): Amélia and the walker waist-deep in paving by the Sé; the walker on a scooter could not pass from the street into the wave-paved Praça da República.
+- Causes, measured on braga-3d.com: (1) every landmark outline was a wall in the walk collider, including the open ones (Praça da República 228 x 90 m, Avenida Central 410 x 77 m, gardens, Parque da Ponte); (2) `WALKABLE` in `src/walk.js` left out the landmark models, so their floors (the Sé porch at +0.5 m) were drawn but not stood on; (3) `street-missions.js` put people at `heightAt + RIBBON_LIFT`, and its spot search accepted a point under the Sé porch roof.
+- Fix (ported from Porto): `walk_open_landmarks` in `cities/braga.json` (praça, avenida, Santa Bárbara, Parque da Ponte, Bom Jesus, Roman baths); `landmark-*` meshes in `WALKABLE` with a 1.8 m climb onto their floors; `walk.standAt(x, z)` returns the drawn surface and whether a surface hangs over it; mission people, scooters and stops stand on it and never under a roof.
+- Proof: check-walk all passed with two new checks; flood fill reaches every mission person; screenshots viewed (walker on the praça's wave paving, Amélia on open paving by the Sé). Budget unchanged. Full surface read 165 to 215 ms (start and teleport only).
+- Not done: open landmarks have no solid parts (fountain, kiosks, statues), as in Porto.
