@@ -774,6 +774,23 @@
         "2026-11-28: npm test 125/125, npm run verify OK"
       ],
       "notes": "Ported from Porto: WALKABLE includes landmark-*, CLIMB 1.8 m for landmark floors, cities/<city>.json walk_open_landmarks. New walk.standAt(x, z) -> { y, roofed } for street-missions.js. Open landmarks have no solid parts now: the walker passes through their fountains, kiosks and statues (as in Porto)."
+    },
+    {
+      "id": "braga-041",
+      "priority": 41,
+      "area": "public",
+      "title": "\"Fix the map\": public reports from the map and from walk mode",
+      "user_visible_behavior": "With ?report=1, a «Исправить карту» button in the share group and in the walk HUD opens a panel: a category, the text, an optional e-mail. Send delivers the report to the owner's private Telegram chat (POST /api/report, off until REPORTS_ON=1). Data faults also offer an OpenStreetMap note at the place. When delivery is off or fails, the panel shows the OSM note and a public GitHub issue link with a 'this is public' warning. Without ?report=1 nothing mounts.",
+      "status": "in_progress",
+      "verification": [
+        "npm test (report-core, report-api, http-helpers, coder tests unchanged)",
+        "npm run build && npm run check:report (served build)",
+        "npm run verify",
+        "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs --budget only",
+        "phase 5 (owner): one live report with ?report=1 and REPORTS_ON=1"
+      ],
+      "evidence": [],
+      "notes": "Roadmap item 11, spec docs/specs/public-reports.md (rev. 5, EGM rounds 1-5). Phase 5 (live test) and the privacy controller name (owner decision 1) are the owner's."
     }
   ]
 }

@@ -29,6 +29,8 @@ export function createProjection(origin, bbox, landmarks = [], terrainData = nul
     const m = toMetres(lat, lon);
     return { x: m.x * S, z: m.z * S };
   };
+  // the inverse of project: world units -> { lat, lon } (src/report.js)
+  const unproject = (x, z) => ({ lat: lat0 - (z / S) / M_PER_DEG_LAT, lon: lon0 + (x / S) / kx });
 
   const terrain = createTerrain(terrainData, toMetres, S, { walkDistricts: terrainData?.walkDistricts || [] });
 
@@ -45,6 +47,7 @@ export function createProjection(origin, bbox, landmarks = [], terrainData = nul
     lon0,
     toMetres,
     project,
+    unproject,
     terrain,
     heightAt: terrain.heightAt,
     maxAbsMetres: maxAbs,

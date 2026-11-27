@@ -16,7 +16,7 @@ const cache = new Map();
 const ALLOWED = (process.env.CITIES || process.env.VITE_CITIES || process.env.VITE_CITY || 'braga')
   .split(',').map((s) => s.trim()).filter(Boolean);
 
-// { id, name, origin, aircraft: { lat, lon, radius_nm }, domain } or null
+// { id, name, origin, aircraft: { lat, lon, radius_nm }, domain, wide_bbox } or null
 // when the id is not a known city.
 export function cityConfig(id = 'braga') {
   if (!ID_RE.test(id) || !ALLOWED.includes(id)) return null;
@@ -33,6 +33,7 @@ export function cityConfig(id = 'braga') {
         domain: j.domain || null,
         origin: j.origin,
         aircraft: { lat: +point.lat, lon: +point.lon, radius_nm: +(j.aircraft?.radius_nm ?? 40) },
+        wide_bbox: j.wide_bbox || null, // { s, w, n, e }: api/report.js checks a report's place
       };
     } catch {
       cfg = null;
