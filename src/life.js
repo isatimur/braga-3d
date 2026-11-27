@@ -56,11 +56,13 @@ function lcg(seed) {
 // each point the highest surface between lo[i] and hi[i] (world y), or
 // NaN. One pass over the triangles. The geometry is world-oriented around
 // the mesh position (fit.js), at real scale. (streetscape.js: the paving of
-// the landmark squares.)
-export function surfaceHeights(mesh, xs, zs, lo, hi) {
+// the landmark squares.) mats (optional): per point, the kit material of
+// that surface (models/kit.js MAT, vertex attribute aMat), -1 without one.
+export function surfaceHeights(mesh, xs, zs, lo, hi, mats = null) {
   const out = new Float32Array(xs.length).fill(NaN);
   if (!mesh?.geometry?.attributes?.position) return out;
   const P = mesh.geometry.attributes.position.array;
+  const M = mesh.geometry.attributes.aMat?.array;
   const I = mesh.geometry.index?.array;
   const px = mesh.position.x;
   const py = mesh.position.y;
@@ -126,7 +128,10 @@ export function surfaceHeights(mesh, xs, zs, lo, hi) {
           if (s < -1e-4 || r < -1e-4 || s + r > 1 + 1e-4) continue;
           const y = py + P[a + 1] + s * uy + r * vy;
           if (y < lo[i] || y > hi[i]) continue;
-          if (!(y <= out[i])) out[i] = y;
+          if (!(y <= out[i])) {
+            out[i] = y;
+            if (mats) mats[i] = M ? M[a / 3] : -1;
+          }
         }
       }
     }

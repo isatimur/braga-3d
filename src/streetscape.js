@@ -35,6 +35,7 @@ import { RIBBON_LIFT, asphaltGrain, SIDEWALK_R, WALKED, sidewalkM, lampSites, la
 import { loadPois, createPoiSigns, isOpenAtHour, guessOpen } from './pois.js';
 import { createPeople, pedestrianDemand } from './people.js';
 import { LEAF_GLSL } from './nature.js';
+import { MAT } from './models/kit.js';
 
 // ------------------------------------------------------------ calçada
 // pattern ids (aPat.x): 0 none (the vertex colour)
@@ -300,9 +301,17 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
       continue;
     }
     const hit = new Float32Array(xs.length).fill(NaN);
+    const hitMat = new Float32Array(xs.length).fill(-1);
+    const mats = new Float32Array(xs.length);
     for (const m of meshes) {
-      const h = surfaceHeights(m, xs, zs, lo, hi);
-      for (let k = 0; k < h.length; k++) if (Number.isFinite(h[k]) && !(h[k] <= hit[k])) hit[k] = h[k];
+      mats.fill(-1);
+      const h = surfaceHeights(m, xs, zs, lo, hi, mats);
+      for (let k = 0; k < h.length; k++) {
+        if (Number.isFinite(h[k]) && !(h[k] <= hit[k])) {
+          hit[k] = h[k];
+          hitMat[k] = mats[k];
+        }
+      }
     }
     // open sky only: a floor under a roof, an arcade, a parasol or a crown
     // is inside the landmark (a church stands on its own ground pad)
@@ -318,9 +327,12 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
     const med = off.length ? off[off.length >> 1] : NaN;
     const Y = new Float32Array(nx * nz).fill(NaN);
     const inside = new Uint8Array(nx * nz);
+    // the floor's lawn (a garden's grass at the paving's level), not paving
+    const lawn = new Uint8Array(nx * nz);
     let valid = 0;
     for (let k = 0; k < xs.length; k++) {
       inside[at[k]] = 1;
+      if (hitMat[k] === MAT.leaf) lawn[at[k]] = 1;
       const g = heightAt(xs[k], zs[k]);
       const o = hit[k] - g;
       if (Number.isFinite(o) && Math.abs(o - med) < 0.06) {
@@ -355,7 +367,7 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
       }
       for (let q = 0; q < fill.length; q += 2) Y[fill[q]] = fill[q + 1];
     }
-    floors.push({ id: it.data.id, poly, x0, x1, z0, z1, nx, nz, STEP, Y, inside, valid, points: xs.length });
+    floors.push({ id: it.data.id, poly, x0, x1, z0, z1, nx, nz, STEP, Y, inside, lawn, valid, points: xs.length });
   }
   const solidIdx = polyIndex(solids);
   return {
@@ -387,6 +399,16 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
         return (A * (1 - fu) + B * fu) * (1 - fv) + (C * (1 - fu) + D * fu) * fv;
       }
       return undefined;
+    },
+    // a landmark's lawn at (x, z): its nearest floor sample is grass
+    lawnAt(x, z) {
+      for (const f of floors) {
+        if (x < f.x0 || x > f.x1 || z < f.z0 || z > f.z1 || !pip(f.poly, x, z)) continue;
+        const i = Math.min(f.nx - 1, Math.max(0, Math.round((x - f.x0) / f.STEP)));
+        const j = Math.min(f.nz - 1, Math.max(0, Math.round((z - f.z0) / f.STEP)));
+        return f.lawn[j * f.nx + i] === 1;
+      }
+      return false;
     },
   };
 }
@@ -773,6 +795,26 @@ function build(ctx, group, doc, pois, stats) {
         }
       }
       if (changed) pat.needsUpdate = true;
+    });
+  }
+  // The foot ways (roads.js street-foot) are lines on the paving, not
+  // surfaces of their own: no ribbon where the ground is paved for walking.
+  // That is a landmark's open floor where it is paving (with the calçada
+  // carpet on it where a square lies there; not its lawns: the Avenida
+  // Central's grass is its floor), a square or pedestrian area off the
+  // landmarks (its draped calçada covers the whole outline), and the walk
+  // district's plate. A footway over a lawn, a raised bed or plain ground
+  // keeps its ribbon. The nature mask cannot tell: OSM maps the squares
+  // inside the parks.
+  let footCut = 0;
+  const clipFoot = ctx.roadGroup?.userData?.clipFoot;
+  if (clipFoot) {
+    const areaIdx = polyIndex(areas.map((a) => a.poly));
+    footCut = clipFoot((x, z) => {
+      if (!lite && net.drapeY(x, z) === net.drapeY(x, z)) return true;
+      const f = marks.at(x, z);
+      if (f === undefined) return areaIdx.inside(x, z);
+      return Number.isFinite(f) && !marks.lawnAt(x, z);
     });
   }
   // calçada meshes: draped on the terrain, or laid on a landmark's paving
@@ -1675,7 +1717,8 @@ function build(ctx, group, doc, pois, stats) {
     laneMs,
     areas: areas.length,
     carpets,
-    floorLandmarks: marks.floors.map((f) => `${f.id} ${f.valid}/${f.points}`),
+    footCut,
+    floorLandmarks: marks.floors.map((f) => `${f.id} ${f.valid}/${f.points} lawn ${f.lawn.reduce((s, v) => s + v, 0)}`),
     solidLandmarks: marks.solids,
     calcadaTriangles: CT.idx.length / 3,
     furniture: Object.fromEntries(Object.entries(F).map(([k, a]) => [k, a.length / 6])),

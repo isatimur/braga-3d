@@ -166,6 +166,99 @@ function carriageways(net, CELL = 8) {
   };
 }
 
+// Ways as bands in a grid. halfOf(w): the band's half width (world), 0 for
+// none. near(x, z, m): within a band's half width + m (m <= pad).
+function bandIndex(net, halfOf, pad = 0, CELL = 8) {
+  const { X, Z } = net;
+  const seg = [];
+  const grid = new Map();
+  for (const w of net.ways) {
+    const half = halfOf(w);
+    if (!half) continue;
+    const r = half + pad;
+    for (let i = w.start; i < w.start + w.n - 1; i++) {
+      const k = seg.length / 5;
+      seg.push(X[i], Z[i], X[i + 1], Z[i + 1], half);
+      for (let gx = Math.floor((Math.min(X[i], X[i + 1]) - r) / CELL); gx <= Math.floor((Math.max(X[i], X[i + 1]) + r) / CELL); gx++) {
+        for (let gz = Math.floor((Math.min(Z[i], Z[i + 1]) - r) / CELL); gz <= Math.floor((Math.max(Z[i], Z[i + 1]) + r) / CELL); gz++) {
+          const key = gx * 65536 + gz;
+          let c = grid.get(key);
+          if (!c) grid.set(key, (c = []));
+          c.push(k);
+        }
+      }
+    }
+  }
+  return {
+    near(x, z, m = 0) {
+      const c = grid.get(Math.floor(x / CELL) * 65536 + Math.floor(z / CELL));
+      if (!c) return false;
+      for (const k of c) {
+        const o = k * 5;
+        const ax = seg[o];
+        const az = seg[o + 1];
+        const dx = seg[o + 2] - ax;
+        const dz = seg[o + 3] - az;
+        const u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1e-9)));
+        const ex = ax + dx * u - x;
+        const ez = az + dz * u - z;
+        const r = seg[o + 4] + m;
+        if (ex * ex + ez * ez < r * r) return true;
+      }
+      return false;
+    },
+  };
+}
+
+// Cut a strip's quads (strip(): 4 vertices each, start-left, start-right,
+// end-right, end-left) where `paved(x, z)` says the ground is already paved
+// for walking. Each quad's axis is tested every metre; the quad keeps its
+// longest free run, or folds to a point when none is free (its triangles
+// then have no area: not drawn, not walked on). The index is not touched,
+// so it works before and after cell-runs.js sorts it. Quads q0..q1 of the
+// flat position array `pos`; a folded quad stays folded. Returns the number
+// of quads cut or folded.
+export function clipQuads(pos, q0, q1, paved, can = null) {
+  const STEP = 1 * S;
+  let cut = 0;
+  const v = new Float64Array(12);
+  for (let q = q0; q < q1; q++) {
+    if (can && !can[q]) continue;
+    const o = q * 12;
+    for (let k = 0; k < 12; k++) v[k] = pos[o + k];
+    const ax = (v[0] + v[3]) / 2;
+    const az = (v[2] + v[5]) / 2;
+    const bx = (v[6] + v[9]) / 2;
+    const bz = (v[8] + v[11]) / 2;
+    const L = Math.hypot(bx - ax, bz - az);
+    if (L < 1e-6) continue;
+    const n = Math.max(1, Math.round(L / STEP));
+    let best = 0;
+    let from = 0;
+    let run = 0;
+    for (let k = 0; k < n; k++) {
+      const u = (k + 0.5) / n;
+      if (paved(ax + (bx - ax) * u, az + (bz - az) * u)) run = 0;
+      else if (++run > best) {
+        best = run;
+        from = k - run + 1;
+      }
+    }
+    if (best === n) continue;
+    cut++;
+    const ta = best ? from / n : 0;
+    const tb = best ? (from + best) / n : 0;
+    // left edge c0 -> c3, right edge c1 -> c2
+    for (let c = 0; c < 3; c++) {
+      pos[o + c] = v[c] + (v[9 + c] - v[c]) * ta;
+      pos[o + 3 + c] = v[3 + c] + (v[6 + c] - v[3 + c]) * ta;
+      pos[o + 6 + c] = v[3 + c] + (v[6 + c] - v[3 + c]) * tb;
+      pos[o + 9 + c] = v[c] + (v[9 + c] - v[c]) * tb;
+    }
+  }
+  return cut;
+}
+
 // One sidewalk of a way (sgn: 1 left, -1 right of travel), built as a kerbed
 // body and not as a painted strip: a granite kerb stone and the calçada walk
 // 12 cm above the carriageway, the kerb's face down to the carriageway, and a
@@ -518,6 +611,30 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
     if (!c) colCache.set(hex, (c = lin(hex)));
     return c;
   };
+  // A foot way is drawn only where nothing else paves its ground. In OSM a
+  // footway across a paved square, along a pedestrian street or on a street's
+  // sidewalk is a line on that paving, not a surface of its own: drawn, it
+  // was a grey strip over the calçada with jagged z-fighting edges. Here: the
+  // pedestrian streets' ribbons, and the carriageway and kerbed sidewalks of
+  // the streets that get them (below); a footway mapped as a sidewalk may lie
+  // up to 2.5 m further out. The squares, the landmark paving and the walk
+  // districts are cut by streetscape.js (clipFoot), which draws them.
+  const SIDEWALK_SLACK = 2.5 * S;
+  const paving = bandIndex(
+    net,
+    (w) => {
+      if (w.tunnel || w.bridge) return 0;
+      const half = (w.widthM / 2) * S;
+      if (w.hw === 'pedestrian') return half;
+      if (!WALKED.has(w.hw)) return 0;
+      const m = w.start + (w.n >> 1);
+      if (X[m] * X[m] + Z[m] * Z[m] > SIDEWALK_R * SIDEWALK_R) return 0;
+      return half + 0.25 * S + sidewalkM(w.hw) * S;
+    },
+    SIDEWALK_SLACK,
+  );
+  const footFree = []; // quad ranges of the foot ways that may be cut later
+  let footCut = 0;
   for (const w of net.ways) {
     const T = surf[w.kind];
     if (!T) continue;
@@ -525,6 +642,15 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
     // centre (scripts/fetch-roads.mjs FOOT_R) and their bridges everywhere;
     // not the crossings on a road deck: the deck is their surface
     if (w.kind === 'foot' && w.onDeck) continue;
+    if (w.kind === 'foot' && !w.bridge && !w.tunnel) {
+      const q0 = T.pos.length / 12;
+      strip(T, net, w.start, w.start + w.n - 1, 0, (w.widthM / 2) * S, RIBBON_LIFT, colOf(surfaceOf(w.f)));
+      const q1 = T.pos.length / 12;
+      const m = w.t.sub === 'sidewalk' ? SIDEWALK_SLACK : 0;
+      footCut += clipQuads(T.pos, q0, q1, (x, z) => paving.near(x, z, m));
+      footFree.push(q0, q1);
+      continue;
+    }
     const h = (w.widthM / 2) * S;
     if (T.pat) {
       // pedestrian streets of the centre: calçada (by name: waves on the
@@ -536,6 +662,7 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
     strip(T, net, w.start, w.start + w.n - 1, 0, h, RIBBON_LIFT, colOf(surfaceOf(w.f)));
   }
   let ribbonTris = 0;
+  let footMesh = null;
   let order = 1;
   ORDER.forEach((kind, k) => {
     const T = surf[kind];
@@ -549,7 +676,23 @@ export function buildRoads(roads, project, heightAt, { waterRibbon = true, lite 
     mesh.receiveShadow = true;
     group.add(mesh);
     ribbonTris += T.idx.length / 3;
+    if (kind === 'foot') footMesh = mesh;
   });
+  counts.footCut = footCut;
+  // streetscape.js: cut the foot ways where it paves the ground (the squares,
+  // the landmark paving, the walk districts). Not the bridges and tunnels.
+  // Returns the number of quads cut; a second call with the same test cuts
+  // nothing more.
+  group.userData.clipFoot = (paved) => {
+    if (!footMesh) return 0;
+    const pos = footMesh.geometry.attributes.position;
+    const can = new Uint8Array(pos.count / 4);
+    for (let k = 0; k < footFree.length; k += 2) can.fill(1, footFree[k], footFree[k + 1]);
+    const n = clipQuads(pos.array, 0, can.length, paved, can);
+    if (n) pos.needsUpdate = true;
+    counts.footCutStreet = (counts.footCutStreet || 0) + n;
+    return n;
+  };
   if (waterRibbon && buckets.water.length) {
     // rivers without the nature layer: a flat blue ribbon
     const T = newT();
