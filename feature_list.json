@@ -781,7 +781,7 @@
       "area": "public",
       "title": "\"Fix the map\": public reports from the map and from walk mode",
       "user_visible_behavior": "With ?report=1, a «Исправить карту» button in the share group and in the walk HUD opens a panel: a category, the text, an optional e-mail. Send delivers the report to the owner's private Telegram chat (POST /api/report, off until REPORTS_ON=1). Data faults also offer an OpenStreetMap note at the place. When delivery is off or fails, the panel shows the OSM note and a public GitHub issue link with a 'this is public' warning. Without ?report=1 nothing mounts.",
-      "status": "in_progress",
+      "status": "passing",
       "verification": [
         "npm test (report-core, report-api, http-helpers, coder tests unchanged)",
         "npm run build && npm run check:report (served build)",
@@ -789,7 +789,12 @@
         "PLAYWRIGHT_CORE=… node scripts/check-walk.mjs --budget only",
         "phase 5 (owner): one live report with ?report=1 and REPORTS_ON=1"
       ],
-      "evidence": [],
+      "evidence": [
+        "2026-11-27: npm test 148/148 (new: report-core 9, report-api 11, http-helpers 3; coder-api.test.mjs unchanged and passing)",
+        "2026-11-27: check:report all passed on a served build: map pt (request at the view centre 41.55005, -8.42905, category road, thanks, closes after 3 s), walk en (HUD button, Escape closes the dialog, walk.active stays true, W in the dialog does not move the walker), phone ru with a 503 stub (OSM and GitHub links at the request's 41.55007, -8.42904), and without ?report=1 no button mounts; screenshots viewed",
+        "2026-11-27: handler test: 503 not_configured with REPORTS_ON unset, 0 or true, and with no Telegram env; Telegram not called",
+        "2026-11-27: npm run verify OK; check-walk --budget only: desktop 272/274 calls, 2.78/2.79 M triangles; phone 159 calls, 1.32 M (unchanged)"
+      ],
       "notes": "Roadmap item 11, spec docs/specs/public-reports.md (rev. 5, EGM rounds 1-5). Phase 5 (live test) and the privacy controller name (owner decision 1) are the owner's."
     }
   ]
