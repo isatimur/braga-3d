@@ -251,7 +251,11 @@ function carIndex(net, zones, CELL = 8) {
 // model has a floor near the ground over most of its outline) can be walked
 // on: at(x, z) is the floor's height there, NaN where something stands on
 // it (a fountain, a kiosk). Any other landmark is solid inside its outline.
-function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
+// pools: per landmark, its OSM water parts (a fountain basin). Nobody walks
+// or stands in one (at() is NaN there). Where the model's basin stands
+// above the paving, the paving runs on under it, so its edge is the rim
+// and not the 2 m steps of the floor grid.
+function landmarkFloors({ items, outlines, pools = [], heightAt, surfaceHeights, near }) {
   const floors = [];
   const solids = [];
   const STEP = 0.5; // world units (2 m)
@@ -304,6 +308,9 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
       const h = surfaceHeights(m, xs, zs, lo, hi);
       for (let k = 0; k < h.length; k++) if (Number.isFinite(h[k]) && !(h[k] <= hit[k])) hit[k] = h[k];
     }
+    const top = Float32Array.from(hit); // the highest surface, before the sky test
+    const wet = (pools[it.index] || []).filter((p) => p.length > 2);
+    const inPool = xs.map((x, k) => wet.some((p) => pip(p, x, zs[k])));
     // open sky only: a floor under a roof, an arcade, a parasol or a crown
     // is inside the landmark (a church stands on its own ground pad)
     const lo2 = xs.map((_, k) => (Number.isFinite(hit[k]) ? hit[k] : lo[k] + 0.5) + 0.45);
@@ -313,7 +320,7 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
       for (let k = 0; k < h.length; k++) if (Number.isFinite(h[k])) hit[k] = NaN;
     }
     const off = [];
-    for (let k = 0; k < xs.length; k++) if (Number.isFinite(hit[k])) off.push(hit[k] - heightAt(xs[k], zs[k]));
+    for (let k = 0; k < xs.length; k++) if (Number.isFinite(hit[k]) && !inPool[k]) off.push(hit[k] - heightAt(xs[k], zs[k]));
     off.sort((a, b) => a - b);
     const med = off.length ? off[off.length >> 1] : NaN;
     const Y = new Float32Array(nx * nz).fill(NaN);
@@ -322,6 +329,16 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
     for (let k = 0; k < xs.length; k++) {
       inside[at[k]] = 1;
       const g = heightAt(xs[k], zs[k]);
+      if (inPool[k]) {
+        // a basin that stands on the paving (its rim or water above the
+        // walking surface): the paving runs on under it, hidden
+        const pave = Math.max(g + med, g + RIBBON_LIFT - 0.024);
+        if (top[k] > pave + 0.02) {
+          Y[at[k]] = pave;
+          valid++;
+        }
+        continue;
+      }
       const o = hit[k] - g;
       if (Number.isFinite(o) && Math.abs(o - med) < 0.06) {
         // where the model's floor lies under the terrain, the ground shows:
@@ -355,7 +372,7 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
       }
       for (let q = 0; q < fill.length; q += 2) Y[fill[q]] = fill[q + 1];
     }
-    floors.push({ id: it.data.id, poly, x0, x1, z0, z1, nx, nz, STEP, Y, inside, valid, points: xs.length });
+    floors.push({ id: it.data.id, poly, x0, x1, z0, z1, nx, nz, STEP, Y, inside, valid, points: xs.length, pools: wet });
   }
   const solidIdx = polyIndex(solids);
   return {
@@ -366,6 +383,7 @@ function landmarkFloors({ items, outlines, heightAt, surfaceHeights, near }) {
     at(x, z) {
       for (const f of floors) {
         if (x < f.x0 || x > f.x1 || z < f.z0 || z > f.z1 || !pip(f.poly, x, z)) continue;
+        if (f.pools.some((p) => pip(p, x, z))) return NaN;
         const u = (x - f.x0) / f.STEP;
         const v = (z - f.z0) / f.STEP;
         const i = Math.min(f.nx - 2, Math.max(0, Math.floor(u)));
@@ -559,7 +577,7 @@ export function createStreetscape(ctx) {
 }
 
 function build(ctx, group, doc, pois, stats) {
-  const { camera, roads, project, heightAt, items = [], outlines = [], footprints = [], lite = false, model, fx, surfaceHeights } = ctx;
+  const { camera, roads, project, heightAt, items = [], outlines = [], pools = [], footprints = [], lite = false, model, fx, surfaceHeights } = ctx;
   const tb = performance.now();
   const rnd = lcg(20260623);
   const net = buildNetwork(roads, project, heightAt);
@@ -577,7 +595,7 @@ function build(ctx, group, doc, pois, stats) {
   const inZone = (x, z) => zones.some((q) => (x - q.x) ** 2 + (z - q.z) ** 2 < q.r * q.r);
   const bIdx = polyIndex(footprints);
   const cars = carIndex(net, zones);
-  const marks = landmarkFloors({ items, outlines, heightAt, surfaceHeights, near: (x, z) => nearC(x, z, R + 80) });
+  const marks = landmarkFloors({ items, outlines, pools, heightAt, surfaceHeights, near: (x, z) => nearC(x, z, R + 80) });
   // the walking surface: a landmark's paving, else the street level
   const groundAt = (x, z) => {
     const f = marks.at(x, z);

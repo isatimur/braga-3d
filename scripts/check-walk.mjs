@@ -232,9 +232,11 @@ async function run(profile) {
   // Praça da República (the fountain square) and on Avenida Central
   const open = await page.evaluate(() => {
     const P = window.__braga, free = (lat, lon) => { const c = P.project(lat, lon); return P.walk.free(c.x, c.z); };
-    return { praca: free(41.55126, -8.42298), avenida: free(41.5514, -8.42) };
+    return { praca: free(41.55126, -8.42298), avenida: free(41.5514, -8.42), pool: free(41.551395, -8.42309) };
   });
   ok(open.praca && open.avenida, `${profile}: the walker may enter Praça da República (${open.praca}) and Avenida Central (${open.avenida})`);
+  // ... but not the Praça fountain's pool (issue #2, its OSM water part)
+  ok(!open.pool, `${profile}: the Praça fountain's pool blocks the walker (free ${open.pool})`);
   await page.evaluate(({ lat, lon }) => {
     const P = window.__braga;
     const q = P.project(lat, lon);

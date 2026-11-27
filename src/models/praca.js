@@ -268,32 +268,46 @@ function praca(k, { footprint, dims }) {
     }
   }
 
-  // --- the fountain on its OSM polygon: low rim, shallow pool, the dome
-  //     of spray, a ring of small jets
+  // --- the fountain on its OSM polygon: granite rim, pool, the dome of
+  //     spray as thin streams, a ring of small jets (life.js adds the
+  //     moving spray as particles from the nozzle)
+  // The square is drawn by the street layer: its calçada lies about 0.6 m
+  // above this model's zero here (the paving ribbon, roads.js RIBBON_LIFT,
+  // plus the walk district's ground over the base). The rim and the water
+  // stand on that level, so the calçada neither covers them nor meets them
+  // in one plane (issue #2: the pool read as a speckled slab).
+  const STREET = 0.6;
   const F = footprint.part(/Chafariz/);
   const [fx, fz] = centroid(F.pts);
-  const rim = dims?.height_m?.fountain ?? 1.5;
-  k.prism(F.pts, -0.3, 0.9, 'graniteLight', { holes: [offset(F.pts, -0.7)] });
-  k.prism(offset(F.pts, -0.7), -0.3, 0.5, 'water', { emit: 0.25 });
   const fr = bbox(F.pts).w / 2;
-  // the dome of spray as arcing jets (the real one reads as separate
-  // streams, not a solid dome), plus the tall central jet
+  const top = STREET + 0.45; // the rim's top: 0.45 m over the calçada
+  const wy = STREET + 0.22; // the water: 0.23 m under the rim's top
+  const inner = offset(F.pts, -0.7);
+  k.prism(F.pts, -0.3, top + 0.3 - 0.08, 'graniteLight', { holes: [inner] });
+  // the coping: a slightly darker top course, proud of the wall outside
+  k.prism(offset(F.pts, 0.06), top - 0.08, 0.08, 'granite', { holes: [offset(inner, 0.04)] });
+  k.prism(inner, -0.3, wy + 0.3, 0x2f5f72, { emit: 0.12, mat: MAT.water });
+  // the nozzle in the middle: a low bronze boss just over the water
+  k.cyl(0.3, 0.42, 0.18, 10, 'bronze', fx, wy - 0.04, fz);
+  // the dome of spray as arcing streams: thin, so it reads as separate
+  // jets of water, not a white cage (the real one is a fan of streams)
+  const SEG = 5;
   for (let i = 0; i < 22; i++) {
     const a = (i / 22) * TAU;
     const R = 4.4;
-    const at = (t) => [fx + Math.cos(a) * (0.4 + (R - 0.4) * t), 0.2 + 4.6 * (1 - t * t), fz + Math.sin(a) * (0.4 + (R - 0.4) * t)];
-    for (let s = 0; s < 3; s++) k.segment(at(s / 3), at((s + 1) / 3), 0.16, 0.16, SPRAY, { emit: 0.5, mat: MAT.water });
+    const at = (t) => [fx + Math.cos(a) * (0.35 + (R - 0.35) * t), wy + 0.12 + 4.3 * (1 - t * t), fz + Math.sin(a) * (0.35 + (R - 0.35) * t)];
+    for (let s = 0; s < SEG; s++) k.segment(at(s / SEG), at((s + 1) / SEG), 0.05, 0.05, SPRAY, { emit: 0.6, mat: MAT.water });
   }
-  k.cyl(0.14, 0.24, 6.5, 6, SPRAY, fx, 0.2, fz, { emit: 0.5 });
-  // named point for the app (water animation): the basin centre
-  k.marker('fountain', fx, 0.2, fz, { kind: 'jet', r: +(bbox(F.pts).w / 2).toFixed(2), jet: 6.5 });
-  k.cyl(3.2, 4.4, 0.35, 16, SPRAY, fx, 0.15, fz, { emit: 0.35, mat: MAT.water });
+  // No solid central jet: life.js finds the nozzle as the highest surface
+  // over the fountain point and throws the tall jet from there as spray.
+  // named point for the app: the water surface at the basin centre
+  k.marker('fountain', fx, wy, fz, { kind: 'jet', r: +fr.toFixed(2), jet: 4.5 });
+  // the ring of small jets inside the rim
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * TAU;
     const r = fr - 2.2;
-    k.cone(0.12, 1.2 + (i % 3) * 0.6, 4, SPRAY, fx + Math.cos(a) * r, 0.2, fz + Math.sin(a) * r, { emit: 0.45 });
+    k.cone(0.05, 1.2 + (i % 3) * 0.6, 4, SPRAY, fx + Math.cos(a) * r, wy, fz + Math.sin(a) * r, { emit: 0.6, mat: MAT.water });
   }
-  void rim;
 
   // --- globe lamps on square posts round the fountain and along the front
   const lamp = (x, z) => {
